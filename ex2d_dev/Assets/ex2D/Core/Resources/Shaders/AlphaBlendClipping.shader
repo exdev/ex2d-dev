@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : SpriteBlendClipping.shader
+// File         : AlphaBlendClipping.shader
 // Author       : Wu Jie 
-// Last Change  : 03/05/2012 | 15:19:25 PM | Monday,March
+// Last Change  : 06/11/2013 | 17:24:35 PM | Tuesday,June
 // Description  : 
 // ======================================================================================
 

@@ -18,16 +18,11 @@ using UnityEngine;
 ///////////////////////////////////////////////////////////////////////////////
 
 public class exTextureInfo : ScriptableObject {
-    public string rawTextureGUID;
+    // public string rawTextureGUID; // TODO: do we need this??
     public Texture2D texture; ///< the atlas or raw texture
 
     public int rawWidth = 1;
     public int rawHeight = 1;
-
-    public int x = 0;
-    public int y = 0;
-    public int width = 1;
-    public int height = 1;
 
     public bool rotated = false; ///< if rotate the texture in atlas 
     public bool trim = false;    ///< if trimmed the texture

@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : SpriteBlendNoZTest.shader
+// File         : AlphaBlendNoZTest.shader
 // Author       : Wu Jie 
-// Last Change  : 08/07/2012 | 10:20:52 AM | Tuesday,August
+// Last Change  : 06/11/2013 | 17:24:37 PM | Tuesday,June
 // Description  : 
 // ======================================================================================
 
