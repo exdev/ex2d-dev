@@ -25,7 +25,7 @@ public class exAtlas : ScriptableObject {
     public class Element {
         public int x;
         public int y;
-        public TextureInfo info;
+        public exTextureInfo info;
     }
 
     public Element[] elements;
