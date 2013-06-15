@@ -1,5 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
+using Diagnostics = System.Diagnostics;
 
 internal class exReleaseFlag {
 
@@ -15,4 +16,31 @@ internal class exReleaseFlag {
 
 #endif
 
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///
+/// Only used and compiled for debugging
+/// 所有方法调用，及用作调用参数的表达式都不会被编译进*非*EX_DEBUG的导出版本
+///
+///////////////////////////////////////////////////////////////////////////////
+
+public static class exAssert {
+
+    [Diagnostics.Conditional("UNITY_EDITOR"), Diagnostics.Conditional("EX_DEBUG")]
+    public static void True(bool test, string msg = "", bool logError = true) {
+        if(!test) {
+            if (logError) {
+                Debug.LogError("Asset Failed! " + msg);
+            }
+            else {
+                Debug.LogWarning("Asset Failed! " + msg);
+            }
+        }
+    }
+
+    [Diagnostics.Conditional("UNITY_EDITOR"), Diagnostics.Conditional("EX_DEBUG")]
+    public static void False(bool test, string msg = "", bool logError = true) {
+        True(!test, msg, logError);
+    }
 }
