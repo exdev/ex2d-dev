@@ -28,7 +28,16 @@ public static class MenuItems {
     // ------------------------------------------------------------------ 
 
     [MenuItem ("Assets/Create/ex2D/Texture Info")]
-    static void CreateLevelInfo () {
+    static void Create_TextureInfo () {
         exGenericAssetUtility<exTextureInfo>.CreateInCurrentDirectory ("New TextureInfo");
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("Assets/Create/ex2D/Atlas")]
+    static void Create_Atlas () {
+        exGenericAssetUtility<exAtlasInfo>.CreateInCurrentDirectory ("New Atlas");
     }
 }
