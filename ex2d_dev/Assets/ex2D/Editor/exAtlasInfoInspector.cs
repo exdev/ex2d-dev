@@ -19,6 +19,7 @@ using System.IO;
 // BoardPatternInspector
 ///////////////////////////////////////////////////////////////////////////////
 
+[CanEditMultipleObjects]
 [CustomEditor(typeof(exAtlasInfo))]
 class exAtlasInfoInspector : Editor {
 
@@ -33,7 +34,7 @@ class exAtlasInfoInspector : Editor {
         GUILayout.FlexibleSpace();
             if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
                 exAtlasInfoEditor editor = EditorWindow.GetWindow<exAtlasInfoEditor>();
-                // editor.Edit(target); // TODO:
+                editor.Edit(target);
             }
         GUILayout.Space(5);
         GUILayout.EndHorizontal();

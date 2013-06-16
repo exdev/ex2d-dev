@@ -72,7 +72,7 @@ public partial class exAtlasInfo : ScriptableObject {
     public List<exTextureInfo> textureInfos = new List<exTextureInfo>(); ///< the list of exTextureInfo
     public Texture2D texture; ///< the referenced atlas texture
     public Material material; ///< the default material we used
-    public bool useBuildColor = false; ///< use buildColor as background color for transparent pixels
+    public bool customBuildColor = false; ///< use buildColor as background color for transparent pixels
     public Color buildColor = new Color(1.0f, 1.0f, 1.0f, 0.0f); ///< the color of transparent pixels in atlas texture
     public bool useContourBleed = false; ///< extends the color of pixels at the edge of transparent pixels to prevent bilinear filtering artifacts
     public bool usePaddingBleed = false; ///< extends the color and alpha of pixels on border of each element into the surrounding padding area

@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : MenuItems.cs
+// File         : exEditorUtility.cs
 // Author       : Wu Jie 
-// Last Change  : 02/17/2013 | 21:51:52 PM | Sunday,February
+// Last Change  : 06/16/2013 | 14:37:44 PM | Sunday,June
 // Description  : 
 // ======================================================================================
 
@@ -9,46 +9,47 @@
 // usings
 ///////////////////////////////////////////////////////////////////////////////
 
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 
 ///////////////////////////////////////////////////////////////////////////////
-// defines
+///
+/// editor helper function
+///
 ///////////////////////////////////////////////////////////////////////////////
 
-public static class MenuItems {
+public static class exEditorUtility {
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Create
+    //
     ///////////////////////////////////////////////////////////////////////////////
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    [MenuItem ("Assets/Create/ex2D/Texture Info")]
-    static void Create_TextureInfo () { exGenericAssetUtility<exTextureInfo>.CreateInCurrentDirectory ("New TextureInfo"); }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    [MenuItem ("Assets/Create/ex2D/Atlas")]
-    static void Create_Atlas () {
-        exGenericAssetUtility<exAtlasInfo>.CreateInCurrentDirectory ("New Atlas");
-    }
+    static Texture2D texWhite;
+    static Texture2D texCheckerboard;
+    static Texture2D texHelp;
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Window
+    // special texture
     ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
-    // Desc: 
+    /// \return the helper texture
+    /// return a help texture
     // ------------------------------------------------------------------ 
 
-    [MenuItem ("Window/ex2D/Atlas Editor")]
-    static void Open_AtlasEditor () {
-        EditorWindow.GetWindow<exAtlasInfoEditor>();
+    public static Texture2D HelpTexture () {
+        // NOTE: hack from "unity editor resources" in Unity3D Contents
+        if ( texHelp == null ) {
+            texHelp = EditorGUIUtility.FindTexture("_help");
+            if ( texHelp == null ) {
+                Debug.LogError ( "can't find help texture" );
+                return null;
+            }
+        }
+        return texHelp;
     }
 }
