@@ -52,6 +52,11 @@ partial class exAtlasInfoEditor : EditorWindow {
     bool foldoutTextureInfo = true;
     bool foldoutBuild = true;
 
+    // GUI states
+    Vector2 mouseDownPos = Vector2.zero;
+    Rect selectRect = new Rect( 0, 0, 1, 1 );
+    bool inRectSelectState = false;
+
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
     ///////////////////////////////////////////////////////////////////////////////
@@ -108,15 +113,12 @@ partial class exAtlasInfoEditor : EditorWindow {
         // NOTE: we can't use GUILayoutUtility.GetLastRect() here, 
         //       because GetLastRect() will return wrong value when Event.current.type is EventType.Layout
         // Rect rect = GUILayoutUtility.GetLastRect ();
-        float toolbarHeight = EditorStyles.toolbar.CalcHeight( new GUIContent(""), 0 );
+        float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
         scrollPos = EditorGUILayout.BeginScrollView ( scrollPos, 
                                                       GUILayout.Width(position.width),
                                                       GUILayout.Height(position.height-toolbarHeight) );
 
-            // ======================================================== 
             // atlas info
-            // ======================================================== 
-
             Object newAtlasInfo = EditorGUILayout.ObjectField( "Atlas Info"
                                                                , curEdit
                                                                , typeof(exAtlasInfo)
@@ -126,10 +128,11 @@ partial class exAtlasInfoEditor : EditorWindow {
                                                              );
             if ( newAtlasInfo != curEdit ) 
                 Selection.activeObject = newAtlasInfo;
+            GUILayout.Space(10);
 
             //
             EditorGUILayout.BeginHorizontal();
-                // settings area 
+                //
                 Settings ();
 
                 //
@@ -140,6 +143,9 @@ partial class exAtlasInfoEditor : EditorWindow {
                 AtlasInfo ( new Rect( lastRect.xMax, lastRect.yMax, curEdit.width * curEdit.scale, curEdit.height * curEdit.scale ) );
 
             EditorGUILayout.EndHorizontal();
+
+            //
+            ProcessEvents();
 
         EditorGUILayout.EndScrollView();
 
@@ -479,12 +485,98 @@ partial class exAtlasInfoEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void AtlasInfo ( Rect _position ) {
-        // TODO
+    void AtlasInfo ( Rect _rect ) {
         if ( Event.current.type == EventType.Repaint ) {
-            GUI.skin.box.Draw ( _position, false, true, true, true );
+            Texture2D checker = exEditorUtility.CheckerboardTexture();
+            GUI.DrawTextureWithTexCoords ( _rect, 
+                                           checker, 
+                                           new Rect( 0.0f, 0.0f, _rect.width/checker.width, _rect.height/checker.height) );
+            exEditorUtility.DrawRect( new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 ),
+                                      new Color( 1,1,1,0 ), 
+                                      Color.white );
         }
-        GUILayoutUtility.GetRect ( curEdit.width, curEdit.height, GUI.skin.box );
+
+        // TODO:
+
+        GUILayoutUtility.GetRect ( _rect.width+2, _rect.height+2, GUI.skin.box );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void ProcessEvents () {
+        Event e = Event.current;
+
+        // repaint
+        if ( e.type == EventType.Repaint ) {
+            // draw select rect 
+            if ( inRectSelectState && (selectRect.width != 0.0f || selectRect.height != 0.0f) ) {
+                exEditorUtility.DrawRect( selectRect, new Color( 0.0f, 0.5f, 1.0f, 0.2f ), new Color( 0.0f, 0.5f, 1.0f, 1.0f ) );
+            }
+        }
+
+        // mouse down
+        if ( e.type == EventType.MouseDown && e.button == 0 && e.clickCount == 1 ) {
+            GUIUtility.keyboardControl = -1; // remove any keyboard control
+
+            mouseDownPos = e.mousePosition;
+            inRectSelectState = true;
+            UpdateSelectRect ();
+            // ConfirmRectSelection(); // TODO
+            Repaint();
+
+            e.Use();
+        }
+
+        // rect select
+        if ( inRectSelectState ) {
+            if ( e.type == EventType.MouseDrag ) {
+                UpdateSelectRect ();
+                // ConfirmRectSelection(); // TODO
+                Repaint();
+
+                e.Use();
+            }
+            else if ( e.type == EventType.MouseUp && e.button == 0 ) {
+                inRectSelectState = false;
+                // ConfirmRectSelection(); // TODO
+                Repaint();
+
+                e.Use();
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void UpdateSelectRect () {
+        float x = 0;
+        float y = 0;
+        float width = 0;
+        float height = 0;
+        Vector2 curMousePos = Event.current.mousePosition;
+
+        if ( mouseDownPos.x < curMousePos.x ) {
+            x = mouseDownPos.x;
+            width = curMousePos.x - mouseDownPos.x;
+        }
+        else {
+            x = curMousePos.x;
+            width = mouseDownPos.x - curMousePos.x;
+        }
+        if ( mouseDownPos.y < curMousePos.y ) {
+            y = mouseDownPos.y;
+            height = curMousePos.y - mouseDownPos.y;
+        }
+        else {
+            y = curMousePos.y;
+            height = mouseDownPos.y - curMousePos.y;
+        }
+
+        selectRect = new Rect( x, y, width, height );
     }
 }
 
