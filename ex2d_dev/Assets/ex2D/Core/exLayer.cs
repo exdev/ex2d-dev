@@ -272,19 +272,13 @@ public class exLayer : MonoBehaviour
 
         // update vertices
         // TODO: 如果sprite的顶点在vertices的最后，把vertices的坑留着，只改变indices
-        int removeStart = vertices.Count - _oldSprite.verticesCount;
-        for (int i = _oldSprite.lVerticesIndex; i < removeStart; ++i) {
-            vertices[i] = vertices[i + _oldSprite.verticesCount];
-            colors32[i] = colors32[i + _oldSprite.verticesCount];
-            uvs[i] = uvs[i + _oldSprite.verticesCount];
-        }
-        vertices.RemoveRange(removeStart, _oldSprite.verticesCount);
+        vertices.RemoveRange(_oldSprite.lVerticesIndex, _oldSprite.verticesCount);
         verticeChanged = true;
 
-        colors32.RemoveRange(removeStart, _oldSprite.verticesCount);
+        colors32.RemoveRange(_oldSprite.lVerticesIndex, _oldSprite.verticesCount);
         colorChanged = true;
 
-        uvs.RemoveRange(removeStart, _oldSprite.verticesCount);
+        uvs.RemoveRange(_oldSprite.lVerticesIndex, _oldSprite.verticesCount);
         uvChanged = true;
 
         rebuildNormal = true;
@@ -370,18 +364,13 @@ public class exLayer : MonoBehaviour
     void RemoveIndices (exSpriteBase _sprite) {
         bool indicesAdded = _sprite.lIndicesIndex != -1;
         if (indicesAdded) {
-            int removeCount = _sprite.lIndicesCount;
-            
             // update indices
-            for (int i = _sprite.lIndicesIndex + _sprite.lIndicesCount; i < indices.Count; ++i) {
-                indices[i - removeCount] = indices[i];
-            }
-            indices.RemoveRange(indices.Count - removeCount, removeCount);
+            indices.RemoveRange(_sprite.lIndicesIndex, _sprite.lIndicesCount);
             
             // update indices index
             for (int i = 0; i < allSprites.Count; ++i) {
                 if (allSprites[i].lIndicesIndex > _sprite.lIndicesIndex) {
-                    allSprites[i].lIndicesIndex -= removeCount;
+                    allSprites[i].lIndicesIndex -= _sprite.lIndicesCount;
                     exDebug.Assert(allSprites[i].lIndicesIndex >= _sprite.lIndicesIndex);
                 }
             }
