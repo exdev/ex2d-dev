@@ -17,7 +17,7 @@ using System.Collections.Generic;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
-/// the atlas info editor
+/// the atlas editor
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -33,7 +33,7 @@ partial class exAtlasEditor : EditorWindow {
     static string[] sizeTextList = new string[] { 
         "32px", "64px", "128px", "256px", "512px", "1024px", "2048px", "4096px" 
     };
-	static int exAtlasInfoEditorHash = "exAtlasEditor".GetHashCode();
+	static int exAtlasEditorHash = "exAtlasEditor".GetHashCode();
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -57,6 +57,9 @@ partial class exAtlasEditor : EditorWindow {
     Vector2 mouseDownPos = Vector2.zero;
     Rect selectRect = new Rect( 0, 0, 1, 1 );
     bool inRectSelectState = false;
+    List<Object> importObjects = new List<Object>();
+    Object oldSelActiveObject;
+    List<Object> oldSelObjects = new List<Object>();
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -67,7 +70,7 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void OnEnable () {
-        name = "Atlas Info Editor";
+        name = "Atlas Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
         // position = new Rect ( 50, 50, 800, 600 );
@@ -101,7 +104,7 @@ partial class exAtlasEditor : EditorWindow {
     void OnGUI () {
         if ( curEdit == null ) {
             GUILayout.Space(10);
-            GUILayout.Label ( "Please select an Atlas Info" );
+            GUILayout.Label ( "Please select an Atlas" );
             return;
         }
 
@@ -119,16 +122,16 @@ partial class exAtlasEditor : EditorWindow {
                                                       GUILayout.Width(position.width),
                                                       GUILayout.Height(position.height-toolbarHeight) );
 
-            // atlas info
-            Object newAtlasInfo = EditorGUILayout.ObjectField( "Atlas Info"
-                                                               , curEdit
-                                                               , typeof(exAtlas)
-                                                               , false 
-                                                               , GUILayout.Width(300)
-                                                               , GUILayout.MaxWidth(300)
-                                                             );
-            if ( newAtlasInfo != curEdit ) 
-                Selection.activeObject = newAtlasInfo;
+            // atlas
+            Object newAtlas = EditorGUILayout.ObjectField( "Atlas"
+                                                           , curEdit
+                                                           , typeof(exAtlas)
+                                                           , false 
+                                                           , GUILayout.Width(300)
+                                                           , GUILayout.MaxWidth(300)
+                                                         );
+            if ( newAtlas != curEdit ) 
+                Selection.activeObject = newAtlas;
             GUILayout.Space(10);
 
             //
@@ -141,7 +144,7 @@ partial class exAtlasEditor : EditorWindow {
 
                 //
                 Rect lastRect = GUILayoutUtility.GetLastRect ();  
-                AtlasInfo ( new Rect( lastRect.xMax, lastRect.yMax, curEdit.width * curEdit.scale, curEdit.height * curEdit.scale ) );
+                AtlasField ( new Rect( lastRect.xMax, lastRect.yMax, curEdit.width * curEdit.scale, curEdit.height * curEdit.scale ) );
 
             EditorGUILayout.EndHorizontal();
 
@@ -168,6 +171,9 @@ partial class exAtlasEditor : EditorWindow {
         scrollPos = Vector2.zero;
         selectIdx = 0;
         selectedTextureInfos.Clear();
+        importObjects.Clear();
+        oldSelActiveObject = null;
+        oldSelObjects.Clear();
     }
 
     // ------------------------------------------------------------------ 
@@ -486,20 +492,93 @@ partial class exAtlasEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void AtlasInfo ( Rect _rect ) {
-        if ( Event.current.type == EventType.Repaint ) {
-            Texture2D checker = exEditorUtility.CheckerboardTexture();
-            GUI.DrawTextureWithTexCoords ( _rect, 
-                                           checker, 
-                                           new Rect( 0.0f, 0.0f, _rect.width/checker.width, _rect.height/checker.height) );
-            exEditorUtility.DrawRect( new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 ),
-                                      new Color( 1,1,1,0 ), 
-                                      Color.white );
-        }
-
-        // TODO:
-
+    void AtlasField ( Rect _rect ) {
         GUILayoutUtility.GetRect ( _rect.width+2, _rect.height+2, GUI.skin.box );
+
+        Event e = Event.current;
+        switch ( e.type ) {
+        case EventType.Repaint:
+            Color old = GUI.color;
+            GUI.color = curEdit.bgColor;
+                if ( curEdit.showCheckerboard ) {
+                    Texture2D checker = exEditorUtility.CheckerboardTexture();
+                    GUI.DrawTextureWithTexCoords ( _rect, checker, 
+                                                   new Rect( 0.0f, 0.0f, _rect.width/checker.width, _rect.height/checker.height) );
+                }
+                else {
+                    GUI.DrawTexture( _rect, EditorGUIUtility.whiteTexture );
+                }
+                exEditorUtility.DrawRect( new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 ),
+                                          new Color( 1,1,1,0 ), 
+                                          Color.white );
+            GUI.color = old;
+            break;
+
+        case EventType.DragUpdated:
+            if ( _rect.Contains(e.mousePosition) ) {
+                // Show a copy icon on the drag
+                foreach ( Object o in DragAndDrop.objectReferences ) {
+                    if ( o is Texture2D 
+                         // || (o is exBitmapFont && (o as exBitmapFont).inAtlas == false) 
+                         || exEditorUtility.IsDirectory(o) 
+                       ) 
+                    {
+                        DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                        break;
+                    }
+                }
+                e.Use();
+            }
+            break;
+
+        case  EventType.DragPerform:
+            if ( _rect.Contains(e.mousePosition) ) {
+                DragAndDrop.AcceptDrag();
+
+                // TODO { 
+                // // NOTE: Unity3D have a problem in ImportTextureForAtlas, when a texture is an active selection, 
+                // //       no matter how you change your import settings, finally it will apply changes that in Inspector (shows when object selected)
+                // oldSelActiveObject = null;
+                // oldSelObjects.Clear();
+                // foreach ( Object o in Selection.objects ) {
+                //     oldSelObjects.Add(o);
+                // }
+                // oldSelActiveObject = Selection.activeObject;
+                // } TODO end 
+
+                // NOTE: Selection.GetFiltered only affect on activeObject, but we may proceed non-active selections sometimes
+                foreach ( Object o in DragAndDrop.objectReferences ) {
+                    if ( exEditorUtility.IsDirectory(o) ) {
+                        Selection.activeObject = o;
+
+                        // add Texture2D objects
+                        Object[] objs = Selection.GetFiltered( typeof(Texture2D), SelectionMode.DeepAssets);
+                        importObjects.AddRange(objs);
+
+                        // TODO { 
+                        // // add exBitmapFont objects
+                        // objs = Selection.GetFiltered( typeof(exBitmapFont), SelectionMode.DeepAssets);
+                        // importObjects.AddRange(objs);
+                        // } TODO end 
+                    }
+                    else if ( o is Texture2D /* TODO || o is exBitmapFont*/ ) {
+                        importObjects.Add(o);
+                    }
+                }
+
+                // TODO { 
+                // Selection.activeObject = null;
+                // } TODO end 
+
+                exAtlasUtility.ImportObjects ( curEdit, importObjects.ToArray() );
+                importObjects.Clear();
+
+                e.Use();
+                Repaint();
+            }
+
+            break;
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -507,7 +586,7 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void ProcessEvents () {
-        int controlID = GUIUtility.GetControlID(exAtlasInfoEditorHash, FocusType.Passive);
+        int controlID = GUIUtility.GetControlID(exAtlasEditorHash, FocusType.Passive);
         Event e = Event.current;
 
         switch ( e.GetTypeForControl(controlID) ) {

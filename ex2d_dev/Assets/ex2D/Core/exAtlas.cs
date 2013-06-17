@@ -363,7 +363,7 @@ public class exAtlas : ScriptableObject {
 
     // // ------------------------------------------------------------------ 
     // /// \param _el the element you expect to remove
-    // /// remove an element from the atlas info
+    // /// remove an element from the atlas
     // // ------------------------------------------------------------------ 
 
     // public void RemoveElement ( exTextureInfo _el ) {
@@ -375,7 +375,7 @@ public class exAtlas : ScriptableObject {
 
     // // ------------------------------------------------------------------ 
     // /// \param _idx the index of the element 
-    // /// remove an element from the atlas info by index
+    // /// remove an element from the atlas by index
     // // ------------------------------------------------------------------ 
 
     // public void RemoveElementAt ( int _idx ) {
@@ -414,7 +414,7 @@ public class exAtlas : ScriptableObject {
     // }
 
     // // ------------------------------------------------------------------ 
-    // /// Sort the elemtns in atlas info by the exAtlas.SortBy and exAtlas.SortOrder 
+    // /// Sort the elemtns in atlas by the exAtlas.SortBy and exAtlas.SortOrder 
     // // ------------------------------------------------------------------ 
 
     // public void SortElements () {

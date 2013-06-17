@@ -128,4 +128,23 @@ public static class exEditorUtility {
             RectBorderStyle().Draw( _rect, false, true, true, true );
         GUI.backgroundColor = old;
     }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    /// \param _o the asset object
+    /// \return the result
+    /// check if the asset is a directory
+    // ------------------------------------------------------------------ 
+
+    public static bool IsDirectory ( Object _o ) {
+        string path = AssetDatabase.GetAssetPath(_o);
+        if ( string.IsNullOrEmpty(path) == false ) {
+            DirectoryInfo info = new DirectoryInfo(path);
+            return info.Exists;
+        }
+        return false;
+    }
 }

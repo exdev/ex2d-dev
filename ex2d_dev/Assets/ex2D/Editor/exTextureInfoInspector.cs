@@ -67,8 +67,12 @@ class exTextureInfoInspector : Editor {
             return;
         }
 
-        _background.Draw(_rect, false, false, false, false);
         exTextureInfo textureInfo = base.target as exTextureInfo; 
+        if ( textureInfo == null || textureInfo.texture == null ) {
+            return;
+        }
+
+        _background.Draw(_rect, false, false, false, false);
 
         float ratio = Mathf.Min ( Mathf.Min(_rect.width / (float)textureInfo.width, _rect.height / (float)textureInfo.height), 1.0f );
         float w = (float)textureInfo.width * ratio;
