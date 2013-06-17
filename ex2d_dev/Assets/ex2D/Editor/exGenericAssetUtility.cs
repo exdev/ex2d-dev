@@ -43,7 +43,6 @@ public static class exGenericAssetUtility<T> where T : ScriptableObject {
         //
         T newAsset = ScriptableObject.CreateInstance<T>();
         AssetDatabase.CreateAsset(newAsset, assetPath);
-        Selection.activeObject = newAsset;
         return newAsset;
     }
 

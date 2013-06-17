@@ -36,7 +36,7 @@ public static class MenuItems {
 
     [MenuItem ("Assets/Create/ex2D/Atlas")]
     static void Create_Atlas () {
-        exGenericAssetUtility<exAtlasInfo>.CreateInCurrentDirectory ("New Atlas");
+        exGenericAssetUtility<exAtlas>.CreateInCurrentDirectory ("New Atlas");
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -49,6 +49,6 @@ public static class MenuItems {
 
     [MenuItem ("Window/ex2D/Atlas Editor")]
     static void Open_AtlasEditor () {
-        EditorWindow.GetWindow<exAtlasInfoEditor>();
+        EditorWindow.GetWindow<exAtlasEditor>();
     }
 }
