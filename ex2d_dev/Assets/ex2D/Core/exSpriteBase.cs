@@ -19,33 +19,58 @@ using System.Collections;
 ///////////////////////////////////////////////////////////////////////////////
 
 public class exSpriteBase : MonoBehaviour {
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // non-serialized
+    ///////////////////////////////////////////////////////////////////////////////
+    
+    [System.NonSerialized] public int verticesCount = 4;
+    [System.NonSerialized] public int lIndicesCount = 6;   // 考虑是不是从verticeCount算出来
+    
+    // cached for layer
+    [System.NonSerialized] public int lSpriteIndex = -1;
+    [System.NonSerialized] public int lVerticesIndex = -1; // layerVerticesIndex
+    [System.NonSerialized] public int lIndicesIndex = -1;  // layerIndicesIndex
 
-    internal int layerCachedIndex;
+    // dirty flags
+    // TODO: 这些标记更新时，应该通知所在layer，而不是让layer每一帧来获取
+    [System.NonSerialized] public bool updateTransform = true;
+    [System.NonSerialized] public bool updateUv = true;
+    [System.NonSerialized] public bool updateColor = true;
+    [System.NonSerialized] public bool updateDepth = true;
 
-    private exLayer _layer;
+    private exLayer layer_;
     internal exLayer layer {
         get {
-            return _layer;
+            return layer_;
         }
         set {
-            if (_layer == value) {
+            if (layer_ == value) {
                 return;
             }
-            if (_layer) {
-                _layer.Remove(this);
+            if (layer_) {
+                layer_.Remove(this);
             }
-            _layer = value;
             if (value) {
                 value.Add(this);
             }
+            layer_ = value;
         }
     }
 
-	void Start () {
-	
-	}
-	
-	void Update () {
-	
-	}
+    ///////////////////////////////////////////////////////////////////////////////
+    // Overridable Functions
+    ///////////////////////////////////////////////////////////////////////////////
+
+    void OnEnable () {
+        if (layer_) {
+            layer_.Show(this);
+        }
+    }
+
+    void OnDisable () {
+        if (layer_) {
+            layer_.Hide(this);
+        }
+    }
 }
