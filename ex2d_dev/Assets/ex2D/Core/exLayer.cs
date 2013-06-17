@@ -30,6 +30,8 @@ public class exLayer : MonoBehaviour
         Dynamic,
     }
 
+    const int RESERVED_INDICE_COUNT = 6;    // 如果不手动给出，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
+
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -69,7 +71,7 @@ public class exLayer : MonoBehaviour
 
     /// cache mesh.triangles
     /// 按深度排序，深度一样的话，按加入的时间排序
-    private List<int> indices = new List<int>();
+    private List<int> indices = new List<int>(RESERVED_INDICE_COUNT);
 
     private List<Vector2> uvs = new List<Vector2>();       ///< cache mesh.vertices
     private List<Color32> colors32 = new List<Color32>();  ///< cache mesh.colors32
@@ -136,8 +138,9 @@ public class exLayer : MonoBehaviour
         
         foreach (exSpriteBase sprite in allSprites) {
             // TODO: 把对mesh的操作做成虚函数由各个sprite自己进行
+            sprite.UpdateDirtyFlags();
             if (sprite.updateTransform) {
-                //sprite.updateTransform = false;
+                sprite.updateTransform = false;
                 verticeChanged = true;
                 var pos = sprite.transform.position;
                 vertices[sprite.lVerticesIndex + 0] = pos + new Vector3(-1.0f, -1.0f, 0.0f);
@@ -369,13 +372,13 @@ public class exLayer : MonoBehaviour
         if (indicesAdded) {
             int removeCount = _sprite.lIndicesCount;
             
-            //update indices
+            // update indices
             for (int i = _sprite.lIndicesIndex + _sprite.lIndicesCount; i < indices.Count; ++i) {
                 indices[i - removeCount] = indices[i];
             }
             indices.RemoveRange(indices.Count - removeCount, removeCount);
             
-            //update indices index
+            // update indices index
             for (int i = 0; i < allSprites.Count; ++i) {
                 if (allSprites[i].lIndicesIndex > _sprite.lIndicesIndex) {
                     allSprites[i].lIndicesIndex -= removeCount;
@@ -394,7 +397,7 @@ public class exLayer : MonoBehaviour
     
     [System.Diagnostics.Conditional("EX_DEBUG")]
     void TestIndices (exSpriteBase _sprite) {
-        //check indice is valid
+        // check indice is valid
         for (int i = _sprite.lIndicesIndex; i < _sprite.lIndicesIndex + _sprite.lIndicesCount; ++i) {
             if (indices[i] < _sprite.lVerticesIndex || indices[i] > _sprite.lVerticesIndex + _sprite.verticesCount) {
                 Debug.LogError("[exLayer] Wrong triangle index!");

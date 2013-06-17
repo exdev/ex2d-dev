@@ -39,6 +39,25 @@ public class exSpriteBase : MonoBehaviour {
     [System.NonSerialized] public bool updateColor = true;
     [System.NonSerialized] public bool updateDepth = true;
 
+    // used to check whether transform is changed
+    // 使用非法值以确保它们第一次比较时不等于sprite的真正transform
+    private Vector3 lastPos = new Vector3(float.NaN, float.NaN, float.NaN);
+    private Quaternion lastRotation = new Quaternion(float.NaN, float.NaN, float.NaN, float.NaN);
+    private Vector3 lastScale = new Vector3(float.NaN, float.NaN, float.NaN);
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // properties
+    ///////////////////////////////////////////////////////////////////////////////
+
+    private Transform cachedTransform_;
+    public Transform cachedTransform {
+        get {
+            if (cachedTransform_ == null)
+                cachedTransform_ = transform; 
+            return cachedTransform_; 
+        }
+    }
+
     private exLayer layer_;
     internal exLayer layer {
         get {
@@ -72,5 +91,25 @@ public class exSpriteBase : MonoBehaviour {
         if (layer_) {
             layer_.Hide(this);
         }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Public Functions
+    ///////////////////////////////////////////////////////////////////////////////
+
+    public void UpdateDirtyFlags () {
+        Vector3 p = cachedTransform.position;
+        updateTransform = (lastPos.x != p.x || lastPos.y != p.y || lastPos.z != p.z);
+        lastPos = p;
+        
+        Quaternion r = cachedTransform_.rotation;
+        updateTransform = updateTransform ||
+                            lastRotation.x != r.x || lastRotation.y != r.y ||
+                            lastRotation.z != r.z || lastRotation.w != r.w;
+        lastRotation = r;
+
+        Vector3 s = cachedTransform_.lossyScale;
+        updateTransform = updateTransform || (lastScale.x != s.x || lastScale.y != s.y || lastScale.z != s.z);
+        lastScale = s;
     }
 }
