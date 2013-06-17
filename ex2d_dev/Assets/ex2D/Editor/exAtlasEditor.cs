@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : exAtlasInfoEditor.cs
+// File         : exAtlasEditor.cs
 // Author       : Wu Jie 
-// Last Change  : 06/15/2013 | 11:40:19 AM | Saturday,June
+// Last Change  : 06/18/2013 | 00:17:05 AM | Tuesday,June
 // Description  : 
 // ======================================================================================
 
@@ -21,7 +21,7 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-partial class exAtlasInfoEditor : EditorWindow {
+partial class exAtlasEditor : EditorWindow {
 
     ///////////////////////////////////////////////////////////////////////////////
     // static 
@@ -33,12 +33,13 @@ partial class exAtlasInfoEditor : EditorWindow {
     static string[] sizeTextList = new string[] { 
         "32px", "64px", "128px", "256px", "512px", "1024px", "2048px", "4096px" 
     };
+	static int exAtlasInfoEditorHash = "exAtlasEditor".GetHashCode();
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
     ///////////////////////////////////////////////////////////////////////////////
 
-    exAtlasInfo curEdit = null;
+    exAtlas curEdit = null;
     SerializedObject curSerializedObject = null;
 
     Vector2 scrollPos = Vector2.zero;
@@ -121,7 +122,7 @@ partial class exAtlasInfoEditor : EditorWindow {
             // atlas info
             Object newAtlasInfo = EditorGUILayout.ObjectField( "Atlas Info"
                                                                , curEdit
-                                                               , typeof(exAtlasInfo)
+                                                               , typeof(exAtlas)
                                                                , false 
                                                                , GUILayout.Width(300)
                                                                , GUILayout.MaxWidth(300)
@@ -175,8 +176,8 @@ partial class exAtlasInfoEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void Edit ( Object _obj ) {
-        if ( _obj is exAtlasInfo && curEdit != _obj ) {
-            curEdit = _obj as exAtlasInfo;
+        if ( _obj is exAtlas && curEdit != _obj ) {
+            curEdit = _obj as exAtlas;
 
             Reset ();
             Repaint ();
@@ -304,14 +305,14 @@ partial class exAtlasInfoEditor : EditorWindow {
             if ( foldoutLayout ) {
                 EditorGUI.indentLevel++;
 
-                curEdit.algorithm = (exAtlasInfo.Algorithm)EditorGUILayout.EnumPopup ( "Algorithm", curEdit.algorithm );
-                curEdit.sortBy = (exAtlasInfo.SortBy)EditorGUILayout.EnumPopup ( "Sort By", curEdit.sortBy );
-                curEdit.sortOrder = (exAtlasInfo.SortOrder)EditorGUILayout.EnumPopup ( "Sort Order", curEdit.sortOrder );
+                curEdit.algorithm = (exAtlas.Algorithm)EditorGUILayout.EnumPopup ( "Algorithm", curEdit.algorithm );
+                curEdit.sortBy = (exAtlas.SortBy)EditorGUILayout.EnumPopup ( "Sort By", curEdit.sortBy );
+                curEdit.sortOrder = (exAtlas.SortOrder)EditorGUILayout.EnumPopup ( "Sort Order", curEdit.sortOrder );
 
                 // padding
-                curEdit.paddingMode = (exAtlasInfo.PaddingMode)EditorGUILayout.EnumPopup("Padding", curEdit.paddingMode);
+                curEdit.paddingMode = (exAtlas.PaddingMode)EditorGUILayout.EnumPopup("Padding", curEdit.paddingMode);
                 EditorGUI.indentLevel++;
-                    GUI.enabled = (curEdit.paddingMode == exAtlasInfo.PaddingMode.Custom);
+                    GUI.enabled = (curEdit.paddingMode == exAtlas.PaddingMode.Custom);
                     curEdit.customPadding = System.Math.Max( EditorGUILayout.IntField("Pixels", curEdit.actualPadding), 0 ); // Clamp to 0
                     GUI.enabled = true;
                 EditorGUI.indentLevel--;
@@ -407,7 +408,7 @@ partial class exAtlasInfoEditor : EditorWindow {
                 // padding bleed
                 // ======================================================== 
 
-                GUI.enabled = (curEdit.paddingMode == exAtlasInfo.PaddingMode.Auto) || (curEdit.actualPadding >= 2);
+                GUI.enabled = (curEdit.paddingMode == exAtlas.PaddingMode.Auto) || (curEdit.actualPadding >= 2);
                 EditorGUILayout.BeginHorizontal();
                     content = new GUIContent( "Use Padding Bleed", 
                                               "Prevents artifacts and seams around the outer bounds of a texture due to bilinear filtering (requires at least Padding of 2)" );
@@ -426,7 +427,7 @@ partial class exAtlasInfoEditor : EditorWindow {
                     curEdit.trimElements = !curEdit.trimElements;
 
                     // TODO
-                    // foreach ( exAtlasInfo.Element el in curEdit.elements ) {
+                    // foreach ( exAtlas.Element el in curEdit.elements ) {
                     //     curEdit.UpdateElement( el.texture, newTrimElements );
                     // }
                     curEdit.needRebuild = true;
@@ -506,45 +507,55 @@ partial class exAtlasInfoEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void ProcessEvents () {
+        int controlID = GUIUtility.GetControlID(exAtlasInfoEditorHash, FocusType.Passive);
         Event e = Event.current;
 
-        // repaint
-        if ( e.type == EventType.Repaint ) {
+        switch ( e.GetTypeForControl(controlID) ) {
+        case EventType.Repaint:
             // draw select rect 
             if ( inRectSelectState && (selectRect.width != 0.0f || selectRect.height != 0.0f) ) {
                 exEditorUtility.DrawRect( selectRect, new Color( 0.0f, 0.5f, 1.0f, 0.2f ), new Color( 0.0f, 0.5f, 1.0f, 1.0f ) );
             }
-        }
+            break;
 
-        // mouse down
-        if ( e.type == EventType.MouseDown && e.button == 0 && e.clickCount == 1 ) {
-            GUIUtility.keyboardControl = -1; // remove any keyboard control
+        case EventType.MouseDown:
+            if ( e.button == 0 && e.clickCount == 1 ) {
+                GUIUtility.hotControl = controlID;
+                GUIUtility.keyboardControl = controlID;
 
-            mouseDownPos = e.mousePosition;
-            inRectSelectState = true;
-            UpdateSelectRect ();
-            // ConfirmRectSelection(); // TODO
-            Repaint();
-
-            e.Use();
-        }
-
-        // rect select
-        if ( inRectSelectState ) {
-            if ( e.type == EventType.MouseDrag ) {
+                mouseDownPos = e.mousePosition;
+                inRectSelectState = true;
                 UpdateSelectRect ();
                 // ConfirmRectSelection(); // TODO
                 Repaint();
 
                 e.Use();
             }
-            else if ( e.type == EventType.MouseUp && e.button == 0 ) {
-                inRectSelectState = false;
+            break;
+
+        case EventType.MouseDrag:
+            if ( GUIUtility.hotControl == controlID && inRectSelectState ) {
+                UpdateSelectRect ();
                 // ConfirmRectSelection(); // TODO
                 Repaint();
 
                 e.Use();
             }
+            break;
+
+        case EventType.MouseUp:
+			if ( GUIUtility.hotControl == controlID ) {
+				GUIUtility.hotControl = 0;
+
+                if ( inRectSelectState && e.button == 0 ) {
+                    inRectSelectState = false;
+                    // ConfirmRectSelection(); // TODO
+                    Repaint();
+
+                    e.Use();
+                }
+			}
+            break;
         }
     }
 

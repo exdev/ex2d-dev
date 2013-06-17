@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : exAtlasInfoInspector.cs
+// File         : exAtlasInspector.cs
 // Author       : Wu Jie 
-// Last Change  : 06/15/2013 | 11:39:10 AM | Saturday,June
+// Last Change  : 06/18/2013 | 00:17:37 AM | Tuesday,June
 // Description  : 
 // ======================================================================================
 
@@ -20,20 +20,21 @@ using System.IO;
 ///////////////////////////////////////////////////////////////////////////////
 
 [CanEditMultipleObjects]
-[CustomEditor(typeof(exAtlasInfo))]
-class exAtlasInfoInspector : Editor {
+[CustomEditor(typeof(exAtlas))]
+class exAtlasInspector : Editor {
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
 	override public void OnInspectorGUI () {
+        EditorGUIUtility.LookLikeInspector();
         DrawDefaultInspector(); 
 
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
             if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
-                exAtlasInfoEditor editor = EditorWindow.GetWindow<exAtlasInfoEditor>();
+                exAtlasEditor editor = EditorWindow.GetWindow<exAtlasEditor>();
                 editor.Edit(target);
             }
         GUILayout.Space(5);

@@ -28,7 +28,6 @@ public static class exEditorUtility {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    static Texture2D textureWhite;
     static Texture2D textureCheckerboard;
     static Texture2D textureHelp;
 
@@ -53,17 +52,6 @@ public static class exEditorUtility {
             }
         }
         return textureHelp;
-    }
-
-    // ------------------------------------------------------------------ 
-    /// \return the white texture
-    /// return a small white texture
-    // ------------------------------------------------------------------ 
-
-    public static Texture2D WhiteTexture () {
-        if ( textureWhite == null )
-            textureWhite = FindTexture ( "pixel.png" ); 
-        return textureWhite;
     }
 
     // ------------------------------------------------------------------ 
@@ -131,7 +119,7 @@ public static class exEditorUtility {
         // backgroundColor
         Color old = GUI.color;
         GUI.color = _backgroundColor;
-            GUI.DrawTexture( _rect, WhiteTexture() );
+            GUI.DrawTexture( _rect, EditorGUIUtility.whiteTexture );
         GUI.color = old;
 
         // border
