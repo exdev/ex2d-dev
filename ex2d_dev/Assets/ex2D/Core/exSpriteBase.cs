@@ -25,12 +25,12 @@ public class exSpriteBase : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
     
     [System.NonSerialized] public int verticesCount = 4;
+    [System.NonSerialized] public int lIndicesCount = 6;   // 考虑是不是从verticeCount算出来
     
     // cached for layer
     [System.NonSerialized] public int lSpriteIndex = -1;
     [System.NonSerialized] public int lVerticesIndex = -1; // layerVerticesIndex
     [System.NonSerialized] public int lIndicesIndex = -1;  // layerIndicesIndex
-    [System.NonSerialized] public int lIndicesCount = 6;   // 考虑是不是从verticeCount算出来
 
     // dirty flags
     // TODO: 这些标记更新时，应该通知所在layer，而不是让layer每一帧来获取

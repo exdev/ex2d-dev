@@ -34,16 +34,16 @@ public class exLayer : MonoBehaviour
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    private LayerType _layerType = LayerType.Dynamic;
+    private LayerType layerType_ = LayerType.Dynamic;
     public LayerType layerType {
         get {
-            return _layerType;
+            return layerType_;
         }
         set {
-            if (_layerType == value) {
+            if (layerType_ == value) {
                 return;
             }
-            _layerType = value;
+            layerType_ = value;
 #if UNITY_EDITOR
             if (value == LayerType.Static && Application.isPlaying) {
                 Debug.LogWarning("can't change to static during runtime");
@@ -180,18 +180,14 @@ public class exLayer : MonoBehaviour
         }
         if (uvChanged) {
             uvChanged = false;
-            Debug.Log(string.Format("[UpdateMesh|exLayer] uvs.Count: {0}", uvs.Count));
             meshFilter.mesh.uv = uvs.ToArray();
         }
         if (colorChanged) {
             colorChanged = false;
-            Debug.Log(string.Format("[UpdateMesh|exLayer] colors32.Count: {0}", colors32.Count));
             meshFilter.mesh.colors32 = colors32.ToArray();
         }
         if (indiceChanged) {
             indiceChanged = false;
-            Debug.Log(string.Format("[UpdateMesh|exLayer] indices.Count: {0}", indices.Count));
-            Debug.Log(string.Format("[UpdateMesh|exLayer] vertices.Count: {0}", vertices.Count));
             meshFilter.mesh.triangles = indices.ToArray(); // Assigning triangles will automatically Recalculate the bounding volume.
         }
         if (rebuildNormal) {
@@ -209,18 +205,18 @@ public class exLayer : MonoBehaviour
     /// NOTE: This function should only be called by exSpriteBase
     // ------------------------------------------------------------------ 
 
-    public void Add (exSpriteBase sprite) {
-        bool hasSprite = object.ReferenceEquals(this, sprite.layer);
-        exDebug.Assert(hasSprite == allSprites.Contains(sprite), "wrong sprite.layer");
+    public void Add (exSpriteBase _sprite) {
+        bool hasSprite = object.ReferenceEquals(this, _sprite.layer);
+        exDebug.Assert(hasSprite == allSprites.Contains(_sprite), "wrong sprite.layer");
         if (hasSprite) {
             Debug.LogError("[Add|exLayer] can't add duplicated sprite");
             return;
         }
 
-        sprite.lSpriteIndex = allSprites.Count;
-        allSprites.Add(sprite);
+        _sprite.lSpriteIndex = allSprites.Count;
+        allSprites.Add(_sprite);
 
-        sprite.lVerticesIndex = vertices.Count;
+        _sprite.lVerticesIndex = vertices.Count;
         vertices.Add(new Vector3());
         vertices.Add(new Vector3());
         vertices.Add(new Vector3());
@@ -241,7 +237,7 @@ public class exLayer : MonoBehaviour
 
         rebuildNormal = true;
 
-        AddIndices(sprite);
+        AddIndices(_sprite);
         
         exDebug.Assert(vertices.Count == uvs.Count, "uvs array needs to be the same size as the vertices array");
         exDebug.Assert(vertices.Count == colors32.Count, "colors32 array needs to be the same size as the vertices array");
@@ -251,46 +247,46 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public void Remove (exSpriteBase oldSprite) {
-        bool hasSprite = object.ReferenceEquals(this, oldSprite.layer);
-        exDebug.Assert(hasSprite == allSprites.Contains(oldSprite), "wrong sprite.layer");
+    public void Remove (exSpriteBase _oldSprite) {
+        bool hasSprite = object.ReferenceEquals(this, _oldSprite.layer);
+        exDebug.Assert(hasSprite == allSprites.Contains(_oldSprite), "wrong sprite.layer");
         if (!hasSprite) {
             Debug.LogError("can't find sprite to remove");
             return;
         }
 
-        allSprites.RemoveAt(oldSprite.lSpriteIndex);
+        allSprites.RemoveAt(_oldSprite.lSpriteIndex);
         
-        for (int i = oldSprite.lSpriteIndex; i < allSprites.Count; ++i) {
+        for (int i = _oldSprite.lSpriteIndex; i < allSprites.Count; ++i) {
             // update sprite and vertic index after removed sprite
             allSprites[i].lSpriteIndex = i;
-            allSprites[i].lVerticesIndex -= oldSprite.verticesCount;
+            allSprites[i].lVerticesIndex -= _oldSprite.verticesCount;
             // update indices to make them match new vertic index
             for (int index = allSprites[i].lIndicesIndex; index < allSprites[i].lIndicesCount; ++index) {
-            	indices[index] -= oldSprite.verticesCount;
+                indices[index] -= _oldSprite.verticesCount;
             }
         }
 
         // update vertices
         // TODO: 如果sprite的顶点在vertices的最后，把vertices的坑留着，只改变indices
-        int removeStart = vertices.Count - oldSprite.verticesCount;
-        for (int i = oldSprite.lVerticesIndex; i < removeStart; ++i) {
-            vertices[i] = vertices[i + oldSprite.verticesCount];
-            colors32[i] = colors32[i + oldSprite.verticesCount];
-            uvs[i] = uvs[i + oldSprite.verticesCount];
+        int removeStart = vertices.Count - _oldSprite.verticesCount;
+        for (int i = _oldSprite.lVerticesIndex; i < removeStart; ++i) {
+            vertices[i] = vertices[i + _oldSprite.verticesCount];
+            colors32[i] = colors32[i + _oldSprite.verticesCount];
+            uvs[i] = uvs[i + _oldSprite.verticesCount];
         }
-        vertices.RemoveRange(removeStart, oldSprite.verticesCount);
+        vertices.RemoveRange(removeStart, _oldSprite.verticesCount);
         verticeChanged = true;
 
-        colors32.RemoveRange(removeStart, oldSprite.verticesCount);
+        colors32.RemoveRange(removeStart, _oldSprite.verticesCount);
         colorChanged = true;
 
-        uvs.RemoveRange(removeStart, oldSprite.verticesCount);
+        uvs.RemoveRange(removeStart, _oldSprite.verticesCount);
         uvChanged = true;
 
         rebuildNormal = true;
         
-        RemoveIndices(oldSprite);
+        RemoveIndices(_oldSprite);
 
         exDebug.Assert(vertices.Count == uvs.Count, "uvs array needs to be the same size as the vertices array");
         exDebug.Assert(vertices.Count == colors32.Count, "colors32 array needs to be the same size as the vertices array");
@@ -301,16 +297,16 @@ public class exLayer : MonoBehaviour
     /// NOTE: This function should only be called by exSpriteBase
     // ------------------------------------------------------------------ 
 
-    public void Show (exSpriteBase sprite) {
-        bool hasSprite = object.ReferenceEquals(this, sprite.layer);
-        exDebug.Assert(hasSprite == allSprites.Contains(sprite), "wrong sprite.layer");
+    public void Show (exSpriteBase _sprite) {
+        bool hasSprite = object.ReferenceEquals(this, _sprite.layer);
+        exDebug.Assert(hasSprite == allSprites.Contains(_sprite), "wrong sprite.layer");
         if (!hasSprite) {
             Debug.LogError("can't find sprite to show");
             return;
         }
-        bool indicesAdded = sprite.lIndicesIndex != -1;
+        bool indicesAdded = _sprite.lIndicesIndex != -1;
         if (!indicesAdded) {
-            AddIndices(sprite);
+            AddIndices(_sprite);
         }
     }
     
@@ -318,27 +314,16 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
     
-    public void Hide (exSpriteBase sprite) {
-        bool hasSprite = object.ReferenceEquals(this, sprite.layer);
-        exDebug.Assert(hasSprite == allSprites.Contains(sprite), "wrong sprite.layer");
+    public void Hide (exSpriteBase _sprite) {
+        bool hasSprite = object.ReferenceEquals(this, _sprite.layer);
+        exDebug.Assert(hasSprite == allSprites.Contains(_sprite), "wrong sprite.layer");
         if (!hasSprite) {
             Debug.LogError("can't find sprite to hide");
             return;
         }
         
-        RemoveIndices(sprite);
+        RemoveIndices(_sprite);
     }
-
-    // ------------------------------------------------------------------ 
-    // 将Mesh优化过后，sprite的索引将失效，
-    // 但是可以将整个mesh烘焙成一个新sprite，然后移除原有全部sprite
-    // ------------------------------------------------------------------ 
-
-    /*public void Optimize () {
-        exDebug.Assert(layerType == LayerType.Dynamic, "consider using Static LayerType", false);
-        meshFilter.mesh.Optimize();
-        // TODO: 检查这个方法是否会导致这个mesh不可编辑
-    }*/
 
     // ------------------------------------------------------------------ 
     /// Compact all reserved buffers
@@ -361,33 +346,44 @@ public class exLayer : MonoBehaviour
     /// Add and resort indices by depth
     // ------------------------------------------------------------------ 
 
-    void AddIndices (exSpriteBase sprite) {
-        sprite.lIndicesIndex = indices.Count;
-        Debug.Log(string.Format("[AddIndices|exLayer] sprite.lVerticesIndex: {0}", sprite.lVerticesIndex));
-        indices.Add(sprite.lVerticesIndex + 0);
-        indices.Add(sprite.lVerticesIndex + 1);
-        indices.Add(sprite.lVerticesIndex + 2);
-        indices.Add(sprite.lVerticesIndex + 3);
-        indices.Add(sprite.lVerticesIndex + 0);
-        indices.Add(sprite.lVerticesIndex + 2);
+    void AddIndices (exSpriteBase _sprite) {
+        _sprite.lIndicesIndex = indices.Count;
+        indices.Add(_sprite.lVerticesIndex + 0);
+        indices.Add(_sprite.lVerticesIndex + 1);
+        indices.Add(_sprite.lVerticesIndex + 2);
+        indices.Add(_sprite.lVerticesIndex + 3);
+        indices.Add(_sprite.lVerticesIndex + 0);
+        indices.Add(_sprite.lVerticesIndex + 2);
         indiceChanged = true;
         // TODO: resort indices by depth
         // TODO: 修复多个sprite依次开关会无法显示的bug
-        TestIndices(sprite);
+        TestIndices(_sprite);
     }
 
     // ------------------------------------------------------------------ 
     /// NOTE: Only remove indices, keep others unchanged.
     // ------------------------------------------------------------------ 
     
-    void RemoveIndices (exSpriteBase sprite) {
-        bool indicesAdded = sprite.lIndicesIndex != -1;
+    void RemoveIndices (exSpriteBase _sprite) {
+        bool indicesAdded = _sprite.lIndicesIndex != -1;
         if (indicesAdded) {
-            for (int i = sprite.lIndicesIndex + sprite.lIndicesCount; i < indices.Count; ++i) {
-                indices[i - sprite.lIndicesCount] = indices[i];
+            int removeCount = _sprite.lIndicesCount;
+            
+            //update indices
+            for (int i = _sprite.lIndicesIndex + _sprite.lIndicesCount; i < indices.Count; ++i) {
+                indices[i - removeCount] = indices[i];
             }
-            indices.RemoveRange(indices.Count - sprite.lIndicesCount, sprite.lIndicesCount);
-            sprite.lIndicesIndex = -1;
+            indices.RemoveRange(indices.Count - removeCount, removeCount);
+            
+            //update indices index
+            for (int i = 0; i < allSprites.Count; ++i) {
+                if (allSprites[i].lIndicesIndex > _sprite.lIndicesIndex) {
+                    allSprites[i].lIndicesIndex -= removeCount;
+                    exDebug.Assert(allSprites[i].lIndicesIndex >= _sprite.lIndicesIndex);
+                }
+            }
+            _sprite.lIndicesIndex = -1;
+
             indiceChanged = true;
         }
     }
@@ -397,10 +393,10 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     
     [System.Diagnostics.Conditional("EX_DEBUG")]
-    void TestIndices (exSpriteBase sprite) {
+    void TestIndices (exSpriteBase _sprite) {
         //check indice is valid
-        for (int i = sprite.lIndicesIndex; i < sprite.lIndicesIndex + sprite.lIndicesCount; ++i) {
-            if (indices[i] < sprite.lVerticesIndex || indices[i] > sprite.lVerticesIndex + sprite.verticesCount) {
+        for (int i = _sprite.lIndicesIndex; i < _sprite.lIndicesIndex + _sprite.lIndicesCount; ++i) {
+            if (indices[i] < _sprite.lVerticesIndex || indices[i] > _sprite.lVerticesIndex + _sprite.verticesCount) {
                 Debug.LogError("[exLayer] Wrong triangle index!");
             }
         }
@@ -431,5 +427,20 @@ public class exLayer : MonoBehaviour
         if (layerType == LayerType.Dynamic) {
             meshFilter.mesh.MarkDynamic();
         }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Output debug info
+    // ------------------------------------------------------------------ 
+
+    [ContextMenu("Output Indices")]
+    [System.Diagnostics.Conditional("EX_DEBUG")]
+    void OutputIndices () {
+        string indicesInfo = "Indices: ";
+        foreach (var index in indices) {
+            indicesInfo += index;
+            indicesInfo += ",";
+        }
+        Debug.Log(indicesInfo);
     }
 }

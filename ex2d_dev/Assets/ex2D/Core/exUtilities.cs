@@ -44,13 +44,13 @@ public static class exDebug {
     // ------------------------------------------------------------------ 
     
     [/*Diagnostics.Conditional("UNITY_EDITOR"), */Diagnostics.Conditional("EX_DEBUG")]
-    public static void Assert (bool test, string msg = "", bool logError = true) {
-        if (!test) {
-            if (logError) {
-                Debug.LogError("Assert Failed! " + msg);
+    public static void Assert (bool _test, string _msg = "", bool _logError = true) {
+        if (!_test) {
+            if (_logError) {
+                Debug.LogError("Assert Failed! " + _msg);
             }
             else {
-                Debug.LogWarning("Assert Failed! " + msg);
+                Debug.LogWarning("Assert Failed! " + _msg);
             }
         }
     }
