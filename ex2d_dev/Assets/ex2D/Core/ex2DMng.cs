@@ -46,10 +46,10 @@ public class ex2DMng : MonoBehaviour
         }
     }
 
-    private List<exLayer> allLayers = new List<exLayer>();
+    private List<exLayer> layerList = new List<exLayer>();
 
     ///////////////////////////////////////////////////////////////////////////////
-    // functions
+    // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
@@ -66,26 +66,44 @@ public class ex2DMng : MonoBehaviour
 
     void OnPreRender () {
         // TODO: 如果检测到屏幕大小改变，同步更新Camera的orthographicSize
-        foreach (exLayer layer in allLayers) {
-            layer.UpdateMesh();
+        for (int i = 0; i < layerList.Count; ++i) {
+            layerList[i].UpdateMesh();
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnDestroy () {
+        for (int i = 0; i < layerList.Count; ++i) {
+            Object.DestroyImmediate(layerList[i].gameObject);
+        }
+        layerList.Clear();
+    }
+
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // Other Functions
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    public exLayer CreateLayer () {
+        exLayer layer = exLayer.Create(this);
+        layerList.Add(layer);
+        return layer;
     }
 
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public void Add (exLayer layer) {
-        if (!allLayers.Contains(layer)) {
-            allLayers.Add(layer);
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
-    public void Remove (exLayer layer) {
-        allLayers.Remove(layer);
+    public void DestroyLayer (exLayer layer) {
+        exDebug.Assert(layerList.Contains(layer), "can't find layer in ex2DMng");
+        layerList.Remove(layer);
+        Object.DestroyImmediate(layer.gameObject);
     }
 }
