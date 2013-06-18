@@ -30,7 +30,7 @@ public class exSpriteBase : MonoBehaviour {
     // cached for layer
     [System.NonSerialized] public int spriteIndex = -1;
     [System.NonSerialized] public int vertexBufferIndex = -1;
-    [System.NonSerialized] public int indexBufferIndex = -1;    // TODO: 使用专门的标志或属性来表示是否已经显示
+    [System.NonSerialized] public int indexBufferIndex = -1;
 
     // ------------------------------------------------------------------ 
     /// The current updateFlags
@@ -59,7 +59,7 @@ public class exSpriteBase : MonoBehaviour {
     }
 
     private exLayer layer_;
-    internal exLayer layer {
+    public exLayer layer {
         get {
             return layer_;
         }
@@ -74,6 +74,14 @@ public class exSpriteBase : MonoBehaviour {
                 value.Add(this);
             }
             layer_ = value;
+            exDebug.Assert(!layer_ || ((enabled && gameObject.activeSelf) == (indexBufferIndex != -1)), 
+                           "a sprite's logic visibility should equals to it's triangle visibility");
+        }
+    }
+
+    public bool HasIndexBuffer {
+        get {
+            return indexBufferIndex != -1;
         }
     }
 
@@ -83,13 +91,13 @@ public class exSpriteBase : MonoBehaviour {
 
     void OnEnable () {
         if (layer_) {
-            layer_.Show(this);
+            layer_.ShowSprite(this);
         }
     }
 
     void OnDisable () {
         if (layer_) {
-            layer_.Hide(this);
+            layer_.HideSprite(this);
         }
     }
 
@@ -98,6 +106,8 @@ public class exSpriteBase : MonoBehaviour {
             layer_.Remove(this);
         }
         layer_ = null;
+        exDebug.Assert(!layer_ || ((enabled && gameObject.activeSelf) == (indexBufferIndex != -1)), 
+                       "a sprite's logic visibility should equals to it's triangle visibility");
     }
 
     ///////////////////////////////////////////////////////////////////////////////

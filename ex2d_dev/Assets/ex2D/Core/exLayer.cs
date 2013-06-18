@@ -137,7 +137,7 @@ public class exLayer : MonoBehaviour
             sprite.UpdateDirtyFlags();
             updateFlags |= sprite.updateFlags;
             if ((sprite.updateFlags & UpdateFlags.Vertex) != 0) {
-                var pos = sprite.transform.position;
+                var pos = sprite.cachedTransform.position;
                 vertices[sprite.vertexBufferIndex + 0] = pos + new Vector3(-1.0f, -1.0f, 0.0f);
                 vertices[sprite.vertexBufferIndex + 1] = pos + new Vector3(-1.0f, 1.0f, 0.0f);
                 vertices[sprite.vertexBufferIndex + 2] = pos + new Vector3(1.0f, 1.0f, 0.0f);
@@ -162,7 +162,6 @@ public class exLayer : MonoBehaviour
             }
             if ((sprite.updateFlags & UpdateFlags.Index) != 0) {
                 // TODO: resort
-                Debug.Log(string.Format("[UpdateDirtyFlags|exSpriteBase] updateFlags: {0}", sprite.updateFlags));
                 TestIndices(sprite);
             }
             sprite.updateFlags = UpdateFlags.None;
@@ -226,9 +225,11 @@ public class exLayer : MonoBehaviour
         uvs.Add(new Vector2());
         uvs.Add(new Vector2());
 
-        AddIndices(_sprite);
+        updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
 
-        updateFlags |= UpdateFlags.All;
+        if (!_sprite.HasIndexBuffer) {
+            AddIndices(_sprite);
+        }
         
         exDebug.Assert(vertices.Count == uvs.Count, "uvs array needs to be the same size as the vertices array");
         exDebug.Assert(vertices.Count == colors32.Count, "colors32 array needs to be the same size as the vertices array");
@@ -264,9 +265,12 @@ public class exLayer : MonoBehaviour
         vertices.RemoveRange(_oldSprite.vertexBufferIndex, _oldSprite.vertexCount);
         colors32.RemoveRange(_oldSprite.vertexBufferIndex, _oldSprite.vertexCount);
         uvs.RemoveRange(_oldSprite.vertexBufferIndex, _oldSprite.vertexCount);
-        RemoveIndices(_oldSprite);
 
-        updateFlags |= UpdateFlags.All;
+        updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+
+        if (_oldSprite.HasIndexBuffer) {
+            RemoveIndices(_oldSprite);
+        }
 
         exDebug.Assert(_oldSprite.indexBufferIndex == -1);
         exDebug.Assert(vertices.Count == uvs.Count, "uvs array needs to be the same size as the vertices array");
@@ -278,15 +282,15 @@ public class exLayer : MonoBehaviour
     /// NOTE: This function should only be called by exSpriteBase
     // ------------------------------------------------------------------ 
 
-    public void Show (exSpriteBase _sprite) {
+    public void ShowSprite (exSpriteBase _sprite) {
         bool hasSprite = object.ReferenceEquals(this, _sprite.layer);
         exDebug.Assert(hasSprite == spriteList.Contains(_sprite), "wrong sprite.layer");
         if (!hasSprite) {
             Debug.LogError("can't find sprite to show");
             return;
         }
-        bool indicesAdded = _sprite.indexBufferIndex != -1;
-        if (!indicesAdded) {
+        // show
+        if (!_sprite.HasIndexBuffer) {
             AddIndices(_sprite);
         }
     }
@@ -295,15 +299,17 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
     
-    public void Hide (exSpriteBase _sprite) {
+    public void HideSprite (exSpriteBase _sprite) {
         bool hasSprite = object.ReferenceEquals(this, _sprite.layer);
         exDebug.Assert(hasSprite == spriteList.Contains(_sprite), "wrong sprite.layer");
         if (!hasSprite) {
             Debug.LogError("can't find sprite to hide");
             return;
         }
-        
-        RemoveIndices(_sprite);
+        // hide
+        if (_sprite.HasIndexBuffer) {
+            RemoveIndices(_sprite);
+        }
         exDebug.Assert(_sprite.indexBufferIndex == -1);
     }
 
@@ -329,20 +335,21 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     void AddIndices (exSpriteBase _sprite) {
-        exDebug.Assert(_sprite.indexBufferIndex == -1);
-
-        _sprite.indexBufferIndex = indices.Count;
-        indices.Add(_sprite.vertexBufferIndex + 0);
-        indices.Add(_sprite.vertexBufferIndex + 1);
-        indices.Add(_sprite.vertexBufferIndex + 2);
-        indices.Add(_sprite.vertexBufferIndex + 3);
-        indices.Add(_sprite.vertexBufferIndex + 0);
-        indices.Add(_sprite.vertexBufferIndex + 2);
+        exDebug.Assert(!_sprite.HasIndexBuffer);
+        if (!_sprite.HasIndexBuffer) {
+            _sprite.indexBufferIndex = indices.Count;
+            indices.Add(_sprite.vertexBufferIndex + 0);
+            indices.Add(_sprite.vertexBufferIndex + 1);
+            indices.Add(_sprite.vertexBufferIndex + 2);
+            indices.Add(_sprite.vertexBufferIndex + 3);
+            indices.Add(_sprite.vertexBufferIndex + 0);
+            indices.Add(_sprite.vertexBufferIndex + 2);
         
-        updateFlags |= UpdateFlags.Index;
+            updateFlags |= UpdateFlags.Index;
 
-        // TODO: resort indices by depth
-        TestIndices(_sprite);
+            // TODO: resort indices by depth
+            TestIndices(_sprite);
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -350,8 +357,8 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     
     void RemoveIndices (exSpriteBase _sprite) {
-        bool indicesAdded = _sprite.indexBufferIndex != -1;
-        if (indicesAdded) {
+        exDebug.Assert(_sprite.HasIndexBuffer);
+        if (_sprite.HasIndexBuffer) {
             // update indices
             indices.RemoveRange(_sprite.indexBufferIndex, _sprite.indexCount);
             
