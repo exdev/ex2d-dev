@@ -38,8 +38,8 @@ public class ex2DMng : MonoBehaviour
                 Camera camera = go.AddComponent<Camera>();
                 instance_ = go.AddComponent<ex2DMng>();
                 go.hideFlags = HideFlags.DontSave | exReleaseFlag.notEditable;
-                camera.orthographic = true;
-                camera.orthographicSize = Screen.height;
+                //camera.orthographic = true;
+                //camera.orthographicSize = Screen.height;
                 go.SetActive(true);
             }
             return instance_;

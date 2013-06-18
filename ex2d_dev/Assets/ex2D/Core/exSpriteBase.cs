@@ -74,8 +74,6 @@ public class exSpriteBase : MonoBehaviour {
                 value.Add(this);
             }
             layer_ = value;
-            exDebug.Assert(!layer_ || ((enabled && gameObject.activeSelf) == (indexBufferIndex != -1)), 
-                           "a sprite's logic visibility should equals to it's triangle visibility");
         }
     }
 
@@ -115,22 +113,29 @@ public class exSpriteBase : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
 
     public void UpdateDirtyFlags () {
-        Vector3 p = cachedTransform.position;
-        bool vertexChanged = (lastPos.x != p.x || lastPos.y != p.y || lastPos.z != p.z);
-        lastPos = p;
+        if ((updateFlags & UpdateFlags.Vertex) != 0) {
+            lastPos = cachedTransform.position;
+            lastRotation = cachedTransform_.rotation;
+            lastScale = cachedTransform_.lossyScale;
+        }
+        else {
+            Vector3 p = cachedTransform.position;
+            bool vertexChanged = (lastPos.x != p.x || lastPos.y != p.y || lastPos.z != p.z);
+            lastPos = p;
         
-        Quaternion r = cachedTransform_.rotation;
-        vertexChanged = vertexChanged ||
-                            lastRotation.x != r.x || lastRotation.y != r.y ||
-                            lastRotation.z != r.z || lastRotation.w != r.w;
-        lastRotation = r;
+            Quaternion r = cachedTransform_.rotation;
+            vertexChanged = vertexChanged ||
+                                lastRotation.x != r.x || lastRotation.y != r.y ||
+                                lastRotation.z != r.z || lastRotation.w != r.w;
+            lastRotation = r;
 
-        Vector3 s = cachedTransform_.lossyScale;
-        vertexChanged = vertexChanged || (lastScale.x != s.x || lastScale.y != s.y || lastScale.z != s.z);
-        lastScale = s;
+            Vector3 s = cachedTransform_.lossyScale;
+            vertexChanged = vertexChanged || (lastScale.x != s.x || lastScale.y != s.y || lastScale.z != s.z);
+            lastScale = s;
 
-        if (vertexChanged) {
-            updateFlags |= UpdateFlags.Vertex;
+            if (vertexChanged) {
+                updateFlags |= UpdateFlags.Vertex;
+            }
         }
     }
 }

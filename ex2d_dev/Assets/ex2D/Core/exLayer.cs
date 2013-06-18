@@ -46,6 +46,7 @@ public class exLayer : MonoBehaviour
     }
 
     const int RESERVED_INDEX_COUNT = 6;    // 如果不手动给出，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
+    const bool CAN_RESERVE_VERTEX = false; // 删除mesh最后面的顶点时，仅先从index buffer中清除，vertices等数据不标记为脏
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -181,7 +182,10 @@ public class exLayer : MonoBehaviour
             meshFilter.mesh.colors32 = colors32.ToArray();
         }
         if ((updateFlags & UpdateFlags.Index) != 0) {
-            meshFilter.mesh.triangles = indices.ToArray(); // Assigning triangles will automatically Recalculate the bounding volume.
+            if ((updateFlags & UpdateFlags.Vertex) == 0) {      // if have not yet update vertices
+                meshFilter.mesh.vertices = vertices.ToArray();  // 必须重设vertices后triangles的更新才会生效
+            }
+            meshFilter.mesh.triangles = indices.ToArray();      // Assigning triangles will automatically Recalculate the bounding volume.
         }
         if ((updateFlags & UpdateFlags.Normal) != 0) {
             var normals = new Vector3[vertices.Count];
@@ -191,6 +195,7 @@ public class exLayer : MonoBehaviour
             meshFilter.mesh.normals = normals;
         }
         updateFlags = UpdateFlags.None;
+        //Graphics.DrawMesh(meshFilter.mesh, transform.localToWorldMatrix, renderer.material, gameObject.layer);
     }
 
     // ------------------------------------------------------------------ 
@@ -209,21 +214,21 @@ public class exLayer : MonoBehaviour
         _sprite.spriteIndex = spriteList.Count;
         spriteList.Add(_sprite);
 
+        // TODO: 把添加过程放到sprite里，则不必更新_sprite.updateFlags
         _sprite.vertexBufferIndex = vertices.Count;
         vertices.Add(new Vector3());
         vertices.Add(new Vector3());
         vertices.Add(new Vector3());
         vertices.Add(new Vector3());
-
         colors32.Add(new Color32());
         colors32.Add(new Color32());
         colors32.Add(new Color32());
         colors32.Add(new Color32());
-
         uvs.Add(new Vector2());
         uvs.Add(new Vector2());
         uvs.Add(new Vector2());
         uvs.Add(new Vector2());
+        _sprite.updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
 
         updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
 
@@ -266,7 +271,12 @@ public class exLayer : MonoBehaviour
         colors32.RemoveRange(_oldSprite.vertexBufferIndex, _oldSprite.vertexCount);
         uvs.RemoveRange(_oldSprite.vertexBufferIndex, _oldSprite.vertexCount);
 
-        updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+#pragma warning disable 0429
+        bool needUpdateVertices = (!CAN_RESERVE_VERTEX || _oldSprite.spriteIndex < spriteList.Count);
+#pragma warning restore 0429
+        if (needUpdateVertices) {
+            updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+        }
 
         if (_oldSprite.HasIndexBuffer) {
             RemoveIndices(_oldSprite);
@@ -362,7 +372,7 @@ public class exLayer : MonoBehaviour
             // update indices
             indices.RemoveRange(_sprite.indexBufferIndex, _sprite.indexCount);
             
-            // update indices index
+            // update indexBufferIndex
             for (int i = 0; i < spriteList.Count; ++i) {
                 exSpriteBase sprite = spriteList[i];
                 if (sprite.indexBufferIndex > _sprite.indexBufferIndex) {
@@ -370,6 +380,7 @@ public class exLayer : MonoBehaviour
                     exDebug.Assert(sprite.indexBufferIndex >= _sprite.indexBufferIndex);
                 }
             }
+            //TODO
             _sprite.indexBufferIndex = -1;
 
             updateFlags |= UpdateFlags.Index;
