@@ -285,6 +285,7 @@ public class exLayer : MonoBehaviour
         
         RemoveIndices(_oldSprite);
 
+        exDebug.Assert(_oldSprite.lIndicesIndex == -1);
         exDebug.Assert(vertices.Count == uvs.Count, "uvs array needs to be the same size as the vertices array");
         exDebug.Assert(vertices.Count == colors32.Count, "colors32 array needs to be the same size as the vertices array");
     }
@@ -320,6 +321,7 @@ public class exLayer : MonoBehaviour
         }
         
         RemoveIndices(_sprite);
+        exDebug.Assert(_sprite.lIndicesIndex == -1);
     }
 
     // ------------------------------------------------------------------ 
@@ -344,6 +346,8 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     void AddIndices (exSpriteBase _sprite) {
+        exDebug.Assert(_sprite.lIndicesIndex == -1);
+
         _sprite.lIndicesIndex = indices.Count;
         indices.Add(_sprite.lVerticesIndex + 0);
         indices.Add(_sprite.lVerticesIndex + 1);
@@ -353,15 +357,15 @@ public class exLayer : MonoBehaviour
         indices.Add(_sprite.lVerticesIndex + 2);
         indiceChanged = true;
         // TODO: resort indices by depth
-        // TODO: 修复多个sprite依次开关会无法显示的bug
         TestIndices(_sprite);
     }
 
     // ------------------------------------------------------------------ 
-    /// NOTE: Only remove indices, keep others unchanged.
+    // Desc:
     // ------------------------------------------------------------------ 
     
     void RemoveIndices (exSpriteBase _sprite) {
+        // TODO:
         bool indicesAdded = _sprite.lIndicesIndex != -1;
         if (indicesAdded) {
             // update indices
@@ -401,7 +405,10 @@ public class exLayer : MonoBehaviour
     void RemoveAll () {
         while (allSprites.Count > 0) {
             exSpriteBase sprite = allSprites[allSprites.Count - 1];
-            sprite.layer = null;
+            exDebug.Assert(sprite);
+            if (sprite) {
+                sprite.layer = null;
+            }
         }
         allSprites.Clear();
         allSprites = null;

@@ -30,7 +30,7 @@ public class exSpriteBase : MonoBehaviour {
     // cached for layer
     [System.NonSerialized] public int lSpriteIndex = -1;
     [System.NonSerialized] public int lVerticesIndex = -1; // layerVerticesIndex
-    [System.NonSerialized] public int lIndicesIndex = -1;  // layerIndicesIndex
+    [System.NonSerialized] public int lIndicesIndex = -1;  // layerIndicesIndex // TODO: 使用专门的标志或属性来表示是否已经显示
 
     // dirty flags
     // TODO: 这些标记更新时，应该通知所在layer，而不是让layer每一帧来获取
@@ -91,6 +91,13 @@ public class exSpriteBase : MonoBehaviour {
         if (layer_) {
             layer_.Hide(this);
         }
+    }
+
+    void OnDestroy () {
+        if (layer_) {
+            layer_.Remove(this);
+        }
+        layer_ = null;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
