@@ -121,8 +121,8 @@ class exSceneEditor : EditorWindow {
                                                new Rect( 0.0f, 0.0f, _rect.width/checker.width, _rect.height/checker.height) );
 
                 // center line
-                int half_w = _rect.width/2;
-                int half_h = _rect.height/2;
+                int half_w = (int)_rect.width/2;
+                int half_h = (int)_rect.height/2;
 
                 // border
                 exEditorUtility.DrawRect( new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 ),
