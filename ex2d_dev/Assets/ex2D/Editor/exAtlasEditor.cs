@@ -70,7 +70,7 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void OnEnable () {
-        name = "Atlas Editor";
+        title = "Atlas Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
         // position = new Rect ( 50, 50, 800, 600 );

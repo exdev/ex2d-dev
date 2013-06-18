@@ -51,4 +51,13 @@ public static class MenuItems {
     static void Open_AtlasEditor () {
         EditorWindow.GetWindow<exAtlasEditor>();
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("Window/ex2D/2D Scene Editor")]
+    static void Open_SceneEditor () {
+        EditorWindow.GetWindow<exSceneEditor>();
+    }
 }

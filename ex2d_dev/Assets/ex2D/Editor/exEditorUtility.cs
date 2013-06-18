@@ -129,6 +129,38 @@ public static class exEditorUtility {
         GUI.backgroundColor = old;
     }
 
+    // ------------------------------------------------------------------ 
+    /// \param _xStart the start point x
+    /// \param _yStart the start point y
+    /// \param _xEnd the end point x
+    /// \param _yEnd the end point y
+    /// \param _color the color of the line
+    /// \param _width the width of the line
+    /// draw a line in editor
+    // ------------------------------------------------------------------ 
+
+    public static void DrawLine ( int _xStart, int _yStart, 
+                                  int _xEnd, int _yEnd,
+                                  Color _color, 
+                                  int _width ) 
+    {
+        Vector3 a = new Vector3( _xStart, _yStart, 0 );
+        Vector3 b = new Vector3( _xEnd, _yEnd, 0 );
+
+        if ( (b - a).sqrMagnitude <= 0.0001f )
+            return;
+
+        Color savedColor = Handles.color;
+        Handles.color = _color;
+
+        if ( _width > 1 )
+            Handles.DrawAAPolyLine(_width, new Vector3[] {a,b} );
+        else 
+            Handles.DrawLine( a, b );
+
+        Handles.color = savedColor;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
