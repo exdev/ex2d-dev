@@ -24,20 +24,20 @@ public class exSpriteBase : MonoBehaviour {
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
     
-    [System.NonSerialized] public int verticesCount = 4;
-    [System.NonSerialized] public int lIndicesCount = 6;   // 考虑是不是从verticeCount算出来
+    [System.NonSerialized] public int vertexCount = 4;
+    [System.NonSerialized] public int indexCount = 6;
     
     // cached for layer
-    [System.NonSerialized] public int lSpriteIndex = -1;
-    [System.NonSerialized] public int lVerticesIndex = -1; // layerVerticesIndex
-    [System.NonSerialized] public int lIndicesIndex = -1;  // layerIndicesIndex // TODO: 使用专门的标志或属性来表示是否已经显示
+    [System.NonSerialized] public int spriteIndex = -1;
+    [System.NonSerialized] public int vertexBufferIndex = -1;
+    [System.NonSerialized] public int indexBufferIndex = -1;    // TODO: 使用专门的标志或属性来表示是否已经显示
 
-    // dirty flags
-    // TODO: 这些标记更新时，应该通知所在layer，而不是让layer每一帧来获取
-    [System.NonSerialized] public bool updateTransform = true;
-    [System.NonSerialized] public bool updateUv = true;
-    [System.NonSerialized] public bool updateColor = true;
-    [System.NonSerialized] public bool updateDepth = true;
+    // ------------------------------------------------------------------ 
+    /// The current updateFlags
+    // ------------------------------------------------------------------ 
+    // TODO: this value will reset after every UpdateDirtyFlags()
+
+    [System.NonSerialized] public UpdateFlags updateFlags = UpdateFlags.All;
 
     // used to check whether transform is changed
     // 使用非法值以确保它们第一次比较时不等于sprite的真正transform
@@ -106,17 +106,21 @@ public class exSpriteBase : MonoBehaviour {
 
     public void UpdateDirtyFlags () {
         Vector3 p = cachedTransform.position;
-        updateTransform = (lastPos.x != p.x || lastPos.y != p.y || lastPos.z != p.z);
+        bool vertexChanged = (lastPos.x != p.x || lastPos.y != p.y || lastPos.z != p.z);
         lastPos = p;
         
         Quaternion r = cachedTransform_.rotation;
-        updateTransform = updateTransform ||
+        vertexChanged = vertexChanged ||
                             lastRotation.x != r.x || lastRotation.y != r.y ||
                             lastRotation.z != r.z || lastRotation.w != r.w;
         lastRotation = r;
 
         Vector3 s = cachedTransform_.lossyScale;
-        updateTransform = updateTransform || (lastScale.x != s.x || lastScale.y != s.y || lastScale.z != s.z);
+        vertexChanged = vertexChanged || (lastScale.x != s.x || lastScale.y != s.y || lastScale.z != s.z);
         lastScale = s;
+
+        if (vertexChanged) {
+            updateFlags |= UpdateFlags.Vertex;
+        }
     }
 }
