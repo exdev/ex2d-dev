@@ -139,13 +139,18 @@ public static class exEditorUtility {
     /// draw a line in editor
     // ------------------------------------------------------------------ 
 
-    public static void DrawLine ( int _xStart, int _yStart, 
-                                  int _xEnd, int _yEnd,
+    public static void DrawLine ( float _xStart, float _yStart, 
+                                  float _xEnd, float _yEnd,
                                   Color _color, 
                                   int _width ) 
     {
-        Vector3 a = new Vector3( _xStart, _yStart, 0 );
-        Vector3 b = new Vector3( _xEnd, _yEnd, 0 );
+        int xStart = (int)_xStart;
+        int yStart = (int)_yStart;
+        int xEnd = (int)_xEnd;
+        int yEnd = (int)_yEnd;
+
+        Vector3 a = new Vector3( xStart, yStart, 0 );
+        Vector3 b = new Vector3( xEnd, yEnd, 0 );
 
         if ( (b - a).sqrMagnitude <= 0.0001f )
             return;

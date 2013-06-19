@@ -630,9 +630,9 @@ partial class exAtlasEditor : EditorWindow {
                     inRectSelectState = false;
                     // ConfirmRectSelection(); // TODO
                     Repaint();
-
-                    e.Use();
                 }
+
+                e.Use();
 			}
             break;
         }
