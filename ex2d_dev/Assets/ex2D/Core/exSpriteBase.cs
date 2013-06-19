@@ -30,7 +30,7 @@ public class exSpriteBase : MonoBehaviour {
     // cached for layer
     [System.NonSerialized] public int spriteIndex = -1;
     [System.NonSerialized] public int vertexBufferIndex = -1;
-    [System.NonSerialized] public int indexBufferIndex = -1;
+    [System.NonSerialized] public int indexBufferIndex = -1;    //如果从layer中隐藏，这个值必须为-1
 
     // ------------------------------------------------------------------ 
     /// The current updateFlags
@@ -40,12 +40,6 @@ public class exSpriteBase : MonoBehaviour {
     [System.NonSerialized] public UpdateFlags updateFlags = UpdateFlags.All;
 
     [System.NonSerialized] public Transform cachedTransform = null;     ///< only available after Awake
-
-    // used to check whether transform is changed
-    // 使用非法值以确保它们第一次比较时不等于sprite的真正transform
-    private Vector3 lastPos = new Vector3(float.NaN, float.NaN, float.NaN);
-    private Quaternion lastRotation = new Quaternion(float.NaN, float.NaN, float.NaN, float.NaN);
-    private Vector3 lastScale = new Vector3(float.NaN, float.NaN, float.NaN);
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -66,16 +60,27 @@ public class exSpriteBase : MonoBehaviour {
                     layer_.Remove(this);
                 }
                 if (value) {
-                    value.Add(this);
+                    bool show = enabled && gameObject.activeInHierarchy;
+                    value.Add(this, show);
                 }
             }
             layer_ = value;
         }
     }
 
-    public bool HasIndexBuffer {
+    public bool IsInIndexBuffer {
         get {
             return indexBufferIndex != -1;
+        }
+    }
+
+    public bool IsInVertexBuffer {
+        get {
+            bool awaked = cachedTransform;
+            bool isInLayer = layer_ && awaked;
+            exDebug.Assert(isInLayer == layer && 0 <= spriteIndex && spriteIndex < layer.spriteList.Count &&
+                           object.ReferenceEquals(this, layer.spriteList[spriteIndex]));
+            return isInLayer;
         }
     }
 
@@ -86,7 +91,8 @@ public class exSpriteBase : MonoBehaviour {
     void Awake () {
         cachedTransform = transform;
         if (layer_) {
-            layer_.Add(this);
+            bool show = enabled;
+            layer_.Add(this, show);
         }
     }
 
@@ -107,7 +113,7 @@ public class exSpriteBase : MonoBehaviour {
             layer_.Remove(this);
         }
         layer_ = null;
-        exDebug.Assert(!layer_ || ((enabled && gameObject.activeInHierarchy) == HasIndexBuffer), 
+        exDebug.Assert(!layer_ || ((enabled && gameObject.activeInHierarchy) == IsInIndexBuffer), 
                        "a sprite's logic visibility should equals to it's triangle visibility");
     }
 
@@ -116,23 +122,9 @@ public class exSpriteBase : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
 
     public void UpdateDirtyFlags () {
-        Quaternion newQuat = cachedTransform.rotation;
-        Vector3 newPos = cachedTransform.position;
-        Vector3 newScale = cachedTransform.lossyScale;
-        if ((updateFlags & UpdateFlags.Vertex) == 0) {
-            bool vertexChanged;
-            vertexChanged = (lastPos.x != newPos.x || lastPos.y != newPos.y || lastPos.z != newPos.z);
-            vertexChanged = vertexChanged ||
-                            lastRotation.x != newQuat.x || lastRotation.y != newQuat.y ||
-                            lastRotation.z != newQuat.z || lastRotation.w != newQuat.w;
-            vertexChanged = vertexChanged || 
-                            (lastScale.x != newScale.x || lastScale.y != newScale.y || lastScale.z != newScale.z);
-            if (vertexChanged) {
-                updateFlags |= UpdateFlags.Vertex;
-            }
+        if (cachedTransform.hasChanged) {
+            updateFlags |= UpdateFlags.Vertex;
+            cachedTransform.hasChanged = false;
         }
-        lastPos = newPos;
-        lastRotation = newQuat;
-        lastScale = newScale;
     }
 }

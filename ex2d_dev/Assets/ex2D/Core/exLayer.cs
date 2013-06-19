@@ -79,7 +79,7 @@ public class exLayer : MonoBehaviour
 
     private MeshFilter meshFilter;
     
-    private List<exSpriteBase> spriteList = new List<exSpriteBase>();
+    public List<exSpriteBase> spriteList = new List<exSpriteBase>();
 
     /// cache mesh.vertices
     /// 依照sprite在spriteList中的相同顺序排列，每个sprite的顶点都放在连续的一段区间中
@@ -116,7 +116,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public static exLayer Create (ex2DMng _2dMng) {
-        GameObject go = new GameObject("exLayer");
+        GameObject go = new GameObject("_exLayer");
         go.hideFlags = exReleaseFlag.hideAndDontSave;
         go.AddComponent<MeshFilter>();
         MeshRenderer mr = go.AddComponent<MeshRenderer>();
@@ -135,7 +135,7 @@ public class exLayer : MonoBehaviour
     public void UpdateMesh () {
         for (int i = 0; i < spriteList.Count; ++i) {
             exSpriteBase sprite = spriteList[i];
-            exDebug.Assert(sprite.enabled && sprite.gameObject.activeInHierarchy == sprite.HasIndexBuffer);
+            exDebug.Assert((sprite.enabled && sprite.gameObject.activeInHierarchy) == sprite.IsInIndexBuffer);
 
             if (sprite.enabled) {
                 // TODO: 把对mesh的操作做成虚函数由各个sprite自己进行
@@ -205,7 +205,7 @@ public class exLayer : MonoBehaviour
     /// NOTE: This function should only be called by exSpriteBase
     // ------------------------------------------------------------------ 
 
-    public void Add (exSpriteBase _sprite) {
+    public void Add (exSpriteBase _sprite, bool _show = true) {
         bool hasSprite = spriteList.Contains(_sprite);
         if (hasSprite) {
             Debug.LogError("[Add|exLayer] can't add duplicated sprite");
@@ -233,7 +233,7 @@ public class exLayer : MonoBehaviour
 
         updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
 
-        if (!_sprite.HasIndexBuffer) {
+        if (_show) {
             AddIndices(_sprite);
         }
         
@@ -279,7 +279,7 @@ public class exLayer : MonoBehaviour
             updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
         }
 
-        if (_oldSprite.HasIndexBuffer) {
+        if (_oldSprite.IsInIndexBuffer) {
             RemoveIndices(_oldSprite);
         }
 
@@ -301,7 +301,7 @@ public class exLayer : MonoBehaviour
             return;
         }
         // show
-        if (!_sprite.HasIndexBuffer) {
+        if (!_sprite.IsInIndexBuffer) {
             AddIndices(_sprite);
         }
     }
@@ -318,7 +318,7 @@ public class exLayer : MonoBehaviour
             return;
         }
         // hide
-        if (_sprite.HasIndexBuffer) {
+        if (_sprite.IsInIndexBuffer) {
             RemoveIndices(_sprite);
         }
         exDebug.Assert(_sprite.indexBufferIndex == -1);
@@ -346,8 +346,8 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     void AddIndices (exSpriteBase _sprite) {
-        exDebug.Assert(!_sprite.HasIndexBuffer);
-        if (!_sprite.HasIndexBuffer) {
+        exDebug.Assert(!_sprite.IsInIndexBuffer);
+        if (!_sprite.IsInIndexBuffer) {
             _sprite.indexBufferIndex = indices.Count;
             indices.Add(_sprite.vertexBufferIndex + 0);
             indices.Add(_sprite.vertexBufferIndex + 1);
@@ -368,8 +368,8 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     
     void RemoveIndices (exSpriteBase _sprite) {
-        exDebug.Assert(_sprite.HasIndexBuffer);
-        if (_sprite.HasIndexBuffer) {
+        exDebug.Assert(_sprite.IsInIndexBuffer);
+        if (_sprite.IsInIndexBuffer) {
             // update indices
             indices.RemoveRange(_sprite.indexBufferIndex, _sprite.indexCount);
             
