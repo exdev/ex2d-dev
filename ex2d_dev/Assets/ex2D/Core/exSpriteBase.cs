@@ -39,6 +39,8 @@ public class exSpriteBase : MonoBehaviour {
 
     [System.NonSerialized] public UpdateFlags updateFlags = UpdateFlags.All;
 
+    [System.NonSerialized] public Transform cachedTransform = null;     ///< only available after Awake
+
     // used to check whether transform is changed
     // 使用非法值以确保它们第一次比较时不等于sprite的真正transform
     private Vector3 lastPos = new Vector3(float.NaN, float.NaN, float.NaN);
@@ -49,14 +51,6 @@ public class exSpriteBase : MonoBehaviour {
     // properties
     ///////////////////////////////////////////////////////////////////////////////
 
-    private Transform cachedTransform_;
-    public Transform cachedTransform {
-        get {
-            if (cachedTransform_ == null)
-                cachedTransform_ = transform; 
-            return cachedTransform_; 
-        }
-    }
 
     private exLayer layer_;
     public exLayer layer {
@@ -67,11 +61,13 @@ public class exSpriteBase : MonoBehaviour {
             if (layer_ == value) {
                 return;
             }
-            if (layer_) {
-                layer_.Remove(this);
-            }
-            if (value) {
-                value.Add(this);
+            if (cachedTransform != null) {
+                if (layer_) {
+                    layer_.Remove(this);
+                }
+                if (value) {
+                    value.Add(this);
+                }
             }
             layer_ = value;
         }
@@ -86,6 +82,13 @@ public class exSpriteBase : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
+
+    void Awake () {
+        cachedTransform = transform;
+        if (layer_) {
+            layer_.Add(this);
+        }
+    }
 
     void OnEnable () {
         if (layer_) {
@@ -104,7 +107,7 @@ public class exSpriteBase : MonoBehaviour {
             layer_.Remove(this);
         }
         layer_ = null;
-        exDebug.Assert(!layer_ || ((enabled && gameObject.activeSelf) == (indexBufferIndex != -1)), 
+        exDebug.Assert(!layer_ || ((enabled && gameObject.activeInHierarchy) == HasIndexBuffer), 
                        "a sprite's logic visibility should equals to it's triangle visibility");
     }
 
@@ -113,29 +116,23 @@ public class exSpriteBase : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
 
     public void UpdateDirtyFlags () {
-        if ((updateFlags & UpdateFlags.Vertex) != 0) {
-            lastPos = cachedTransform.position;
-            lastRotation = cachedTransform_.rotation;
-            lastScale = cachedTransform_.lossyScale;
-        }
-        else {
-            Vector3 p = cachedTransform.position;
-            bool vertexChanged = (lastPos.x != p.x || lastPos.y != p.y || lastPos.z != p.z);
-            lastPos = p;
-        
-            Quaternion r = cachedTransform_.rotation;
+        Quaternion newQuat = cachedTransform.rotation;
+        Vector3 newPos = cachedTransform.position;
+        Vector3 newScale = cachedTransform.lossyScale;
+        if ((updateFlags & UpdateFlags.Vertex) == 0) {
+            bool vertexChanged;
+            vertexChanged = (lastPos.x != newPos.x || lastPos.y != newPos.y || lastPos.z != newPos.z);
             vertexChanged = vertexChanged ||
-                                lastRotation.x != r.x || lastRotation.y != r.y ||
-                                lastRotation.z != r.z || lastRotation.w != r.w;
-            lastRotation = r;
-
-            Vector3 s = cachedTransform_.lossyScale;
-            vertexChanged = vertexChanged || (lastScale.x != s.x || lastScale.y != s.y || lastScale.z != s.z);
-            lastScale = s;
-
+                            lastRotation.x != newQuat.x || lastRotation.y != newQuat.y ||
+                            lastRotation.z != newQuat.z || lastRotation.w != newQuat.w;
+            vertexChanged = vertexChanged || 
+                            (lastScale.x != newScale.x || lastScale.y != newScale.y || lastScale.z != newScale.z);
             if (vertexChanged) {
                 updateFlags |= UpdateFlags.Vertex;
             }
         }
+        lastPos = newPos;
+        lastRotation = newQuat;
+        lastScale = newScale;
     }
 }

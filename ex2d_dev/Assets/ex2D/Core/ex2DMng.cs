@@ -13,8 +13,6 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-// TODO: 手动添加SpriteMng时，检查Camera属性，如果不是正交，报错
-
 ///////////////////////////////////////////////////////////////////////////////
 ///
 /// The 2D Manager component
@@ -27,26 +25,17 @@ using System.Collections.Generic;
 public class ex2DMng : MonoBehaviour
 {
     ///////////////////////////////////////////////////////////////////////////////
-    // properties
+    // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    private static ex2DMng instance_;
-    public static ex2DMng instance {
-        get {
-            if (!instance_) {
-                GameObject go = new GameObject("2D Manager");
-                Camera camera = go.AddComponent<Camera>();
-                instance_ = go.AddComponent<ex2DMng>();
-                go.hideFlags = HideFlags.DontSave | exReleaseFlag.notEditable;
-                //camera.orthographic = true;
-                //camera.orthographicSize = Screen.height;
-                go.SetActive(true);
-            }
-            return instance_;
-        }
-    }
+    [System.NonSerialized] public static ex2DMng instance;
 
     private List<exLayer> layerList = new List<exLayer>();
+
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // properties
+    ///////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
@@ -57,7 +46,13 @@ public class ex2DMng : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     void Awake () {
-        instance_ = this;
+        if (!instance) {
+            instance = this;
+        }
+        if (camera.orthographic != true) {
+            Debug.LogWarning("Set ex2DMng's camera projection to orthographic");
+            camera.orthographic = true;
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -82,7 +77,6 @@ public class ex2DMng : MonoBehaviour
         layerList.Clear();
     }
 
-    
     ///////////////////////////////////////////////////////////////////////////////
     // Other Functions
     ///////////////////////////////////////////////////////////////////////////////

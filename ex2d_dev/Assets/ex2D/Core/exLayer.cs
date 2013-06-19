@@ -25,6 +25,7 @@ public enum UpdateFlags {
 	UV	        = 4,  ///< update the uv coordination
 	Color	    = 8,  ///< update the vertex color
 	Normal	    = 16, ///< update the normal
+	VertexAndIndex = (Index | Vertex),
 	All = (Index | Vertex | UV | Color | Normal), ///< update all
 };
 
@@ -134,45 +135,49 @@ public class exLayer : MonoBehaviour
     public void UpdateMesh () {
         for (int i = 0; i < spriteList.Count; ++i) {
             exSpriteBase sprite = spriteList[i];
-            // TODO: 把对mesh的操作做成虚函数由各个sprite自己进行
-            sprite.UpdateDirtyFlags();
-            updateFlags |= sprite.updateFlags;
-            if ((sprite.updateFlags & UpdateFlags.Vertex) != 0) {
-                var pos = sprite.cachedTransform.position;
-                vertices[sprite.vertexBufferIndex + 0] = pos + new Vector3(-1.0f, -1.0f, 0.0f);
-                vertices[sprite.vertexBufferIndex + 1] = pos + new Vector3(-1.0f, 1.0f, 0.0f);
-                vertices[sprite.vertexBufferIndex + 2] = pos + new Vector3(1.0f, 1.0f, 0.0f);
-                vertices[sprite.vertexBufferIndex + 3] = pos + new Vector3(1.0f, -1.0f, 0.0f);
-            }
-            if ((sprite.updateFlags & UpdateFlags.UV) != 0) {
-                exTextureInfo textureInfo = (sprite as exSprite).textureInfo;
-                float xStart = (float)textureInfo.x / (float)textureInfo.texture.width;
-                float yStart = (float)textureInfo.y / (float)textureInfo.texture.height;
-                float xEnd = (float)(textureInfo.x + textureInfo.width) / (float)textureInfo.texture.width;
-                float yEnd = (float)(textureInfo.y + textureInfo.height) / (float)textureInfo.texture.height;
-                uvs[sprite.vertexBufferIndex + 0] = new Vector2(xStart, yStart);
-                uvs[sprite.vertexBufferIndex + 1] = new Vector2(xStart, yEnd);
-                uvs[sprite.vertexBufferIndex + 2] = new Vector2(xEnd, yEnd);
-                uvs[sprite.vertexBufferIndex + 3] = new Vector2(xEnd, yStart);
-            }
-            if ((sprite.updateFlags & UpdateFlags.Color) != 0) {
-                colors32[sprite.vertexBufferIndex + 0] = new Color32(255, 255, 255, 255);
-                colors32[sprite.vertexBufferIndex + 1] = new Color32(255, 255, 255, 255);
-                colors32[sprite.vertexBufferIndex + 2] = new Color32(255, 255, 255, 255);
-                colors32[sprite.vertexBufferIndex + 3] = new Color32(255, 255, 255, 255);
-            }
-            if ((sprite.updateFlags & UpdateFlags.Index) != 0) {
-                // TODO: resort
-                TestIndices(sprite);
-            }
-            sprite.updateFlags = UpdateFlags.None;
-        }
+            exDebug.Assert(sprite.enabled && sprite.gameObject.activeInHierarchy == sprite.HasIndexBuffer);
 
-        if ((updateFlags & UpdateFlags.Vertex) != 0) {
-            if ((updateFlags & UpdateFlags.Index) != 0) {
-                // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
-                meshFilter.mesh.Clear(true);
+            if (sprite.enabled) {
+                // TODO: 把对mesh的操作做成虚函数由各个sprite自己进行
+                sprite.UpdateDirtyFlags();
+                updateFlags |= sprite.updateFlags;
+                if ((sprite.updateFlags & UpdateFlags.Vertex) != 0) {
+                    var pos = sprite.cachedTransform.position;
+                    vertices[sprite.vertexBufferIndex + 0] = pos + new Vector3(-1.0f, -1.0f, 0.0f);
+                    vertices[sprite.vertexBufferIndex + 1] = pos + new Vector3(-1.0f, 1.0f, 0.0f);
+                    vertices[sprite.vertexBufferIndex + 2] = pos + new Vector3(1.0f, 1.0f, 0.0f);
+                    vertices[sprite.vertexBufferIndex + 3] = pos + new Vector3(1.0f, -1.0f, 0.0f);
+                }
+                if ((sprite.updateFlags & UpdateFlags.UV) != 0) {
+                    exTextureInfo textureInfo = (sprite as exSprite).textureInfo;
+                    float xStart = (float)textureInfo.x / (float)textureInfo.texture.width;
+                    float yStart = (float)textureInfo.y / (float)textureInfo.texture.height;
+                    float xEnd = (float)(textureInfo.x + textureInfo.width) / (float)textureInfo.texture.width;
+                    float yEnd = (float)(textureInfo.y + textureInfo.height) / (float)textureInfo.texture.height;
+                    uvs[sprite.vertexBufferIndex + 0] = new Vector2(xStart, yStart);
+                    uvs[sprite.vertexBufferIndex + 1] = new Vector2(xStart, yEnd);
+                    uvs[sprite.vertexBufferIndex + 2] = new Vector2(xEnd, yEnd);
+                    uvs[sprite.vertexBufferIndex + 3] = new Vector2(xEnd, yStart);
+                }
+                if ((sprite.updateFlags & UpdateFlags.Color) != 0) {
+                    colors32[sprite.vertexBufferIndex + 0] = new Color32(255, 255, 255, 255);
+                    colors32[sprite.vertexBufferIndex + 1] = new Color32(255, 255, 255, 255);
+                    colors32[sprite.vertexBufferIndex + 2] = new Color32(255, 255, 255, 255);
+                    colors32[sprite.vertexBufferIndex + 3] = new Color32(255, 255, 255, 255);
+                }
+                if ((sprite.updateFlags & UpdateFlags.Index) != 0) {
+                    // TODO: resort
+                    TestIndices(sprite);
+                }
+                sprite.updateFlags = UpdateFlags.None;
             }
+        }
+        if ((updateFlags & UpdateFlags.VertexAndIndex) == UpdateFlags.VertexAndIndex) {
+            // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
+            meshFilter.mesh.Clear(true);
+        }
+        if ((updateFlags & UpdateFlags.Vertex) != 0 || 
+            (updateFlags & UpdateFlags.Index) != 0) {           // 如果要重设triangles，则必须同时重设vertices，否则mesh将显示不出来
             meshFilter.mesh.vertices = vertices.ToArray();
         }
         if ((updateFlags & UpdateFlags.UV) != 0) {
@@ -182,9 +187,6 @@ public class exLayer : MonoBehaviour
             meshFilter.mesh.colors32 = colors32.ToArray();
         }
         if ((updateFlags & UpdateFlags.Index) != 0) {
-            if ((updateFlags & UpdateFlags.Vertex) == 0) {      // if have not yet update vertices
-                meshFilter.mesh.vertices = vertices.ToArray();  // 必须重设vertices后triangles的更新才会生效
-            }
             meshFilter.mesh.triangles = indices.ToArray();      // Assigning triangles will automatically Recalculate the bounding volume.
         }
         if ((updateFlags & UpdateFlags.Normal) != 0) {
@@ -204,8 +206,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void Add (exSpriteBase _sprite) {
-        bool hasSprite = object.ReferenceEquals(this, _sprite.layer);
-        exDebug.Assert(hasSprite == spriteList.Contains(_sprite), "wrong sprite.layer");
+        bool hasSprite = spriteList.Contains(_sprite);
         if (hasSprite) {
             Debug.LogError("[Add|exLayer] can't add duplicated sprite");
             return;
