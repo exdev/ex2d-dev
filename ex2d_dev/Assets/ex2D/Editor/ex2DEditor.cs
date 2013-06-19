@@ -14,13 +14,18 @@ using UnityEngine;
 using System.Collections.Generic;
  
 [InitializeOnLoad]
-class ex2DEditor {
+public static class ex2DEditor {
+
+    public static string atlasBuildPathKey = "ex2D.atlasBuildPath";
+    public static string atlasBuildPath = "Assets/Atlas/";
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
     static ex2DEditor () {
+        atlasBuildPath = EditorPrefs.GetString( atlasBuildPathKey, atlasBuildPath );
+
         // TODO: you can load texture_to_textureinfo table here
         // EditorApplication.hierarchyWindowItemOnGUI += HierarchyItemCB
         // EditorApplication.projectWindowItemOnGUI += ProjectWindowItemOnGUI

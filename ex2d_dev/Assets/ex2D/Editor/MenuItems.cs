@@ -47,7 +47,7 @@ public static class MenuItems {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    [MenuItem ("Window/ex2D/Atlas Editor")]
+    [MenuItem ("ex2D/Atlas Editor", false, 100)]
     static void Open_AtlasEditor () {
         EditorWindow.GetWindow<exAtlasEditor>();
     }
@@ -56,8 +56,26 @@ public static class MenuItems {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    [MenuItem ("Window/ex2D/2D Scene Editor")]
+    [MenuItem ("ex2D/2D Scene Editor", false, 101)]
     static void Open_SceneEditor () {
         EditorWindow.GetWindow<exSceneEditor>();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("ex2D/Preferences...", false, 1000)]
+    public static void Open_PreferenceWindow () {
+        ScriptableWizard.DisplayWizard<ex2DPreferencesWindow>("ex2D Preferences");
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("ex2D/About...", false, 1001)]
+    public static void Open_AboutWindow () {
+        ScriptableWizard.DisplayWizard<ex2DAboutWindow>("About ex2D");
     }
 }
