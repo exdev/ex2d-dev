@@ -18,7 +18,7 @@ using UnityEngine;
 ///////////////////////////////////////////////////////////////////////////////
 
 public class exTextureInfo : ScriptableObject {
-    // public string rawTextureGUID;
+    public string rawTextureGUID = "";
     public Texture2D texture; ///< the atlas or raw texture
 
     public bool rotated = false; ///< if rotate the texture in atlas 
@@ -34,4 +34,17 @@ public class exTextureInfo : ScriptableObject {
     public int y = 0; ///< the y in Unity3D texture coordinate. (0,0) start from bottom-left, same as mesh.uv and Texture2D.SetPixel
     public int width = 1;
     public int height = 1;
+
+    public int rotatedWidth {
+        get {
+            if ( rotated ) return height;
+            return width;
+        }
+    }
+    public int rotatedHeight {
+        get {
+            if ( rotated ) return width;
+            return height;
+        }
+    }
 }

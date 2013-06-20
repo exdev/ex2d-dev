@@ -17,7 +17,11 @@ using System.Collections.Generic;
 public static class ex2DEditor {
 
     public static string atlasBuildPathKey = "ex2D.atlasBuildPath";
-    public static string atlasBuildPath = "Assets/Atlas/";
+    public static string atlasBuildPath = "Assets/_Atlas/";
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // build in functions
+    ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -37,4 +41,8 @@ public static class ex2DEditor {
 
     static void ProjectWindowItemOnGUI ( string _guid, Rect _selectionRect ) {
     }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // public functions
+    ///////////////////////////////////////////////////////////////////////////////
 }

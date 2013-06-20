@@ -28,8 +28,43 @@ class exTextureInfoInspector : Editor {
     // ------------------------------------------------------------------ 
 
 	public override void OnInspectorGUI () {
+        // get old trim value
+        serializedObject.Update ();
+        SerializedProperty prop = serializedObject.FindProperty("trim");
+        bool oldTrim = prop.boolValue;
+
         EditorGUIUtility.LookLikeInspector();
         DrawDefaultInspector(); 
+
+        // process trim property
+        if ( prop.boolValue != oldTrim ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exTextureInfo textureInfo = obj as exTextureInfo;
+                if ( textureInfo == null ) {
+                    continue;
+                }
+
+                Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D> ( textureInfo.rawTextureGUID );
+                if ( rawTexture == null ) {
+                    continue;
+                }
+
+                if ( prop.boolValue ) {
+                    Rect trimRect = exTextureUtility.GetTrimTextureRect(rawTexture);
+                    textureInfo.trim_x = (int)trimRect.x;
+                    textureInfo.trim_y = (int)trimRect.y;
+                    textureInfo.width = (int)trimRect.width;
+                    textureInfo.height = (int)trimRect.height;
+                }
+                else {
+                    textureInfo.trim_x = 0;
+                    textureInfo.trim_y = 0;
+                    textureInfo.width = rawTexture.width;
+                    textureInfo.height = rawTexture.height;
+                }
+                EditorUtility.SetDirty(textureInfo);
+            }
+        }
 
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();

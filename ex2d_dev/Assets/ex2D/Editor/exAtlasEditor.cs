@@ -333,6 +333,15 @@ partial class exAtlasEditor : EditorWindow {
                     GUILayout.FlexibleSpace();
                     if ( GUILayout.Button ( "Apply", GUILayout.Width(80) ) ) {
                         curEdit.needRebuild = true;
+
+                        // this is very basic algorithm
+                        if ( curEdit.algorithm == exAtlas.Algorithm.Basic ) {
+                            exAtlasUtility.BasicPack (curEdit);
+                        }
+                        else if ( curEdit.algorithm == exAtlas.Algorithm.Tree ) {
+                            exAtlasUtility.TreePack (curEdit);
+                        }
+
                         // TODO:
                         // try {
                         //     EditorUtility.DisplayProgressBar( "Layout Elements...", "Layout Elements...", 0.5f  );    
@@ -500,6 +509,7 @@ partial class exAtlasEditor : EditorWindow {
         case EventType.Repaint:
             Color old = GUI.color;
             GUI.color = curEdit.bgColor;
+                // checker box
                 if ( curEdit.showCheckerboard ) {
                     Texture2D checker = exEditorUtility.CheckerboardTexture();
                     GUI.DrawTextureWithTexCoords ( _rect, checker, 
@@ -508,9 +518,22 @@ partial class exAtlasEditor : EditorWindow {
                 else {
                     GUI.DrawTexture( _rect, EditorGUIUtility.whiteTexture );
                 }
+
+                // border
                 exEditorUtility.DrawRect( new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 ),
                                           new Color( 1,1,1,0 ), 
                                           Color.white );
+
+                // texture info list 
+                foreach ( exTextureInfo textureInfo in curEdit.textureInfos ) {
+                    Rect textureInfoRect 
+                        = new Rect ( _rect.x + textureInfo.x * curEdit.scale,
+                                     _rect.y + textureInfo.y * curEdit.scale,
+                                     textureInfo.rotatedWidth * curEdit.scale,
+                                     textureInfo.rotatedHeight * curEdit.scale );
+
+                    DrawTextureInfo ( textureInfoRect, textureInfo );
+                }
             GUI.color = old;
             break;
 
@@ -578,6 +601,22 @@ partial class exAtlasEditor : EditorWindow {
             }
 
             break;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawTextureInfo ( Rect _rect, exTextureInfo _textureInfo ) {
+        Color old = GUI.color;
+        GUI.color = curEdit.elementBgColor;
+            GUI.DrawTexture( _rect, EditorGUIUtility.whiteTexture );
+        GUI.color = old;
+
+        Texture2D texture = exEditorUtility.LoadAssetFromGUID<Texture2D>( _textureInfo.rawTextureGUID );
+        if ( texture ) {
+            GUI.DrawTexture( _rect, texture );
         }
     }
 

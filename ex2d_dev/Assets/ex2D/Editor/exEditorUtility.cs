@@ -85,10 +85,6 @@ public static class exEditorUtility {
     ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    // ------------------------------------------------------------------ 
     /// \return the new gui style
     /// create rect border gui style
     // ------------------------------------------------------------------ 
@@ -167,7 +163,7 @@ public static class exEditorUtility {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    //
+    // assets
     ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
@@ -183,5 +179,51 @@ public static class exEditorUtility {
             return info.Exists;
         }
         return false;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// \param _o the asset object
+    /// \return the guid
+    /// get the guid of the asset path, if not found, return empty string
+    // ------------------------------------------------------------------ 
+
+    public static string AssetToGUID ( Object _o ) {
+        if ( _o == null )
+            return "";
+        return AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_o));
+    }
+
+    // ------------------------------------------------------------------ 
+    /// \param _guid asset path guid
+    /// \return the asset
+    /// load the asset from path guid
+    // ------------------------------------------------------------------ 
+
+    public static T LoadAssetFromGUID<T> ( string _guid ) where T : Object {
+        if ( string.IsNullOrEmpty(_guid) )
+            return null;
+        string assetPath = AssetDatabase.GUIDToAssetPath(_guid);
+        return AssetDatabase.LoadAssetAtPath( assetPath, typeof(T) ) as T;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // texture
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    /// \param _tex
+    /// change the import texture settings to make it fit for atlas 
+    // ------------------------------------------------------------------ 
+
+    public static void ImportTextureForAtlas ( Texture2D _tex ) {
+        string path = AssetDatabase.GetAssetPath(_tex);
+        TextureImporter importer = TextureImporter.GetAtPath(path) as TextureImporter;
+
+        importer.textureFormat = TextureImporterFormat.AutomaticTruecolor;
+        importer.textureType = TextureImporterType.Advanced;
+        importer.npotScale = TextureImporterNPOTScale.None;
+        importer.isReadable = true;
+        importer.mipmapEnabled = false;
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
     }
 }
