@@ -6,6 +6,15 @@
 // ======================================================================================
 
 ///////////////////////////////////////////////////////////////////////////////
+// defines
+///////////////////////////////////////////////////////////////////////////////
+
+#define USE_DRAW_MESH
+#if USE_DRAW_MESH
+    //#define DRAW_MESH_NOW
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -25,6 +34,7 @@ public enum UpdateFlags {
 	UV	        = 4,  ///< update the uv coordination
 	Color	    = 8,  ///< update the vertex color
 	Normal	    = 16, ///< update the normal
+
 	VertexAndIndex = (Index | Vertex),
 	All = (Index | Vertex | UV | Color | Normal), ///< update all
 };
@@ -36,8 +46,10 @@ public enum UpdateFlags {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#if !USE_DRAW_MESH
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
+#endif
 public class exLayer : MonoBehaviour
 {
     public enum LayerType
@@ -45,7 +57,6 @@ public class exLayer : MonoBehaviour
         Static = 0,
         Dynamic,
     }
-
     const int RESERVED_INDEX_COUNT = 6;    // 如果不手动给出，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
     const bool CAN_RESERVE_VERTEX = false; // 删除mesh最后面的顶点时，仅先从index buffer中清除，vertices等数据不标记为脏
 
@@ -68,8 +79,8 @@ public class exLayer : MonoBehaviour
                 Debug.LogWarning("can't change to static during runtime");
             }
 #endif
-            if (value == LayerType.Dynamic && meshFilter && meshFilter.mesh) {
-                meshFilter.mesh.MarkDynamic();
+            if (value == LayerType.Dynamic) {
+                mesh.MarkDynamic();
             }
             else if (value == LayerType.Static){
                 Compact();
@@ -77,8 +88,30 @@ public class exLayer : MonoBehaviour
         }
     }
 
-    private MeshFilter meshFilter;
-    
+#if !EX_DEBUG
+    [System.NonSerialized]
+#endif
+    public Mesh mesh;
+
+#if USE_DRAW_MESH
+
+#if !EX_DEBUG
+    [System.NonSerialized]
+#endif
+    public Material material;
+
+#elif UNITY_EDITOR
+    /// test only
+    public Material material {
+        set {
+            renderer.material = value;
+        }
+    }
+#endif
+
+#if !EX_DEBUG
+    [System.NonSerialized]
+#endif
     public List<exSpriteBase> spriteList = new List<exSpriteBase>();
 
     /// cache mesh.vertices
@@ -100,7 +133,6 @@ public class exLayer : MonoBehaviour
     ///////////////////////////////////////////////////////////////////////////////
 
     void Awake () {
-        meshFilter = GetComponent<MeshFilter>();
     }
 
     void OnDestroy () {
@@ -118,10 +150,6 @@ public class exLayer : MonoBehaviour
     public static exLayer Create (ex2DMng _2dMng) {
         GameObject go = new GameObject("_exLayer");
         go.hideFlags = exReleaseFlag.hideAndDontSave;
-        go.AddComponent<MeshFilter>();
-        MeshRenderer mr = go.AddComponent<MeshRenderer>();
-        mr.receiveShadows = false;
-        mr.castShadows = false;
         // TODO: 对Material进行设置
         exLayer res = go.AddComponent<exLayer>();
         res.CreateMesh();
@@ -174,30 +202,39 @@ public class exLayer : MonoBehaviour
         }
         if ((updateFlags & UpdateFlags.VertexAndIndex) == UpdateFlags.VertexAndIndex) {
             // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
-            meshFilter.mesh.Clear(true);
+            mesh.Clear(true);
         }
         if ((updateFlags & UpdateFlags.Vertex) != 0 || 
             (updateFlags & UpdateFlags.Index) != 0) {           // 如果要重设triangles，则必须同时重设vertices，否则mesh将显示不出来
-            meshFilter.mesh.vertices = vertices.ToArray();
+            mesh.vertices = vertices.ToArray();
         }
         if ((updateFlags & UpdateFlags.UV) != 0) {
-            meshFilter.mesh.uv = uvs.ToArray();
+            mesh.uv = uvs.ToArray();
         }
         if ((updateFlags & UpdateFlags.Color) != 0) {
-            meshFilter.mesh.colors32 = colors32.ToArray();
+            mesh.colors32 = colors32.ToArray();
         }
         if ((updateFlags & UpdateFlags.Index) != 0) {
-            meshFilter.mesh.triangles = indices.ToArray();      // Assigning triangles will automatically Recalculate the bounding volume.
+            mesh.triangles = indices.ToArray();      // Assigning triangles will automatically Recalculate the bounding volume.
         }
         if ((updateFlags & UpdateFlags.Normal) != 0) {
             var normals = new Vector3[vertices.Count];
             for (int i = 0; i < normals.Length; ++i) {
                 normals[i] = new Vector3(0, 0, -1);
             }
-            meshFilter.mesh.normals = normals;
+            mesh.normals = normals;
         }
         updateFlags = UpdateFlags.None;
-        //Graphics.DrawMesh(meshFilter.mesh, transform.localToWorldMatrix, renderer.material, gameObject.layer);
+#if USE_DRAW_MESH
+#   if DRAW_MESH_NOW
+            material.SetPass(0);
+            Graphics.DrawMeshNow(mesh, transform.localToWorldMatrix, -1);
+#   else
+        //if (Time.frameCount % 2 == 0) {
+            Graphics.DrawMesh(mesh, transform.localToWorldMatrix, material, gameObject.layer, null, 0, null, false, false);
+        //}
+#   endif
+#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -374,6 +411,7 @@ public class exLayer : MonoBehaviour
             indices.RemoveRange(_sprite.indexBufferIndex, _sprite.indexCount);
             
             // update indexBufferIndex
+            // TODO: 这里是性能瓶颈，应该设法优化
             for (int i = 0; i < spriteList.Count; ++i) {
                 exSpriteBase sprite = spriteList[i];
                 if (sprite.indexBufferIndex > _sprite.indexBufferIndex) {
@@ -422,12 +460,24 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     void CreateMesh () {
-        if (!meshFilter.sharedMesh) {
-            meshFilter.mesh.name = "exLayer mesh";  //a new mesh will be created and assigned
-            meshFilter.mesh.hideFlags = HideFlags.DontSave;
-        }
-        if (layerType == LayerType.Dynamic) {
-            meshFilter.mesh.MarkDynamic();
+        exDebug.Assert(!mesh);
+        if (!mesh) {
+#if USE_DRAW_MESH
+            mesh = new Mesh();
+#else
+            //var meshFilter = gameObject.AddComponent<MeshFilter>();
+            //var mr = gameObject.AddComponent<MeshRenderer>();
+            var meshFilter = gameObject.GetComponent<MeshFilter>();
+            var mr = gameObject.GetComponent<MeshRenderer>();
+            mr.receiveShadows = false;
+            mr.castShadows = false;
+            mesh = meshFilter.mesh;
+#endif
+            mesh.name = "exLayer mesh";
+            mesh.hideFlags = HideFlags.DontSave;
+            if (layerType == LayerType.Dynamic) {
+                mesh.MarkDynamic();
+            }
         }
     }
     
@@ -446,7 +496,7 @@ public class exLayer : MonoBehaviour
         Debug.Log(vertexInfo);
         
         vertexInfo = "Mesh.vertices: ";
-        foreach (var v in meshFilter.mesh.vertices) {
+        foreach (var v in mesh.vertices) {
             vertexInfo += v;
             vertexInfo += ", ";
         }
@@ -460,7 +510,7 @@ public class exLayer : MonoBehaviour
         Debug.Log(indicesInfo);
 
         indicesInfo = "Mesh.triangles: ";
-        foreach (var index in meshFilter.mesh.triangles) {
+        foreach (var index in mesh.triangles) {
             indicesInfo += index;
             indicesInfo += ",";
         }

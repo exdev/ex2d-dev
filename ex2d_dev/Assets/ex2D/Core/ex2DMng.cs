@@ -56,10 +56,11 @@ public class ex2DMng : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    // Desc:
+    // NOTE: 使用DrawMesh时，要在OnRenderObject时调用，使用DrawMeshNow时，要在OnPreCull中调用
+    // 使用MeshRenderer时，要在OnPreRender中调用
     // ------------------------------------------------------------------ 
 
-    void OnPreRender () {
+    void OnPreCull () {
         // TODO: 如果检测到屏幕大小改变，同步更新Camera的orthographicSize
         for (int i = 0; i < layerList.Count; ++i) {
             layerList[i].UpdateMesh();

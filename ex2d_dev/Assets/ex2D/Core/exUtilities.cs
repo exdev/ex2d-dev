@@ -55,3 +55,32 @@ public static class exDebug {
         }
     }
 }
+
+﻿﻿namespace UnityEngine {
+
+    ///////////////////////////////////////////////////////////////////////////////
+    ///
+    /// The extension methods
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+
+    internal static partial class UnityEngineExtends {
+    
+        // ------------------------------------------------------------------ 
+        // Desc: 
+        // ------------------------------------------------------------------ 
+    
+        public static T Instantiate<T>(this T original) where T : Object {
+            return Object.Instantiate(original) as T;
+        }
+    
+        // ------------------------------------------------------------------ 
+        // Desc: 
+        // ------------------------------------------------------------------ 
+    
+        public static T Instantiate<T>(this T original, Vector3 position, Quaternion rotation) where T : Object {
+            return Object.Instantiate(original, position, rotation) as T;
+        }
+    }
+
+}
