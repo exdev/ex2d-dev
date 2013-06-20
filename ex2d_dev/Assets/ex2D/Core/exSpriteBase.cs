@@ -30,7 +30,7 @@ public class exSpriteBase : MonoBehaviour {
     // cached for layer
     [System.NonSerialized] public int spriteIndex = -1;
     [System.NonSerialized] public int vertexBufferIndex = -1;
-    [System.NonSerialized] public int indexBufferIndex = -1;    // TODO: 使用专门的标志或属性来表示是否已经显示
+    [System.NonSerialized] public int indexBufferIndex = -1;    //如果从layer中隐藏，这个值必须为-1
 
     // ------------------------------------------------------------------ 
     /// The current updateFlags
@@ -39,27 +39,15 @@ public class exSpriteBase : MonoBehaviour {
 
     [System.NonSerialized] public UpdateFlags updateFlags = UpdateFlags.All;
 
-    // used to check whether transform is changed
-    // 使用非法值以确保它们第一次比较时不等于sprite的真正transform
-    private Vector3 lastPos = new Vector3(float.NaN, float.NaN, float.NaN);
-    private Quaternion lastRotation = new Quaternion(float.NaN, float.NaN, float.NaN, float.NaN);
-    private Vector3 lastScale = new Vector3(float.NaN, float.NaN, float.NaN);
+    [System.NonSerialized] public Transform cachedTransform = null;     ///< only available after Awake
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
     ///////////////////////////////////////////////////////////////////////////////
 
-    private Transform cachedTransform_;
-    public Transform cachedTransform {
-        get {
-            if (cachedTransform_ == null)
-                cachedTransform_ = transform; 
-            return cachedTransform_; 
-        }
-    }
 
     private exLayer layer_;
-    internal exLayer layer {
+    public exLayer layer {
         get {
             return layer_;
         }
@@ -67,13 +55,32 @@ public class exSpriteBase : MonoBehaviour {
             if (layer_ == value) {
                 return;
             }
-            if (layer_) {
-                layer_.Remove(this);
-            }
-            if (value) {
-                value.Add(this);
+            if (cachedTransform != null) {
+                if (layer_) {
+                    layer_.Remove(this);
+                }
+                if (value) {
+                    bool show = enabled && gameObject.activeInHierarchy;
+                    value.Add(this, show);
+                }
             }
             layer_ = value;
+        }
+    }
+
+    public bool IsInIndexBuffer {
+        get {
+            return indexBufferIndex != -1;
+        }
+    }
+
+    public bool IsInVertexBuffer {
+        get {
+            bool awaked = cachedTransform;
+            bool isInLayer = layer_ && awaked;
+            exDebug.Assert(isInLayer == layer && 0 <= spriteIndex && spriteIndex < layer.spriteList.Count &&
+                           object.ReferenceEquals(this, layer.spriteList[spriteIndex]));
+            return isInLayer;
         }
     }
 
@@ -81,15 +88,23 @@ public class exSpriteBase : MonoBehaviour {
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
+    void Awake () {
+        cachedTransform = transform;
+        if (layer_) {
+            bool show = enabled;
+            layer_.Add(this, show);
+        }
+    }
+
     void OnEnable () {
         if (layer_) {
-            layer_.Show(this);
+            layer_.ShowSprite(this);
         }
     }
 
     void OnDisable () {
         if (layer_) {
-            layer_.Hide(this);
+            layer_.HideSprite(this);
         }
     }
 
@@ -98,6 +113,8 @@ public class exSpriteBase : MonoBehaviour {
             layer_.Remove(this);
         }
         layer_ = null;
+        exDebug.Assert(!layer_ || ((enabled && gameObject.activeInHierarchy) == IsInIndexBuffer), 
+                       "a sprite's logic visibility should equals to it's triangle visibility");
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -105,22 +122,9 @@ public class exSpriteBase : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
 
     public void UpdateDirtyFlags () {
-        Vector3 p = cachedTransform.position;
-        bool vertexChanged = (lastPos.x != p.x || lastPos.y != p.y || lastPos.z != p.z);
-        lastPos = p;
-        
-        Quaternion r = cachedTransform_.rotation;
-        vertexChanged = vertexChanged ||
-                            lastRotation.x != r.x || lastRotation.y != r.y ||
-                            lastRotation.z != r.z || lastRotation.w != r.w;
-        lastRotation = r;
-
-        Vector3 s = cachedTransform_.lossyScale;
-        vertexChanged = vertexChanged || (lastScale.x != s.x || lastScale.y != s.y || lastScale.z != s.z);
-        lastScale = s;
-
-        if (vertexChanged) {
+        if (cachedTransform.hasChanged) {
             updateFlags |= UpdateFlags.Vertex;
+            cachedTransform.hasChanged = false;
         }
     }
 }
