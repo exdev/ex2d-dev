@@ -261,7 +261,7 @@ public class exLayer : MonoBehaviour
             sprite.spriteIndex = i;
             sprite.vertexBufferIndex -= _oldSprite.vertexCount;
             // update indices to make them match new vertic index
-            for (int index = sprite.indexBufferIndex; index < sprite.indexCount; ++index) {
+            for (int index = sprite.indexBufferIndex; index < sprite.indexBufferIndex + sprite.indexCount; ++index) {
                 indices[index] -= _oldSprite.vertexCount;
             }
         }
