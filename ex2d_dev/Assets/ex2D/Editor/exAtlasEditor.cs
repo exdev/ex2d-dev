@@ -513,7 +513,7 @@ partial class exAtlasEditor : EditorWindow {
                 if ( curEdit.showCheckerboard ) {
                     Texture2D checker = exEditorUtility.CheckerboardTexture();
                     GUI.DrawTextureWithTexCoords ( _rect, checker, 
-                                                   new Rect( 0.0f, 0.0f, _rect.width/checker.width, _rect.height/checker.height) );
+                                                   new Rect( 0.0f, 0.0f, _rect.width/(checker.width * curEdit.scale), _rect.height/(checker.height * curEdit.scale)) );
                 }
                 else {
                     GUI.DrawTexture( _rect, EditorGUIUtility.whiteTexture );
@@ -614,9 +614,13 @@ partial class exAtlasEditor : EditorWindow {
             GUI.DrawTexture( _rect, EditorGUIUtility.whiteTexture );
         GUI.color = old;
 
-        Texture2D texture = exEditorUtility.LoadAssetFromGUID<Texture2D>( _textureInfo.rawTextureGUID );
-        if ( texture ) {
-            GUI.DrawTexture( _rect, texture );
+        Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( _textureInfo.rawTextureGUID );
+        if ( rawTexture ) {
+            GUI.DrawTextureWithTexCoords( _rect, rawTexture,
+                                          new Rect( (float)_textureInfo.trim_x/(float)rawTexture.width,
+                                                    (float)_textureInfo.trim_y/(float)rawTexture.height,
+                                                    (float)_textureInfo.width/(float)rawTexture.width,
+                                                    (float)_textureInfo.height/(float)rawTexture.height ) );
         }
     }
 
