@@ -13,8 +13,6 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-// TODO: 手动添加SpriteMng时，检查Camera属性，如果不是正交，报错
-
 ///////////////////////////////////////////////////////////////////////////////
 ///
 /// The 2D Manager component
@@ -27,26 +25,17 @@ using System.Collections.Generic;
 public class ex2DMng : MonoBehaviour
 {
     ///////////////////////////////////////////////////////////////////////////////
-    // properties
+    // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    private static ex2DMng instance_;
-    public static ex2DMng instance {
-        get {
-            if (!instance_) {
-                GameObject go = new GameObject("2D Manager");
-                Camera camera = go.AddComponent<Camera>();
-                instance_ = go.AddComponent<ex2DMng>();
-                go.hideFlags = HideFlags.DontSave | exReleaseFlag.notEditable;
-                camera.orthographic = true;
-                camera.orthographicSize = Screen.height;
-                go.SetActive(true);
-            }
-            return instance_;
-        }
-    }
+    [System.NonSerialized] public static ex2DMng instance;
 
     private List<exLayer> layerList = new List<exLayer>();
+
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // properties
+    ///////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
@@ -57,14 +46,21 @@ public class ex2DMng : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     void Awake () {
-        instance_ = this;
+        if (!instance) {
+            instance = this;
+        }
+        if (camera.orthographic != true) {
+            Debug.LogWarning("Set ex2DMng's camera projection to orthographic");
+            camera.orthographic = true;
+        }
     }
 
     // ------------------------------------------------------------------ 
-    // Desc:
+    // NOTE: 使用DrawMesh时，要在OnRenderObject时调用，使用DrawMeshNow时，要在OnPreCull中调用
+    // 使用MeshRenderer时，要在OnPreRender中调用
     // ------------------------------------------------------------------ 
 
-    void OnPreRender () {
+    void OnPreCull () {
         // TODO: 如果检测到屏幕大小改变，同步更新Camera的orthographicSize
         for (int i = 0; i < layerList.Count; ++i) {
             layerList[i].UpdateMesh();
@@ -82,7 +78,6 @@ public class ex2DMng : MonoBehaviour
         layerList.Clear();
     }
 
-    
     ///////////////////////////////////////////////////////////////////////////////
     // Other Functions
     ///////////////////////////////////////////////////////////////////////////////
