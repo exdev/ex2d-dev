@@ -31,7 +31,7 @@ public class ex2DMng : MonoBehaviour
     [System.NonSerialized] public static ex2DMng instance;
 
     private List<exLayer> layerList = new List<exLayer>();
-
+    private Camera cachedCamera;
     
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -49,9 +49,10 @@ public class ex2DMng : MonoBehaviour
         if (!instance) {
             instance = this;
         }
-        if (camera.orthographic != true) {
+        cachedCamera = camera;
+        if (cachedCamera.orthographic != true) {
             Debug.LogWarning("Set ex2DMng's camera projection to orthographic");
-            camera.orthographic = true;
+            cachedCamera.orthographic = true;
         }
     }
 
@@ -61,7 +62,10 @@ public class ex2DMng : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     void OnPreCull () {
-        // TODO: 如果检测到屏幕大小改变，同步更新Camera的orthographicSize
+        if (cachedCamera.orthographicSize != Screen.height) {
+            //cachedCamera.orthographicSize = Screen.height;
+        }
+        
         for (int i = 0; i < layerList.Count; ++i) {
             layerList[i].UpdateMesh();
         }
