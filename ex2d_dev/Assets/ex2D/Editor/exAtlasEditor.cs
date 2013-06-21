@@ -45,6 +45,7 @@ partial class exAtlasEditor : EditorWindow {
     Vector2 scrollPos = Vector2.zero;
     int selectIdx = 0;
     List<exTextureInfo> selectedTextureInfos = new List<exTextureInfo>();
+    Rect atlasRect = new Rect( 0, 0, 1, 1 );
 
     // GUI options 
     bool lockCurEdit = false; 
@@ -57,6 +58,7 @@ partial class exAtlasEditor : EditorWindow {
     Vector2 mouseDownPos = Vector2.zero;
     Rect selectRect = new Rect( 0, 0, 1, 1 );
     bool inRectSelectState = false;
+    bool inDraggingTextureInfoState = false;
     List<Object> importObjects = new List<Object>();
     Object oldSelActiveObject;
     List<Object> oldSelObjects = new List<Object>();
@@ -94,6 +96,22 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void OnInspectorUpdate () {
+        if ( curEdit == null )
+            return;
+
+        for ( int i = curEdit.textureInfos.Count-1; i >= 0; --i ) {
+            exTextureInfo textureInfo = curEdit.textureInfos[i];
+            if ( textureInfo == null ) {
+                curEdit.textureInfos.RemoveAt(i);
+            }
+        }
+        for ( int i = selectedTextureInfos.Count-1; i >= 0; --i ) {
+            exTextureInfo textureInfo = selectedTextureInfos[i];
+            if ( textureInfo == null ) {
+                selectedTextureInfos.RemoveAt(i);
+            }
+        }
+
         Repaint();
     }
 
@@ -144,7 +162,9 @@ partial class exAtlasEditor : EditorWindow {
 
                 //
                 Rect lastRect = GUILayoutUtility.GetLastRect ();  
-                AtlasField ( new Rect( lastRect.xMax, lastRect.yMax, curEdit.width * curEdit.scale, curEdit.height * curEdit.scale ) );
+                atlasRect = new Rect( lastRect.xMax, lastRect.yMax, curEdit.width * curEdit.scale, curEdit.height * curEdit.scale );
+                atlasRect = exGeometryUtility.Rect_FloorToInt(atlasRect);
+                AtlasField ( atlasRect );
 
             EditorGUILayout.EndHorizontal();
 
@@ -174,6 +194,9 @@ partial class exAtlasEditor : EditorWindow {
         importObjects.Clear();
         oldSelActiveObject = null;
         oldSelObjects.Clear();
+
+        inRectSelectState = false;
+        inDraggingTextureInfoState = false;
     }
 
     // ------------------------------------------------------------------ 
@@ -333,27 +356,7 @@ partial class exAtlasEditor : EditorWindow {
                     GUILayout.FlexibleSpace();
                     if ( GUILayout.Button ( "Apply", GUILayout.Width(80) ) ) {
                         curEdit.needRebuild = true;
-
-                        // this is very basic algorithm
-                        if ( curEdit.algorithm == exAtlas.Algorithm.Basic ) {
-                            exAtlasUtility.BasicPack (curEdit);
-                        }
-                        else if ( curEdit.algorithm == exAtlas.Algorithm.Tree ) {
-                            exAtlasUtility.TreePack (curEdit);
-                        }
-
-                        // TODO:
-                        // try {
-                        //     EditorUtility.DisplayProgressBar( "Layout Elements...", "Layout Elements...", 0.5f  );    
-                        //     // register undo
-                        //     Undo.RegisterUndo ( curEdit, "Apply.LayoutElements" );
-                        //     curEdit.LayoutElements ();
-                        //     EditorUtility.ClearProgressBar();
-                        // }
-                        // catch ( System.Exception ) {
-                        //     EditorUtility.ClearProgressBar();
-                        //     throw;
-                        // }
+                        LayoutTextureInfos();
                     }
                 EditorGUILayout.EndHorizontal();
 
@@ -526,15 +529,35 @@ partial class exAtlasEditor : EditorWindow {
 
                 // texture info list 
                 foreach ( exTextureInfo textureInfo in curEdit.textureInfos ) {
-                    Rect textureInfoRect 
-                        = new Rect ( _rect.x + textureInfo.x * curEdit.scale,
-                                     _rect.y + textureInfo.y * curEdit.scale,
-                                     textureInfo.rotatedWidth * curEdit.scale,
-                                     textureInfo.rotatedHeight * curEdit.scale );
+                    if ( textureInfo == null )
+                        continue;
 
-                    DrawTextureInfo ( textureInfoRect, textureInfo );
+                    DrawTextureInfo ( MapTextureInfo( _rect, textureInfo ), textureInfo );
                 }
             GUI.color = old;
+            break;
+
+        case EventType.MouseDown:
+            if ( e.button == 0 && e.clickCount == 1 && _rect.Contains(e.mousePosition) ) {
+                foreach ( exTextureInfo textureInfo in curEdit.textureInfos ) {
+                    if ( textureInfo == null )
+                        continue;
+
+                    if ( MapTextureInfo( _rect, textureInfo ).Contains (e.mousePosition) ) {
+                        if ( e.command || e.control ) {
+                            ToggleSelected(textureInfo);
+                        }
+                        else {
+                            inDraggingTextureInfoState = true; 
+                            if ( selectedTextureInfos.IndexOf(textureInfo) == -1 ) {
+                                selectedTextureInfos.Clear();
+                                selectedTextureInfos.Add(textureInfo);
+                            }
+                        }
+                        e.Use();
+                    }
+                }
+            }
             break;
 
         case EventType.DragUpdated:
@@ -622,6 +645,13 @@ partial class exAtlasEditor : EditorWindow {
                                                     (float)_textureInfo.width/(float)rawTexture.width,
                                                     (float)_textureInfo.height/(float)rawTexture.height ) );
         }
+
+        if ( selectedTextureInfos.IndexOf(_textureInfo) != -1 ) {
+            old = GUI.backgroundColor;
+            GUI.backgroundColor = curEdit.elementSelectColor;
+                GUI.Box ( _rect, GUIContent.none, exEditorUtility.RectBorderStyle() );
+            GUI.backgroundColor = old;
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -648,7 +678,7 @@ partial class exAtlasEditor : EditorWindow {
                 mouseDownPos = e.mousePosition;
                 inRectSelectState = true;
                 UpdateSelectRect ();
-                // ConfirmRectSelection(); // TODO
+                ConfirmRectSelection();
                 Repaint();
 
                 e.Use();
@@ -658,7 +688,7 @@ partial class exAtlasEditor : EditorWindow {
         case EventType.MouseDrag:
             if ( GUIUtility.hotControl == controlID && inRectSelectState ) {
                 UpdateSelectRect ();
-                // ConfirmRectSelection(); // TODO
+                ConfirmRectSelection();
                 Repaint();
 
                 e.Use();
@@ -671,7 +701,7 @@ partial class exAtlasEditor : EditorWindow {
 
                 if ( inRectSelectState && e.button == 0 ) {
                     inRectSelectState = false;
-                    // ConfirmRectSelection(); // TODO
+                    ConfirmRectSelection();
                     Repaint();
                 }
 
@@ -710,6 +740,81 @@ partial class exAtlasEditor : EditorWindow {
         }
 
         selectRect = new Rect( x, y, width, height );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void ToggleSelected ( exTextureInfo _textureInfo ) {
+        int i = selectedTextureInfos.IndexOf(_textureInfo);
+        if ( i != -1 ) {
+            selectedTextureInfos.RemoveAt(i);
+        }
+        else {
+            selectedTextureInfos.Add(_textureInfo);
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void ConfirmRectSelection () {
+        selectedTextureInfos.Clear();
+
+        foreach ( exTextureInfo textureInfo in curEdit.textureInfos ) {
+            if ( textureInfo == null )
+                continue;
+
+            Rect textureInfoRect = MapTextureInfo ( atlasRect, textureInfo );
+            if ( exGeometryUtility.RectRect_Contains( selectRect, textureInfoRect ) != 0 ||
+                 exGeometryUtility.RectRect_Intersect( selectRect, textureInfoRect ) )
+            {
+                selectedTextureInfos.Add (textureInfo);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    Rect MapTextureInfo ( Rect _atlasRect, exTextureInfo _textureInfo ) {
+        Rect textureInfoRect = new Rect ( _textureInfo.x * curEdit.scale,
+                                          _textureInfo.y * curEdit.scale,
+                                          _textureInfo.rotatedWidth * curEdit.scale,
+                                          _textureInfo.rotatedHeight * curEdit.scale );
+
+        textureInfoRect.x = _atlasRect.x + textureInfoRect.x;
+        textureInfoRect.y = _atlasRect.y + _atlasRect.height - textureInfoRect.y - textureInfoRect.height;
+        textureInfoRect = exGeometryUtility.Rect_FloorToInt(textureInfoRect);
+
+        return textureInfoRect;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void LayoutTextureInfos () {
+        try {
+            EditorUtility.DisplayProgressBar( "Layout Elements...", "Layout Elements...", 0.5f  );    
+
+            // sort texture info
+            curEdit.SortTextureInfos();
+
+            // pack texture
+            if ( curEdit.algorithm == exAtlas.Algorithm.Basic ) {
+                exAtlasUtility.BasicPack (curEdit);
+            }
+            else if ( curEdit.algorithm == exAtlas.Algorithm.Tree ) {
+                exAtlasUtility.TreePack (curEdit);
+            }
+        }
+        finally {
+            EditorUtility.ClearProgressBar();
+        }
     }
 }
 

@@ -28,6 +28,18 @@ public static class exGenericAssetUtility<T> where T : ScriptableObject {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public static T LoadExistsOrCreate ( string _path, string _name ) {
+        T asset = AssetDatabase.LoadAssetAtPath ( Path.Combine(_path,_name), typeof(T) ) as T;
+        if ( asset == null ) {
+            asset = Create ( _path, _name );
+        }
+        return asset;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public static T Create ( string _path, string _name ) {
         // check if the asset is valid to create
         if ( new DirectoryInfo(_path).Exists == false ) {

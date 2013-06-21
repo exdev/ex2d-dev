@@ -89,8 +89,8 @@ public static class exAtlasUtility {
                 info.y = (int)pos.Value.y;
             }
             else {
-                // log error but continue processing other elements
-                Debug.LogError("Failed to layout texture info " + info.name);
+                // log warning but continue processing other elements
+                Debug.LogWarning("Failed to layout texture info " + info.name);
             }
         }
     }
@@ -112,13 +112,13 @@ public static class exAtlasUtility {
                 maxY = 0;
             }
             if ( (curY + info.rotatedHeight) > _atlas.height ) {
-                Debug.LogError( "Failed to layout element " + info.name );
+                Debug.LogWarning( "Failed to layout element " + info.name );
                 break;
             }
             info.x = curX;
             info.y = curY;
 
-            curX = curX + info.rotatedHeight + _atlas.actualPadding;
+            curX = curX + info.rotatedWidth + _atlas.actualPadding;
             if (info.rotatedHeight > maxY) {
                 maxY = info.rotatedHeight;
             }
@@ -136,26 +136,48 @@ public static class exAtlasUtility {
             Directory.CreateDirectory (path);
         }
 
-        AssetDatabase.StartAssetEditing();
+        // import textures used for atlas
+        try {
+            AssetDatabase.StartAssetEditing();
+            foreach ( Object o in _objects ) {
+                if ( o is Texture2D ) {
+                    exEditorUtility.ImportTextureForAtlas (o as Texture2D);
+                }
+            }
+        }
+        finally {
+            AssetDatabase.StopAssetEditing();
+        }
+
+        //
         foreach ( Object o in _objects ) {
             if ( o is Texture2D ) {
+                Texture2D rawTexture = o as Texture2D;
+
                 // if the texture already in the atlas, warning and skip it.
-                Texture2D tex = o as Texture2D;
-                if ( exAtlasUtility.Exists(_atlas,tex) ) {
+                if ( exAtlasUtility.Exists(_atlas,rawTexture) ) {
                     Debug.LogWarning ( "The texture " + o.name + " already exists in the atlas" );
                     continue;
                 }
 
-                exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.Create( path, tex.name );
-                textureInfo.rawTextureGUID = exEditorUtility.AssetToGUID(tex);
-                textureInfo.name = tex.name;
-                textureInfo.texture = tex;
-                textureInfo.rawWidth = tex.width;
-                textureInfo.rawHeight = tex.height;
+                Rect trimRect = new Rect ( 0, 0, rawTexture.width, rawTexture.height );
+                if ( _atlas.trimElements ) {
+                    trimRect = exTextureUtility.GetTrimTextureRect(rawTexture);
+                }
+
+                //
+                exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate( path, rawTexture.name );
+                textureInfo.rawTextureGUID = exEditorUtility.AssetToGUID(rawTexture);
+                textureInfo.name = rawTexture.name;
+                textureInfo.texture = rawTexture;
+                textureInfo.rawWidth = rawTexture.width;
+                textureInfo.rawHeight = rawTexture.height;
                 textureInfo.x = 0;
                 textureInfo.y = 0;
-                textureInfo.width = tex.width;
-                textureInfo.height = tex.height;
+                textureInfo.trim_x = (int)trimRect.x;
+                textureInfo.trim_y = (int)trimRect.y;
+                textureInfo.width = (int)trimRect.width;
+                textureInfo.height = (int)trimRect.height;
                 textureInfo.trim = _atlas.trimElements;
 
                 _atlas.textureInfos.Add(textureInfo);
@@ -163,7 +185,6 @@ public static class exAtlasUtility {
         }
 
         EditorUtility.SetDirty(_atlas);
-        AssetDatabase.StopAssetEditing();
     }
 
     // ------------------------------------------------------------------ 

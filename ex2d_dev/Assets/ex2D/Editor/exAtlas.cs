@@ -35,7 +35,7 @@ public class exAtlas : ScriptableObject {
     }
 
     // ------------------------------------------------------------------ 
-    /// sorting type for sort elements
+    /// sorting type for sort textureInfos
     // ------------------------------------------------------------------ 
 
     public enum SortBy {
@@ -47,7 +47,7 @@ public class exAtlas : ScriptableObject {
     }
 
     // ------------------------------------------------------------------ 
-    /// sorting the elements in Ascending or Descending order
+    /// sorting the textureInfos in Ascending or Descending order
     // ------------------------------------------------------------------ 
 
     public enum SortOrder {
@@ -73,8 +73,8 @@ public class exAtlas : ScriptableObject {
     public Texture2D texture; ///< the referenced atlas texture
     public bool customBuildColor = false; ///< use buildColor as background color for transparent pixels
     public Color buildColor = new Color(1.0f, 1.0f, 1.0f, 0.0f); ///< the color of transparent pixels in atlas texture
-    public bool useContourBleed = false; ///< extends the color of pixels at the edge of transparent pixels to prevent bilinear filtering artifacts
-    public bool usePaddingBleed = false; ///< extends the color and alpha of pixels on border of each element into the surrounding padding area
+    public bool useContourBleed = true; ///< extends the color of pixels at the edge of transparent pixels to prevent bilinear filtering artifacts
+    public bool usePaddingBleed = true; ///< extends the color and alpha of pixels on border of each element into the surrounding padding area
     public bool trimElements = true; ///< trim all element when importing
     public bool readable = false; ///< enabled Read/Write option for atlas texture after build
 
@@ -84,8 +84,8 @@ public class exAtlas : ScriptableObject {
 
     // layout settings
     public Algorithm algorithm = Algorithm.Tree; ///< the algorithm used for texture packer
-    public SortBy sortBy = SortBy.UseBest; ///< the method to sort the elements in atlas editor info
-    public SortOrder sortOrder = SortOrder.UseBest; ///< the order to sort the elements in atlas editor info
+    public SortBy sortBy = SortBy.UseBest; ///< the method to sort the textureInfos in atlas editor info
+    public SortOrder sortOrder = SortOrder.UseBest; ///< the order to sort the textureInfos in atlas editor info
     public PaddingMode paddingMode = PaddingMode.Auto; ///< the padding mode used to determine the actualPadding value
     public int customPadding = 1; ///< the user-specified padding size between each element, used when paddingMode is Custom
     public bool allowRotate = false; ///< if allow texture rotated, disabled in current version 
@@ -136,44 +136,52 @@ public class exAtlas : ScriptableObject {
 
     public static int CompareByWidth ( exTextureInfo _a, exTextureInfo _b ) {
         int ret = (int)_a.width - (int)_b.width;
-        // if ( ret == 0 ) {
-        //     ret = string.Compare( exEditorHelper.AssetToGUID(_a.texture), exEditorHelper.AssetToGUID(_b.texture) );
-        // }
+        if ( ret == 0 ) {
+            ret = string.Compare( _a.rawTextureGUID, _b.rawTextureGUID );
+        }
+        // TODO { 
         // if ( _a.isFontElement && _b.isFontElement && ret == 0 ) {
         //     ret = _a.charInfo.id - _b.charInfo.id;
         // }
+        // } TODO end 
         return ret;
     }
     public static int CompareByHeight ( exTextureInfo _a, exTextureInfo _b ) {
         int ret = (int)_a.height - (int)_b.height;
-        // if ( ret == 0 ) {
-        //     ret = string.Compare( exEditorHelper.AssetToGUID(_a.texture), exEditorHelper.AssetToGUID(_b.texture) );
-        // }
+        if ( ret == 0 ) {
+            ret = string.Compare( _a.rawTextureGUID, _b.rawTextureGUID );
+        }
+        // TODO { 
         // if ( _a.isFontElement && _b.isFontElement && ret == 0 ) {
         //     ret = _a.charInfo.id - _b.charInfo.id;
         // }
+        // } TODO end 
         return ret;
     }
     public static int CompareByArea ( exTextureInfo _a, exTextureInfo _b ) {
         int ret = (int)_a.width * (int)_a.height - (int)_b.width * (int)_b.height;
-        // if ( ret == 0 ) {
-        //     ret = string.Compare( exEditorHelper.AssetToGUID(_a.texture), exEditorHelper.AssetToGUID(_b.texture) );
-        // }
+        if ( ret == 0 ) {
+            ret = string.Compare( _a.rawTextureGUID, _b.rawTextureGUID );
+        }
+        // TODO { 
         // if ( _a.isFontElement && _b.isFontElement && ret == 0 ) {
         //     ret = _a.charInfo.id - _b.charInfo.id;
         // }
+        // } TODO end 
         return ret;
     }
-    // public static int CompareByName ( exTextureInfo _a, exTextureInfo _b ) {
-    //     int ret = string.Compare( _a.texture.name, _b.texture.name );
-    //     if ( ret == 0 ) {
-    //         ret = string.Compare( exEditorHelper.AssetToGUID(_a.texture), exEditorHelper.AssetToGUID(_b.texture) );
-    //     }
-    //     if ( _a.isFontElement && _b.isFontElement && ret == 0 ) {
-    //         ret = _a.charInfo.id - _b.charInfo.id;
-    //     }
-    //     return ret;
-    // }
+    public static int CompareByName ( exTextureInfo _a, exTextureInfo _b ) {
+        int ret = string.Compare( _a.name, _b.name );
+        if ( ret == 0 ) {
+            ret = string.Compare( _a.rawTextureGUID, _b.rawTextureGUID );
+        }
+        // TODO { 
+        // if ( _a.isFontElement && _b.isFontElement && ret == 0 ) {
+        //     ret = _a.charInfo.id - _b.charInfo.id;
+        // }
+        // } TODO end 
+        return ret;
+    }
 
     // public static int CompareByWidthRotate ( exTextureInfo _a, exTextureInfo _b ) {
     //     int a_size = (int)_a.trimRect.height;
@@ -236,8 +244,8 @@ public class exAtlas : ScriptableObject {
 
     //     //
     //     exAtlas.exTextureInfo el = null;
-    //     for ( int i = 0; i < elements.Count; ++i ) {
-    //         el = elements[i];
+    //     for ( int i = 0; i < textureInfos.Count; ++i ) {
+    //         el = textureInfos[i];
     //         if ( el.texture == _tex )
     //             break;
     //     }
@@ -284,7 +292,7 @@ public class exAtlas : ScriptableObject {
     //     el.texture = _tex;
     //     el.coord[0] = 0;
     //     el.coord[1] = 0;
-    //     elements.Add(el);
+    //     textureInfos.Add(el);
 
     //     // get sprite animation clip by textureGUID, add them to rebuildAnimClipGUIDs
     //     AddSpriteAnimClipForRebuilding(el);
@@ -302,8 +310,8 @@ public class exAtlas : ScriptableObject {
     // // ------------------------------------------------------------------ 
 
     // public void RemoveBitmapFont ( exBitmapFont _fontInfo ) {
-    //     for ( int i = 0; i < elements.Count; ++i ) {
-    //         exAtlas.exTextureInfo el = elements[i];
+    //     for ( int i = 0; i < textureInfos.Count; ++i ) {
+    //         exAtlas.exTextureInfo el = textureInfos[i];
     //         if ( el.isFontElement == false )
     //             continue;
 
@@ -353,7 +361,7 @@ public class exAtlas : ScriptableObject {
     //         Debug.LogError ( "can't not find char info with ID " + el.charInfo.id );
     //     }
 
-    //     elements.Add(el);
+    //     textureInfos.Add(el);
 
     //     needRebuild = true;
     //     EditorUtility.SetDirty(this);
@@ -367,7 +375,7 @@ public class exAtlas : ScriptableObject {
     // // ------------------------------------------------------------------ 
 
     // public void RemoveElement ( exTextureInfo _el ) {
-    //     int idx = elements.IndexOf(_el);
+    //     int idx = textureInfos.IndexOf(_el);
     //     if ( idx != -1 ) {
     //         RemoveElementAt (idx);
     //     }
@@ -379,7 +387,7 @@ public class exAtlas : ScriptableObject {
     // // ------------------------------------------------------------------ 
 
     // public void RemoveElementAt ( int _idx ) {
-    //     exTextureInfo el = elements[_idx];
+    //     exTextureInfo el = textureInfos[_idx];
 
     //     // get sprite animation clip by textureGUID, add them to rebuildAnimClipGUIDs
     //     AddSpriteAnimClipForRebuilding(el);
@@ -395,78 +403,68 @@ public class exAtlas : ScriptableObject {
     //     exAtlasDB.RemoveElementInfo(exEditorHelper.AssetToGUID(el.texture));
 
     //     //
-    //     elements.RemoveAt(_idx);
+    //     textureInfos.RemoveAt(_idx);
 
     //     //
     //     EditorUtility.SetDirty(this);
     // }
 
-    // // ------------------------------------------------------------------ 
-    // // Desc: 
-    // // ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    /// Sort the elemtns in atlas by the exAtlas.SortBy and exAtlas.SortOrder 
+    // ------------------------------------------------------------------ 
 
-    // public void ResetElements () {
-    //     foreach ( exTextureInfo el in elements ) {
-    //         el.rotated = false;
-    //     }
-    //     needRebuild = true;
-    //     EditorUtility.SetDirty(this);
-    // }
+    public void SortTextureInfos () {
+        //
+        SortBy mySortBy = sortBy;
+        SortOrder mySortOrder = sortOrder;
+        if ( mySortBy == SortBy.UseBest ) {
+            switch ( algorithm ) {
+            case Algorithm.Basic:
+                mySortBy = SortBy.Height;
+                break;
+            case Algorithm.Tree:
+                mySortBy = SortBy.Height;
+                break;
+            default:
+                mySortBy = SortBy.Height;
+                break;
+            }
+        }
+        if ( mySortOrder == SortOrder.UseBest ) {
+            mySortOrder = SortOrder.Descending;
+        }
 
-    // // ------------------------------------------------------------------ 
-    // /// Sort the elemtns in atlas by the exAtlas.SortBy and exAtlas.SortOrder 
-    // // ------------------------------------------------------------------ 
+        // sort by
+        switch ( mySortBy ) {
+        case SortBy.Width:
+            // if ( allowRotate )
+            //     textureInfos.Sort( CompareByWidthRotate );
+            // else
+            //     textureInfos.Sort( CompareByWidth );
+            textureInfos.Sort( CompareByWidth );
+            break;
+        case SortBy.Height:
+            // if ( allowRotate )
+            //     textureInfos.Sort( CompareByHeightRotate );
+            // else
+            //     textureInfos.Sort( CompareByHeight );
+            textureInfos.Sort( CompareByHeight );
+            break;
+        case SortBy.Area:
+            textureInfos.Sort( CompareByArea );
+            break;
+        case SortBy.Name:
+            textureInfos.Sort( CompareByName );
+            break;
+        }
 
-    // public void SortElements () {
-    //     //
-    //     SortBy mySortBy = sortBy;
-    //     SortOrder mySortOrder = sortOrder;
-    //     if ( sortBy == SortBy.UseBest ) {
-    //         switch ( algorithm ) {
-    //         case Algorithm.Basic:
-    //             mySortBy = SortBy.Height;
-    //             break;
-    //         case Algorithm.Tree:
-    //             mySortBy = SortBy.Height;
-    //             break;
-    //         default:
-    //             mySortBy = SortBy.Height;
-    //             break;
-    //         }
-    //     }
-    //     if ( sortOrder == SortOrder.UseBest ) {
-    //         mySortOrder = SortOrder.Descending;
-    //     }
-
-    //     // sort by
-    //     switch ( mySortBy ) {
-    //     case SortBy.Width:
-    //         if ( allowRotate )
-    //             elements.Sort( CompareByWidthRotate );
-    //         else
-    //             elements.Sort( CompareByWidth );
-    //         break;
-    //     case SortBy.Height:
-    //         if ( allowRotate )
-    //             elements.Sort( CompareByHeightRotate );
-    //         else
-    //             elements.Sort( CompareByHeight );
-    //         break;
-    //     case SortBy.Area:
-    //         elements.Sort( CompareByArea );
-    //         break;
-    //     case SortBy.Name:
-    //         elements.Sort( CompareByName );
-    //         break;
-    //     }
-
-    //     // sort order
-    //     if ( mySortOrder == SortOrder.Descending ) {
-    //         elements.Reverse();
-    //     }
-    //     needRebuild = true;
-    //     EditorUtility.SetDirty(this);
-    // }
+        // sort order
+        if ( mySortOrder == SortOrder.Descending ) {
+            textureInfos.Reverse();
+        }
+        needRebuild = true;
+        EditorUtility.SetDirty(this);
+    }
 
     // // ------------------------------------------------------------------ 
     // /// Clear the all pixels in atlas texture, and fill with white color
