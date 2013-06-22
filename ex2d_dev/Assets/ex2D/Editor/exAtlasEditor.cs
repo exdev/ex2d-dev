@@ -150,6 +150,7 @@ partial class exAtlasEditor : EditorWindow {
                                                          );
             if ( newAtlas != curEdit ) 
                 Selection.activeObject = newAtlas;
+
             GUILayout.Space(10);
 
             //
@@ -268,7 +269,15 @@ partial class exAtlasEditor : EditorWindow {
             GUI.enabled = curEdit.needRebuild;
             GUILayout.Space(5);
             if ( GUILayout.Button( "Build", EditorStyles.toolbarButton ) ) {
-                // TODO: build atlas
+                try {
+                    exAtlasUtility.Build( curEdit, (_progress, _info) => {
+                                            EditorUtility.DisplayProgressBar( "Building Atlas...", _info, _progress );
+                                          } );
+                }
+                finally {
+                    curEdit.needRebuild = false;
+                    EditorUtility.ClearProgressBar();    
+                }
             }
             GUI.enabled = true;
 
@@ -314,7 +323,9 @@ partial class exAtlasEditor : EditorWindow {
 
                 // Check if we need to Reset width & height
                 if ( width != curEdit.width || height != curEdit.height ) {
-                    // TODO:
+                    curEdit.width = width;
+                    curEdit.height = height;
+                    curEdit.needRebuild = true;
                 }
 
                 // EditorGUILayout.PropertyField (curSerializedObject.FindProperty ("bgColor"), new GUIContent("Background"));
@@ -461,6 +472,16 @@ partial class exAtlasEditor : EditorWindow {
                     // exTextureHelper.SetReadable ( curEdit.texture, curEdit.readable );
                 }
 
+                // ======================================================== 
+                // texture 
+                // ======================================================== 
+
+                EditorGUILayout.ObjectField( "Texture"
+                                             , curEdit.texture
+                                             , typeof(Texture2D)
+                                             , false
+                                           );
+
                 EditorGUI.indentLevel--;
             }
             GUILayout.Space(20);
@@ -505,14 +526,14 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void AtlasField ( Rect _rect ) {
-        GUILayoutUtility.GetRect ( _rect.width+2, _rect.height+2, GUI.skin.box );
+        GUILayoutUtility.GetRect ( _rect.width+4, _rect.height+4, GUI.skin.box );
 
         Event e = Event.current;
         switch ( e.type ) {
         case EventType.Repaint:
+            // checker box
             Color old = GUI.color;
             GUI.color = curEdit.bgColor;
-                // checker box
                 if ( curEdit.showCheckerboard ) {
                     Texture2D checker = exEditorUtility.CheckerboardTexture();
                     GUI.DrawTextureWithTexCoords ( _rect, checker, 
@@ -521,20 +542,23 @@ partial class exAtlasEditor : EditorWindow {
                 else {
                     GUI.DrawTexture( _rect, EditorGUIUtility.whiteTexture );
                 }
-
-                // border
-                exEditorUtility.DrawRect( new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 ),
-                                          new Color( 1,1,1,0 ), 
-                                          Color.white );
-
-                // texture info list 
-                foreach ( exTextureInfo textureInfo in curEdit.textureInfos ) {
-                    if ( textureInfo == null )
-                        continue;
-
-                    DrawTextureInfo ( MapTextureInfo( _rect, textureInfo ), textureInfo );
-                }
             GUI.color = old;
+
+
+            // texture info list 
+            GUI.BeginGroup( _rect );
+            foreach ( exTextureInfo textureInfo in curEdit.textureInfos ) {
+                if ( textureInfo == null )
+                    continue;
+
+                DrawTextureInfo ( MapTextureInfo( new Rect ( 0, 0, _rect.width, _rect.height ), textureInfo ), textureInfo );
+            }
+            GUI.EndGroup();
+
+            // border
+            exEditorUtility.DrawRect( new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 ),
+                                      new Color( 1,1,1,0 ), 
+                                      Color.white );
             break;
 
         case EventType.MouseDown:
@@ -581,16 +605,14 @@ partial class exAtlasEditor : EditorWindow {
             if ( _rect.Contains(e.mousePosition) ) {
                 DragAndDrop.AcceptDrag();
 
-                // TODO { 
-                // // NOTE: Unity3D have a problem in ImportTextureForAtlas, when a texture is an active selection, 
-                // //       no matter how you change your import settings, finally it will apply changes that in Inspector (shows when object selected)
-                // oldSelActiveObject = null;
-                // oldSelObjects.Clear();
-                // foreach ( Object o in Selection.objects ) {
-                //     oldSelObjects.Add(o);
-                // }
-                // oldSelActiveObject = Selection.activeObject;
-                // } TODO end 
+                // NOTE: Unity3D have a problem in ImportTextureForAtlas, when a texture is an active selection, 
+                //       no matter how you change your import settings, finally it will apply changes that in Inspector (shows when object selected)
+                oldSelActiveObject = null;
+                oldSelObjects.Clear();
+                foreach ( Object o in Selection.objects ) {
+                    oldSelObjects.Add(o);
+                }
+                oldSelActiveObject = Selection.activeObject;
 
                 // NOTE: Selection.GetFiltered only affect on activeObject, but we may proceed non-active selections sometimes
                 foreach ( Object o in DragAndDrop.objectReferences ) {
@@ -611,16 +633,25 @@ partial class exAtlasEditor : EditorWindow {
                         importObjects.Add(o);
                     }
                 }
+                Selection.activeObject = null;
 
-                // TODO { 
-                // Selection.activeObject = null;
-                // } TODO end 
 
-                exAtlasUtility.ImportObjects ( curEdit, importObjects.ToArray() );
-                importObjects.Clear();
+                try {
+                    exAtlasUtility.ImportObjects ( curEdit, importObjects.ToArray(), (_progress, _info) => {
+                                                      EditorUtility.DisplayProgressBar( "Adding Textures...", _info, _progress );
+                                                   } );
+                }
+                finally {
+                    importObjects.Clear();
+                    EditorUtility.ClearProgressBar();    
+                }
+                Repaint();
+
+                // recover selections
+                Selection.activeObject = oldSelActiveObject;
+                Selection.objects = oldSelObjects.ToArray();
 
                 e.Use();
-                Repaint();
             }
 
             break;
@@ -647,10 +678,7 @@ partial class exAtlasEditor : EditorWindow {
         }
 
         if ( selectedTextureInfos.IndexOf(_textureInfo) != -1 ) {
-            old = GUI.backgroundColor;
-            GUI.backgroundColor = curEdit.elementSelectColor;
-                GUI.Box ( _rect, GUIContent.none, exEditorUtility.RectBorderStyle() );
-            GUI.backgroundColor = old;
+            exEditorUtility.DrawRectBorder( _rect, curEdit.elementSelectColor );
         }
     }
 
@@ -707,6 +735,27 @@ partial class exAtlasEditor : EditorWindow {
 
                 e.Use();
 			}
+            break;
+
+        case EventType.KeyDown:
+            if ( e.keyCode == KeyCode.Backspace ||
+                 e.keyCode == KeyCode.Delete ) 
+            {
+
+                AssetDatabase.StartAssetEditing();
+                    foreach ( exTextureInfo textureInfo in selectedTextureInfos ) {
+                        int i = curEdit.textureInfos.IndexOf(textureInfo);
+                        if ( i != -1 ) {
+                            curEdit.textureInfos.RemoveAt(i);
+                            curEdit.needRebuild = true;
+                            AssetDatabase.DeleteAsset( AssetDatabase.GetAssetPath(textureInfo) );
+                        }
+                    }
+                AssetDatabase.StopAssetEditing();
+                selectedTextureInfos.Clear();
+                Repaint();
+                e.Use();
+            }
             break;
         }
     }

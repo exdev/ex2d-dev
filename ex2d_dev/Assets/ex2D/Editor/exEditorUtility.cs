@@ -105,6 +105,19 @@ public static class exEditorUtility {
     ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void DrawRectBorder ( Rect _rect, Color _borderColor ) {
+        // Graphics.DrawTexture( _rect, FindTexture("border.png"), new Rect(0,0,1,1), 2, 2, 2, 2, _borderColor * 0.5f );
+
+        Color old = GUI.backgroundColor;
+        GUI.backgroundColor = _borderColor;
+            RectBorderStyle().Draw( _rect, false, true, true, true );
+        GUI.backgroundColor = old;
+    }
+
+    // ------------------------------------------------------------------ 
     /// \param _rect the rect
     /// \param _backgroundColor the background color of the rect
     /// \param _borderColor the border color of the rect
@@ -209,6 +222,26 @@ public static class exEditorUtility {
     ///////////////////////////////////////////////////////////////////////////////
     // texture
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    /// \param _tex
+    /// \return is valid or not
+    /// check if the texture settings is valid for atlas build
+    // ------------------------------------------------------------------ 
+
+    public static bool IsValidForAtlas ( Texture2D _tex ) {
+        string path = AssetDatabase.GetAssetPath(_tex);
+        TextureImporter importer = TextureImporter.GetAtPath(path) as TextureImporter;
+        if ( importer.textureType != TextureImporterType.Advanced ||
+             importer.textureFormat != TextureImporterFormat.AutomaticTruecolor ||
+             importer.npotScale != TextureImporterNPOTScale.None ||
+             importer.isReadable != true ||
+             importer.mipmapEnabled != false )
+        {
+            return false;
+        }
+        return true;
+    }
 
     // ------------------------------------------------------------------ 
     /// \param _tex

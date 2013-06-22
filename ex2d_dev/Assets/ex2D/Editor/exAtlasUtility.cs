@@ -130,13 +130,16 @@ public static class exAtlasUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void ImportObjects ( exAtlas _atlas, Object[] _objects ) {
+    public static void ImportObjects ( exAtlas _atlas, Object[] _objects, System.Action<float,string> _progress ) {
+        // check if create atlas directory
+        _progress( 0.1f, "Checking atlas directory" );
         string path = Path.Combine ( ex2DEditor.atlasBuildPath, _atlas.name ); 
         if ( new DirectoryInfo(path).Exists == false ) {
             Directory.CreateDirectory (path);
         }
 
         // import textures used for atlas
+        _progress( 0.2f, "Setup texture for atlas" );
         try {
             AssetDatabase.StartAssetEditing();
             foreach ( Object o in _objects ) {
@@ -150,7 +153,10 @@ public static class exAtlasUtility {
         }
 
         //
-        foreach ( Object o in _objects ) {
+        for ( int i = 0; i < _objects.Length; ++i ) {
+            Object o = _objects[i];
+            _progress( 0.2f + (float)i/(float)_objects.Length * 0.8f, "Add texture " + o.name );
+
             if ( o is Texture2D ) {
                 Texture2D rawTexture = o as Texture2D;
 
@@ -169,7 +175,7 @@ public static class exAtlasUtility {
                 exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate( path, rawTexture.name );
                 textureInfo.rawTextureGUID = exEditorUtility.AssetToGUID(rawTexture);
                 textureInfo.name = rawTexture.name;
-                textureInfo.texture = rawTexture;
+                textureInfo.texture = _atlas.texture;
                 textureInfo.rawWidth = rawTexture.width;
                 textureInfo.rawHeight = rawTexture.height;
                 textureInfo.x = 0;
@@ -208,4 +214,111 @@ public static class exAtlasUtility {
     public static bool Exists ( exAtlas _atlas, exTextureInfo _textureInfo ) {
         return _atlas.textureInfos.IndexOf(_textureInfo) != -1;
     }
-} 
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void Build ( exAtlas _atlas, System.Action<float,string> _progress ) {
+        TextureImporter importSettings = null;
+
+        // check if create atlas directory
+        _progress( 0.1f, "Checking atlas directory" );
+        string path = Path.Combine ( ex2DEditor.atlasBuildPath, _atlas.name ); 
+        if ( new DirectoryInfo(path).Exists == false ) {
+            Directory.CreateDirectory (path);
+        }
+
+        // check if create atlas texture
+        _progress( 0.2f, "Checking atlas texture" );
+        string atlasTexturePath = Path.Combine(path, _atlas.name + ".png");
+        Texture2D atlasTexture = AssetDatabase.LoadAssetAtPath( atlasTexturePath, typeof(Texture2D) ) as Texture2D;
+        if ( atlasTexture == null ||
+             atlasTexture.width != _atlas.width ||
+             atlasTexture.height != _atlas.height ) 
+        {
+            atlasTexture = new Texture2D( _atlas.width, 
+                                          _atlas.height, 
+                                          TextureFormat.ARGB32, 
+                                          false );
+
+            // save texture to png
+            File.WriteAllBytes(atlasTexturePath, atlasTexture.EncodeToPNG());
+            Object.DestroyImmediate(atlasTexture);
+            AssetDatabase.ImportAsset( atlasTexturePath, ImportAssetOptions.ForceSynchronousImport );
+
+            // setup new texture
+            importSettings = TextureImporter.GetAtPath(atlasTexturePath) as TextureImporter;
+            importSettings.maxTextureSize = Mathf.Max( _atlas.width, _atlas.height );
+            importSettings.textureFormat = TextureImporterFormat.AutomaticTruecolor;
+            importSettings.isReadable = true;
+            importSettings.wrapMode = TextureWrapMode.Clamp;
+            importSettings.mipmapEnabled = false;
+            importSettings.textureType = TextureImporterType.Advanced;
+            importSettings.npotScale = TextureImporterNPOTScale.None;
+            AssetDatabase.ImportAsset( atlasTexturePath, ImportAssetOptions.ForceSynchronousImport );
+
+            atlasTexture = (Texture2D)AssetDatabase.LoadAssetAtPath( atlasTexturePath, typeof(Texture2D) );
+        }
+
+        // clean the atlas
+        _progress( 0.3f, "Cleaning atlas texture" );
+        importSettings = TextureImporter.GetAtPath(atlasTexturePath) as TextureImporter;
+        if ( importSettings.isReadable == false ) {
+            importSettings.isReadable = true;
+            AssetDatabase.ImportAsset( atlasTexturePath, ImportAssetOptions.ForceSynchronousImport );
+        }
+        Color buildColor = new Color(0.0f, 0.0f, 0.0f, 0.0f);
+        if ( _atlas.customBuildColor ) {
+            buildColor = _atlas.buildColor;
+        }
+        for ( int i = 0; i < _atlas.width; ++i ) {
+            for ( int j = 0; j < _atlas.height; ++j ) {
+                atlasTexture.SetPixel(i, j, buildColor );
+            }
+        }
+        atlasTexture.Apply(false);
+
+        // fill raw texture to atlas
+        _progress( 0.4f, "Filling texture-info to atlas" );
+        foreach ( exTextureInfo textureInfo in _atlas.textureInfos ) {
+            Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>(textureInfo.rawTextureGUID); 
+            if ( exEditorUtility.IsValidForAtlas(rawTexture) == false ) {
+                exEditorUtility.ImportTextureForAtlas(rawTexture);
+            }
+
+            // NOTE: we do this because the texture already been trimmed, and only this way to make texture have better filter
+            // apply contour bleed
+            if ( _atlas.useContourBleed ) {
+                rawTexture = exTextureUtility.ApplyContourBleed( rawTexture );
+            }
+
+            // copy raw texture into atlas texture
+            exTextureUtility.Fill( atlasTexture
+                                 , rawTexture
+                                 , new Vector2 ( textureInfo.x, textureInfo.y )
+                                 , new Rect ( textureInfo.trim_x, textureInfo.trim_y, textureInfo.width, textureInfo.height )
+                                 , textureInfo.rotated
+                                 );
+
+            //
+            if ( _atlas.useContourBleed ) {
+                Object.DestroyImmediate(rawTexture);
+            }
+
+            // apply padding bleed
+            if ( _atlas.usePaddingBleed ) {
+                exTextureUtility.ApplyPaddingBleed( atlasTexture,
+                                                    new Rect( textureInfo.x, textureInfo.y, textureInfo.width, textureInfo.height ) );
+            }
+        }
+
+        // write new atlas texture to disk
+        File.WriteAllBytes(atlasTexturePath, atlasTexture.EncodeToPNG());
+        AssetDatabase.ImportAsset( atlasTexturePath );
+
+        //
+        _atlas.texture = (Texture2D)AssetDatabase.LoadAssetAtPath( atlasTexturePath, typeof(Texture2D) );
+        _atlas.needRebuild = false;
+    }
+}
