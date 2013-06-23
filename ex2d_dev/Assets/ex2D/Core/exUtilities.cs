@@ -70,6 +70,10 @@ public static class exDebug {
             return ArrayUtility.Contains(defs.Split(';'), "EX_DEBUG");
         }
         set {
+            if (EditorApplication.isPlaying) {
+                Debug.LogError("can't toggle debugging mode when editor is playing");
+                return;
+            }
             if (enabled != value) {
                 string defs = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
                 var defsAry = defs.Split(';');
@@ -88,7 +92,7 @@ public static class exDebug {
 #endif
 }
 
-﻿﻿namespace UnityEngine {
+namespace UnityEngine {
 
     ///////////////////////////////////////////////////////////////////////////////
     ///

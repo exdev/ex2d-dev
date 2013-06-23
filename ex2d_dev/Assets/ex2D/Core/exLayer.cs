@@ -14,7 +14,7 @@
     //#define DRAW_MESH_NOW
 #endif
 
-//#define CAN_RESERVE_VERTEX ///< 删除mesh最后面的顶点时，仅先从index buffer中清除，vertices等数据不标记为脏。因为都是尾端的冗余数据，不用同步。
+#define FORCE_UPDATE_VERTEX_INFO ///< 删除mesh最后面的顶点时，仅先从index buffer和vertex buffer中清除，其它数据不标记为脏。因为是尾端的冗余数据，不同步也可以。
 
 ///////////////////////////////////////////////////////////////////////////////
 // usings
@@ -60,6 +60,7 @@ public class exLayer : MonoBehaviour
         Dynamic,
     }
     const int RESERVED_INDEX_COUNT = 6;    // 如果不手动给出，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
+    const int MAX_DYNAMIC_VERTEX_COUNT = 300;    ///< 超过这个数量的话，layer将会自动进行拆分
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -203,13 +204,10 @@ public class exLayer : MonoBehaviour
         }
         if ((updateFlags & UpdateFlags.VertexAndIndex) == UpdateFlags.VertexAndIndex) {
             // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
-            mesh.Clear(true);
+            mesh.triangles = null;  //这里如果使用clear，那么uv和color就必须赋值，否则有时会出错
         }
         if ((updateFlags & UpdateFlags.Vertex) != 0 || 
             (updateFlags & UpdateFlags.Index) != 0) {           // 如果要重设triangles，则必须同时重设vertices，否则mesh将显示不出来
-            //if ((updateFlags & UpdateFlags.Index) != 0) {
-            //    mesh.Clear(true);                              // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
-            //}
             mesh.vertices = vertices.ToArray();
         }
         if ((updateFlags & UpdateFlags.UV) != 0) {
@@ -293,7 +291,6 @@ public class exLayer : MonoBehaviour
             Debug.LogError("can't find sprite to remove");
             return;
         }
-
         spriteList.RemoveAt(_oldSprite.spriteIndex);
         
         for (int i = _oldSprite.spriteIndex; i < spriteList.Count; ++i) {
@@ -302,24 +299,26 @@ public class exLayer : MonoBehaviour
             sprite.spriteIndex = i;
             sprite.vertexBufferIndex -= _oldSprite.vertexCount;
             // update indices to make them match new vertic index
-            for (int index = sprite.indexBufferIndex; index < sprite.indexBufferIndex + sprite.indexCount; ++index) {
-                indices[index] -= _oldSprite.vertexCount;
+            if (sprite.isInIndexBuffer) {
+                for (int index = sprite.indexBufferIndex; index < sprite.indexBufferIndex + sprite.indexCount; ++index) {
+                    indices[index] -= _oldSprite.vertexCount;
+                }
             }
         }
-        updateFlags |= UpdateFlags.Index;
+        updateFlags |= UpdateFlags.VertexAndIndex;
 
         // update vertices
         vertices.RemoveRange(_oldSprite.vertexBufferIndex, _oldSprite.vertexCount);
         colors32.RemoveRange(_oldSprite.vertexBufferIndex, _oldSprite.vertexCount);
         uvs.RemoveRange(_oldSprite.vertexBufferIndex, _oldSprite.vertexCount);
 
-#if CAN_RESERVE_VERTEX
-        bool needUpdateVertices = (_oldSprite.spriteIndex < spriteList.Count);
-        if (needUpdateVertices) {
-#endif
-            updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
-#if CAN_RESERVE_VERTEX
+#if FORCE_UPDATE_VERTEX_INFO
+        bool removeBack = (_oldSprite.spriteIndex == spriteList.Count);
+        if (!removeBack) {
+            updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
         }
+#else
+        updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
 #endif
 
         if (_oldSprite.isInIndexBuffer) {
@@ -378,6 +377,9 @@ public class exLayer : MonoBehaviour
         indices.TrimExcess();
         uvs.TrimExcess();
         colors32.TrimExcess();
+#if FORCE_UPDATE_VERTEX_INFO
+        updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+#endif
     }
     
     ///////////////////////////////////////////////////////////////////////////////
@@ -494,32 +496,47 @@ public class exLayer : MonoBehaviour
     [ContextMenu("Output Mesh Info")]
     [System.Diagnostics.Conditional("EX_DEBUG")]
     void OutputMeshInfo () {
-        string vertexInfo = "Vertices: ";
+        Debug.Log("exLayer MeshInfo: SpriteCount: " + spriteList.Count, this);
+        string vertexInfo = "Cache Vertices: ";
         foreach (var v in vertices) {
             vertexInfo += v;
             vertexInfo += ", ";
         }
-        Debug.Log(vertexInfo);
+        Debug.Log(vertexInfo, this);
         
         vertexInfo = "Mesh.vertices: ";
         foreach (var v in mesh.vertices) {
             vertexInfo += v;
             vertexInfo += ", ";
         }
-        Debug.Log(vertexInfo);
+        Debug.Log(vertexInfo, this);
 
-        string indicesInfo = "Indices: ";
+        string indicesInfo = "Cache Indices: ";
         foreach (var index in indices) {
             indicesInfo += index;
             indicesInfo += ",";
         }
-        Debug.Log(indicesInfo);
+        Debug.Log(indicesInfo, this);
 
         indicesInfo = "Mesh.triangles: ";
         foreach (var index in mesh.triangles) {
             indicesInfo += index;
             indicesInfo += ",";
         }
-        Debug.Log(indicesInfo);
+        Debug.Log(indicesInfo, this);
+
+        string uvInfo = "Cache uvs: ";
+        foreach (var uv in uvs) {
+            uvInfo += uv;
+            uvInfo += ",";
+        }
+        Debug.Log(uvInfo, this);
+        
+        uvInfo = "Mesh.uvs: ";
+        foreach (var uv in mesh.uv) {
+            uvInfo += uv;
+            uvInfo += ",";
+        }
+        Debug.Log(uvInfo, this);
     }
 }
