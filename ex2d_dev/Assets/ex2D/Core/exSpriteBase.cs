@@ -27,7 +27,7 @@ public class exSpriteBase : MonoBehaviour {
     [System.NonSerialized] public int vertexCount = 4;
     [System.NonSerialized] public int indexCount = 6;
     
-    // cached for layer
+    // cached for exMesh
     [System.NonSerialized] public int spriteIndex = -1;
     [System.NonSerialized] public int vertexBufferIndex = -1;
     [System.NonSerialized] public int indexBufferIndex = -1;    //如果从layer中隐藏，这个值必须为-1
@@ -40,6 +40,9 @@ public class exSpriteBase : MonoBehaviour {
     [System.NonSerialized] public UpdateFlags updateFlags = UpdateFlags.All;
 
     [System.NonSerialized] public Transform cachedTransform = null;     ///< only available after Awake
+    
+    // TODO: if material changed, update sprite's exMesh
+    public Material material;
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -56,10 +59,10 @@ public class exSpriteBase : MonoBehaviour {
                 return;
             }
             if (cachedTransform != null) {
-                if (layer_) {
+                if (layer_ != null) {
                     layer_.Remove(this);
                 }
-                if (value) {
+                if (value != null) {
                     bool show = enabled && gameObject.activeInHierarchy;
                     value.Add(this, show);
                 }
@@ -90,30 +93,30 @@ public class exSpriteBase : MonoBehaviour {
 
     void Awake () {
         cachedTransform = transform;
-        if (layer_) {
+        if (layer_ != null) {
             bool show = enabled;
             layer_.Add(this, show);
         }
     }
 
     void OnEnable () {
-        if (layer_) {
+        if (layer_ != null) {
             layer_.ShowSprite(this);
         }
     }
 
     void OnDisable () {
-        if (layer_) {
+        if (layer_ != null) {
             layer_.HideSprite(this);
         }
     }
 
     void OnDestroy () {
-        if (layer_) {
+        if (layer_ != null) {
             layer_.Remove(this);
         }
         layer_ = null;
-        exDebug.Assert(!layer_ || ((enabled && gameObject.activeInHierarchy) == isInIndexBuffer), 
+        exDebug.Assert(((enabled && gameObject.activeInHierarchy) == isInIndexBuffer), 
                        "a sprite's logic visibility should equals to it's triangle visibility");
     }
 

@@ -29,7 +29,9 @@ public class ex2DMng : MonoBehaviour
     ///////////////////////////////////////////////////////////////////////////////
 
     [System.NonSerialized] public static ex2DMng instance;
-
+#if EX_DEBUG
+    [SerializeField]
+#endif
     private List<exLayer> layerList = new List<exLayer>();
     private Camera cachedCamera;
     
@@ -61,13 +63,13 @@ public class ex2DMng : MonoBehaviour
     // 使用MeshRenderer时，要在OnPreRender中调用
     // ------------------------------------------------------------------ 
 
-    void OnPreCull () {
+    void OnPreRender () {
         if (cachedCamera.orthographicSize != Screen.height) {
             //cachedCamera.orthographicSize = Screen.height;
         }
         
         for (int i = 0; i < layerList.Count; ++i) {
-            layerList[i].UpdateMesh();
+            layerList[i].UpdateAllMeshes();
         }
     }
 
@@ -77,7 +79,7 @@ public class ex2DMng : MonoBehaviour
 
     void OnDestroy () {
         for (int i = 0; i < layerList.Count; ++i) {
-            Object.DestroyImmediate(layerList[i].gameObject);
+            layerList[i].Clear();
         }
         layerList.Clear();
     }
@@ -91,7 +93,7 @@ public class ex2DMng : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public exLayer CreateLayer () {
-        exLayer layer = exLayer.Create(this);
+        exLayer layer = new exLayer();
         layerList.Add(layer);
         return layer;
     }
@@ -103,6 +105,6 @@ public class ex2DMng : MonoBehaviour
     public void DestroyLayer (exLayer layer) {
         exDebug.Assert(layerList.Contains(layer), "can't find layer in ex2DMng");
         layerList.Remove(layer);
-        Object.DestroyImmediate(layer.gameObject);
+        layer.Clear();
     }
 }
