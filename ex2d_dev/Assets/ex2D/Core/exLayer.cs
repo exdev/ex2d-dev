@@ -14,6 +14,8 @@
     //#define DRAW_MESH_NOW
 #endif
 
+//#define CAN_RESERVE_VERTEX ///< 删除mesh最后面的顶点时，仅先从index buffer中清除，vertices等数据不标记为脏。因为都是尾端的冗余数据，不用同步。
+
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
@@ -58,7 +60,6 @@ public class exLayer : MonoBehaviour
         Dynamic,
     }
     const int RESERVED_INDEX_COUNT = 6;    // 如果不手动给出，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
-    const bool CAN_RESERVE_VERTEX = false; // 删除mesh最后面的顶点时，仅先从index buffer中清除，vertices等数据不标记为脏
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -206,6 +207,9 @@ public class exLayer : MonoBehaviour
         }
         if ((updateFlags & UpdateFlags.Vertex) != 0 || 
             (updateFlags & UpdateFlags.Index) != 0) {           // 如果要重设triangles，则必须同时重设vertices，否则mesh将显示不出来
+            //if ((updateFlags & UpdateFlags.Index) != 0) {
+            //    mesh.Clear(true);                              // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
+            //}
             mesh.vertices = vertices.ToArray();
         }
         if ((updateFlags & UpdateFlags.UV) != 0) {
@@ -302,19 +306,21 @@ public class exLayer : MonoBehaviour
                 indices[index] -= _oldSprite.vertexCount;
             }
         }
+        updateFlags |= UpdateFlags.Index;
 
         // update vertices
-        // TODO: 如果sprite的顶点在vertices的最后，把vertices的坑留着，只改变indices
         vertices.RemoveRange(_oldSprite.vertexBufferIndex, _oldSprite.vertexCount);
         colors32.RemoveRange(_oldSprite.vertexBufferIndex, _oldSprite.vertexCount);
         uvs.RemoveRange(_oldSprite.vertexBufferIndex, _oldSprite.vertexCount);
 
-#pragma warning disable 0429
-        bool needUpdateVertices = (!CAN_RESERVE_VERTEX || _oldSprite.spriteIndex < spriteList.Count);
-#pragma warning restore 0429
+#if CAN_RESERVE_VERTEX
+        bool needUpdateVertices = (_oldSprite.spriteIndex < spriteList.Count);
         if (needUpdateVertices) {
+#endif
             updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+#if CAN_RESERVE_VERTEX
         }
+#endif
 
         if (_oldSprite.IsInIndexBuffer) {
             RemoveIndices(_oldSprite);
