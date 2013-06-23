@@ -68,21 +68,21 @@ public class exSpriteBase : MonoBehaviour {
         }
     }
 
-    public bool IsInIndexBuffer {
+    public bool isInIndexBuffer {
         get {
             return indexBufferIndex != -1;
         }
     }
 
-    public bool IsInVertexBuffer {
-        get {
-            bool awaked = cachedTransform;
-            bool isInLayer = layer_ && awaked;
-            exDebug.Assert(isInLayer == layer && 0 <= spriteIndex && spriteIndex < layer.spriteList.Count &&
-                           object.ReferenceEquals(this, layer.spriteList[spriteIndex]));
-            return isInLayer;
-        }
-    }
+    //public bool isInVertexBuffer {
+    //    get {
+    //        bool awaked = cachedTransform;
+    //        bool isInLayer = layer_ && awaked;
+    //        exDebug.Assert(isInLayer == layer && 0 <= spriteIndex && spriteIndex < layer.spriteList.Count &&
+    //                       object.ReferenceEquals(this, layer.spriteList[spriteIndex]));
+    //        return isInLayer;
+    //    }
+    //}
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
@@ -113,7 +113,7 @@ public class exSpriteBase : MonoBehaviour {
             layer_.Remove(this);
         }
         layer_ = null;
-        exDebug.Assert(!layer_ || ((enabled && gameObject.activeInHierarchy) == IsInIndexBuffer), 
+        exDebug.Assert(!layer_ || ((enabled && gameObject.activeInHierarchy) == isInIndexBuffer), 
                        "a sprite's logic visibility should equals to it's triangle visibility");
     }
 

@@ -10,6 +10,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using System.Collections;
 using Diagnostics = System.Diagnostics;
 
@@ -54,6 +57,35 @@ public static class exDebug {
             }
         }
     }
+
+#if UNITY_EDITOR
+
+    // ------------------------------------------------------------------ 
+    /// 在Editor中访问当前平台的EX_DEBUG宏定义，修改它将触发脚本重新编译
+    // ------------------------------------------------------------------ 
+
+    public static bool enabled {
+        get {
+            string defs = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            return ArrayUtility.Contains(defs.Split(';'), "EX_DEBUG");
+        }
+        set {
+            if (enabled != value) {
+                string defs = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+                var defsAry = defs.Split(';');
+                if (value) {
+                    ArrayUtility.Add(ref defsAry, "EX_DEBUG");
+                }
+                else {
+                    ArrayUtility.Remove(ref defsAry, "EX_DEBUG");
+                }
+                defs = string.Join(";", defsAry);
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, defs);
+            }
+        }
+    }
+
+#endif
 }
 
 ﻿﻿namespace UnityEngine {
