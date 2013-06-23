@@ -9,7 +9,7 @@
 // defines
 ///////////////////////////////////////////////////////////////////////////////
 
-#define USE_DRAW_MESH
+//#define USE_DRAW_MESH
 #if USE_DRAW_MESH
     //#define DRAW_MESH_NOW
 #endif
@@ -164,7 +164,7 @@ public class exLayer : MonoBehaviour
     public void UpdateMesh () {
         for (int i = 0; i < spriteList.Count; ++i) {
             exSpriteBase sprite = spriteList[i];
-            exDebug.Assert((sprite.enabled && sprite.gameObject.activeInHierarchy) == sprite.IsInIndexBuffer);
+            exDebug.Assert((sprite.enabled && sprite.gameObject.activeInHierarchy) == sprite.isInIndexBuffer);
 
             if (sprite.enabled) {
                 // TODO: 把对mesh的操作做成虚函数由各个sprite自己进行
@@ -322,7 +322,7 @@ public class exLayer : MonoBehaviour
         }
 #endif
 
-        if (_oldSprite.IsInIndexBuffer) {
+        if (_oldSprite.isInIndexBuffer) {
             RemoveIndices(_oldSprite);
         }
 
@@ -344,7 +344,7 @@ public class exLayer : MonoBehaviour
             return;
         }
         // show
-        if (!_sprite.IsInIndexBuffer) {
+        if (!_sprite.isInIndexBuffer) {
             AddIndices(_sprite);
         }
     }
@@ -361,7 +361,7 @@ public class exLayer : MonoBehaviour
             return;
         }
         // hide
-        if (_sprite.IsInIndexBuffer) {
+        if (_sprite.isInIndexBuffer) {
             RemoveIndices(_sprite);
         }
         exDebug.Assert(_sprite.indexBufferIndex == -1);
@@ -389,8 +389,8 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     void AddIndices (exSpriteBase _sprite) {
-        exDebug.Assert(!_sprite.IsInIndexBuffer);
-        if (!_sprite.IsInIndexBuffer) {
+        exDebug.Assert(!_sprite.isInIndexBuffer);
+        if (!_sprite.isInIndexBuffer) {
             _sprite.indexBufferIndex = indices.Count;
             indices.Add(_sprite.vertexBufferIndex + 0);
             indices.Add(_sprite.vertexBufferIndex + 1);
@@ -411,8 +411,8 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     
     void RemoveIndices (exSpriteBase _sprite) {
-        exDebug.Assert(_sprite.IsInIndexBuffer);
-        if (_sprite.IsInIndexBuffer) {
+        exDebug.Assert(_sprite.isInIndexBuffer);
+        if (_sprite.isInIndexBuffer) {
             // update indices
             indices.RemoveRange(_sprite.indexBufferIndex, _sprite.indexCount);
             

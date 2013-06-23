@@ -12,6 +12,7 @@
 using UnityEditor;
 using UnityEngine;
 using System.IO;
+using System;
 
 ///////////////////////////////////////////////////////////////////////////////
 // defines
@@ -45,6 +46,17 @@ class ex2DPreferencesWindow : ScriptableWizard {
             EditorPrefs.SetString( ex2DEditor.atlasBuildPathKey, ex2DEditor.atlasBuildPath );
         }
 
+        // ======================================================== 
+        // EX_DEBUG macro
+        // ======================================================== 
+
+        bool isDebug = exDebug.enabled;
+        bool newIsDebug = EditorGUILayout.Toggle ( "Debugging", isDebug );
+        if (newIsDebug != isDebug) {
+            exDebug.enabled = newIsDebug;
+        }
+
         EditorGUI.indentLevel--;
     }
+
 }
