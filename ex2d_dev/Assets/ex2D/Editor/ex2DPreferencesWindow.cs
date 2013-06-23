@@ -50,10 +50,12 @@ class ex2DPreferencesWindow : ScriptableWizard {
         // EX_DEBUG macro
         // ======================================================== 
 
-        bool isDebug = exDebug.enabled;
-        bool newIsDebug = EditorGUILayout.Toggle ( "Debugging", isDebug );
-        if (newIsDebug != isDebug) {
-            exDebug.enabled = newIsDebug;
+        if (!EditorApplication.isPlaying) {
+            bool isDebug = exDebug.enabled;
+            bool newIsDebug = EditorGUILayout.Toggle("Debugging", isDebug);
+            if (newIsDebug != isDebug) {
+                exDebug.enabled = newIsDebug;
+            }
         }
 
         EditorGUI.indentLevel--;
