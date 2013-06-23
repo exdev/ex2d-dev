@@ -95,7 +95,17 @@ public class exAtlas : ScriptableObject {
     public Color elementSelectColor = new Color( 0.0f, 0.0f, 1.0f, 1.0f ); ///< the select rect color of each element
 
     //
-    public float scale = 1.0f; ///< the zoom value of the atlas
+    [SerializeField] float scale_ = 1.0f; ///< the zoom value of the atlas
+    public float scale {
+        get { return scale_; }
+        set {
+            if ( scale_ != value ) {
+                scale_ = value;
+                scale_ = Mathf.Clamp( scale_, 0.1f, 2.0f );
+                scale_ = Mathf.Round( scale_ * 100.0f ) / 100.0f;
+            }
+        }
+    }
 
     // bitmap fonts
     // public List<exBitmapFont> bitmapFonts = new List<exBitmapFont>(); ///< the list of bitmap fonts in the atlas

@@ -65,7 +65,13 @@ class exSceneEditor : EditorWindow {
     void OnGUI () {
         // toolbar
         Toolbar ();
+        float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
 
+        // TODO:
+        // settings
+        GUILayout.Space(40);
+
+        // layer & scene
         EditorGUILayout.BeginHorizontal();
             //
             LayerField ();
@@ -74,15 +80,23 @@ class exSceneEditor : EditorWindow {
             GUILayout.Space(40);
 
             // scene filed
-            Rect lastRect = GUILayoutUtility.GetLastRect ();  
             int margin = 40; 
-            Rect sceneRect = new Rect( lastRect.xMax + margin, 
-                                       lastRect.yMax + margin, 
-                                       position.width - lastRect.xMax - margin*2,
-                                       position.height - lastRect.yMax - margin*2 );
+            Rect lastRect = GUILayoutUtility.GetLastRect ();  
+            Rect sceneRect = new Rect( lastRect.xMax,
+                                       toolbarHeight + 40,
+                                       position.width - lastRect.xMax - margin,
+                                       position.height - (toolbarHeight + 40) - margin );
             sceneRect = exGeometryUtility.Rect_FloorToInt(sceneRect);
             SceneField(sceneRect);
         EditorGUILayout.EndHorizontal();
+
+        if ( Event.current.type == EventType.Repaint ) {
+            Rect lastRect2 = GUILayoutUtility.GetLastRect ();  
+            exEditorUtility.DrawRectBorder ( lastRect2, Color.red );
+        }
+
+        // debug info
+        DebugInfos ();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -121,6 +135,14 @@ class exSceneEditor : EditorWindow {
                                                 EditorStyles.toolbarTextField,
                                                 GUILayout.Width(30) );
 
+            // ======================================================== 
+            // Help
+            // ======================================================== 
+
+            if ( GUILayout.Button( exEditorUtility.HelpTexture(), EditorStyles.toolbarButton ) ) {
+                Help.BrowseURL("http://www.ex-dev.com/ex2d/wiki/doku.php?id=manual:scene_editor");
+            }
+
         EditorGUILayout.EndHorizontal ();
     }
 
@@ -131,7 +153,6 @@ class exSceneEditor : EditorWindow {
     void LayerField () {
         EditorGUILayout.BeginVertical( GUILayout.Width(200), GUILayout.MinWidth(200), GUILayout.MaxWidth(200) );
             EditorGUILayout.LabelField ( "Layers" );
-            EditorGUILayout.LabelField ( "editCameraPos = " + editCameraPos );
         EditorGUILayout.EndVertical();
     }
 
@@ -139,17 +160,26 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void DebugInfos () {
+        EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField ( "Camera Pos: " + editCameraPos );
+        EditorGUILayout.EndHorizontal();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void SceneField ( Rect _rect ) {
-        int controlID = GUIUtility.GetControlID(sceneFieldHash, FocusType.Passive);
-
         GUILayoutUtility.GetRect ( _rect.width+4, _rect.height+4, GUI.skin.box );
-
-        float half_w = _rect.width/2.0f;
-        float half_h = _rect.height/2.0f;
+        int controlID = GUIUtility.GetControlID(sceneFieldHash, FocusType.Passive);
 
         Event e = Event.current;
         switch ( e.type ) {
         case EventType.Repaint:
+            float half_w = _rect.width/2.0f;
+            float half_h = _rect.height/2.0f;
+
             Color old = GUI.color;
             GUI.color = background;
                 Texture2D checker = exEditorUtility.CheckerboardTexture();
@@ -214,6 +244,33 @@ class exSceneEditor : EditorWindow {
                 Repaint();
                 e.Use();
 			}
+            break;
+
+        case EventType.DragUpdated:
+            if ( _rect.Contains(e.mousePosition) ) {
+                // Show a copy icon on the drag
+                foreach ( Object o in DragAndDrop.objectReferences ) {
+                    if ( o is exTextureInfo ) {
+                        DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                        break;
+                    }
+                }
+                e.Use();
+            }
+            break;
+
+        case EventType.DragPerform:
+            if ( _rect.Contains(e.mousePosition) ) {
+                DragAndDrop.AcceptDrag();
+
+                foreach ( Object o in DragAndDrop.objectReferences ) {
+                    if ( o is exTextureInfo ) {
+                    }
+                }
+
+                Repaint();
+                e.Use();
+            }
             break;
         }
     }

@@ -58,7 +58,7 @@ partial class exAtlasEditor : EditorWindow {
     Vector2 mouseDownPos = Vector2.zero;
     Rect selectRect = new Rect( 0, 0, 1, 1 );
     bool inRectSelectState = false;
-    bool inDraggingTextureInfoState = false;
+    // bool inDraggingTextureInfoState = false;
     List<Object> importObjects = new List<Object>();
     Object oldSelActiveObject;
     List<Object> oldSelObjects = new List<Object>();
@@ -197,7 +197,7 @@ partial class exAtlasEditor : EditorWindow {
         oldSelObjects.Clear();
 
         inRectSelectState = false;
-        inDraggingTextureInfoState = false;
+        // inDraggingTextureInfoState = false;
     }
 
     // ------------------------------------------------------------------ 
@@ -242,23 +242,19 @@ partial class exAtlasEditor : EditorWindow {
             // zoom in/out slider 
             // ======================================================== 
 
-            float scale = curEdit.scale;
             GUILayout.Label ("Zoom");
             GUILayout.Space(5);
-            scale = GUILayout.HorizontalSlider ( scale, 
-                                                 0.1f, 
-                                                 2.0f, 
-                                                 GUILayout.MinWidth(50),
-                                                 GUILayout.MaxWidth(150) );
+            curEdit.scale = GUILayout.HorizontalSlider ( curEdit.scale, 
+                                                         0.1f, 
+                                                         2.0f, 
+                                                         GUILayout.MinWidth(50),
+                                                         GUILayout.MaxWidth(150) );
             GUILayout.Space(5);
-            scale = EditorGUILayout.FloatField( scale,
-                                                EditorStyles.toolbarTextField,
-                                                GUILayout.Width(30) );
-            scale = Mathf.Clamp( scale, 0.1f, 2.0f );
-            scale = Mathf.Round( scale * 100.0f ) / 100.0f;
+            curEdit.scale = EditorGUILayout.FloatField( curEdit.scale,
+                                                        EditorStyles.toolbarTextField,
+                                                        GUILayout.Width(30) );
             if ( GUI.changed ) {
                 GUI.changed = false;
-                curEdit.scale = scale;
                 EditorUtility.SetDirty(curEdit);
             }
 
@@ -577,7 +573,7 @@ partial class exAtlasEditor : EditorWindow {
                             ToggleSelected(textureInfo);
                         }
                         else {
-                            inDraggingTextureInfoState = true; 
+                            // inDraggingTextureInfoState = true; 
                             if ( selectedTextureInfos.IndexOf(textureInfo) == -1 ) {
                                 selectedTextureInfos.Clear();
                                 selectedTextureInfos.Add(textureInfo);
@@ -606,7 +602,7 @@ partial class exAtlasEditor : EditorWindow {
             }
             break;
 
-        case  EventType.DragPerform:
+        case EventType.DragPerform:
             if ( _rect.Contains(e.mousePosition) ) {
                 DragAndDrop.AcceptDrag();
 
@@ -658,7 +654,6 @@ partial class exAtlasEditor : EditorWindow {
 
                 e.Use();
             }
-
             break;
         }
     }
@@ -743,9 +738,7 @@ partial class exAtlasEditor : EditorWindow {
             break;
 
         case EventType.ScrollWheel:
-            float scale = curEdit.scale - e.delta.y * 0.1f;
-            scale = Mathf.Round( scale * 100.0f ) / 100.0f;
-            curEdit.scale = scale;
+            curEdit.scale += -e.delta.y * 0.1f;
 
             Repaint();
             e.Use();
