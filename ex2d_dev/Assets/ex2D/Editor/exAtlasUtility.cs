@@ -315,7 +315,14 @@ public static class exAtlasUtility {
 
         // write new atlas texture to disk
         File.WriteAllBytes(atlasTexturePath, atlasTexture.EncodeToPNG());
-        AssetDatabase.ImportAsset( atlasTexturePath );
+        AssetDatabase.ImportAsset( atlasTexturePath, ImportAssetOptions.ForceSynchronousImport );
+
+        // turn-off readable to save memory
+        if ( _atlas.readable == false ) {
+            importSettings = TextureImporter.GetAtPath(atlasTexturePath) as TextureImporter;
+            importSettings.isReadable = false;
+            AssetDatabase.ImportAsset( atlasTexturePath, ImportAssetOptions.ForceSynchronousImport );
+        }
 
         //
         _atlas.texture = (Texture2D)AssetDatabase.LoadAssetAtPath( atlasTexturePath, typeof(Texture2D) );

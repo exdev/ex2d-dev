@@ -468,8 +468,13 @@ partial class exAtlasEditor : EditorWindow {
 
                 if ( EditorGUILayout.Toggle ( "Read/Write Enabled", curEdit.readable ) != curEdit.readable ) {
                     curEdit.readable = !curEdit.readable;
-                    // TODO:
-                    // exTextureHelper.SetReadable ( curEdit.texture, curEdit.readable );
+
+                    if ( curEdit.texture != null ) {
+                        string atlasTexturePath = AssetDatabase.GetAssetPath(curEdit.texture);
+                        TextureImporter importSettings = TextureImporter.GetAtPath(atlasTexturePath) as TextureImporter;
+                        importSettings.isReadable = curEdit.readable;
+                        AssetDatabase.ImportAsset( atlasTexturePath, ImportAssetOptions.ForceSynchronousImport );
+                    }
                 }
 
                 // ======================================================== 
@@ -735,6 +740,15 @@ partial class exAtlasEditor : EditorWindow {
 
                 e.Use();
 			}
+            break;
+
+        case EventType.ScrollWheel:
+            float scale = curEdit.scale - e.delta.y * 0.1f;
+            scale = Mathf.Round( scale * 100.0f ) / 100.0f;
+            curEdit.scale = scale;
+
+            Repaint();
+            e.Use();
             break;
 
         case EventType.KeyDown:

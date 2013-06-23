@@ -76,10 +76,12 @@ class exSceneEditor : EditorWindow {
             // scene filed
             Rect lastRect = GUILayoutUtility.GetLastRect ();  
             int margin = 40; 
-            SceneField ( new Rect( lastRect.xMax + margin, 
-                                   lastRect.yMax + margin, 
-                                   position.width - lastRect.xMax - margin*2,
-                                   position.height - lastRect.yMax - margin*2 ) );
+            Rect sceneRect = new Rect( lastRect.xMax + margin, 
+                                       lastRect.yMax + margin, 
+                                       position.width - lastRect.xMax - margin*2,
+                                       position.height - lastRect.yMax - margin*2 );
+            sceneRect = exGeometryUtility.Rect_FloorToInt(sceneRect);
+            SceneField(sceneRect);
         EditorGUILayout.EndHorizontal();
     }
 
@@ -140,7 +142,7 @@ class exSceneEditor : EditorWindow {
     void SceneField ( Rect _rect ) {
         int controlID = GUIUtility.GetControlID(sceneFieldHash, FocusType.Passive);
 
-        GUILayoutUtility.GetRect ( _rect.width+2, _rect.height+2, GUI.skin.box );
+        GUILayoutUtility.GetRect ( _rect.width+4, _rect.height+4, GUI.skin.box );
 
         float half_w = _rect.width/2.0f;
         float half_h = _rect.height/2.0f;
@@ -159,12 +161,13 @@ class exSceneEditor : EditorWindow {
                                                          _rect.height/(checker.height * scale) ) );
 
                 // center line
-                float center_x = -editCameraPos.x + _rect.x + half_w + 1;
-                float center_y =  editCameraPos.y + _rect.y + half_h + 1;
+                float center_x = -editCameraPos.x + _rect.x + half_w;
+                float center_y =  editCameraPos.y + _rect.y + half_h;
                 if ( center_y >= _rect.y && center_y <= _rect.yMax )
-                    exEditorUtility.DrawLine ( _rect.x, center_y, _rect.xMax, center_y, Color.black, 1 );
-                if ( center_x >= _rect.x && center_x <= _rect.xMax )
-                    exEditorUtility.DrawLine ( center_x, _rect.y, center_x, _rect.yMax, Color.black, 1 );
+                    exEditorUtility.DrawLine ( _rect.x, center_y, _rect.xMax, center_y, Color.white, 1 );
+                if ( center_x >= _rect.x && center_x <= _rect.xMax ) {
+                    exEditorUtility.DrawLine ( center_x, _rect.y, center_x, _rect.yMax, Color.white, 1 );
+                }
 
                 // border
                 exEditorUtility.DrawRect( new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 ),

@@ -166,13 +166,20 @@ public static class exEditorUtility {
 
         Color savedColor = Handles.color;
         Handles.color = _color;
-
-        if ( _width > 1 )
-            Handles.DrawAAPolyLine(_width, new Vector3[] {a,b} );
-        else 
-            Handles.DrawLine( a, b );
-
+            if ( _width > 1 )
+                Handles.DrawAAPolyLine(_width, new Vector3[] {a,b} );
+            else {
+                Handles.DrawLine( a, b );
+            }
         Handles.color = savedColor;
+
+        // Material line2D = (Material)EditorGUIUtility.LoadRequired("SceneView/2DHandleLines.mat");
+        // line2D.SetPass(0);
+        // GL.Begin( GL.LINES );
+        // GL.Color(_color);
+        // GL.Vertex3( xStart, yStart, 0 );
+        // GL.Vertex3( xEnd, yEnd, 0 );
+        // GL.End();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
