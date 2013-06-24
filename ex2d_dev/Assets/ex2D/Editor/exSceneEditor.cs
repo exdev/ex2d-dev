@@ -23,7 +23,7 @@ using System.Collections.Generic;
 
 class exSceneEditor : EditorWindow {
 
-	static int sceneFieldHash = "SceneField".GetHashCode();
+	static int sceneViewFieldHash = "SceneViewField".GetHashCode();
 
     float scale_ = 1.0f;
     float scale {
@@ -39,6 +39,7 @@ class exSceneEditor : EditorWindow {
 
     Color background = Color.gray;
     Vector2 editCameraPos = Vector2.zero;
+    Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -65,10 +66,10 @@ class exSceneEditor : EditorWindow {
     void OnGUI () {
         // toolbar
         Toolbar ();
-        float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
 
         // TODO:
-        // settings
+        // Settings
+
         GUILayout.Space(40);
 
         // layer & scene
@@ -81,19 +82,11 @@ class exSceneEditor : EditorWindow {
 
             // scene filed
             int margin = 40; 
-            Rect lastRect = GUILayoutUtility.GetLastRect ();  
-            Rect sceneRect = new Rect( lastRect.xMax,
-                                       toolbarHeight + 40,
-                                       position.width - lastRect.xMax - margin,
-                                       position.height - (toolbarHeight + 40) - margin );
-            sceneRect = exGeometryUtility.Rect_FloorToInt(sceneRect);
-            SceneField(sceneRect);
-        EditorGUILayout.EndHorizontal();
+            float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
 
-        if ( Event.current.type == EventType.Repaint ) {
-            Rect lastRect2 = GUILayoutUtility.GetLastRect ();  
-            exEditorUtility.DrawRectBorder ( lastRect2, Color.red );
-        }
+            Layout_SceneViewField ( Mathf.FloorToInt(position.width - 200 - 40 - 10 - margin),
+                                    Mathf.FloorToInt(position.height - toolbarHeight - 40 - margin) );
+        EditorGUILayout.EndHorizontal();
 
         // debug info
         DebugInfos ();
@@ -120,20 +113,32 @@ class exSceneEditor : EditorWindow {
             GUILayout.FlexibleSpace();
 
             // ======================================================== 
+            // Reset 
+            // ======================================================== 
+
+            if ( GUILayout.Button( "Reset", EditorStyles.toolbarButton ) ) {
+                editCameraPos = Vector2.zero;
+            }
+
+            // ======================================================== 
             // zoom in/out slider 
             // ======================================================== 
 
             GUILayout.Label ("Zoom");
-            GUILayout.Space(5);
+            EditorGUILayout.Space();
             scale = GUILayout.HorizontalSlider ( scale, 
                                                  0.1f, 
                                                  10.0f, 
-                                                 GUILayout.MinWidth(50),
-                                                 GUILayout.MaxWidth(150) );
-            GUILayout.Space(5);
+                                                 new GUILayoutOption [] {
+                                                    GUILayout.MinWidth(50),
+                                                    GUILayout.MaxWidth(150)
+                                                 } );
+            EditorGUILayout.Space();
             scale = EditorGUILayout.FloatField( scale,
                                                 EditorStyles.toolbarTextField,
-                                                GUILayout.Width(30) );
+                                                new GUILayoutOption [] {
+                                                    GUILayout.Width(30)
+                                                } );
 
             // ======================================================== 
             // Help
@@ -151,7 +156,12 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void LayerField () {
-        EditorGUILayout.BeginVertical( GUILayout.Width(200), GUILayout.MinWidth(200), GUILayout.MaxWidth(200) );
+        EditorGUILayout.BeginVertical( new GUILayoutOption [] {
+                                           GUILayout.Width(200), 
+                                           GUILayout.MinWidth(200), 
+                                           GUILayout.MaxWidth(200),
+                                           GUILayout.ExpandWidth(false),
+                                       } );
             EditorGUILayout.LabelField ( "Layers" );
         EditorGUILayout.EndVertical();
     }
@@ -162,7 +172,18 @@ class exSceneEditor : EditorWindow {
 
     void DebugInfos () {
         EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField ( "Camera Pos: " + editCameraPos );
+            string text = "";
+            int width = -1;
+            
+            text = "Camera Pos: " + editCameraPos;
+            // width = (int)EditorStyles.label.CalcSize(new GUIContent(text)).x;
+            width = 180;
+            EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
+
+            text = "Viewport: " + new Vector2(sceneViewRect.width, sceneViewRect.height).ToString();
+            // width = (int)EditorStyles.label.CalcSize(new GUIContent(text)).x;
+            width = 180;
+            EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
         EditorGUILayout.EndHorizontal();
     }
 
@@ -170,37 +191,45 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void SceneField ( Rect _rect ) {
-        GUILayoutUtility.GetRect ( _rect.width+4, _rect.height+4, GUI.skin.box );
-        int controlID = GUIUtility.GetControlID(sceneFieldHash, FocusType.Passive);
-
+    void Layout_SceneViewField ( int _width, int _height ) {
+        Rect rect = GUILayoutUtility.GetRect ( _width+4, _height+4, 
+                                               new GUILayoutOption[] {
+                                                   GUILayout.ExpandWidth(false),
+                                                   GUILayout.ExpandHeight(false)
+                                               });
+        SceneViewField (rect);
+    }
+    void SceneViewField ( Rect _rect ) {
+        int controlID = GUIUtility.GetControlID(sceneViewFieldHash, FocusType.Passive);
         Event e = Event.current;
+
         switch ( e.type ) {
         case EventType.Repaint:
-            float half_w = _rect.width/2.0f;
-            float half_h = _rect.height/2.0f;
+            sceneViewRect = new Rect( _rect.x + 2, _rect.y + 2, _rect.width - 4, _rect.height - 4 );
+            float half_w = sceneViewRect.width/2.0f;
+            float half_h = sceneViewRect.height/2.0f;
 
             Color old = GUI.color;
             GUI.color = background;
                 Texture2D checker = exEditorUtility.CheckerboardTexture();
                 // background
-                GUI.DrawTextureWithTexCoords ( _rect, checker, 
+                GUI.DrawTextureWithTexCoords ( sceneViewRect, checker, 
                                                new Rect( (-half_w + editCameraPos.x)/(checker.width * scale), 
                                                          (-half_h + editCameraPos.y)/(checker.height * scale), 
-                                                         _rect.width/(checker.width * scale), 
-                                                         _rect.height/(checker.height * scale) ) );
+                                                         sceneViewRect.width/(checker.width * scale), 
+                                                         sceneViewRect.height/(checker.height * scale) ) );
 
                 // center line
-                float center_x = -editCameraPos.x + _rect.x + half_w;
-                float center_y =  editCameraPos.y + _rect.y + half_h;
-                if ( center_y >= _rect.y && center_y <= _rect.yMax )
-                    exEditorUtility.DrawLine ( _rect.x, center_y, _rect.xMax, center_y, Color.white, 1 );
-                if ( center_x >= _rect.x && center_x <= _rect.xMax ) {
-                    exEditorUtility.DrawLine ( center_x, _rect.y, center_x, _rect.yMax, Color.white, 1 );
+                float center_x = -editCameraPos.x + sceneViewRect.x + half_w;
+                float center_y =  editCameraPos.y + sceneViewRect.y + half_h;
+                if ( center_y >= sceneViewRect.y && center_y <= sceneViewRect.yMax )
+                    exEditorUtility.DrawLine ( sceneViewRect.x, center_y, sceneViewRect.xMax, center_y, Color.white, 1 );
+                if ( center_x >= sceneViewRect.x && center_x <= sceneViewRect.xMax ) {
+                    exEditorUtility.DrawLine ( center_x, sceneViewRect.y, center_x, sceneViewRect.yMax, Color.white, 1 );
                 }
 
                 // border
-                exEditorUtility.DrawRect( new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 ),
+                exEditorUtility.DrawRect( _rect,
                                           new Color( 1,1,1,0 ), 
                                           Color.white );
             GUI.color = old;

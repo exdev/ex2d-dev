@@ -121,7 +121,7 @@ partial class exAtlasEditor : EditorWindow {
 
     void OnGUI () {
         if ( curEdit == null ) {
-            GUILayout.Space(10);
+            EditorGUILayout.Space();
             GUILayout.Label ( "Please select an Atlas" );
             return;
         }
@@ -155,7 +155,7 @@ partial class exAtlasEditor : EditorWindow {
             if ( newAtlas != curEdit ) 
                 Selection.activeObject = newAtlas;
 
-            GUILayout.Space(10);
+            EditorGUILayout.Space();
 
             //
             EditorGUILayout.BeginHorizontal();
@@ -238,14 +238,14 @@ partial class exAtlasEditor : EditorWindow {
                 EditorGUIUtility.PingObject(Selection.objects[selectIdx]);
             }
             GUI.enabled = true;
-            GUILayout.Space(5);
+            EditorGUILayout.Space();
 
             // ======================================================== 
             // zoom in/out slider 
             // ======================================================== 
 
             GUILayout.Label ("Zoom");
-            GUILayout.Space(5);
+            EditorGUILayout.Space();
             curEdit.scale = GUILayout.HorizontalSlider ( curEdit.scale, 
                                                          0.1f, 
                                                          2.0f, 
@@ -253,7 +253,7 @@ partial class exAtlasEditor : EditorWindow {
                                                              GUILayout.MinWidth(50),
                                                              GUILayout.MaxWidth(150)
                                                          } );
-            GUILayout.Space(5);
+            EditorGUILayout.Space();
             curEdit.scale = EditorGUILayout.FloatField( curEdit.scale,
                                                         EditorStyles.toolbarTextField,
                                                         new GUILayoutOption[] {
@@ -269,7 +269,7 @@ partial class exAtlasEditor : EditorWindow {
             // ======================================================== 
 
             GUI.enabled = curEdit.needRebuild;
-            GUILayout.Space(5);
+            EditorGUILayout.Space();
             if ( GUILayout.Button( "Build", EditorStyles.toolbarButton ) ) {
                 try {
                     exAtlasUtility.Build( curEdit, (_progress, _info) => {
@@ -342,7 +342,7 @@ partial class exAtlasEditor : EditorWindow {
 
                 EditorGUI.indentLevel--;
             }
-            GUILayout.Space(20);
+            EditorGUILayout.Space();
 
             // ======================================================== 
             // layout
@@ -383,7 +383,7 @@ partial class exAtlasEditor : EditorWindow {
 
                 EditorGUI.indentLevel--;
             }
-            GUILayout.Space(20);
+            EditorGUILayout.Space();
 
             // ======================================================== 
             // TextureInfo
@@ -399,7 +399,7 @@ partial class exAtlasEditor : EditorWindow {
 
                 EditorGUI.indentLevel--;
             }
-            GUILayout.Space(20);
+            EditorGUILayout.Space();
 
             // ======================================================== 
             // Build 
@@ -499,7 +499,7 @@ partial class exAtlasEditor : EditorWindow {
 
                 EditorGUI.indentLevel--;
             }
-            GUILayout.Space(20);
+            EditorGUILayout.Space();
 
             // TODO { 
             // // ======================================================== 
@@ -550,6 +550,7 @@ partial class exAtlasEditor : EditorWindow {
     }
     void AtlasField ( Rect _rect ) {
         Event e = Event.current;
+
         switch ( e.type ) {
         case EventType.Repaint:
             atlasRect = new Rect( _rect.x + 2, _rect.y + 2, _rect.width - 4, _rect.height - 4 );
