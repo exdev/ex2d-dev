@@ -131,22 +131,26 @@ partial class exAtlasEditor : EditorWindow {
         // toolbar
         Toolbar ();
 
-
+        // DISABLE { 
         // NOTE: we can't use GUILayoutUtility.GetLastRect() here, 
         //       because GetLastRect() will return wrong value when Event.current.type is EventType.Layout
         // Rect rect = GUILayoutUtility.GetLastRect ();
-        float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
-        scrollPos = EditorGUILayout.BeginScrollView ( scrollPos, 
-                                                      GUILayout.Width(position.width),
-                                                      GUILayout.Height(position.height-toolbarHeight) );
+        // float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
+        // scrollPos = EditorGUILayout.BeginScrollView ( scrollPos, 
+        //                                               GUILayout.Width(position.width),
+        //                                               GUILayout.Height(position.height-toolbarHeight) );
+        // } DISABLE end 
+        scrollPos = EditorGUILayout.BeginScrollView ( scrollPos );
 
             // atlas
             Object newAtlas = EditorGUILayout.ObjectField( "Atlas"
                                                            , curEdit
                                                            , typeof(exAtlas)
                                                            , false 
-                                                           , GUILayout.Width(300)
-                                                           , GUILayout.MaxWidth(300)
+                                                           , new GUILayoutOption[] {
+                                                               GUILayout.Width(300), 
+                                                               GUILayout.MaxWidth(300)
+                                                           }
                                                          );
             if ( newAtlas != curEdit ) 
                 Selection.activeObject = newAtlas;
@@ -162,10 +166,8 @@ partial class exAtlasEditor : EditorWindow {
                 GUILayout.Space(40);
 
                 //
-                Rect lastRect = GUILayoutUtility.GetLastRect ();  
-                atlasRect = new Rect( lastRect.xMax, lastRect.yMax, curEdit.width * curEdit.scale, curEdit.height * curEdit.scale );
-                atlasRect = exGeometryUtility.Rect_FloorToInt(atlasRect);
-                AtlasField ( atlasRect );
+                Layout_AtlasField ( Mathf.FloorToInt(curEdit.width * curEdit.scale), 
+                                    Mathf.FloorToInt (curEdit.height * curEdit.scale) );
 
             EditorGUILayout.EndHorizontal();
 
@@ -247,12 +249,16 @@ partial class exAtlasEditor : EditorWindow {
             curEdit.scale = GUILayout.HorizontalSlider ( curEdit.scale, 
                                                          0.1f, 
                                                          2.0f, 
-                                                         GUILayout.MinWidth(50),
-                                                         GUILayout.MaxWidth(150) );
+                                                         new GUILayoutOption[] {
+                                                             GUILayout.MinWidth(50),
+                                                             GUILayout.MaxWidth(150)
+                                                         } );
             GUILayout.Space(5);
             curEdit.scale = EditorGUILayout.FloatField( curEdit.scale,
                                                         EditorStyles.toolbarTextField,
-                                                        GUILayout.Width(30) );
+                                                        new GUILayoutOption[] {
+                                                            GUILayout.Width(30)
+                                                        } );
             if ( GUI.changed ) {
                 GUI.changed = false;
                 EditorUtility.SetDirty(curEdit);
@@ -303,7 +309,12 @@ partial class exAtlasEditor : EditorWindow {
         int height = -1;
         GUIContent content = null;
 
-        EditorGUILayout.BeginVertical( GUILayout.Width(200), GUILayout.MinWidth(200), GUILayout.MaxWidth(200) );
+        EditorGUILayout.BeginVertical( new GUILayoutOption [] {
+                                           GUILayout.Width(250), 
+                                           GUILayout.MinWidth(250), 
+                                           GUILayout.MaxWidth(250),
+                                           GUILayout.ExpandWidth(false)
+                                       } );
 
             // ======================================================== 
             // canvas
@@ -361,7 +372,10 @@ partial class exAtlasEditor : EditorWindow {
 
                 EditorGUILayout.BeginHorizontal();
                     GUILayout.FlexibleSpace();
-                    if ( GUILayout.Button ( "Apply", GUILayout.Width(80) ) ) {
+                    if ( GUILayout.Button ( "Apply", 
+                                            new GUILayoutOption [] {
+                                                GUILayout.Width(80)
+                                            } ) ) {
                         curEdit.needRebuild = true;
                         LayoutTextureInfos();
                     }
@@ -526,38 +540,46 @@ partial class exAtlasEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void Layout_AtlasField ( int _width, int _height ) {
+        Rect rect = GUILayoutUtility.GetRect ( _width+4, _height+4, 
+                                               new GUILayoutOption[] {
+                                                   GUILayout.ExpandWidth(false),
+                                                   GUILayout.ExpandHeight(false)
+                                               });
+        AtlasField (rect);
+    }
     void AtlasField ( Rect _rect ) {
-        GUILayoutUtility.GetRect ( _rect.width+4, _rect.height+4, GUI.skin.box );
-
         Event e = Event.current;
         switch ( e.type ) {
         case EventType.Repaint:
+            atlasRect = new Rect( _rect.x + 2, _rect.y + 2, _rect.width - 4, _rect.height - 4 );
+
             // checker box
             Color old = GUI.color;
             GUI.color = curEdit.bgColor;
                 if ( curEdit.showCheckerboard ) {
                     Texture2D checker = exEditorUtility.CheckerboardTexture();
-                    GUI.DrawTextureWithTexCoords ( _rect, checker, 
-                                                   new Rect( 0.0f, 0.0f, _rect.width/(checker.width * curEdit.scale), _rect.height/(checker.height * curEdit.scale)) );
+                    GUI.DrawTextureWithTexCoords ( atlasRect, checker, 
+                                                   new Rect( 0.0f, 0.0f, atlasRect.width/(checker.width * curEdit.scale), atlasRect.height/(checker.height * curEdit.scale)) );
                 }
                 else {
-                    GUI.DrawTexture( _rect, EditorGUIUtility.whiteTexture );
+                    GUI.DrawTexture( atlasRect, EditorGUIUtility.whiteTexture );
                 }
             GUI.color = old;
 
 
             // texture info list 
-            GUI.BeginGroup( _rect );
+            GUI.BeginGroup( atlasRect );
             foreach ( exTextureInfo textureInfo in curEdit.textureInfos ) {
                 if ( textureInfo == null )
                     continue;
 
-                DrawTextureInfo ( MapTextureInfo( new Rect ( 0, 0, _rect.width, _rect.height ), textureInfo ), textureInfo );
+                DrawTextureInfo ( MapTextureInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), textureInfo ), textureInfo );
             }
             GUI.EndGroup();
 
             // border
-            exEditorUtility.DrawRect( new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 ),
+            exEditorUtility.DrawRect( _rect,
                                       new Color( 1,1,1,0 ), 
                                       Color.white );
             break;
