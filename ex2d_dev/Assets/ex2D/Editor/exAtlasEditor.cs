@@ -287,12 +287,17 @@ partial class exAtlasEditor : EditorWindow {
             // Lock 
             // ======================================================== 
 
-            lockCurEdit = GUILayout.Toggle ( lockCurEdit, "Lock", EditorStyles.toolbarButton );
+            EditorGUILayout.Space();
+			GUILayout.BeginVertical(new GUILayoutOption[0]);
+			GUILayout.Space(3f);
+            lockCurEdit = GUILayout.Toggle ( lockCurEdit, GUIContent.none, "IN LockButton" );
+			GUILayout.EndVertical();
 
             // ======================================================== 
             // Help
             // ======================================================== 
 
+            EditorGUILayout.Space();
             if ( GUILayout.Button( exEditorUtility.HelpTexture(), EditorStyles.toolbarButton ) ) {
                 Help.BrowseURL("http://www.ex-dev.com/ex2d/wiki/doku.php?id=manual:atlas_editor");
             }
@@ -582,7 +587,7 @@ partial class exAtlasEditor : EditorWindow {
             // border
             exEditorUtility.DrawRect( _rect,
                                       new Color( 1,1,1,0 ), 
-                                      Color.white );
+                                      Color.gray );
             break;
 
         case EventType.MouseDown:

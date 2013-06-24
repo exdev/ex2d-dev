@@ -286,6 +286,10 @@ public static class exAtlasUtility {
             if ( exEditorUtility.IsValidForAtlas(rawTexture) == false ) {
                 exEditorUtility.ImportTextureForAtlas(rawTexture);
             }
+            if ( textureInfo.texture != atlasTexture ) {
+                textureInfo.texture = atlasTexture;
+                EditorUtility.SetDirty(textureInfo);
+            }
 
             // NOTE: we do this because the texture already been trimmed, and only this way to make texture have better filter
             // apply contour bleed

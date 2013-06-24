@@ -83,7 +83,6 @@ class exSceneEditor : EditorWindow {
             // scene filed
             int margin = 40; 
             float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
-
             Layout_SceneViewField ( Mathf.FloorToInt(position.width - 200 - 40 - 10 - margin),
                                     Mathf.FloorToInt(position.height - toolbarHeight - 40 - margin) );
         EditorGUILayout.EndHorizontal();
@@ -224,14 +223,45 @@ class exSceneEditor : EditorWindow {
                 float center_y =  editCameraPos.y + sceneViewRect.y + half_h;
                 if ( center_y >= sceneViewRect.y && center_y <= sceneViewRect.yMax )
                     exEditorUtility.DrawLine ( sceneViewRect.x, center_y, sceneViewRect.xMax, center_y, Color.white, 1 );
-                if ( center_x >= sceneViewRect.x && center_x <= sceneViewRect.xMax ) {
+                if ( center_x >= sceneViewRect.x && center_x <= sceneViewRect.xMax )
                     exEditorUtility.DrawLine ( center_x, sceneViewRect.y, center_x, sceneViewRect.yMax, Color.white, 1 );
-                }
+
+                // TEMP { 
+                Rect oldViewport = new Rect( 0, 0, Screen.width, Screen.height ); 
+                GL.PushMatrix();
+                    // mat.SetPass(0);
+                    GL.LoadOrtho();
+                    GL.LoadPixelMatrix( 0, sceneViewRect.width, sceneViewRect.height, 0 );
+                    // GL.LoadIdentity();
+                    // GL.LoadPixelMatrix();
+                    GL.Viewport(sceneViewRect);
+                    GL.Clear(true, true, new Color(0f, 0f, 0f, 0f));
+                    GL.Color(Color.red);
+                    GL.Begin(GL.TRIANGLES);
+                        // GL.Vertex3(10,10,0);
+                        // GL.Vertex3(10,100,0);
+                        // GL.Vertex3(200,100,0);
+
+                        // GL.Vertex3(0,0,0);
+                        // GL.Vertex3(0,sceneViewRect.height,0);
+                        // GL.Vertex3(sceneViewRect.width,sceneViewRect.height,0);
+
+                        // GL.Vertex3(-100,-100,0);
+                        // GL.Vertex3(0,position.height,0);
+                        // GL.Vertex3(position.width,position.height,0);
+                    GL.End();
+                GL.PopMatrix();
+                GL.Viewport(oldViewport);
+
+                exEditorUtility.DrawRect( new Rect ( sceneViewRect.x, sceneViewRect.y + 100, 200, 100 ),
+                                          new Color( 1,1,1,0 ), 
+                                          Color.red );
+                // } TEMP end 
 
                 // border
                 exEditorUtility.DrawRect( _rect,
                                           new Color( 1,1,1,0 ), 
-                                          Color.white );
+                                          Color.gray );
             GUI.color = old;
             break;
 

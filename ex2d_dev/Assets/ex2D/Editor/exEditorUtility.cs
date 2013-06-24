@@ -133,7 +133,7 @@ public static class exEditorUtility {
 
         // border
         old = GUI.backgroundColor;
-        GUI.backgroundColor = _borderColor;
+        GUI.backgroundColor = _borderColor * 2.0f;
             RectBorderStyle().Draw( _rect, false, true, true, true );
         GUI.backgroundColor = old;
     }
