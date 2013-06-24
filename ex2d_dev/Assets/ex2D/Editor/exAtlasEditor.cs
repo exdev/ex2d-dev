@@ -585,7 +585,7 @@ partial class exAtlasEditor : EditorWindow {
             // border
             exEditorUtility.DrawRect( _rect,
                                       new Color( 1,1,1,0 ), 
-                                      Color.gray );
+                                      EditorStyles.label.normal.textColor );
             break;
 
         case EventType.MouseDown:

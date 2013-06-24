@@ -171,6 +171,13 @@ class exSceneEditor : EditorWindow {
                     GUI.color = Color.yellow;
                     EditorGUILayout.LabelField ( "Can't find ex2DMng in the scene!" );
                     GUI.color = old;
+
+                    EditorGUILayout.BeginHorizontal();
+                        GUILayout.FlexibleSpace();
+                        if ( GUILayout.Button("Create...", GUILayout.Width(80) ) ) {
+                            // TODO
+                        }
+                    EditorGUILayout.EndHorizontal();
                 }
             EditorGUI.indentLevel--;
 
@@ -233,23 +240,23 @@ class exSceneEditor : EditorWindow {
                                                          (-half_h + editCameraPos.y)/(checker.height * scale), 
                                                          sceneViewRect.width/(checker.width * scale), 
                                                          sceneViewRect.height/(checker.height * scale) ) );
-
-                // center line
-                float center_x = -editCameraPos.x + sceneViewRect.x + half_w;
-                float center_y =  editCameraPos.y + sceneViewRect.y + half_h;
-                if ( center_y >= sceneViewRect.y && center_y <= sceneViewRect.yMax )
-                    exEditorUtility.DrawLine ( sceneViewRect.x, center_y, sceneViewRect.xMax, center_y, Color.white, 1 );
-                if ( center_x >= sceneViewRect.x && center_x <= sceneViewRect.xMax )
-                    exEditorUtility.DrawLine ( center_x, sceneViewRect.y, center_x, sceneViewRect.yMax, Color.white, 1 );
-
-                // draw scene
-                DrawScene ( sceneViewRect );
-
-                // border
-                exEditorUtility.DrawRect( _rect,
-                                          new Color( 1,1,1,0 ), 
-                                          Color.gray );
             GUI.color = old;
+
+            // center line
+            float center_x = -editCameraPos.x + sceneViewRect.x + half_w;
+            float center_y =  editCameraPos.y + sceneViewRect.y + half_h;
+            if ( center_y >= sceneViewRect.y && center_y <= sceneViewRect.yMax )
+                exEditorUtility.DrawLine ( sceneViewRect.x, center_y, sceneViewRect.xMax, center_y, Color.white, 1 );
+            if ( center_x >= sceneViewRect.x && center_x <= sceneViewRect.xMax )
+                exEditorUtility.DrawLine ( center_x, sceneViewRect.y, center_x, sceneViewRect.yMax, Color.white, 1 );
+
+            // draw scene
+            DrawScene ( sceneViewRect );
+
+            // border
+            exEditorUtility.DrawRect( _rect,
+                                      new Color( 1,1,1,0 ), 
+                                      EditorStyles.label.normal.textColor );
             break;
 
         case EventType.ScrollWheel:
@@ -328,12 +335,12 @@ class exSceneEditor : EditorWindow {
     void DrawScene ( Rect _rect ) {
         Rect oldViewport = new Rect( 0, 0, Screen.width, Screen.height ); 
         GL.PushMatrix();
-            GL.LoadPixelMatrix( (editCameraPos.x - _rect.width * 0.5f) / scale, 
-                                (editCameraPos.x - _rect.width * 0.5f + _rect.width) / scale, 
-                                (editCameraPos.y - _rect.height * 0.5f) / scale,
-                                (editCameraPos.y - _rect.height * 0.5f + _rect.height) / scale );
-            Rect viewportRect = new Rect ( _rect.x, 
-                                           position.height - _rect.yMax, 
+            GL.LoadPixelMatrix( Mathf.FloorToInt((editCameraPos.x - _rect.width * 0.5f) / scale), 
+                                Mathf.FloorToInt((editCameraPos.x - _rect.width * 0.5f + _rect.width) / scale), 
+                                Mathf.FloorToInt((editCameraPos.y - _rect.height * 0.5f) / scale),
+                                Mathf.FloorToInt((editCameraPos.y - _rect.height * 0.5f + _rect.height) / scale) );
+            Rect viewportRect = new Rect ( _rect.x + 2, 
+                                           position.height - _rect.yMax + 2, 
                                            _rect.width, 
                                            _rect.height );
             GL.Viewport(viewportRect);

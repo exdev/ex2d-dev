@@ -112,7 +112,7 @@ public static class exEditorUtility {
         // Graphics.DrawTexture( _rect, FindTexture("border.png"), new Rect(0,0,1,1), 2, 2, 2, 2, _borderColor * 0.5f );
 
         Color old = GUI.backgroundColor;
-        GUI.backgroundColor = _borderColor;
+        GUI.backgroundColor = _borderColor * 2.0f;
             RectBorderStyle().Draw( _rect, false, true, true, true );
         GUI.backgroundColor = old;
     }
@@ -133,7 +133,7 @@ public static class exEditorUtility {
 
         // border
         old = GUI.backgroundColor;
-        GUI.backgroundColor = _borderColor * 2.0f;
+        GUI.backgroundColor = _borderColor;
             RectBorderStyle().Draw( _rect, false, true, true, true );
         GUI.backgroundColor = old;
     }
