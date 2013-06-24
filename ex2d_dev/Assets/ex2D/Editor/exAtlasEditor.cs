@@ -760,10 +760,12 @@ partial class exAtlasEditor : EditorWindow {
             break;
 
         case EventType.ScrollWheel:
-            curEdit.scale += -e.delta.y * 0.1f;
+            if ( e.control ) {
+                curEdit.scale += -e.delta.y * 0.1f;
 
-            Repaint();
-            e.Use();
+                Repaint();
+                e.Use();
+            }
             break;
 
         case EventType.KeyDown:
