@@ -29,7 +29,8 @@ class ex2DPreferencesWindow : ScriptableWizard {
         GUIStyle style = new GUIStyle();
         style.fontSize = 15;
         style.fontStyle = FontStyle.Bold;
-        style.normal.textColor = Color.gray;
+        style.normal.textColor = EditorStyles.boldLabel.normal.textColor;
+
         EditorGUILayout.LabelField( "General", style );
 
         GUILayout.Space (10);

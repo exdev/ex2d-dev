@@ -67,15 +67,12 @@ class exSceneEditor : EditorWindow {
         // toolbar
         Toolbar ();
 
-        // TODO:
-        // Settings
-
         GUILayout.Space(40);
 
         // layer & scene
         EditorGUILayout.BeginHorizontal();
             //
-            LayerField ();
+            Settings ();
 
             //
             GUILayout.Space(40);
@@ -154,14 +151,33 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void LayerField () {
+    void Settings () {
+        GUIStyle boldStyle = new GUIStyle();
+        boldStyle.fontSize = 15;
+        boldStyle.fontStyle = FontStyle.Bold;
+        boldStyle.normal.textColor = EditorStyles.boldLabel.normal.textColor;
+
         EditorGUILayout.BeginVertical( new GUILayoutOption [] {
                                            GUILayout.Width(200), 
                                            GUILayout.MinWidth(200), 
                                            GUILayout.MaxWidth(200),
                                            GUILayout.ExpandWidth(false),
                                        } );
-            EditorGUILayout.LabelField ( "Layers" );
+
+            EditorGUILayout.LabelField ( "General", boldStyle );
+            EditorGUI.indentLevel++;
+                if ( ex2DMng.instance == null ) {
+                    Color old = GUI.color;
+                    GUI.color = Color.yellow;
+                    EditorGUILayout.LabelField ( "Can't find ex2DMng in the scene!" );
+                    GUI.color = old;
+                }
+            EditorGUI.indentLevel--;
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField ( "Layers", boldStyle );
+            EditorGUI.indentLevel++;
+            EditorGUI.indentLevel--;
         EditorGUILayout.EndVertical();
     }
 
@@ -226,37 +242,8 @@ class exSceneEditor : EditorWindow {
                 if ( center_x >= sceneViewRect.x && center_x <= sceneViewRect.xMax )
                     exEditorUtility.DrawLine ( center_x, sceneViewRect.y, center_x, sceneViewRect.yMax, Color.white, 1 );
 
-                // TEMP { 
-                Rect oldViewport = new Rect( 0, 0, Screen.width, Screen.height ); 
-                GL.PushMatrix();
-                    // mat.SetPass(0);
-                    GL.LoadOrtho();
-                    GL.LoadPixelMatrix( 0, sceneViewRect.width, sceneViewRect.height, 0 );
-                    // GL.LoadIdentity();
-                    // GL.LoadPixelMatrix();
-                    GL.Viewport(sceneViewRect);
-                    GL.Clear(true, true, new Color(0f, 0f, 0f, 0f));
-                    GL.Color(Color.red);
-                    GL.Begin(GL.TRIANGLES);
-                        // GL.Vertex3(10,10,0);
-                        // GL.Vertex3(10,100,0);
-                        // GL.Vertex3(200,100,0);
-
-                        // GL.Vertex3(0,0,0);
-                        // GL.Vertex3(0,sceneViewRect.height,0);
-                        // GL.Vertex3(sceneViewRect.width,sceneViewRect.height,0);
-
-                        // GL.Vertex3(-100,-100,0);
-                        // GL.Vertex3(0,position.height,0);
-                        // GL.Vertex3(position.width,position.height,0);
-                    GL.End();
-                GL.PopMatrix();
-                GL.Viewport(oldViewport);
-
-                exEditorUtility.DrawRect( new Rect ( sceneViewRect.x, sceneViewRect.y + 100, 200, 100 ),
-                                          new Color( 1,1,1,0 ), 
-                                          Color.red );
-                // } TEMP end 
+                // draw scene
+                DrawScene ( sceneViewRect );
 
                 // border
                 exEditorUtility.DrawRect( _rect,
@@ -332,5 +319,36 @@ class exSceneEditor : EditorWindow {
             }
             break;
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawScene ( Rect _rect ) {
+        Rect oldViewport = new Rect( 0, 0, Screen.width, Screen.height ); 
+        GL.PushMatrix();
+            GL.LoadPixelMatrix( (editCameraPos.x - _rect.width * 0.5f) / scale, 
+                                (editCameraPos.x - _rect.width * 0.5f + _rect.width) / scale, 
+                                (editCameraPos.y - _rect.height * 0.5f) / scale,
+                                (editCameraPos.y - _rect.height * 0.5f + _rect.height) / scale );
+            Rect viewportRect = new Rect ( _rect.x, 
+                                           position.height - _rect.yMax, 
+                                           _rect.width, 
+                                           _rect.height );
+            GL.Viewport(viewportRect);
+
+            // TODO { 
+            // mat.SetPass(0);
+            GL.Begin(GL.QUADS);
+            GL.Color( new Color( 1.0f, 0.0f, 0.0f, 0.5f ) );
+                GL.Vertex3(200,   100,   0);
+                GL.Vertex3(200,   300,   0);
+                GL.Vertex3(300,   300,   0);
+                GL.Vertex3(300,   100,   0);
+            GL.End();
+            // } TODO end 
+        GL.PopMatrix();
+        GL.Viewport(oldViewport);
     }
 }

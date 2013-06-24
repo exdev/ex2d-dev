@@ -310,8 +310,6 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void Settings () {
-        int width = -1;
-        int height = -1;
         GUIContent content = null;
 
         EditorGUILayout.BeginVertical( new GUILayoutOption [] {
@@ -330,8 +328,8 @@ partial class exAtlasEditor : EditorWindow {
                 EditorGUI.indentLevel++;
 
                 // width and height
-                width = EditorGUILayout.IntPopup ( "Width", curEdit.width, sizeTextList, sizeList );
-                height = EditorGUILayout.IntPopup ( "Height", curEdit.height, sizeTextList, sizeList );
+                int width = EditorGUILayout.IntPopup ( "Width", curEdit.width, sizeTextList, sizeList );
+                int height = EditorGUILayout.IntPopup ( "Height", curEdit.height, sizeTextList, sizeList );
 
                 // Check if we need to Reset width & height
                 if ( width != curEdit.width || height != curEdit.height ) {

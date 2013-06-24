@@ -20,7 +20,7 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-//[ExecuteInEditMode]
+[ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
 public class ex2DMng : MonoBehaviour
 {
@@ -57,6 +57,14 @@ public class ex2DMng : MonoBehaviour
             cachedCamera.orthographic = true;
         }
     }
+
+#if UNITY_EDITOR
+    void Start () {
+        if (!instance) {
+            instance = this;
+        }
+    }
+#endif
 
     // ------------------------------------------------------------------ 
     // NOTE: 使用DrawMesh时，要在OnRenderObject时调用，使用DrawMeshNow时，要在OnPreCull中调用
