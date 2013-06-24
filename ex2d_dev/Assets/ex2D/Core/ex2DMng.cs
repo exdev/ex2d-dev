@@ -59,7 +59,7 @@ public class ex2DMng : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    void Start () {
+    void OnEnable () {
         if (!instance) {
             instance = this;
         }

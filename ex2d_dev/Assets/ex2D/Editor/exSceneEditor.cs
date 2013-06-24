@@ -164,6 +164,10 @@ class exSceneEditor : EditorWindow {
                                            GUILayout.ExpandWidth(false),
                                        } );
 
+            // ======================================================== 
+            // General 
+            // ======================================================== 
+
             EditorGUILayout.LabelField ( "General", boldStyle );
             EditorGUI.indentLevel++;
                 if ( ex2DMng.instance == null ) {
@@ -175,15 +179,37 @@ class exSceneEditor : EditorWindow {
                     EditorGUILayout.BeginHorizontal();
                         GUILayout.FlexibleSpace();
                         if ( GUILayout.Button("Create...", GUILayout.Width(80) ) ) {
-                            // TODO
+                            Camera ex2DCamera = Camera.main;
+                            if ( ex2DCamera == null ) {
+                                GameObject go = new GameObject("Main Camera");
+                                ex2DCamera = go.AddComponent<Camera>();
+                            }
+                            ex2DCamera.gameObject.AddComponent<ex2DMng>();
                         }
                     EditorGUILayout.EndHorizontal();
                 }
+                else {
+                    EditorGUILayout.ObjectField( ""
+                                                 , ex2DMng.instance
+                                                 , typeof(ex2DMng)
+                                                 , false 
+                                               );
+                }
             EditorGUI.indentLevel--;
+
+            // ======================================================== 
+            // Layers 
+            // ======================================================== 
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField ( "Layers", boldStyle );
             EditorGUI.indentLevel++;
+                EditorGUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+                    if ( GUILayout.Button("Add...", GUILayout.Width(50) ) ) {
+                        // TODO
+                    }
+                EditorGUILayout.EndHorizontal();
             EditorGUI.indentLevel--;
         EditorGUILayout.EndVertical();
     }
@@ -339,14 +365,15 @@ class exSceneEditor : EditorWindow {
                                 Mathf.FloorToInt((editCameraPos.x - _rect.width * 0.5f + _rect.width) / scale), 
                                 Mathf.FloorToInt((editCameraPos.y - _rect.height * 0.5f) / scale),
                                 Mathf.FloorToInt((editCameraPos.y - _rect.height * 0.5f + _rect.height) / scale) );
-            Rect viewportRect = new Rect ( _rect.x + 2, 
-                                           position.height - _rect.yMax + 2, 
+            Rect viewportRect = new Rect ( _rect.x,
+                                           position.height - _rect.yMax,
                                            _rect.width, 
                                            _rect.height );
             GL.Viewport(viewportRect);
 
             // TODO { 
-            // mat.SetPass(0);
+            Material mat = (Material)EditorGUIUtility.LoadRequired("SceneView/HandleLines.mat");
+            mat.SetPass(0);
             GL.Begin(GL.QUADS);
             GL.Color( new Color( 1.0f, 0.0f, 0.0f, 0.5f ) );
                 GL.Vertex3(200,   100,   0);
