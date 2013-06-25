@@ -62,6 +62,7 @@ public class ex2DMng : MonoBehaviour {
         if (!instance) {
             instance = this;
         }
+        cachedCamera = camera;
     }
 #endif
 
@@ -85,15 +86,24 @@ public class ex2DMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void OnDestroy () {
-        for (int i = 0; i < layerList.Count; ++i) {
-            layerList[i].Clear();
-        }
-        layerList.Clear();
+        DestroyAllLayer();
+        instance = null;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Other Functions
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    public void DestroyAllLayer () {
+        for (int i = 0; i < layerList.Count; ++i) {
+            layerList[i].Clear();
+        }
+        layerList.Clear();
+    }
 
     // ------------------------------------------------------------------ 
     // Desc:

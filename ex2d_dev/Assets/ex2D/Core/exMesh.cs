@@ -223,6 +223,10 @@ public class exMesh : MonoBehaviour
             }
 #endif
         }
+        else if((updateFlags & UpdateFlags.Vertex) != 0) { 
+            // 如果没有更新triangles并且更新了vertex位置，则需要手动更新bbox
+            mesh.RecalculateBounds();
+        }
         if ((updateFlags & UpdateFlags.Normal) != 0) {
             var normals = new Vector3[vertices.Count];
             for (int i = 0; i < normals.Length; ++i) {
