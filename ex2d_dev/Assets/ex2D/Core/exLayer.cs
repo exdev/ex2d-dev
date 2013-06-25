@@ -114,12 +114,12 @@ public class exLayer
             return;
         }
         // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
-        exMesh sameDrawcalMesh = null;
+        exMesh sameDrawcallMesh = null;
         if (layerType == LayerType.Dynamic) {
             for (int i = 0; i < meshList.Count; ++i) {
                 exMesh mesh = meshList[i];
 		        if (mesh.material == mat && mesh.vertexCount < MAX_DYNAMIC_VERTEX_COUNT) {
-                    sameDrawcalMesh = meshList[i];
+                    sameDrawcallMesh = meshList[i];
                     break;
 		        }
             }
@@ -128,17 +128,17 @@ public class exLayer
             for (int i = 0; i < meshList.Count; ++i) {
                 exMesh mesh = meshList[i];
 		        if (mesh.material == mat) {
-                    sameDrawcalMesh = meshList[i];
+                    sameDrawcallMesh = meshList[i];
                     break;
 		        }
             }
         }
-        if (sameDrawcalMesh == null) {
-            sameDrawcalMesh = exMesh.Create(this);
-            sameDrawcalMesh.material = mat;
-            meshList.Add(sameDrawcalMesh);
+        if (sameDrawcallMesh == null) {
+            sameDrawcallMesh = exMesh.Create(this);
+            sameDrawcallMesh.material = mat;
+            meshList.Add(sameDrawcallMesh);
         }
-        sameDrawcalMesh.Add(_sprite, _show);
+        sameDrawcallMesh.Add(_sprite, _show);
     }
 
     // ------------------------------------------------------------------ 
