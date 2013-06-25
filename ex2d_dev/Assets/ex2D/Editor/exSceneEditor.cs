@@ -28,11 +28,25 @@ class exSceneEditor : EditorWindow {
         public GUIStyle toolbar = "TE Toolbar";
         public GUIStyle toolbarDropDown = "TE ToolbarDropDown";
         public GUIStyle boxBackground = "TE NodeBackground";
+        public GUIStyle elementBackground = "OL Box";
+        public GUIStyle draggingHandle = "WindowBottomResize";
+        public GUIStyle removeButton = "InvisibleButton";
+
         public Texture iconToolbarPlus = EditorGUIUtility.FindTexture ("Toolbar Plus");
+        public Texture iconToolbarMinus = EditorGUIUtility.FindTexture("Toolbar Minus");
+
+        public int elementHeight = 25;
 
         public SettingsStyles() {
+            // NOTE: if we don't new GUIStyle, it will reference the original style. 
+            boxBackground = new GUIStyle(boxBackground);
             boxBackground.margin = new RectOffset( 0, 0, 0, 0 );
             boxBackground.padding = new RectOffset( 0, 0, 0, 0 );
+
+            elementBackground = new GUIStyle(elementBackground);
+            elementBackground.overflow = new RectOffset(0, 0, 1, 0);
+
+            boldLabel = new GUIStyle(boldLabel);
             boldLabel.fontSize = 15;
             boldLabel.fontStyle = FontStyle.Bold;
             boldLabel.normal.textColor = EditorStyles.boldLabel.normal.textColor;
@@ -99,10 +113,10 @@ class exSceneEditor : EditorWindow {
             GUILayout.Space(40);
 
             // scene filed
-            // int margin = 40; 
-            // float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
-            // Layout_SceneViewField ( Mathf.FloorToInt(position.width - 210 - 40 - 10 - margin),
-            //                         Mathf.FloorToInt(position.height - toolbarHeight - 40 - margin) );
+            int margin = 40; 
+            float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
+            Layout_SceneViewField ( Mathf.FloorToInt(position.width - 250 - 40 - 10 - margin),
+                                    Mathf.FloorToInt(position.height - toolbarHeight - 40 - margin) );
         EditorGUILayout.EndHorizontal();
 
         // debug info
@@ -174,9 +188,9 @@ class exSceneEditor : EditorWindow {
 
     void Settings () {
         EditorGUILayout.BeginHorizontal( new GUILayoutOption [] {
-                                           GUILayout.Width(200), 
-                                           GUILayout.MinWidth(200), 
-                                           GUILayout.MaxWidth(200),
+                                           GUILayout.Width(250), 
+                                           GUILayout.MinWidth(250), 
+                                           GUILayout.MaxWidth(250),
                                            GUILayout.ExpandWidth(false),
                                        } );
         GUILayout.Space(10);
@@ -219,10 +233,9 @@ class exSceneEditor : EditorWindow {
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField ( "Layers", settingsStyles.boldLabel );
+            GUILayout.Space(2);
 
-            // TODO { 
-			Rect rect = GUILayoutUtility.GetRect ( 10f, (float)(21 * ex2DMng.instance.layerList.Count) );
-            // } TODO end 
+            Layout_LayerElementsField();
 
             EditorGUILayout.BeginHorizontal( settingsStyles.toolbar, new GUILayoutOption[0]);
             GUILayout.FlexibleSpace();
@@ -262,6 +275,60 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void Layout_LayerElementsField () {
+        if ( ex2DMng.instance == null )
+            return;
+
+        Rect rect = GUILayoutUtility.GetRect ( 10f, settingsStyles.elementHeight * ex2DMng.instance.layerList.Count );
+        LayerElementsField (rect);
+    }
+
+    void LayerElementsField ( Rect _rect ) {
+        float cx = _rect.x;
+        float cy = _rect.y;
+        for ( int i = 0; i < ex2DMng.instance.layerList.Count; ++i ) {
+            exLayer layer = ex2DMng.instance.layerList[i];
+            LayerElementField ( new Rect( cx, cy, _rect.width, settingsStyles.elementHeight ), layer );
+            cy += settingsStyles.elementHeight;
+        } 
+    }
+
+    void LayerElementField ( Rect _rect, exLayer _layer ) {
+        float cur_x = _rect.x;
+        cur_x += 5.0f;
+
+        if ( Event.current.type == EventType.Repaint ) {
+            settingsStyles.elementBackground.Draw(_rect, false, false, false, false);
+            settingsStyles.draggingHandle.Draw( new Rect(cur_x, _rect.y + 10f, 10f, _rect.height), 
+                                                false, false, false, false );
+        }
+        cur_x += 10.0f;
+
+        cur_x += 5.0f;
+        _layer.show = EditorGUI.Toggle ( new Rect ( cur_x, _rect.y + 3f, 10f, _rect.height ),
+                                         _layer.show );
+        cur_x += 10.0f;
+
+        cur_x += 10.0f;
+        _layer.name = EditorGUI.TextField ( new Rect ( cur_x, _rect.y + 4f, 100f, _rect.height - 8f ),
+                                            _layer.name );
+        cur_x += 100.0f;
+
+
+        //
+        Vector2 size = settingsStyles.removeButton.CalcSize( new GUIContent(settingsStyles.iconToolbarMinus) );
+        cur_x = _rect.xMax - 5.0f - size.x;
+        if ( GUI.Button( new Rect( cur_x, _rect.y + 2f, size.x, size.y ), 
+                         settingsStyles.iconToolbarMinus, settingsStyles.removeButton) )
+        {
+            // TODO:
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void Layout_SceneViewField ( int _width, int _height ) {
         Rect rect = GUILayoutUtility.GetRect ( _width+4, _height+4, 
                                                new GUILayoutOption[] {
@@ -270,6 +337,7 @@ class exSceneEditor : EditorWindow {
                                                });
         SceneViewField (rect);
     }
+
     void SceneViewField ( Rect _rect ) {
         int controlID = GUIUtility.GetControlID(sceneViewFieldHash, FocusType.Passive);
         Event e = Event.current;
