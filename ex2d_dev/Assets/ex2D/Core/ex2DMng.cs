@@ -22,17 +22,16 @@ using System.Collections.Generic;
 
 [ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
-public class ex2DMng : MonoBehaviour
-{
+public class ex2DMng : MonoBehaviour {
+
+    [System.NonSerialized] public static ex2DMng instance;
+
+    public List<exLayer> layerList = new List<exLayer>();
+
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    [System.NonSerialized] public static ex2DMng instance;
-#if EX_DEBUG
-    [SerializeField]
-#endif
-    private List<exLayer> layerList = new List<exLayer>();
     private Camera cachedCamera;
     
     ///////////////////////////////////////////////////////////////////////////////
