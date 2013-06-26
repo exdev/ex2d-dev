@@ -10,6 +10,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -35,7 +36,8 @@ public class ex2DMng : MonoBehaviour {
 
     private Camera cachedCamera;
     
-    private static Dictionary<int, Material> materialTable = new Dictionary<int, Material>();
+    /// Pair's type is <Shader, Texture>
+    private static Dictionary<Pair, Material> materialTable = new Dictionary<Pair, Material>();
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -91,6 +93,7 @@ public class ex2DMng : MonoBehaviour {
     void OnDestroy () {
         DestroyAllLayer();
         instance = null;
+        cachedCamera = null;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -134,27 +137,13 @@ public class ex2DMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public static Material GetMaterial (Shader shader, Texture texture) {
-        int shaderHashCode, texHashCode;
-        if (shader != null) {
-            shaderHashCode = shader.GetHashCode();
-        }
-        else {
-            shaderHashCode = 0x61E04917;
-        }
-        if (texture != null) {
-            texHashCode = texture.GetHashCode() * 397;
-        }
-        else {
-            texHashCode = 0x198ED6A3;
-        }
-        int pairHashCode = shaderHashCode ^ texHashCode;
-
+        var key = new Pair(shader, texture);
         Material mat;
-        if ( ! materialTable.TryGetValue(pairHashCode, out mat) ) {
+        if ( ! materialTable.TryGetValue(key, out mat) ) {
             mat = new Material(shader);
             mat.hideFlags = HideFlags.DontSave;
             mat.mainTexture = texture;
-            materialTable.Add(pairHashCode, mat);
+            materialTable.Add(key, mat);
         }
         return mat;
     }
