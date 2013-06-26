@@ -22,6 +22,7 @@ using System.Collections.Generic;
 
 [ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
+[AddComponentMenu("ex2D/2D Manager")]
 public class ex2DMng : MonoBehaviour {
 
     [System.NonSerialized] public static ex2DMng instance;
@@ -34,6 +35,8 @@ public class ex2DMng : MonoBehaviour {
 
     private Camera cachedCamera;
     
+    private static Dictionary<int, Material> materialTable = new Dictionary<int, Material>();
+
     ///////////////////////////////////////////////////////////////////////////////
     // properties
     ///////////////////////////////////////////////////////////////////////////////
@@ -124,5 +127,35 @@ public class ex2DMng : MonoBehaviour {
         exDebug.Assert(layerList.Contains(layer), "can't find layer in ex2DMng");
         layerList.Remove(layer);
         layer.Clear();
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// Return shared material matchs given shader and texture
+    // ------------------------------------------------------------------ 
+
+    public static Material GetMaterial (Shader shader, Texture texture) {
+        int shaderHashCode, texHashCode;
+        if (shader != null) {
+            shaderHashCode = shader.GetHashCode();
+        }
+        else {
+            shaderHashCode = 0x61E04917;
+        }
+        if (texture != null) {
+            texHashCode = texture.GetHashCode() * 397;
+        }
+        else {
+            texHashCode = 0x198ED6A3;
+        }
+        int pairHashCode = shaderHashCode ^ texHashCode;
+
+        Material mat;
+        if ( ! materialTable.TryGetValue(pairHashCode, out mat) ) {
+            mat = new Material(shader);
+            mat.hideFlags = HideFlags.DontSave;
+            mat.mainTexture = texture;
+            materialTable.Add(pairHashCode, mat);
+        }
+        return mat;
     }
 }
