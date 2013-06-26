@@ -119,6 +119,7 @@ public class ex2DMng : MonoBehaviour {
     // Desc:
     // ------------------------------------------------------------------ 
 
+    public void DestroyLayer ( int _idx ) { DestroyLayer ( layerList[_idx] ); }
     public void DestroyLayer (exLayer layer) {
         exDebug.Assert(layerList.Contains(layer), "can't find layer in ex2DMng");
         layerList.Remove(layer);

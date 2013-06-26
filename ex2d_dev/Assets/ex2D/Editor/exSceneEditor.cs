@@ -55,6 +55,7 @@ class exSceneEditor : EditorWindow {
 
     static SettingsStyles settingsStyles = null;
 	static int sceneViewFieldHash = "SceneViewField".GetHashCode();
+	static int sceneEditorHash = "SceneEditor".GetHashCode();
 
     float scale_ = 1.0f;
     float scale {
@@ -71,6 +72,7 @@ class exSceneEditor : EditorWindow {
     Color background = Color.gray;
     Vector2 editCameraPos = Vector2.zero;
     Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
+    SerializedObject curSerializedObject = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -95,9 +97,12 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void OnGUI () {
-        if ( settingsStyles == null ) {
-            settingsStyles = new SettingsStyles();
-        }
+        // pre-check
+        PreCheck ();
+        if ( ex2DMng.instance == null )
+            return;
+
+        curSerializedObject.Update ();
 
         // toolbar
         Toolbar ();
@@ -121,6 +126,11 @@ class exSceneEditor : EditorWindow {
 
         // debug info
         DebugInfos ();
+
+        //
+        ProcessSceneEditorEvents();
+
+        curSerializedObject.ApplyModifiedProperties ();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -132,6 +142,49 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void Reset () {
+        curSerializedObject = null;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void PreCheck () {
+        // if settingsStyles is null
+        if ( settingsStyles == null ) {
+            settingsStyles = new SettingsStyles();
+        }
+
+        // if ex2DMng is null
+        if ( ex2DMng.instance == null ) {
+            EditorGUILayout.Space();
+
+            EditorGUILayout.BeginHorizontal();
+                GUILayout.Space(30);
+
+                Color old = GUI.color;
+                GUI.color = Color.yellow;
+                EditorGUILayout.LabelField ( "Can't find ex2DMng in the scene!" );
+                GUI.color = old;
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+                GUILayout.Space(30);
+                if ( GUILayout.Button("Create...", GUILayout.Width(80) ) ) {
+                    Camera ex2DCamera = Camera.main;
+                    if ( ex2DCamera == null ) {
+                        GameObject go = new GameObject("Main Camera");
+                        ex2DCamera = go.AddComponent<Camera>();
+                    }
+                    ex2DCamera.gameObject.AddComponent<ex2DMng>();
+                }
+            EditorGUILayout.EndHorizontal();
+        }
+
+        // if SerializedObject is null
+        if ( ex2DMng.instance != null && curSerializedObject == null ) {
+            curSerializedObject = new SerializedObject(ex2DMng.instance);
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -201,31 +254,11 @@ class exSceneEditor : EditorWindow {
             // ======================================================== 
 
             EditorGUILayout.LabelField ( "General", settingsStyles.boldLabel );
-            if ( ex2DMng.instance == null ) {
-                Color old = GUI.color;
-                GUI.color = Color.yellow;
-                EditorGUILayout.LabelField ( "Can't find ex2DMng in the scene!" );
-                GUI.color = old;
-
-                EditorGUILayout.BeginHorizontal();
-                    GUILayout.FlexibleSpace();
-                    if ( GUILayout.Button("Create...", GUILayout.Width(80) ) ) {
-                        Camera ex2DCamera = Camera.main;
-                        if ( ex2DCamera == null ) {
-                            GameObject go = new GameObject("Main Camera");
-                            ex2DCamera = go.AddComponent<Camera>();
-                        }
-                        ex2DCamera.gameObject.AddComponent<ex2DMng>();
-                    }
-                EditorGUILayout.EndHorizontal();
-            }
-            else {
-                EditorGUILayout.ObjectField( ""
-                                             , ex2DMng.instance
-                                             , typeof(ex2DMng)
-                                             , false 
-                                           );
-            }
+            EditorGUILayout.ObjectField( ""
+                                         , ex2DMng.instance
+                                         , typeof(ex2DMng)
+                                         , false 
+                                       );
 
             // ======================================================== 
             // Layers 
@@ -237,15 +270,6 @@ class exSceneEditor : EditorWindow {
 
             Layout_LayerElementsField();
 
-            EditorGUILayout.BeginHorizontal( settingsStyles.toolbar, new GUILayoutOption[0]);
-            GUILayout.FlexibleSpace();
-                if ( GUILayout.Button( settingsStyles.iconToolbarPlus, 
-                                       settingsStyles.toolbarDropDown ) ) 
-                {
-                    ex2DMng.instance.CreateLayer();
-                }
-            EditorGUILayout.EndHorizontal();
-
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
     }
@@ -254,46 +278,38 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DebugInfos () {
-        EditorGUILayout.BeginHorizontal();
-            string text = "";
-            int width = -1;
-            
-            text = "Camera Pos: " + editCameraPos;
-            // width = (int)EditorStyles.label.CalcSize(new GUIContent(text)).x;
-            width = 180;
-            EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
-
-            text = "Viewport: " + new Vector2(sceneViewRect.width, sceneViewRect.height).ToString();
-            // width = (int)EditorStyles.label.CalcSize(new GUIContent(text)).x;
-            width = 180;
-            EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
-        EditorGUILayout.EndHorizontal();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
     void Layout_LayerElementsField () {
-        if ( ex2DMng.instance == null )
-            return;
-
         Rect rect = GUILayoutUtility.GetRect ( 10f, settingsStyles.elementHeight * ex2DMng.instance.layerList.Count );
         LayerElementsField (rect);
+
+        // add layer button
+        EditorGUILayout.BeginHorizontal( settingsStyles.toolbar, new GUILayoutOption[0]);
+        GUILayout.FlexibleSpace();
+            if ( GUILayout.Button( settingsStyles.iconToolbarPlus, 
+                                   settingsStyles.toolbarDropDown ) ) 
+            {
+                ex2DMng.instance.CreateLayer();
+            }
+        EditorGUILayout.EndHorizontal();
     }
 
     void LayerElementsField ( Rect _rect ) {
         float cx = _rect.x;
         float cy = _rect.y;
-        for ( int i = 0; i < ex2DMng.instance.layerList.Count; ++i ) {
-            exLayer layer = ex2DMng.instance.layerList[i];
-            LayerElementField ( new Rect( cx, cy, _rect.width, settingsStyles.elementHeight ), layer );
+        SerializedProperty layerListProp = curSerializedObject.FindProperty ("layerList");
+        for ( int i = 0; i < layerListProp.arraySize; ++i ) {
+            SerializedProperty layerProp = layerListProp.GetArrayElementAtIndex(i);
+            if ( LayerElementField ( new Rect( cx, cy, _rect.width, settingsStyles.elementHeight ), 
+                                     layerProp ) )
+            {
+                ex2DMng.instance.DestroyLayer(i);
+                layerProp.DeleteCommand();
+            }
             cy += settingsStyles.elementHeight;
         } 
     }
 
-    void LayerElementField ( Rect _rect, exLayer _layer ) {
+    bool LayerElementField ( Rect _rect, SerializedProperty _prop ) {
         float cur_x = _rect.x;
         cur_x += 5.0f;
 
@@ -305,13 +321,19 @@ class exSceneEditor : EditorWindow {
         cur_x += 10.0f;
 
         cur_x += 5.0f;
-        _layer.show = EditorGUI.Toggle ( new Rect ( cur_x, _rect.y + 3f, 10f, _rect.height ),
-                                         _layer.show );
+        // _layer.show = EditorGUI.Toggle ( new Rect ( cur_x, _rect.y + 3f, 10f, _rect.height ),
+        //                                  _layer.show );
+        EditorGUI.PropertyField ( new Rect ( cur_x, _rect.y + 3f, 10f, _rect.height ),
+                                  _prop.FindPropertyRelative("show"), 
+                                  GUIContent.none );
         cur_x += 10.0f;
 
         cur_x += 10.0f;
-        _layer.name = EditorGUI.TextField ( new Rect ( cur_x, _rect.y + 4f, 100f, _rect.height - 8f ),
-                                            _layer.name );
+        // _layer.name = EditorGUI.TextField ( new Rect ( cur_x, _rect.y + 4f, 100f, _rect.height - 8f ),
+        //                                     _layer.name );
+        EditorGUI.PropertyField ( new Rect ( cur_x, _rect.y + 4f, 100f, _rect.height - 8f ),
+                                  _prop.FindPropertyRelative("name"), 
+                                  GUIContent.none );
         cur_x += 100.0f;
 
 
@@ -319,10 +341,20 @@ class exSceneEditor : EditorWindow {
         Vector2 size = settingsStyles.removeButton.CalcSize( new GUIContent(settingsStyles.iconToolbarMinus) );
         cur_x = _rect.xMax - 5.0f - size.x;
         if ( GUI.Button( new Rect( cur_x, _rect.y + 2f, size.x, size.y ), 
-                         settingsStyles.iconToolbarMinus, settingsStyles.removeButton) )
+                         settingsStyles.iconToolbarMinus, 
+                         settingsStyles.removeButton) )
         {
-            // TODO:
+            string layerName = _prop.FindPropertyRelative("name").stringValue;
+            if ( EditorUtility.DisplayDialog ( "Delete Layer?", 
+                                               string.Format("Are you sure you want to delete layer: {0}?", layerName),
+                                               "Yes",
+                                               "No" ) )
+            {
+                return true;
+            }
         }
+
+        return false;
     }
 
     // ------------------------------------------------------------------ 
@@ -475,5 +507,54 @@ class exSceneEditor : EditorWindow {
             // } TODO end 
         GL.PopMatrix();
         GL.Viewport(oldViewport);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DebugInfos () {
+        EditorGUILayout.BeginHorizontal();
+            string text = "";
+            int width = -1;
+            
+            text = "Camera Pos: " + editCameraPos;
+            // width = (int)EditorStyles.label.CalcSize(new GUIContent(text)).x;
+            width = 180;
+            EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
+
+            text = "Viewport: " + new Vector2(sceneViewRect.width, sceneViewRect.height).ToString();
+            // width = (int)EditorStyles.label.CalcSize(new GUIContent(text)).x;
+            width = 180;
+            EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
+        EditorGUILayout.EndHorizontal();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void ProcessSceneEditorEvents () {
+        int controlID = GUIUtility.GetControlID(sceneEditorHash, FocusType.Passive);
+        Event e = Event.current;
+
+        switch ( e.GetTypeForControl(controlID) ) {
+        case EventType.MouseDown:
+            if ( e.button == 0 && e.clickCount == 1 ) {
+                GUIUtility.hotControl = controlID;
+                GUIUtility.keyboardControl = controlID;
+
+                e.Use();
+            }
+            break;
+
+        case EventType.MouseUp:
+			if ( GUIUtility.hotControl == controlID ) {
+				GUIUtility.hotControl = 0;
+
+                e.Use();
+			}
+            break;
+        }
     }
 }
