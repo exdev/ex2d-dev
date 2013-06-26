@@ -9,7 +9,7 @@
 // defines
 ///////////////////////////////////////////////////////////////////////////////
 
-//#define USE_DRAW_MESH
+#define USE_DRAW_MESH
 #if USE_DRAW_MESH
     //#define DRAW_MESH_NOW
 #endif
@@ -561,7 +561,7 @@ public class exMesh : MonoBehaviour
             cachedRenderer = gameObject.GetComponent<MeshRenderer>();
             cachedRenderer.receiveShadows = false;
             cachedRenderer.castShadows = false;
-            mesh = meshFilter.mesh;
+            mesh = meshFilter.sharedMesh;
 #endif
             mesh.name = "ex2D mesh";
             mesh.hideFlags = HideFlags.DontSave;

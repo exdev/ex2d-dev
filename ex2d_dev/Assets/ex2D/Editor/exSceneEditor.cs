@@ -529,6 +529,15 @@ class exSceneEditor : EditorWindow {
 
                 foreach ( Object o in DragAndDrop.objectReferences ) {
                     if ( o is exTextureInfo ) {
+                        GameObject gameObject = new GameObject("New Sprite");
+                        exSprite sprite = gameObject.AddComponent<exSprite>();
+                        sprite.textureInfo = o as exTextureInfo;
+                        gameObject.transform.position = Vector3.zero;
+                        gameObject.transform.localScale = Vector3.one;
+                        gameObject.transform.rotation = Quaternion.identity;
+
+                        if ( selectingLayer != null )
+                            selectingLayer.Add(sprite);
                     }
                 }
 
@@ -557,15 +566,15 @@ class exSceneEditor : EditorWindow {
             GL.Viewport(viewportRect);
 
             // TODO { 
-            Material mat = (Material)EditorGUIUtility.LoadRequired("SceneView/HandleLines.mat");
-            mat.SetPass(0);
-            GL.Begin(GL.QUADS);
-            GL.Color( new Color( 1.0f, 0.0f, 0.0f, 0.5f ) );
-                GL.Vertex3(200,   100,   0);
-                GL.Vertex3(200,   300,   0);
-                GL.Vertex3(300,   300,   0);
-                GL.Vertex3(300,   100,   0);
-            GL.End();
+            // Material mat = (Material)EditorGUIUtility.LoadRequired("SceneView/HandleLines.mat");
+            // mat.SetPass(0);
+            // GL.Begin(GL.QUADS);
+            // GL.Color( new Color( 1.0f, 0.0f, 0.0f, 0.5f ) );
+            //     GL.Vertex3(200,   100,   0);
+            //     GL.Vertex3(200,   300,   0);
+            //     GL.Vertex3(300,   300,   0);
+            //     GL.Vertex3(300,   100,   0);
+            // GL.End();
             // } TODO end 
         GL.PopMatrix();
         GL.Viewport(oldViewport);
