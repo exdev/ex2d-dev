@@ -21,12 +21,9 @@ using System.Collections;
 public class exSpriteBase : MonoBehaviour {
     
     ///////////////////////////////////////////////////////////////////////////////
-    // serialize
+    // serialized
     ///////////////////////////////////////////////////////////////////////////////
     
-    // TODO: if material changed, update sprite's exMesh
-    public Material material;
-
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -73,6 +70,8 @@ public class exSpriteBase : MonoBehaviour {
             layer_ = value;
         }
     }
+
+    public virtual Material material { get { return null; } }
 
     public bool isInIndexBuffer {
         get {
