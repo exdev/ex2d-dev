@@ -119,7 +119,7 @@ public class exSpriteBase : MonoBehaviour {
         }
         layer_ = null;
         exDebug.Assert(((enabled && gameObject.activeInHierarchy) == isInIndexBuffer), 
-                       "a sprite's logic visibility should equals to it's triangle visibility");
+                       "a sprite's logic visibility should equals to it's triangle visibility", this);
     }
 
     ///////////////////////////////////////////////////////////////////////////////

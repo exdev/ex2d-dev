@@ -48,13 +48,13 @@ public static class exDebug {
     // ------------------------------------------------------------------ 
     
     [/*Diagnostics.Conditional("UNITY_EDITOR"), */Diagnostics.Conditional("EX_DEBUG")]
-    public static void Assert (bool _test, string _msg = "", bool _logError = true) {
+    public static void Assert (bool _test, string _msg = "", bool _logError = true, UnityEngine.Object _context = null) {
         if (!_test) {
             if (_logError) {
-                Debug.LogError("Assert Failed! " + _msg);
+                Debug.LogError("Assert Failed! " + _msg, _context);
             }
             else {
-                Debug.LogWarning("Assert Failed! " + _msg);
+                Debug.LogWarning("Assert Failed! " + _msg, _context);
             }
         }
     }
