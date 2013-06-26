@@ -13,6 +13,7 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+using System;
 using System.Collections;
 using Diagnostics = System.Diagnostics;
 
@@ -119,4 +120,49 @@ namespace UnityEngine {
         }
     }
 
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///
+/// Simple pair used to combine ref type keys
+///
+///////////////////////////////////////////////////////////////////////////////
+
+public struct Pair : IComparable<Pair>, IEquatable<Pair> {
+
+    public object first;
+    public object second;
+
+    public Pair (object _first, object _second) {
+        this.first = _first;
+        this.second = _second;
+    }
+    public bool Equals (Pair _other) {
+        return object.ReferenceEquals(first, _other.first) && object.ReferenceEquals(second, _other.second);
+    }
+    public override int GetHashCode () {
+        int firstHashCode, secondHashCode;
+        if (first != null) {
+            firstHashCode = first.GetHashCode();
+        }
+        else {
+            firstHashCode = 0x00000000;
+        }
+        if (second != null) {
+            secondHashCode = second.GetHashCode() * 1313;
+        }
+        else {
+            secondHashCode = 0x00000000;
+        }
+        return firstHashCode ^ secondHashCode;
+    }
+    public int CompareTo(Pair _other) {
+        int secondCompare = second.GetHashCode().CompareTo(_other.second.GetHashCode());
+        if (secondCompare == 0) {
+            return first.GetHashCode().CompareTo(_other.first.GetHashCode());
+        }
+        else{
+            return secondCompare;
+        }
+    }
 }
