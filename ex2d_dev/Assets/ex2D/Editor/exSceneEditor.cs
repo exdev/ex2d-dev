@@ -26,11 +26,13 @@ class exSceneEditor : EditorWindow {
     class SettingsStyles {
         public GUIStyle boldLabel = new GUIStyle();
         public GUIStyle toolbar = "TE Toolbar";
+        public GUIStyle toolbarButton = "TE ToolbarButton";
         public GUIStyle toolbarDropDown = "TE ToolbarDropDown";
         public GUIStyle boxBackground = "TE NodeBackground";
         public GUIStyle elementBackground = "OL Box";
         public GUIStyle draggingHandle = "WindowBottomResize";
         public GUIStyle removeButton = "InvisibleButton";
+        public GUIStyle elementSelectionRect = "SelectionRect";
 
         public Texture iconToolbarPlus = EditorGUIUtility.FindTexture ("Toolbar Plus");
         public Texture iconToolbarMinus = EditorGUIUtility.FindTexture("Toolbar Minus");
@@ -46,6 +48,9 @@ class exSceneEditor : EditorWindow {
             elementBackground = new GUIStyle(elementBackground);
             elementBackground.overflow = new RectOffset(0, 0, 1, 0);
 
+            elementSelectionRect = new GUIStyle(elementSelectionRect);
+            elementSelectionRect.overflow = new RectOffset(0, 0, 1, -1);
+
             boldLabel = new GUIStyle(boldLabel);
             boldLabel.fontSize = 15;
             boldLabel.fontStyle = FontStyle.Bold;
@@ -56,6 +61,7 @@ class exSceneEditor : EditorWindow {
     static SettingsStyles settingsStyles = null;
 	static int sceneViewFieldHash = "SceneViewField".GetHashCode();
 	static int sceneEditorHash = "SceneEditor".GetHashCode();
+	static int layerElementsFieldHash = "LayerElementsField".GetHashCode();
 
     float scale_ = 1.0f;
     float scale {
@@ -73,6 +79,9 @@ class exSceneEditor : EditorWindow {
     Vector2 editCameraPos = Vector2.zero;
     Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
     SerializedObject curSerializedObject = null;
+
+    exLayer selectingLayer = null;
+    exLayer draggingLayer = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -143,6 +152,8 @@ class exSceneEditor : EditorWindow {
 
     void Reset () {
         curSerializedObject = null;
+        selectingLayer = null;
+        draggingLayer = null;
     }
 
     // ------------------------------------------------------------------ 
@@ -279,12 +290,28 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void Layout_LayerElementsField () {
+        SerializedProperty layerListProp = curSerializedObject.FindProperty ("layerList");
+
         Rect rect = GUILayoutUtility.GetRect ( 10f, settingsStyles.elementHeight * ex2DMng.instance.layerList.Count );
-        LayerElementsField (rect);
+        LayerElementsField (rect, layerListProp);
 
         // add layer button
         EditorGUILayout.BeginHorizontal( settingsStyles.toolbar, new GUILayoutOption[0]);
         GUILayout.FlexibleSpace();
+            if ( GUILayout.Button( "UP", settingsStyles.toolbarButton ) ) 
+            {
+                int curIdx = ex2DMng.instance.layerList.IndexOf(selectingLayer);
+                int nextIdx = System.Math.Max(curIdx-1,0);
+                layerListProp.MoveArrayElement ( curIdx, nextIdx );
+                selectingLayer = ex2DMng.instance.layerList[nextIdx];
+            }
+            if ( GUILayout.Button( "DOWN", settingsStyles.toolbarButton ) ) 
+            {
+                int curIdx = ex2DMng.instance.layerList.IndexOf(selectingLayer);
+                int nextIdx = System.Math.Min(curIdx+1,ex2DMng.instance.layerList.Count-1);
+                layerListProp.MoveArrayElement ( curIdx, nextIdx );
+                selectingLayer = ex2DMng.instance.layerList[nextIdx];
+            }
             if ( GUILayout.Button( settingsStyles.iconToolbarPlus, 
                                    settingsStyles.toolbarDropDown ) ) 
             {
@@ -293,44 +320,63 @@ class exSceneEditor : EditorWindow {
         EditorGUILayout.EndHorizontal();
     }
 
-    void LayerElementsField ( Rect _rect ) {
+    void LayerElementsField ( Rect _rect, SerializedProperty _layerListProp ) {
+        int controlID = GUIUtility.GetControlID(layerElementsFieldHash, FocusType.Passive);
         float cx = _rect.x;
         float cy = _rect.y;
-        SerializedProperty layerListProp = curSerializedObject.FindProperty ("layerList");
-        for ( int i = 0; i < layerListProp.arraySize; ++i ) {
-            SerializedProperty layerProp = layerListProp.GetArrayElementAtIndex(i);
-            if ( LayerElementField ( new Rect( cx, cy, _rect.width, settingsStyles.elementHeight ), 
-                                     layerProp ) )
-            {
-                ex2DMng.instance.DestroyLayer(i);
-                layerProp.DeleteCommand();
-            }
+        Event e = Event.current;
+
+        for ( int i = 0; i < _layerListProp.arraySize; ++i ) {
+            SerializedProperty layerProp = _layerListProp.GetArrayElementAtIndex(i);
+            LayerElementField ( new Rect( cx, cy, _rect.width, settingsStyles.elementHeight ), 
+                                layerProp,
+                                i,
+                                controlID ); 
             cy += settingsStyles.elementHeight;
-        } 
+        }
+
+        // event process for layers
+        switch ( e.GetTypeForControl(controlID) ) {
+        case EventType.MouseUp:
+			if ( GUIUtility.hotControl == controlID ) {
+				GUIUtility.hotControl = 0;
+                draggingLayer = null;
+                e.Use();
+			}
+            break;
+        }
     }
 
-    bool LayerElementField ( Rect _rect, SerializedProperty _prop ) {
+    void LayerElementField ( Rect _rect, SerializedProperty _prop, int _idx, int _controlID ) {
+        Vector2 size = Vector2.zero;
         float cur_x = _rect.x;
-        cur_x += 5.0f;
+        Event e = Event.current;
+        exLayer layer = ex2DMng.instance.layerList[_idx];
 
+        cur_x += 5.0f;
+        Rect draggingHandleRect = new Rect(cur_x, _rect.y + 10f, 10f, _rect.height);
         if ( Event.current.type == EventType.Repaint ) {
-            settingsStyles.elementBackground.Draw(_rect, false, false, false, false);
-            settingsStyles.draggingHandle.Draw( new Rect(cur_x, _rect.y + 10f, 10f, _rect.height), 
-                                                false, false, false, false );
+            // draw background
+            if ( selectingLayer == layer ) {
+                settingsStyles.elementSelectionRect.Draw(_rect, false, false, false, false);
+            }
+            else {
+                settingsStyles.elementBackground.Draw(_rect, false, false, false, false);
+            }
+
+            settingsStyles.draggingHandle.Draw( draggingHandleRect, false, false, false, false );
+            EditorGUIUtility.AddCursorRect ( draggingHandleRect, MouseCursor.Pan );
         }
         cur_x += 10.0f;
 
         cur_x += 5.0f;
-        // _layer.show = EditorGUI.Toggle ( new Rect ( cur_x, _rect.y + 3f, 10f, _rect.height ),
-        //                                  _layer.show );
-        EditorGUI.PropertyField ( new Rect ( cur_x, _rect.y + 3f, 10f, _rect.height ),
+        size = EditorStyles.toggle.CalcSize( GUIContent.none );
+        EditorGUI.PropertyField ( new Rect ( cur_x, _rect.y + 3f, size.x, size.y ),
                                   _prop.FindPropertyRelative("show"), 
                                   GUIContent.none );
         cur_x += 10.0f;
 
         cur_x += 10.0f;
-        // _layer.name = EditorGUI.TextField ( new Rect ( cur_x, _rect.y + 4f, 100f, _rect.height - 8f ),
-        //                                     _layer.name );
         EditorGUI.PropertyField ( new Rect ( cur_x, _rect.y + 4f, 100f, _rect.height - 8f ),
                                   _prop.FindPropertyRelative("name"), 
                                   GUIContent.none );
@@ -338,7 +384,7 @@ class exSceneEditor : EditorWindow {
 
 
         //
-        Vector2 size = settingsStyles.removeButton.CalcSize( new GUIContent(settingsStyles.iconToolbarMinus) );
+        size = settingsStyles.removeButton.CalcSize( new GUIContent(settingsStyles.iconToolbarMinus) );
         cur_x = _rect.xMax - 5.0f - size.x;
         if ( GUI.Button( new Rect( cur_x, _rect.y + 2f, size.x, size.y ), 
                          settingsStyles.iconToolbarMinus, 
@@ -350,11 +396,27 @@ class exSceneEditor : EditorWindow {
                                                "Yes",
                                                "No" ) )
             {
-                return true;
+                ex2DMng.instance.DestroyLayer(_idx);
+                _prop.DeleteCommand();
             }
         }
 
-        return false;
+        // event process for layer
+        switch ( e.GetTypeForControl(_controlID) ) {
+        case EventType.MouseDown:
+            if ( e.button == 0 && e.clickCount == 1 && _rect.Contains(e.mousePosition) ) {
+                GUIUtility.hotControl = _controlID;
+                GUIUtility.keyboardControl = _controlID;
+                selectingLayer = layer;
+
+                if ( draggingHandleRect.Contains(e.mousePosition) ) {
+                    draggingLayer = layer;
+                }
+
+                e.Use();
+            }
+            break;
+        }
     }
 
     // ------------------------------------------------------------------ 
