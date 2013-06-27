@@ -607,20 +607,39 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawNode ( exSpriteBase _node ) {
-        // Material mat = _node.material;
-        Material mat = new Material ( Shader.Find("ex2D/Alpha Blended") );
-        mat.SetPass(0);
+        Material material = _node.material;
+        material.SetPass(0);
 
-        Vector3 pos = _node.transform.position;
-        Vector2 size = Vector2.one * 10.0f;
+        if ( _node is exSprite ) {
+            exSprite sprite = _node as exSprite;
 
-        GL.Begin(GL.QUADS);
-        GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
-            GL.Vertex3( -size.x + pos.x, -size.y + pos.y, 0.0f );
-            GL.Vertex3( -size.x + pos.x,  size.y + pos.y, 0.0f );
-            GL.Vertex3(  size.x + pos.x,  size.y + pos.y, 0.0f );
-            GL.Vertex3(  size.x + pos.x, -size.y + pos.y, 0.0f );
-        GL.End();
+            exTextureInfo textureInfo = sprite.textureInfo;
+
+            Vector3 pos = _node.transform.position;
+            Vector2 halfSize = new Vector2( textureInfo.width * 0.5f * _node.transform.lossyScale.x, 
+                                            textureInfo.height * 0.5f * _node.transform.lossyScale.y );
+
+            float s0 = (float) textureInfo.x                      / (float) textureInfo.texture.width;
+            float s1 = (float) (textureInfo.x+textureInfo.width)  / (float) textureInfo.texture.width;
+            float t0 = (float) textureInfo.y                      / (float) textureInfo.texture.height;
+            float t1 = (float) (textureInfo.y+textureInfo.height) / (float) textureInfo.texture.height;
+
+            GL.Begin(GL.QUADS);
+                GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
+
+                GL.TexCoord2 ( s0, t0 );
+                GL.Vertex3 ( -halfSize.x + pos.x, -halfSize.y + pos.y, 0.0f );
+
+                GL.TexCoord2 ( s0, t1 );
+                GL.Vertex3 ( -halfSize.x + pos.x,  halfSize.y + pos.y, 0.0f );
+
+                GL.TexCoord2 ( s1, t1 );
+                GL.Vertex3 (  halfSize.x + pos.x,  halfSize.y + pos.y, 0.0f );
+
+                GL.TexCoord2 ( s1, t0 );
+                GL.Vertex3 (  halfSize.x + pos.x, -halfSize.y + pos.y, 0.0f );
+            GL.End();
+        }
     }
 
     // ------------------------------------------------------------------ 
