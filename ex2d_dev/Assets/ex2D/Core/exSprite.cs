@@ -26,11 +26,7 @@ public class exSprite : exSpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
     
     public exTextureInfo textureInfo = null;
-#if UNITY_EDITOR
-    public Shader shader = Shader.Find("ex2D/Alpha Blended"); // can only trigger in Awake or editor mode
-#else
-    public Shader shader;
-#endif
+    public Shader shader = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized

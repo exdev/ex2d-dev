@@ -541,6 +541,8 @@ class exSceneEditor : EditorWindow {
                     if ( o is exTextureInfo ) {
                         GameObject gameObject = new GameObject("New Sprite");
                         exSprite sprite = gameObject.AddComponent<exSprite>();
+                        if ( sprite.shader == null )
+                            sprite.shader = Shader.Find("ex2D/Alpha Blended");
                         sprite.textureInfo = o as exTextureInfo;
                         gameObject.transform.position = Vector3.zero;
                         gameObject.transform.localScale = Vector3.one;
@@ -564,6 +566,12 @@ class exSceneEditor : EditorWindow {
 
     void DrawScene ( Rect _rect ) {
         Rect oldViewport = new Rect( 0, 0, Screen.width, Screen.height ); 
+        Rect viewportRect = new Rect ( _rect.x,
+                                       position.height - _rect.yMax,
+                                       _rect.width, 
+                                       _rect.height );
+        GL.Viewport(viewportRect);
+
         GL.PushMatrix();
             // GL.LoadPixelMatrix( Mathf.FloorToInt((editCameraPos.x - _rect.width * 0.5f) / scale), 
             //                     Mathf.FloorToInt((editCameraPos.x + _rect.width * 0.5f) / scale), 
@@ -571,17 +579,19 @@ class exSceneEditor : EditorWindow {
             //                     Mathf.FloorToInt((editCameraPos.y + _rect.height * 0.5f) / scale) );
 
             // TODO { 
-            GL.LoadPixelMatrix( 0.0f, _rect.width, _rect.height, 0.0f );
+            // GL.LoadPixelMatrix( 0.0f, _rect.width, 0.0f, _rect.height );
+            // GL.LoadOrtho();
+            GL.LoadProjectionMatrix( Matrix4x4.Ortho( -_rect.width * 0.5f, 
+                                                       _rect.width * 0.5f, 
+                                                      -_rect.height * 0.5f, 
+                                                       _rect.height * 0.5f, 
+                                                      -1.0f, 
+                                                       1.0f ) );
             GL.LoadIdentity();
             GL.MultMatrix( Matrix4x4.TRS( new Vector3(editCameraPos.x, editCameraPos.y, 0.0f),
                                           Quaternion.identity,
-                                          new Vector3(scale, scale, 1.0f) ) );
+                                          new Vector3(1.0f, 1.0f, 1.0f) ).inverse );
             // } TODO end 
-            Rect viewportRect = new Rect ( _rect.x,
-                                           position.height - _rect.yMax,
-                                           _rect.width, 
-                                           _rect.height );
-            GL.Viewport(viewportRect);
 
             // draw all nodes in the scene
             // foreach ( exLayer layer in ex2DMng.instance.layerList ) {
