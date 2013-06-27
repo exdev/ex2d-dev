@@ -39,6 +39,9 @@ public class ex2DMng : MonoBehaviour {
             this.shader = _shader;
             this.texture = _texture;
         }
+        public MaterialTableKey (Material _material) 
+            : this(_material.shader, _material.mainTexture) {
+        }
         public bool Equals (MaterialTableKey _other) {
             return object.ReferenceEquals(shader, _other.shader) && object.ReferenceEquals(texture, _other.texture);
         }
@@ -83,7 +86,7 @@ public class ex2DMng : MonoBehaviour {
 
     private Camera cachedCamera;
     
-    private static Dictionary<MaterialTableKey, Material> materialTable = new Dictionary<MaterialTableKey, Material>();
+    private static Dictionary<MaterialTableKey, Material> materialTable;
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -101,15 +104,30 @@ public class ex2DMng : MonoBehaviour {
         if (!instance) {
             instance = this;
         }
+        materialTable = new Dictionary<MaterialTableKey, Material>();
         cachedCamera = camera;
         if (cachedCamera.orthographic != true) {
             Debug.LogWarning("Set ex2DMng's camera projection to orthographic");
             cachedCamera.orthographic = true;
         }
     }
+    
+    // ------------------------------------------------------------------ 
+    /// 用于重新编译过后，重新初始化非序列化变量
+    // ------------------------------------------------------------------ 
 
 #if UNITY_EDITOR
     void OnEnable () {
+        if (materialTable == null) {
+            // refill materialTable using current materials
+            materialTable = new Dictionary<MaterialTableKey, Material>();
+            foreach (exLayer layer in layerList) {
+                foreach (exMesh mesh in layer.meshList) {
+                    MaterialTableKey key = new MaterialTableKey(mesh.material);
+                    materialTable[key] = mesh.material;
+                }
+            }
+        }
         if (!instance) {
             instance = this;
         }
