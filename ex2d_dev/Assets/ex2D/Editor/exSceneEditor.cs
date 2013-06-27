@@ -188,6 +188,7 @@ class exSceneEditor : EditorWindow {
                         ex2DCamera = go.AddComponent<Camera>();
                     }
                     ex2DCamera.gameObject.AddComponent<ex2DMng>();
+                    curSerializedObject = new SerializedObject(ex2DMng.instance);
                 }
             EditorGUILayout.EndHorizontal();
         }
@@ -573,44 +574,29 @@ class exSceneEditor : EditorWindow {
         GL.Viewport(viewportRect);
 
         GL.PushMatrix();
-            // GL.LoadPixelMatrix( Mathf.FloorToInt((editCameraPos.x - _rect.width * 0.5f) / scale), 
-            //                     Mathf.FloorToInt((editCameraPos.x + _rect.width * 0.5f) / scale), 
-            //                     Mathf.FloorToInt((editCameraPos.y - _rect.height * 0.5f) / scale),
-            //                     Mathf.FloorToInt((editCameraPos.y + _rect.height * 0.5f) / scale) );
-
-            // TODO { 
-            // GL.LoadPixelMatrix( 0.0f, _rect.width, 0.0f, _rect.height );
-            // GL.LoadOrtho();
-            GL.LoadProjectionMatrix( Matrix4x4.Ortho( -_rect.width * 0.5f, 
-                                                       _rect.width * 0.5f, 
-                                                      -_rect.height * 0.5f, 
-                                                       _rect.height * 0.5f, 
-                                                      -1.0f, 
-                                                       1.0f ) );
-            GL.LoadIdentity();
-            GL.MultMatrix( Matrix4x4.TRS( new Vector3(editCameraPos.x, editCameraPos.y, 0.0f),
-                                          Quaternion.identity,
-                                          new Vector3(1.0f, 1.0f, 1.0f) ).inverse );
-            // } TODO end 
+            GL.LoadPixelMatrix( (editCameraPos.x - _rect.width  * 0.5f) / scale, 
+                                (editCameraPos.x + _rect.width  * 0.5f) / scale, 
+                                (editCameraPos.y - _rect.height * 0.5f) / scale,
+                                (editCameraPos.y + _rect.height * 0.5f) / scale );
 
             // draw all nodes in the scene
-            // foreach ( exLayer layer in ex2DMng.instance.layerList ) {
-            //     if ( layer.show ) {
-            //         foreach ( exSpriteBase node in layer ) {
-            //             DrawNode ( node );
-            //         }
-            //     }
-            // }
+            foreach ( exLayer layer in ex2DMng.instance.layerList ) {
+                if ( layer.show ) {
+                    foreach ( exSpriteBase node in layer ) {
+                        DrawNode ( node );
+                    }
+                }
+            }
 
-            GL.PushMatrix();
-            GL.Begin(GL.QUADS);
-            GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
-                GL.Vertex3( -10.0f, -10.0f, 0.0f );
-                GL.Vertex3( -10.0f,  20.0f, 0.0f );
-                GL.Vertex3(  30.0f,  20.0f, 0.0f );
-                GL.Vertex3(  30.0f, -10.0f, 0.0f );
-            GL.End();
-            GL.PopMatrix();
+            // Material mat = new Material ( Shader.Find("ex2D/Alpha Blended") );
+            // mat.SetPass(0);
+            // GL.Begin(GL.QUADS);
+            // GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
+            //     GL.Vertex3( -10.0f, -10.0f, 0.0f );
+            //     GL.Vertex3( -10.0f,  20.0f, 0.0f );
+            //     GL.Vertex3(  30.0f,  20.0f, 0.0f );
+            //     GL.Vertex3(  30.0f, -10.0f, 0.0f );
+            // GL.End();
 
         GL.PopMatrix();
         GL.Viewport(oldViewport);
@@ -621,11 +607,12 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawNode ( exSpriteBase _node ) {
-        Material mat = _node.material;
+        // Material mat = _node.material;
+        Material mat = new Material ( Shader.Find("ex2D/Alpha Blended") );
         mat.SetPass(0);
 
         Vector3 pos = _node.transform.position;
-        Vector2 size = Vector2.one;
+        Vector2 size = Vector2.one * 10.0f;
 
         GL.Begin(GL.QUADS);
         GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
