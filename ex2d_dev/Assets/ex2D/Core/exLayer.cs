@@ -39,13 +39,20 @@ public enum LayerType
 public class exLayer
 {
     const int MAX_DYNAMIC_VERTEX_COUNT = 300;    ///< 超过这个数量的话，layer将会自动进行拆分
-
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // serialized
+    ///////////////////////////////////////////////////////////////////////////////
+    
+    public string name = "New Layer";
+    public bool show = true;
+    
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
-
-    public string name = "New Layer";
-    public bool show = true;
+    
+    [System.NonSerialized]
+    public List<exMesh> meshList = new List<exMesh>();
 
     private LayerType layerType_ = LayerType.Dynamic;
     public LayerType layerType {
@@ -73,8 +80,6 @@ public class exLayer
             }
         }
     }
-
-    public List<exMesh> meshList = new List<exMesh>();
 
     //public bool dirty = true;
 
@@ -104,10 +109,19 @@ public class exLayer
 
     // ------------------------------------------------------------------ 
     /// Add an exSpriteBase to this layer. 
-    /// NOTE: This function should only be called by exSpriteBase
+    /// If sprite is disabled, it will keep invisible until you enable it.
+    /// NOTE: You can also use exSpriteBase.SetLayer.
     // ------------------------------------------------------------------ 
 
-    public void Add (exSpriteBase _sprite, bool _show = true) {
+    public void Add (exSpriteBase _sprite) {
+        exLayer oldLayer = _sprite.layer;
+        if (oldLayer == this) {
+            return;
+        }
+        if (oldLayer != null) {
+            oldLayer.Remove(_sprite);
+        }
+        _sprite.layer = this;
         // TODO: 在exSpriteBase中添加
         Material mat = _sprite.material;
         if (!mat) {
@@ -139,7 +153,8 @@ public class exLayer
             sameDrawcallMesh.material = mat;
             meshList.Add(sameDrawcallMesh);
         }
-        sameDrawcallMesh.Add(_sprite, _show);
+        bool show = _sprite.isOnEnabled;
+        sameDrawcallMesh.Add(_sprite, show);
     }
 
     // ------------------------------------------------------------------ 
@@ -150,6 +165,7 @@ public class exLayer
         exMesh mesh = FindMesh(_sprite);
         if (mesh != null) {
             mesh.Remove(_sprite);
+            _sprite.layer = null;
         }
     }
     
@@ -158,7 +174,7 @@ public class exLayer
     /// NOTE: This function should only be called by exSpriteBase
     // ------------------------------------------------------------------ 
 
-    public void ShowSprite (exSpriteBase _sprite) {
+    internal void ShowSprite (exSpriteBase _sprite) {
         if (!_sprite.isInIndexBuffer) {
             exMesh mesh = FindMesh(_sprite);
             if (mesh != null) {
@@ -171,7 +187,7 @@ public class exLayer
     // Desc:
     // ------------------------------------------------------------------ 
     
-    public void HideSprite (exSpriteBase _sprite) {
+    internal void HideSprite (exSpriteBase _sprite) {
         if (_sprite.isInIndexBuffer) {
             exMesh mesh = FindMesh(_sprite);
             if (mesh != null) {

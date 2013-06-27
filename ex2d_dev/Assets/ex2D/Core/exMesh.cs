@@ -9,7 +9,7 @@
 // defines
 ///////////////////////////////////////////////////////////////////////////////
 
-#define USE_DRAW_MESH
+//#define USE_DRAW_MESH
 #if USE_DRAW_MESH
     //#define DRAW_MESH_NOW
 #endif
@@ -163,9 +163,9 @@ public class exMesh : MonoBehaviour
     public void UpdateMesh () {
         for (int i = 0; i < spriteList.Count; ++i) {
             exSpriteBase sprite = spriteList[i];
-            exDebug.Assert((sprite.enabled && sprite.gameObject.activeInHierarchy) == sprite.isInIndexBuffer);
+            exDebug.Assert(sprite.isOnEnabled == sprite.isInIndexBuffer);
 
-            if (sprite.enabled) {
+            if (sprite.isOnEnabled) {
                 // TODO: 把对mesh的操作做成虚函数由各个sprite自己进行
                 sprite.UpdateDirtyFlags();
                 updateFlags |= sprite.updateFlags;
@@ -541,7 +541,7 @@ public class exMesh : MonoBehaviour
             exSpriteBase sprite = spriteList[spriteList.Count - 1];
             exDebug.Assert(sprite);
             if (sprite) {
-                sprite.layer = null;
+                sprite.SetLayer(null);
             }
         }
         spriteList.Clear();
