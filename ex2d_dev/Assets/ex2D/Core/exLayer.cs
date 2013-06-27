@@ -227,4 +227,20 @@ public class exLayer
         Debug.LogError("sprite not exist");
         return null;
     }
+
+#if UNITY_EDITOR
+
+    // ------------------------------------------------------------------ 
+    /// 按照绘制的先后次序返回所有sprite，供编辑器使用
+    // ------------------------------------------------------------------ 
+
+    public IEnumerator<exSpriteBase> GetEnumerator () { 
+        foreach (exMesh mesh in meshList) {
+            foreach (exSpriteBase sprite in mesh.spriteList) {
+                yield return sprite;
+            }
+        }
+    }
+
+#endif
 }
