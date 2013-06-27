@@ -9,7 +9,7 @@
 // defines
 ///////////////////////////////////////////////////////////////////////////////
 
-//#define USE_DRAW_MESH
+#define USE_DRAW_MESH
 #if USE_DRAW_MESH
     //#define DRAW_MESH_NOW
 #endif
@@ -556,15 +556,23 @@ public class exMesh : MonoBehaviour
         if (!mesh) {
 #if USE_DRAW_MESH
             mesh = new Mesh();
+            mesh.name = "ex2D mesh";
+            mesh.hideFlags = HideFlags.DontSave;
 #else
-            var meshFilter = gameObject.GetComponent<MeshFilter>();
+            MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
             cachedRenderer = gameObject.GetComponent<MeshRenderer>();
             cachedRenderer.receiveShadows = false;
             cachedRenderer.castShadows = false;
-            mesh = meshFilter.mesh;
+            if (!meshFilter.sharedMesh) {
+                mesh = new Mesh();
+                mesh.name = "ex2D mesh";
+                mesh.hideFlags = HideFlags.DontSave;
+                meshFilter.sharedMesh = mesh;
+            }
+            else {
+                mesh = meshFilter.sharedMesh;
+            }
 #endif
-            mesh.name = "ex2D mesh";
-            mesh.hideFlags = HideFlags.DontSave;
             if (layer.layerType == LayerType.Dynamic) {
                 mesh.MarkDynamic();
             }

@@ -35,9 +35,7 @@ public enum LayerType
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#if EX_DEBUG
 [System.Serializable]
-#endif
 public class exLayer
 {
     const int MAX_DYNAMIC_VERTEX_COUNT = 300;    ///< 超过这个数量的话，layer将会自动进行拆分
@@ -45,6 +43,9 @@ public class exLayer
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
+
+    public string name = "New Layer";
+    public bool show = true;
 
     private LayerType layerType_ = LayerType.Dynamic;
     public LayerType layerType {

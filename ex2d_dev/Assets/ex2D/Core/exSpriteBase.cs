@@ -21,12 +21,9 @@ using System.Collections;
 public class exSpriteBase : MonoBehaviour {
     
     ///////////////////////////////////////////////////////////////////////////////
-    // serialize
+    // serialized
     ///////////////////////////////////////////////////////////////////////////////
     
-    // TODO: if material changed, update sprite's exMesh
-    public Material material;
-
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -74,6 +71,8 @@ public class exSpriteBase : MonoBehaviour {
         }
     }
 
+    public virtual Material material { get { return null; } }
+
     public bool isInIndexBuffer {
         get {
             return indexBufferIndex != -1;
@@ -120,7 +119,7 @@ public class exSpriteBase : MonoBehaviour {
         }
         layer_ = null;
         exDebug.Assert(((enabled && gameObject.activeInHierarchy) == isInIndexBuffer), 
-                       "a sprite's logic visibility should equals to it's triangle visibility");
+                       "a sprite's logic visibility should equals to it's triangle visibility", this);
     }
 
     ///////////////////////////////////////////////////////////////////////////////

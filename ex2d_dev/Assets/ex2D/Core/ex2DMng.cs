@@ -10,6 +10,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -22,19 +23,22 @@ using System.Collections.Generic;
 
 [ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
-public class ex2DMng : MonoBehaviour
-{
+[AddComponentMenu("ex2D/2D Manager")]
+public class ex2DMng : MonoBehaviour {
+
+    [System.NonSerialized] public static ex2DMng instance;
+
+    public List<exLayer> layerList = new List<exLayer>();
+
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    [System.NonSerialized] public static ex2DMng instance;
-#if EX_DEBUG
-    [SerializeField]
-#endif
-    private List<exLayer> layerList = new List<exLayer>();
     private Camera cachedCamera;
     
+    /// Pair's type is <Shader, Texture>
+    private static Dictionary<Pair, Material> materialTable = new Dictionary<Pair, Material>();
+
     ///////////////////////////////////////////////////////////////////////////////
     // properties
     ///////////////////////////////////////////////////////////////////////////////
@@ -89,6 +93,7 @@ public class ex2DMng : MonoBehaviour
     void OnDestroy () {
         DestroyAllLayer();
         instance = null;
+        cachedCamera = null;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -120,9 +125,26 @@ public class ex2DMng : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
+    public void DestroyLayer ( int _idx ) { DestroyLayer ( layerList[_idx] ); }
     public void DestroyLayer (exLayer layer) {
         exDebug.Assert(layerList.Contains(layer), "can't find layer in ex2DMng");
         layerList.Remove(layer);
         layer.Clear();
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// Return shared material matchs given shader and texture
+    // ------------------------------------------------------------------ 
+
+    public static Material GetMaterial (Shader shader, Texture texture) {
+        var key = new Pair(shader, texture);
+        Material mat;
+        if ( ! materialTable.TryGetValue(key, out mat) ) {
+            mat = new Material(shader);
+            mat.hideFlags = HideFlags.DontSave;
+            mat.mainTexture = texture;
+            materialTable.Add(key, mat);
+        }
+        return mat;
     }
 }

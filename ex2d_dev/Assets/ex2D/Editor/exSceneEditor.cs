@@ -23,7 +23,45 @@ using System.Collections.Generic;
 
 class exSceneEditor : EditorWindow {
 
+    class SettingsStyles {
+        public GUIStyle boldLabel = new GUIStyle();
+        public GUIStyle toolbar = "TE Toolbar";
+        public GUIStyle toolbarButton = "TE ToolbarButton";
+        public GUIStyle toolbarDropDown = "TE ToolbarDropDown";
+        public GUIStyle boxBackground = "TE NodeBackground";
+        public GUIStyle elementBackground = "OL Box";
+        public GUIStyle draggingHandle = "WindowBottomResize";
+        public GUIStyle removeButton = "InvisibleButton";
+        public GUIStyle elementSelectionRect = "SelectionRect";
+
+        public Texture iconToolbarPlus = EditorGUIUtility.FindTexture ("Toolbar Plus");
+        public Texture iconToolbarMinus = EditorGUIUtility.FindTexture("Toolbar Minus");
+
+        public int elementHeight = 25;
+
+        public SettingsStyles() {
+            // NOTE: if we don't new GUIStyle, it will reference the original style. 
+            boxBackground = new GUIStyle(boxBackground);
+            boxBackground.margin = new RectOffset( 0, 0, 0, 0 );
+            boxBackground.padding = new RectOffset( 0, 0, 0, 0 );
+
+            elementBackground = new GUIStyle(elementBackground);
+            elementBackground.overflow = new RectOffset(0, 0, 1, 0);
+
+            elementSelectionRect = new GUIStyle(elementSelectionRect);
+            elementSelectionRect.overflow = new RectOffset(0, 0, 1, -1);
+
+            boldLabel = new GUIStyle(boldLabel);
+            boldLabel.fontSize = 15;
+            boldLabel.fontStyle = FontStyle.Bold;
+            boldLabel.normal.textColor = EditorStyles.boldLabel.normal.textColor;
+        }
+    }
+
+    static SettingsStyles settingsStyles = null;
 	static int sceneViewFieldHash = "SceneViewField".GetHashCode();
+	static int sceneEditorHash = "SceneEditor".GetHashCode();
+	static int layerElementsFieldHash = "LayerElementsField".GetHashCode();
 
     float scale_ = 1.0f;
     float scale {
@@ -40,6 +78,10 @@ class exSceneEditor : EditorWindow {
     Color background = Color.gray;
     Vector2 editCameraPos = Vector2.zero;
     Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
+    SerializedObject curSerializedObject = null;
+
+    exLayer selectingLayer = null;
+    exLayer draggingLayer = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -64,6 +106,13 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void OnGUI () {
+        // pre-check
+        PreCheck ();
+        if ( ex2DMng.instance == null )
+            return;
+
+        curSerializedObject.Update ();
+
         // toolbar
         Toolbar ();
 
@@ -80,12 +129,17 @@ class exSceneEditor : EditorWindow {
             // scene filed
             int margin = 40; 
             float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
-            Layout_SceneViewField ( Mathf.FloorToInt(position.width - 200 - 40 - 10 - margin),
+            Layout_SceneViewField ( Mathf.FloorToInt(position.width - 250 - 40 - 10 - margin),
                                     Mathf.FloorToInt(position.height - toolbarHeight - 40 - margin) );
         EditorGUILayout.EndHorizontal();
 
         // debug info
         DebugInfos ();
+
+        //
+        ProcessSceneEditorEvents();
+
+        curSerializedObject.ApplyModifiedProperties ();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -97,6 +151,51 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void Reset () {
+        curSerializedObject = null;
+        selectingLayer = null;
+        draggingLayer = null;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void PreCheck () {
+        // if settingsStyles is null
+        if ( settingsStyles == null ) {
+            settingsStyles = new SettingsStyles();
+        }
+
+        // if ex2DMng is null
+        if ( ex2DMng.instance == null ) {
+            EditorGUILayout.Space();
+
+            EditorGUILayout.BeginHorizontal();
+                GUILayout.Space(30);
+
+                Color old = GUI.color;
+                GUI.color = Color.yellow;
+                EditorGUILayout.LabelField ( "Can't find ex2DMng in the scene!" );
+                GUI.color = old;
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+                GUILayout.Space(30);
+                if ( GUILayout.Button("Create...", GUILayout.Width(80) ) ) {
+                    Camera ex2DCamera = Camera.main;
+                    if ( ex2DCamera == null ) {
+                        GameObject go = new GameObject("Main Camera");
+                        ex2DCamera = go.AddComponent<Camera>();
+                    }
+                    ex2DCamera.gameObject.AddComponent<ex2DMng>();
+                }
+            EditorGUILayout.EndHorizontal();
+        }
+
+        // if SerializedObject is null
+        if ( ex2DMng.instance != null && curSerializedObject == null ) {
+            curSerializedObject = new SerializedObject(ex2DMng.instance);
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -152,87 +251,172 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void Settings () {
-        GUIStyle boldStyle = new GUIStyle();
-        boldStyle.fontSize = 15;
-        boldStyle.fontStyle = FontStyle.Bold;
-        boldStyle.normal.textColor = EditorStyles.boldLabel.normal.textColor;
-
-        EditorGUILayout.BeginVertical( new GUILayoutOption [] {
-                                           GUILayout.Width(200), 
-                                           GUILayout.MinWidth(200), 
-                                           GUILayout.MaxWidth(200),
+        EditorGUILayout.BeginHorizontal( new GUILayoutOption [] {
+                                           GUILayout.Width(250), 
+                                           GUILayout.MinWidth(250), 
+                                           GUILayout.MaxWidth(250),
                                            GUILayout.ExpandWidth(false),
                                        } );
+        GUILayout.Space(10);
+        EditorGUILayout.BeginVertical( settingsStyles.boxBackground );
 
             // ======================================================== 
             // General 
             // ======================================================== 
 
-            EditorGUILayout.LabelField ( "General", boldStyle );
-            EditorGUI.indentLevel++;
-                if ( ex2DMng.instance == null ) {
-                    Color old = GUI.color;
-                    GUI.color = Color.yellow;
-                    EditorGUILayout.LabelField ( "Can't find ex2DMng in the scene!" );
-                    GUI.color = old;
-
-                    EditorGUILayout.BeginHorizontal();
-                        GUILayout.FlexibleSpace();
-                        if ( GUILayout.Button("Create...", GUILayout.Width(80) ) ) {
-                            Camera ex2DCamera = Camera.main;
-                            if ( ex2DCamera == null ) {
-                                GameObject go = new GameObject("Main Camera");
-                                ex2DCamera = go.AddComponent<Camera>();
-                            }
-                            ex2DCamera.gameObject.AddComponent<ex2DMng>();
-                        }
-                    EditorGUILayout.EndHorizontal();
-                }
-                else {
-                    EditorGUILayout.ObjectField( ""
-                                                 , ex2DMng.instance
-                                                 , typeof(ex2DMng)
-                                                 , false 
-                                               );
-                }
-            EditorGUI.indentLevel--;
+            EditorGUILayout.LabelField ( "General", settingsStyles.boldLabel );
+            EditorGUILayout.ObjectField( ""
+                                         , ex2DMng.instance
+                                         , typeof(ex2DMng)
+                                         , false 
+                                       );
 
             // ======================================================== 
             // Layers 
             // ======================================================== 
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField ( "Layers", boldStyle );
-            EditorGUI.indentLevel++;
-                EditorGUILayout.BeginHorizontal();
-                    GUILayout.FlexibleSpace();
-                    if ( GUILayout.Button("Add...", GUILayout.Width(50) ) ) {
-                        // TODO
-                    }
-                EditorGUILayout.EndHorizontal();
-            EditorGUI.indentLevel--;
+            EditorGUILayout.LabelField ( "Layers", settingsStyles.boldLabel );
+            GUILayout.Space(2);
+
+            Layout_LayerElementsField();
+
         EditorGUILayout.EndVertical();
+        EditorGUILayout.EndHorizontal();
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DebugInfos () {
-        EditorGUILayout.BeginHorizontal();
-            string text = "";
-            int width = -1;
-            
-            text = "Camera Pos: " + editCameraPos;
-            // width = (int)EditorStyles.label.CalcSize(new GUIContent(text)).x;
-            width = 180;
-            EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
+    void Layout_LayerElementsField () {
+        SerializedProperty layerListProp = curSerializedObject.FindProperty ("layerList");
 
-            text = "Viewport: " + new Vector2(sceneViewRect.width, sceneViewRect.height).ToString();
-            // width = (int)EditorStyles.label.CalcSize(new GUIContent(text)).x;
-            width = 180;
-            EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
+        Rect rect = GUILayoutUtility.GetRect ( 10f, settingsStyles.elementHeight * ex2DMng.instance.layerList.Count );
+        LayerElementsField (rect, layerListProp);
+
+        // add layer button
+        EditorGUILayout.BeginHorizontal( settingsStyles.toolbar, new GUILayoutOption[0]);
+        GUILayout.FlexibleSpace();
+            if ( GUILayout.Button( "UP", settingsStyles.toolbarButton ) ) 
+            {
+                int curIdx = ex2DMng.instance.layerList.IndexOf(selectingLayer);
+                int nextIdx = System.Math.Max(curIdx-1,0);
+                layerListProp.MoveArrayElement ( curIdx, nextIdx );
+                selectingLayer = ex2DMng.instance.layerList[nextIdx];
+            }
+            if ( GUILayout.Button( "DOWN", settingsStyles.toolbarButton ) ) 
+            {
+                int curIdx = ex2DMng.instance.layerList.IndexOf(selectingLayer);
+                int nextIdx = System.Math.Min(curIdx+1,ex2DMng.instance.layerList.Count-1);
+                layerListProp.MoveArrayElement ( curIdx, nextIdx );
+                selectingLayer = ex2DMng.instance.layerList[nextIdx];
+            }
+            if ( GUILayout.Button( settingsStyles.iconToolbarPlus, 
+                                   settingsStyles.toolbarDropDown ) ) 
+            {
+                ex2DMng.instance.CreateLayer();
+            }
         EditorGUILayout.EndHorizontal();
+    }
+
+    void LayerElementsField ( Rect _rect, SerializedProperty _layerListProp ) {
+        int controlID = GUIUtility.GetControlID(layerElementsFieldHash, FocusType.Passive);
+        float cx = _rect.x;
+        float cy = _rect.y;
+        Event e = Event.current;
+
+        for ( int i = 0; i < _layerListProp.arraySize; ++i ) {
+            SerializedProperty layerProp = _layerListProp.GetArrayElementAtIndex(i);
+            LayerElementField ( new Rect( cx, cy, _rect.width, settingsStyles.elementHeight ), 
+                                layerProp,
+                                i,
+                                controlID ); 
+            cy += settingsStyles.elementHeight;
+        }
+
+        // event process for layers
+        switch ( e.GetTypeForControl(controlID) ) {
+        case EventType.MouseUp:
+			if ( GUIUtility.hotControl == controlID ) {
+				GUIUtility.hotControl = 0;
+                draggingLayer = null;
+                e.Use();
+			}
+            break;
+        }
+    }
+
+    void LayerElementField ( Rect _rect, SerializedProperty _prop, int _idx, int _controlID ) {
+        Vector2 size = Vector2.zero;
+        float cur_x = _rect.x;
+        Event e = Event.current;
+        exLayer layer = ex2DMng.instance.layerList[_idx];
+
+        cur_x += 5.0f;
+        Rect draggingHandleRect = new Rect(cur_x, _rect.y + 10f, 10f, _rect.height);
+        if ( Event.current.type == EventType.Repaint ) {
+            // draw background
+            if ( selectingLayer == layer ) {
+                settingsStyles.elementSelectionRect.Draw(_rect, false, false, false, false);
+            }
+            else {
+                settingsStyles.elementBackground.Draw(_rect, false, false, false, false);
+            }
+
+            settingsStyles.draggingHandle.Draw( draggingHandleRect, false, false, false, false );
+            EditorGUIUtility.AddCursorRect ( draggingHandleRect, MouseCursor.Pan );
+        }
+        cur_x += 10.0f;
+
+        cur_x += 5.0f;
+        size = EditorStyles.toggle.CalcSize( GUIContent.none );
+        EditorGUI.PropertyField ( new Rect ( cur_x, _rect.y + 3f, size.x, size.y ),
+                                  _prop.FindPropertyRelative("show"), 
+                                  GUIContent.none );
+        cur_x += 10.0f;
+
+        cur_x += 10.0f;
+        EditorGUI.PropertyField ( new Rect ( cur_x, _rect.y + 4f, 100f, _rect.height - 8f ),
+                                  _prop.FindPropertyRelative("name"), 
+                                  GUIContent.none );
+        cur_x += 100.0f;
+
+
+        //
+        size = settingsStyles.removeButton.CalcSize( new GUIContent(settingsStyles.iconToolbarMinus) );
+        cur_x = _rect.xMax - 5.0f - size.x;
+        if ( GUI.Button( new Rect( cur_x, _rect.y + 2f, size.x, size.y ), 
+                         settingsStyles.iconToolbarMinus, 
+                         settingsStyles.removeButton) )
+        {
+            string layerName = _prop.FindPropertyRelative("name").stringValue;
+            if ( EditorUtility.DisplayDialog ( "Delete Layer?", 
+                                               string.Format("Are you sure you want to delete layer: {0}?", layerName),
+                                               "Yes",
+                                               "No" ) )
+            {
+                ex2DMng.instance.DestroyLayer(_idx);
+                _prop.DeleteCommand();
+            }
+        }
+
+        // event process for layer
+        switch ( e.GetTypeForControl(_controlID) ) {
+        case EventType.MouseDown:
+            if ( e.button == 0 && e.clickCount == 1 && _rect.Contains(e.mousePosition) ) {
+                GUIUtility.hotControl = _controlID;
+                GUIUtility.keyboardControl = _controlID;
+                selectingLayer = layer;
+
+                if ( draggingHandleRect.Contains(e.mousePosition) ) {
+                    draggingLayer = layer;
+                }
+
+                e.Use();
+            }
+            break;
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -247,6 +431,7 @@ class exSceneEditor : EditorWindow {
                                                });
         SceneViewField (rect);
     }
+
     void SceneViewField ( Rect _rect ) {
         int controlID = GUIUtility.GetControlID(sceneViewFieldHash, FocusType.Passive);
         Event e = Event.current;
@@ -344,6 +529,15 @@ class exSceneEditor : EditorWindow {
 
                 foreach ( Object o in DragAndDrop.objectReferences ) {
                     if ( o is exTextureInfo ) {
+                        GameObject gameObject = new GameObject("New Sprite");
+                        exSprite sprite = gameObject.AddComponent<exSprite>();
+                        sprite.textureInfo = o as exTextureInfo;
+                        gameObject.transform.position = Vector3.zero;
+                        gameObject.transform.localScale = Vector3.one;
+                        gameObject.transform.rotation = Quaternion.identity;
+
+                        if ( selectingLayer != null )
+                            selectingLayer.Add(sprite);
                     }
                 }
 
@@ -372,17 +566,66 @@ class exSceneEditor : EditorWindow {
             GL.Viewport(viewportRect);
 
             // TODO { 
-            Material mat = (Material)EditorGUIUtility.LoadRequired("SceneView/HandleLines.mat");
-            mat.SetPass(0);
-            GL.Begin(GL.QUADS);
-            GL.Color( new Color( 1.0f, 0.0f, 0.0f, 0.5f ) );
-                GL.Vertex3(200,   100,   0);
-                GL.Vertex3(200,   300,   0);
-                GL.Vertex3(300,   300,   0);
-                GL.Vertex3(300,   100,   0);
-            GL.End();
+            // Material mat = (Material)EditorGUIUtility.LoadRequired("SceneView/HandleLines.mat");
+            // mat.SetPass(0);
+            // GL.Begin(GL.QUADS);
+            // GL.Color( new Color( 1.0f, 0.0f, 0.0f, 0.5f ) );
+            //     GL.Vertex3(200,   100,   0);
+            //     GL.Vertex3(200,   300,   0);
+            //     GL.Vertex3(300,   300,   0);
+            //     GL.Vertex3(300,   100,   0);
+            // GL.End();
             // } TODO end 
         GL.PopMatrix();
         GL.Viewport(oldViewport);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DebugInfos () {
+        EditorGUILayout.BeginHorizontal();
+            string text = "";
+            int width = -1;
+            
+            text = "Camera Pos: " + editCameraPos;
+            // width = (int)EditorStyles.label.CalcSize(new GUIContent(text)).x;
+            width = 180;
+            EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
+
+            text = "Viewport: " + new Vector2(sceneViewRect.width, sceneViewRect.height).ToString();
+            // width = (int)EditorStyles.label.CalcSize(new GUIContent(text)).x;
+            width = 180;
+            EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
+        EditorGUILayout.EndHorizontal();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void ProcessSceneEditorEvents () {
+        int controlID = GUIUtility.GetControlID(sceneEditorHash, FocusType.Passive);
+        Event e = Event.current;
+
+        switch ( e.GetTypeForControl(controlID) ) {
+        case EventType.MouseDown:
+            if ( e.button == 0 && e.clickCount == 1 ) {
+                GUIUtility.hotControl = controlID;
+                GUIUtility.keyboardControl = controlID;
+
+                e.Use();
+            }
+            break;
+
+        case EventType.MouseUp:
+			if ( GUIUtility.hotControl == controlID ) {
+				GUIUtility.hotControl = 0;
+
+                e.Use();
+			}
+            break;
+        }
     }
 }
