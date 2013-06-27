@@ -25,19 +25,65 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Camera))]
 [AddComponentMenu("ex2D/2D Manager")]
 public class ex2DMng : MonoBehaviour {
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // nested classes, enums
+    ///////////////////////////////////////////////////////////////////////////////
 
-    [System.NonSerialized] public static ex2DMng instance;
+    public struct MaterialTableKey : IComparable<MaterialTableKey>, IEquatable<MaterialTableKey> {
 
+        public Shader shader;
+        public Texture texture;
+
+        public MaterialTableKey (Shader _shader, Texture _texture) {
+            this.shader = _shader;
+            this.texture = _texture;
+        }
+        public bool Equals (MaterialTableKey _other) {
+            return object.ReferenceEquals(shader, _other.shader) && object.ReferenceEquals(texture, _other.texture);
+        }
+        public override int GetHashCode () {
+            int shaderHashCode, texHashCode;
+            if (shader != null) {
+                shaderHashCode = shader.GetHashCode();
+            }
+            else {
+                shaderHashCode = 0x00000000;
+            }
+            if (texture != null) {
+                texHashCode = texture.GetHashCode() * 1313;
+            }
+            else {
+                texHashCode = 0x00000000;
+            }
+            return shaderHashCode ^ texHashCode;
+        }
+        public int CompareTo(MaterialTableKey _other) {
+            int texCompare = texture.GetHashCode().CompareTo(_other.texture.GetHashCode());
+            if (texCompare == 0) {
+                return shader.GetHashCode().CompareTo(_other.shader.GetHashCode());
+            }
+            else {
+                return texCompare;
+            }
+        }
+    }
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // serialized
+    ///////////////////////////////////////////////////////////////////////////////
+    
     public List<exLayer> layerList = new List<exLayer>();
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
+    [System.NonSerialized] public static ex2DMng instance;
+
     private Camera cachedCamera;
     
-    /// Pair's type is <Shader, Texture>
-    private static Dictionary<Pair, Material> materialTable = new Dictionary<Pair, Material>();
+    private static Dictionary<MaterialTableKey, Material> materialTable = new Dictionary<MaterialTableKey, Material>();
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -137,7 +183,7 @@ public class ex2DMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public static Material GetMaterial (Shader shader, Texture texture) {
-        var key = new Pair(shader, texture);
+        MaterialTableKey key = new MaterialTableKey(shader, texture);
         Material mat;
         if ( ! materialTable.TryGetValue(key, out mat) ) {
             mat = new Material(shader);
