@@ -80,7 +80,7 @@ class exSceneEditor : EditorWindow {
     Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
     SerializedObject curSerializedObject = null;
 
-    exLayer selectingLayer = null;
+    exLayer activeLayer = null;
     exLayer draggingLayer = null;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -152,7 +152,7 @@ class exSceneEditor : EditorWindow {
 
     void Reset () {
         curSerializedObject = null;
-        selectingLayer = null;
+        activeLayer = null;
         draggingLayer = null;
     }
 
@@ -300,17 +300,21 @@ class exSceneEditor : EditorWindow {
         GUILayout.FlexibleSpace();
             if ( GUILayout.Button( "UP", settingsStyles.toolbarButton ) ) 
             {
-                int curIdx = ex2DMng.instance.layerList.IndexOf(selectingLayer);
-                int nextIdx = System.Math.Max(curIdx-1,0);
-                layerListProp.MoveArrayElement ( curIdx, nextIdx );
-                selectingLayer = ex2DMng.instance.layerList[nextIdx];
+                int curIdx = ex2DMng.instance.layerList.IndexOf(activeLayer);
+                if ( curIdx != -1 ) {
+                    int nextIdx = System.Math.Max(curIdx-1,0);
+                    layerListProp.MoveArrayElement ( curIdx, nextIdx );
+                    activeLayer = ex2DMng.instance.layerList[nextIdx];
+                }
             }
             if ( GUILayout.Button( "DOWN", settingsStyles.toolbarButton ) ) 
             {
-                int curIdx = ex2DMng.instance.layerList.IndexOf(selectingLayer);
-                int nextIdx = System.Math.Min(curIdx+1,ex2DMng.instance.layerList.Count-1);
-                layerListProp.MoveArrayElement ( curIdx, nextIdx );
-                selectingLayer = ex2DMng.instance.layerList[nextIdx];
+                int curIdx = ex2DMng.instance.layerList.IndexOf(activeLayer);
+                if ( curIdx != -1 ) {
+                    int nextIdx = System.Math.Min(curIdx+1,ex2DMng.instance.layerList.Count-1);
+                    layerListProp.MoveArrayElement ( curIdx, nextIdx );
+                    activeLayer = ex2DMng.instance.layerList[nextIdx];
+                }
             }
             if ( GUILayout.Button( settingsStyles.iconToolbarPlus, 
                                    settingsStyles.toolbarDropDown ) ) 
@@ -357,7 +361,7 @@ class exSceneEditor : EditorWindow {
         Rect draggingHandleRect = new Rect(cur_x, _rect.y + 10f, 10f, _rect.height);
         if ( Event.current.type == EventType.Repaint ) {
             // draw background
-            if ( selectingLayer == layer ) {
+            if ( activeLayer == layer ) {
                 settingsStyles.elementSelectionRect.Draw(_rect, false, false, false, false);
             }
             else {
@@ -398,6 +402,8 @@ class exSceneEditor : EditorWindow {
             {
                 ex2DMng.instance.DestroyLayer(_idx);
                 _prop.DeleteCommand();
+                if ( activeLayer == layer )
+                    activeLayer = null;
             }
         }
 
@@ -407,7 +413,7 @@ class exSceneEditor : EditorWindow {
             if ( e.button == 0 && e.clickCount == 1 && _rect.Contains(e.mousePosition) ) {
                 GUIUtility.hotControl = _controlID;
                 GUIUtility.keyboardControl = _controlID;
-                selectingLayer = layer;
+                activeLayer = layer;
 
                 if ( draggingHandleRect.Contains(e.mousePosition) ) {
                     draggingLayer = layer;
@@ -511,7 +517,11 @@ class exSceneEditor : EditorWindow {
             break;
 
         case EventType.DragUpdated:
-            if ( _rect.Contains(e.mousePosition) ) {
+            if ( ex2DMng.instance.layerList.Count > 0 &&  _rect.Contains(e.mousePosition) ) {
+                if ( activeLayer == null ) {
+                    activeLayer = ex2DMng.instance.layerList[0];
+                }
+
                 // Show a copy icon on the drag
                 foreach ( Object o in DragAndDrop.objectReferences ) {
                     if ( o is exTextureInfo ) {
@@ -536,8 +546,8 @@ class exSceneEditor : EditorWindow {
                         gameObject.transform.localScale = Vector3.one;
                         gameObject.transform.rotation = Quaternion.identity;
 
-                        if ( selectingLayer != null )
-                            selectingLayer.Add(sprite);
+                        if ( activeLayer != null )
+                            activeLayer.Add(sprite);
                     }
                 }
 
@@ -555,29 +565,65 @@ class exSceneEditor : EditorWindow {
     void DrawScene ( Rect _rect ) {
         Rect oldViewport = new Rect( 0, 0, Screen.width, Screen.height ); 
         GL.PushMatrix();
-            GL.LoadPixelMatrix( Mathf.FloorToInt((editCameraPos.x - _rect.width * 0.5f) / scale), 
-                                Mathf.FloorToInt((editCameraPos.x - _rect.width * 0.5f + _rect.width) / scale), 
-                                Mathf.FloorToInt((editCameraPos.y - _rect.height * 0.5f) / scale),
-                                Mathf.FloorToInt((editCameraPos.y - _rect.height * 0.5f + _rect.height) / scale) );
+            // GL.LoadPixelMatrix( Mathf.FloorToInt((editCameraPos.x - _rect.width * 0.5f) / scale), 
+            //                     Mathf.FloorToInt((editCameraPos.x + _rect.width * 0.5f) / scale), 
+            //                     Mathf.FloorToInt((editCameraPos.y - _rect.height * 0.5f) / scale),
+            //                     Mathf.FloorToInt((editCameraPos.y + _rect.height * 0.5f) / scale) );
+
+            // TODO { 
+            GL.LoadPixelMatrix( 0.0f, _rect.width, _rect.height, 0.0f );
+            GL.LoadIdentity();
+            GL.MultMatrix( Matrix4x4.TRS( new Vector3(editCameraPos.x, editCameraPos.y, 0.0f),
+                                          Quaternion.identity,
+                                          new Vector3(scale, scale, 1.0f) ) );
+            // } TODO end 
             Rect viewportRect = new Rect ( _rect.x,
                                            position.height - _rect.yMax,
                                            _rect.width, 
                                            _rect.height );
             GL.Viewport(viewportRect);
 
-            // TODO { 
-            // Material mat = (Material)EditorGUIUtility.LoadRequired("SceneView/HandleLines.mat");
-            // mat.SetPass(0);
-            // GL.Begin(GL.QUADS);
-            // GL.Color( new Color( 1.0f, 0.0f, 0.0f, 0.5f ) );
-            //     GL.Vertex3(200,   100,   0);
-            //     GL.Vertex3(200,   300,   0);
-            //     GL.Vertex3(300,   300,   0);
-            //     GL.Vertex3(300,   100,   0);
-            // GL.End();
-            // } TODO end 
+            // draw all nodes in the scene
+            // foreach ( exLayer layer in ex2DMng.instance.layerList ) {
+            //     if ( layer.show ) {
+            //         foreach ( exSpriteBase node in layer ) {
+            //             DrawNode ( node );
+            //         }
+            //     }
+            // }
+
+            GL.PushMatrix();
+            GL.Begin(GL.QUADS);
+            GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
+                GL.Vertex3( -10.0f, -10.0f, 0.0f );
+                GL.Vertex3( -10.0f,  20.0f, 0.0f );
+                GL.Vertex3(  30.0f,  20.0f, 0.0f );
+                GL.Vertex3(  30.0f, -10.0f, 0.0f );
+            GL.End();
+            GL.PopMatrix();
+
         GL.PopMatrix();
         GL.Viewport(oldViewport);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawNode ( exSpriteBase _node ) {
+        Material mat = _node.material;
+        mat.SetPass(0);
+
+        Vector3 pos = _node.transform.position;
+        Vector2 size = Vector2.one;
+
+        GL.Begin(GL.QUADS);
+        GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
+            GL.Vertex3( -size.x + pos.x, -size.y + pos.y, 0.0f );
+            GL.Vertex3( -size.x + pos.x,  size.y + pos.y, 0.0f );
+            GL.Vertex3(  size.x + pos.x,  size.y + pos.y, 0.0f );
+            GL.Vertex3(  size.x + pos.x, -size.y + pos.y, 0.0f );
+        GL.End();
     }
 
     // ------------------------------------------------------------------ 
