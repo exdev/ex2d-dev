@@ -46,6 +46,7 @@ public class exLayer
     
     public string name = "New Layer";
     public bool show = true;
+    public List<exSpriteBase> spriteList; ///< all the sprites in this layer
     
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -91,8 +92,11 @@ public class exLayer
     //// Desc:
     //// ------------------------------------------------------------------ 
 
-    //public exLayer () {
-    //}
+    public exLayer () {
+        if (spriteList == null) {
+            spriteList = new List<exSpriteBase>();
+        }
+    }
 
     // ------------------------------------------------------------------ 
     /// Maintains a mesh to render all sprites
@@ -121,13 +125,15 @@ public class exLayer
         if (oldLayer != null) {
             oldLayer.Remove(_sprite);
         }
-        _sprite.layer = this;
         // TODO: 在exSpriteBase中添加
         Material mat = _sprite.material;
         if (!mat) {
             Debug.LogError("no material assigned in sprite", _sprite);
             return;
         }
+
+        _sprite.layer = this;
+        spriteList.Add(_sprite);
         // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
         exMesh sameDrawcallMesh = null;
         if (layerType == LayerType.Dynamic) {
@@ -166,6 +172,7 @@ public class exLayer
         if (mesh != null) {
             mesh.Remove(_sprite);
             _sprite.layer = null;
+            spriteList.Remove(_sprite);
         }
     }
     
@@ -212,7 +219,24 @@ public class exLayer
                 meshList[i].Compact();
             }
         }
+        spriteList.TrimExcess();
     }
+
+    // ------------------------------------------------------------------ 
+    /// 重新初始化私有变量
+    // ------------------------------------------------------------------ 
+
+    public void OnDeserialize () {
+        spriteList.RemoveAll((sprite => !(bool)sprite));
+        exSpriteBase[] oldSprites = new exSpriteBase[spriteList.Count];
+        spriteList.CopyTo(oldSprites);
+        spriteList.Clear();
+        foreach (exSpriteBase sprite in oldSprites) {
+            sprite.layer = null;    // TODO: destory old layer
+            Add(sprite);
+        }
+    }
+
     
     ///////////////////////////////////////////////////////////////////////////////
     // Internal Functions
@@ -223,10 +247,12 @@ public class exLayer
     // ------------------------------------------------------------------ 
 
     public void Clear() {
+        Debug.Log(string.Format("[Clear|exLayer] meshList.Count: {0}", meshList.Count));
         for (int i = 0; i < meshList.Count; ++i) {
             Object.DestroyImmediate(meshList[i].gameObject);
         }
         meshList.Clear();
+        exDebug.Assert(spriteList.Count == 0);
     }
 
     // ------------------------------------------------------------------ 
@@ -251,12 +277,8 @@ public class exLayer
     /// 按照绘制的先后次序返回所有sprite，供编辑器使用
     // ------------------------------------------------------------------ 
 
-    public IEnumerator<exSpriteBase> GetEnumerator () { 
-        foreach (exMesh mesh in meshList) {
-            foreach (exSpriteBase sprite in mesh.spriteList) {
-                yield return sprite;
-            }
-        }
+    public IEnumerator<exSpriteBase> GetEnumerator () {
+        return spriteList.GetEnumerator();
     }
 
 #endif

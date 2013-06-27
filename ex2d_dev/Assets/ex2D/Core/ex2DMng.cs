@@ -132,6 +132,9 @@ public class ex2DMng : MonoBehaviour {
             instance = this;
         }
         cachedCamera = camera;
+        foreach (exLayer layer in layerList) {
+            layer.OnDeserialize();
+        }
     }
 #endif
 
