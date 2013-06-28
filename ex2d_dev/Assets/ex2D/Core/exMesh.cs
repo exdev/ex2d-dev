@@ -11,7 +11,7 @@
 
 //#define USE_DRAW_MESH
 #if USE_DRAW_MESH
-    //#define DRAW_MESH_NOW
+//#define DRAW_MESH_NOW
 #endif
 
 #define FORCE_UPDATE_VERTEX_INFO ///< 删除mesh最后面的顶点时，仅先从index buffer和vertex buffer中清除，其它数据不标记为脏。因为是尾端的冗余数据，不同步也可以。
@@ -56,6 +56,26 @@ public enum UpdateFlags {
 public class exMesh : MonoBehaviour
 {
     const int RESERVED_INDEX_COUNT = 6;    // 如果不手动给出，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
+
+    public enum RenderEventType { 
+        During_OnPreRender = 0,        ///< if use MeshRenderer
+        During_OnRenderObject = 1,     ///< if use DrawMesh
+        During_OnPostRender = 2           ///< if use DrawMeshNow
+    }
+    
+    // ------------------------------------------------------------------ 
+    // When should we update exMesh ?
+    // ------------------------------------------------------------------ 
+    
+#if USE_DRAW_MESH
+#   if DRAW_MESH_NOW
+	    public const RenderEventType RENDER_EVENT = RenderEventType.During_OnPostRender;  
+#   else
+        public const RenderEventType RENDER_EVENT = RenderEventType.During_OnRenderObject;
+#   endif
+#else
+    public const RenderEventType RENDER_EVENT = RenderEventType.During_OnPreRender;
+#endif
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -128,15 +148,15 @@ public class exMesh : MonoBehaviour
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
-//#if USE_DRAW_MESH
     void Awake () {
-        enabled = false;
+        cachedRenderer = gameObject.GetComponent<MeshRenderer>();
     } 
-//#endif
 
     void OnDestroy () {
         RemoveAll();
         layer = null;
+        cachedRenderer = null;
+        mesh = null;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -536,15 +556,21 @@ public class exMesh : MonoBehaviour
     /// Remove all exSpriteBases out of this layer 
     // ------------------------------------------------------------------ 
 
-    void RemoveAll () {
-        while (spriteList.Count > 0) {
-            exSpriteBase sprite = spriteList[spriteList.Count - 1];
-            exDebug.Assert(sprite);
-            if (sprite) {
-                sprite.SetLayer(null);
+    public void RemoveAll (bool removeSpriteFromLayer = true) {
+        if (removeSpriteFromLayer) {
+            while (spriteList.Count > 0) {
+                exSpriteBase sprite = spriteList[spriteList.Count - 1];
+                exDebug.Assert(sprite);
+                if (sprite) {
+                    sprite.SetLayer(null);
+                }
             }
         }
         spriteList.Clear();
+        vertices.Clear();
+        indices.Clear();
+        uvs.Clear();
+        colors32.Clear();
     }
 
     // ------------------------------------------------------------------ 

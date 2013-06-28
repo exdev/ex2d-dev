@@ -47,15 +47,8 @@ public class exLayer
     public string name = "New Layer";
     public bool show = true;
     public List<exSpriteBase> spriteList; ///< all the sprites in this layer
-    
-    ///////////////////////////////////////////////////////////////////////////////
-    // non-serialized
-    ///////////////////////////////////////////////////////////////////////////////
-    
-    [System.NonSerialized]
-    public List<exMesh> meshList = new List<exMesh>();
 
-    private LayerType layerType_ = LayerType.Dynamic;
+    [HideInInspector] [SerializeField] private LayerType layerType_ = LayerType.Dynamic;
     public LayerType layerType {
         get {
             return layerType_;
@@ -81,6 +74,13 @@ public class exLayer
             }
         }
     }
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // non-serialized
+    ///////////////////////////////////////////////////////////////////////////////
+    
+    [System.NonSerialized]
+    public List<exMesh> meshList = new List<exMesh>();
 
     //public bool dirty = true;
 
@@ -223,21 +223,38 @@ public class exLayer
     }
 
     // ------------------------------------------------------------------ 
+    /// 销毁非序列化变量引用的资源
+    // ------------------------------------------------------------------ 
+
+    public void OnSerialize () {
+        Debug.Log("[OnSerialize|exLayer] ");
+        // 将数据全部清除，但是保留spriteList，以便重新生成mesh
+        foreach (exMesh mesh in meshList) {
+            mesh.RemoveAll(false);
+            mesh.gameObject.Destory();
+        }
+        meshList.Clear();
+        foreach (exSpriteBase sprite in spriteList) {
+            sprite.layer = null;
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
     /// 重新初始化私有变量
     // ------------------------------------------------------------------ 
 
     public void OnDeserialize () {
-        spriteList.RemoveAll((sprite => !(bool)sprite));
+        Debug.Log("[OnDeserialize|exLayer] ");
+        // 根据spriteList重新生成mesh
+        //spriteList.RemoveAll((sprite => !(bool)sprite));
         exSpriteBase[] oldSprites = new exSpriteBase[spriteList.Count];
         spriteList.CopyTo(oldSprites);
         spriteList.Clear();
         foreach (exSpriteBase sprite in oldSprites) {
-            sprite.layer = null;    // TODO: destory old layer
             Add(sprite);
         }
     }
 
-    
     ///////////////////////////////////////////////////////////////////////////////
     // Internal Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -247,7 +264,6 @@ public class exLayer
     // ------------------------------------------------------------------ 
 
     public void Clear() {
-        Debug.Log(string.Format("[Clear|exLayer] meshList.Count: {0}", meshList.Count));
         for (int i = 0; i < meshList.Count; ++i) {
             Object.DestroyImmediate(meshList[i].gameObject);
         }

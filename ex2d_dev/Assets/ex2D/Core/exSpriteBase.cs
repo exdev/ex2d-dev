@@ -46,10 +46,11 @@ public class exSpriteBase : MonoBehaviour {
     [System.NonSerialized] public Transform cachedTransform = null;     ///< only available after Awake
 
     ///////////////////////////////////////////////////////////////////////////////
-    // properties
+    // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
 
-    private exLayer layer_;
+    [System.NonSerialized]
+    private exLayer layer_ = null;
     public exLayer layer {
         get {
             return layer_;
@@ -60,7 +61,7 @@ public class exSpriteBase : MonoBehaviour {
     }
 
     public virtual Material material { get { return null; } }
-
+    
     /// Is component enabled and gameobject activeInHierarchy? 
     private bool isOnEnabled_;
     public bool isOnEnabled {

@@ -10,6 +10,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -86,7 +89,7 @@ public class ex2DMng : MonoBehaviour {
 
     private Camera cachedCamera;
     
-    private static Dictionary<MaterialTableKey, Material> materialTable;
+    private static Dictionary<MaterialTableKey, Material> materialTable = new Dictionary<MaterialTableKey, Material>();
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -104,7 +107,7 @@ public class ex2DMng : MonoBehaviour {
         if (!instance) {
             instance = this;
         }
-        materialTable = new Dictionary<MaterialTableKey, Material>();
+        //materialTable = new Dictionary<MaterialTableKey, Material>();
         cachedCamera = camera;
         if (cachedCamera.orthographic != true) {
             Debug.LogWarning("Set ex2DMng's camera projection to orthographic");
@@ -113,52 +116,78 @@ public class ex2DMng : MonoBehaviour {
     }
     
     // ------------------------------------------------------------------ 
-    /// 用于重新编译过后，重新初始化非序列化变量
+    //
     // ------------------------------------------------------------------ 
 
-#if UNITY_EDITOR
     void OnEnable () {
-        if (materialTable == null) {
-            // refill materialTable using current materials
-            materialTable = new Dictionary<MaterialTableKey, Material>();
+#if UNITY_EDITOR
+        if (!EditorApplication.isPlaying) {
+            //用于重新编译过后，重新初始化非序列化变量
+            exDebug.Assert(materialTable != null);
+            if (!instance) {
+                instance = this;
+            }
+            cachedCamera = camera;
             foreach (exLayer layer in layerList) {
-                foreach (exMesh mesh in layer.meshList) {
-                    MaterialTableKey key = new MaterialTableKey(mesh.material);
-                    materialTable[key] = mesh.material;
-                }
+                layer.OnDeserialize();
+            }
+            //for (int l = 0; l < layerList.Count; ++l) {
+            //    exLayer layer = layerList[l];
+            //    for (int i = 0; i < layer.spriteList.Count; ++i) {
+            //        exSpriteBase sprite = layer.spriteList[i];
+            //        Material mat = sprite.material;
+            //        materialTable[new MaterialTableKey(mat)] = mat;
+            //    }
+            //}
+        }
+#endif
+    }
+
+    void OnDisable () {
+#if UNITY_EDITOR
+        if (!EditorApplication.isPlaying) {
+            instance = null;
+            foreach (exLayer layer in layerList) {
+                layer.OnSerialize();
             }
         }
-        if (!instance) {
-            instance = this;
-        }
-        cachedCamera = camera;
-        foreach (exLayer layer in layerList) {
-            layer.OnDeserialize();
-        }
-    }
 #endif
+    }
 
     // ------------------------------------------------------------------ 
-    // NOTE: 使用DrawMesh时，要在OnRenderObject时调用，使用DrawMeshNow时，要在OnPreCull中调用
-    // 使用MeshRenderer时，要在OnPreRender中调用
+    // Desc: 
     // ------------------------------------------------------------------ 
-
+    
+#pragma warning disable 0162
     void OnPreRender () {
-        if (cachedCamera.orthographicSize != Screen.height) {
-            //cachedCamera.orthographicSize = Screen.height;
-        }
-        
-        for (int i = 0; i < layerList.Count; ++i) {
-            layerList[i].UpdateAllMeshes();
+        if (exMesh.RENDER_EVENT == exMesh.RenderEventType.During_OnPreRender) {
+            RenderScene();
         }
     }
+    void OnPostRender () {
+        if (exMesh.RENDER_EVENT == exMesh.RenderEventType.During_OnPostRender) {
+            RenderScene();
+        }
+    }
+    void OnRenderObject () {
+        if (exMesh.RENDER_EVENT == exMesh.RenderEventType.During_OnRenderObject) {
+            RenderScene();
+        }
+    }
+#pragma warning restore 0162
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
     void OnDestroy () {
+#if UNITY_EDITOR
+        if (EditorApplication.isPlaying) {
+            DestroyAllLayer();
+        }
+#else
         DestroyAllLayer();
+#endif
         instance = null;
         cachedCamera = null;
     }
@@ -213,5 +242,20 @@ public class ex2DMng : MonoBehaviour {
             materialTable.Add(key, mat);
         }
         return mat;
+    }
+
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    void RenderScene () {
+        if (cachedCamera.orthographicSize != Screen.height) {
+            //cachedCamera.orthographicSize = Screen.height;
+        }
+        
+        for (int i = 0; i < layerList.Count; ++i) {
+            layerList[i].UpdateAllMeshes();
+        }
     }
 }

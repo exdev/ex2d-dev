@@ -101,7 +101,7 @@ namespace UnityEngine {
     ///
     ///////////////////////////////////////////////////////////////////////////////
 
-    internal static partial class UnityEngineExtends {
+    public static partial class UnityEngineExtends {
     
         // ------------------------------------------------------------------ 
         // Desc: 
@@ -118,6 +118,70 @@ namespace UnityEngine {
         public static T Instantiate<T>(this T original, Vector3 position, Quaternion rotation) where T : Object {
             return Object.Instantiate(original, position, rotation) as T;
         }
+
+#region Destory
+
+        // ------------------------------------------------------------------ 
+        /// If in edit mode, destory immediatelly
+        // ------------------------------------------------------------------ 
+
+        public static void Destory(this GameObject obj) {
+            obj.transform.parent = null;
+#           if UNITY_EDITOR
+                if (EditorApplication.isPlaying) {
+                    Object.Destroy(obj);
+                }
+                else {
+                    Object.DestroyImmediate(obj, false);
+                }
+#           else
+                Object.Destroy(obj);
+#           endif
+        }
+        public static void Destory(this Object obj) {
+#           if UNITY_EDITOR
+                if (EditorApplication.isPlaying) {
+                    Object.Destroy(obj);
+                }
+                else {
+                    Object.DestroyImmediate(obj, false);
+                }
+#           else
+                Object.Destroy(obj);
+#           endif
+        }
+        public static void Destory(this GameObject obj, float waitTime) {
+            obj.transform.parent = null;
+            ((Object)obj).Destory(waitTime);
+        }
+        public static void Destory(this Object obj, float waitTime) {
+#           if UNITY_EDITOR
+                if (EditorApplication.isPlaying) {
+                    Object.Destroy(obj, waitTime);
+                }
+                else {
+                    Object.DestroyImmediate(obj, false);
+                }
+#           else
+                Object.Destroy(obj, waitTime);
+#           endif
+        }
+        public static void DestroyImmediate(this GameObject obj) {
+            obj.transform.parent = null;
+            Object.DestroyImmediate(obj);
+        }
+        public static void DestroyImmediate(this GameObject obj, bool allowDestroyingAssets) {
+            obj.transform.parent = null;
+            Object.DestroyImmediate(obj, allowDestroyingAssets);
+        }
+        public static void DestroyImmediate(this Object obj) {
+            Object.DestroyImmediate(obj);
+        }
+        public static void DestroyImmediate(this Object obj, bool allowDestroyingAssets) {
+            Object.DestroyImmediate(obj, allowDestroyingAssets);
+        }
     }
+
+#endregion
 
 }
