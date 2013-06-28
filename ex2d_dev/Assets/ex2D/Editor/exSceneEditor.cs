@@ -545,7 +545,7 @@ class exSceneEditor : EditorWindow {
                         if ( sprite.shader == null )
                             sprite.shader = Shader.Find("ex2D/Alpha Blended");
                         sprite.textureInfo = o as exTextureInfo;
-                        gameObject.transform.position = Vector3.zero;
+                        gameObject.transform.position = SceneField_MapToWorld( _rect, e.mousePosition);
                         gameObject.transform.localScale = Vector3.one;
                         gameObject.transform.rotation = Quaternion.identity;
 
@@ -588,16 +588,6 @@ class exSceneEditor : EditorWindow {
                 }
             }
 
-            // Material mat = new Material ( Shader.Find("ex2D/Alpha Blended") );
-            // mat.SetPass(0);
-            // GL.Begin(GL.QUADS);
-            // GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
-            //     GL.Vertex3( -10.0f, -10.0f, 0.0f );
-            //     GL.Vertex3( -10.0f,  20.0f, 0.0f );
-            //     GL.Vertex3(  30.0f,  20.0f, 0.0f );
-            //     GL.Vertex3(  30.0f, -10.0f, 0.0f );
-            // GL.End();
-
         GL.PopMatrix();
         GL.Viewport(oldViewport);
     }
@@ -615,7 +605,6 @@ class exSceneEditor : EditorWindow {
 
             exTextureInfo textureInfo = sprite.textureInfo;
 
-            Vector3 pos = _node.transform.position;
             Vector2 halfSize = new Vector2( textureInfo.width * 0.5f * _node.transform.lossyScale.x, 
                                             textureInfo.height * 0.5f * _node.transform.lossyScale.y );
 
@@ -624,21 +613,24 @@ class exSceneEditor : EditorWindow {
             float t0 = (float) textureInfo.y                      / (float) textureInfo.texture.height;
             float t1 = (float) (textureInfo.y+textureInfo.height) / (float) textureInfo.texture.height;
 
+            GL.PushMatrix();
+            GL.MultMatrix( _node.transform.localToWorldMatrix );
             GL.Begin(GL.QUADS);
-                GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
+                GL.Color( new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
 
                 GL.TexCoord2 ( s0, t0 );
-                GL.Vertex3 ( -halfSize.x + pos.x, -halfSize.y + pos.y, 0.0f );
+                GL.Vertex3 ( -halfSize.x, -halfSize.y, 0.0f );
 
                 GL.TexCoord2 ( s0, t1 );
-                GL.Vertex3 ( -halfSize.x + pos.x,  halfSize.y + pos.y, 0.0f );
+                GL.Vertex3 ( -halfSize.x,  halfSize.y, 0.0f );
 
                 GL.TexCoord2 ( s1, t1 );
-                GL.Vertex3 (  halfSize.x + pos.x,  halfSize.y + pos.y, 0.0f );
+                GL.Vertex3 (  halfSize.x,  halfSize.y, 0.0f );
 
                 GL.TexCoord2 ( s1, t0 );
-                GL.Vertex3 (  halfSize.x + pos.x, -halfSize.y + pos.y, 0.0f );
+                GL.Vertex3 (  halfSize.x, -halfSize.y, 0.0f );
             GL.End();
+            GL.PopMatrix();
         }
     }
 
@@ -689,5 +681,20 @@ class exSceneEditor : EditorWindow {
 			}
             break;
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    Vector3 SceneField_MapToWorld ( Rect _rect, Vector2 _mousePosition ) {
+        return new Vector3 (  (_mousePosition.x - _rect.x - _rect.width/2.0f + editCameraPos.x)/scale,
+                             -(_mousePosition.y - _rect.y - _rect.height/2.0f + editCameraPos.y)/scale,
+                             0.0f );
+    }
+    Vector3 SceneField_MapToScreen ( Rect _rect, Vector2 _mousePosition ) {
+        return new Vector3 ( _mousePosition.x - _rect.x,
+                             _mousePosition.y - _rect.y,
+                             0.0f );
     }
 }
