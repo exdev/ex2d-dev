@@ -895,6 +895,11 @@ partial class exAtlasEditor : EditorWindow {
             else if ( curEdit.algorithm == exAtlas.Algorithm.Tree ) {
                 exAtlasUtility.TreePack (curEdit);
             }
+
+            //
+            foreach ( exTextureInfo info in curEdit.textureInfos ) {
+                EditorUtility.SetDirty(info);
+            }
         }
         finally {
             EditorUtility.ClearProgressBar();

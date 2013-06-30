@@ -331,5 +331,7 @@ public static class exAtlasUtility {
         //
         _atlas.texture = (Texture2D)AssetDatabase.LoadAssetAtPath( atlasTexturePath, typeof(Texture2D) );
         _atlas.needRebuild = false;
+
+        EditorUtility.SetDirty(_atlas);
     }
 }
