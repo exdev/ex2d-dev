@@ -552,8 +552,11 @@ class exSceneEditor : EditorWindow {
                         gameObject.transform.localScale = Vector3.one;
                         gameObject.transform.rotation = Quaternion.identity;
 
-                        if ( activeLayer != null )
+                        if ( activeLayer != null ) {
                             activeLayer.Add(sprite);
+                            EditorUtility.SetDirty(activeLayer);
+                            EditorUtility.SetDirty(sprite);
+                        }
                     }
                 }
 

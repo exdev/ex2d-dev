@@ -119,13 +119,13 @@ namespace UnityEngine {
             return Object.Instantiate(original, position, rotation) as T;
         }
 
-#region Destory
+#region Destroy
 
         // ------------------------------------------------------------------ 
         /// If in edit mode, destory immediatelly
         // ------------------------------------------------------------------ 
 
-        public static void Destory(this GameObject obj) {
+        public static void Destroy(this GameObject obj) {
             obj.transform.parent = null;
 #           if UNITY_EDITOR
                 if (EditorApplication.isPlaying) {
@@ -138,7 +138,7 @@ namespace UnityEngine {
                 Object.Destroy(obj);
 #           endif
         }
-        public static void Destory(this Object obj) {
+        public static void Destroy(this Object obj) {
 #           if UNITY_EDITOR
                 if (EditorApplication.isPlaying) {
                     Object.Destroy(obj);
@@ -150,11 +150,11 @@ namespace UnityEngine {
                 Object.Destroy(obj);
 #           endif
         }
-        public static void Destory(this GameObject obj, float waitTime) {
+        public static void Destroy(this GameObject obj, float waitTime) {
             obj.transform.parent = null;
-            ((Object)obj).Destory(waitTime);
+            ((Object)obj).Destroy(waitTime);
         }
-        public static void Destory(this Object obj, float waitTime) {
+        public static void Destroy(this Object obj, float waitTime) {
 #           if UNITY_EDITOR
                 if (EditorApplication.isPlaying) {
                     Object.Destroy(obj, waitTime);
@@ -180,8 +180,8 @@ namespace UnityEngine {
         public static void DestroyImmediate(this Object obj, bool allowDestroyingAssets) {
             Object.DestroyImmediate(obj, allowDestroyingAssets);
         }
-    }
-
 #endregion
+
+    }
 
 }

@@ -210,7 +210,7 @@ public class ex2DMng : MonoBehaviour {
     public void DestroyLayer (exLayer layer) {
         exDebug.Assert(layerList.Contains(layer), "can't find layer in ex2DMng");
         layerList.Remove(layer);
-        layer.gameObject.Destory();
+        layer.gameObject.Destroy();
     }
     
     // ------------------------------------------------------------------ 
