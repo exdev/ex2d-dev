@@ -165,6 +165,17 @@ public class ex2DMng : MonoBehaviour {
         cachedCamera = null;
     }
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void LateUpdate () {
+        for ( int i = layerList.Count-1; i >= 0; --i ) {
+            if ( layerList[i] == null )
+                layerList.RemoveAt(i);
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Other Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -175,7 +186,8 @@ public class ex2DMng : MonoBehaviour {
 
     public void DestroyAllLayer () {
         for (int i = 0; i < layerList.Count; ++i) {
-            layerList[i].Clear();
+            if ( layerList[i] != null )
+                layerList[i].Clear();
         }
         layerList.Clear();
     }
@@ -230,7 +242,8 @@ public class ex2DMng : MonoBehaviour {
         }
         
         for (int i = 0; i < layerList.Count; ++i) {
-            layerList[i].UpdateAllMeshes();
+            if ( layerList[i] != null )
+                layerList[i].UpdateAllMeshes();
         }
     }
 }
