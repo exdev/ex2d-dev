@@ -9,11 +9,6 @@
 // defines
 ///////////////////////////////////////////////////////////////////////////////
 
-//#define USE_DRAW_MESH
-#if USE_DRAW_MESH
-//#define DRAW_MESH_NOW
-#endif
-
 #define FORCE_UPDATE_VERTEX_INFO ///< 删除mesh最后面的顶点时，仅先从index buffer和vertex buffer中清除，其它数据不标记为脏。因为是尾端的冗余数据，不同步也可以。
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -49,33 +44,11 @@ public enum UpdateFlags {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#if !USE_DRAW_MESH
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
-#endif
 public class exMesh : MonoBehaviour
 {
     const int RESERVED_INDEX_COUNT = 6;    // 如果不手动给出，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
-
-    public enum RenderEventType { 
-        During_OnPreRender = 0,        ///< if use MeshRenderer
-        During_OnRenderObject = 1,     ///< if use DrawMesh
-        During_OnPostRender = 2           ///< if use DrawMeshNow
-    }
-    
-    // ------------------------------------------------------------------ 
-    // When should we update exMesh ?
-    // ------------------------------------------------------------------ 
-    
-#if USE_DRAW_MESH
-#   if DRAW_MESH_NOW
-	    public const RenderEventType RENDER_EVENT = RenderEventType.During_OnPostRender;  
-#   else
-        public const RenderEventType RENDER_EVENT = RenderEventType.During_OnRenderObject;
-#   endif
-#else
-    public const RenderEventType RENDER_EVENT = RenderEventType.During_OnPreRender;
-#endif
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -84,12 +57,6 @@ public class exMesh : MonoBehaviour
     [System.NonSerialized] public exLayer layer;
     
     //material
-#if USE_DRAW_MESH
-#   if !EX_DEBUG
-        [System.NonSerialized]
-#   endif
-        public Material material;
-#else
     Renderer cachedRenderer;
     public Material material {
         get {
@@ -109,7 +76,6 @@ public class exMesh : MonoBehaviour
             }
         }
     }
-#endif
 
     [System.NonSerialized]
     public List<exSpriteBase> spriteList = new List<exSpriteBase>();
@@ -236,12 +202,10 @@ public class exMesh : MonoBehaviour
         }
         if ((updateFlags & UpdateFlags.Index) != 0) {
             mesh.triangles = indices.ToArray();      // Assigning triangles will automatically Recalculate the bounding volume.
-#if !USE_DRAW_MESH
             bool visible =  (indices.Count > 0);
             if (gameObject.activeSelf != visible) {
                 gameObject.SetActive(visible);
             }
-#endif
         }
         else if((updateFlags & UpdateFlags.Vertex) != 0) { 
             // 如果没有更新triangles并且更新了vertex位置，则需要手动更新bbox
@@ -255,18 +219,6 @@ public class exMesh : MonoBehaviour
             mesh.normals = normals;
         }
         updateFlags = UpdateFlags.None;
-
-#if USE_DRAW_MESH
-        bool visible =  (indices.Count > 0);
-        if (visible) {
-#   if DRAW_MESH_NOW
-            material.SetPass(0);
-            Graphics.DrawMeshNow(mesh, transform.localToWorldMatrix, -1);
-#   else
-            Graphics.DrawMesh(mesh, transform.localToWorldMatrix, material, gameObject.layer, null, 0, null, false, false);
-#   endif
-        }
-#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -580,11 +532,6 @@ public class exMesh : MonoBehaviour
     void CreateMesh () {
         exDebug.Assert(!mesh);
         if (!mesh) {
-#if USE_DRAW_MESH
-            mesh = new Mesh();
-            mesh.name = "ex2D mesh";
-            mesh.hideFlags = HideFlags.DontSave;
-#else
             MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
             cachedRenderer = gameObject.GetComponent<MeshRenderer>();
             cachedRenderer.receiveShadows = false;
@@ -598,7 +545,6 @@ public class exMesh : MonoBehaviour
             else {
                 mesh = meshFilter.sharedMesh;
             }
-#endif
             if (layer.layerType == LayerType.Dynamic) {
                 mesh.MarkDynamic();
             }

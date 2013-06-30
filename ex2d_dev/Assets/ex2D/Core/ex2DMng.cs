@@ -158,23 +158,9 @@ public class ex2DMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
     
-#pragma warning disable 0162
     void OnPreRender () {
-        if (exMesh.RENDER_EVENT == exMesh.RenderEventType.During_OnPreRender) {
-            RenderScene();
-        }
+        RenderScene();
     }
-    void OnPostRender () {
-        if (exMesh.RENDER_EVENT == exMesh.RenderEventType.During_OnPostRender) {
-            RenderScene();
-        }
-    }
-    void OnRenderObject () {
-        if (exMesh.RENDER_EVENT == exMesh.RenderEventType.During_OnRenderObject) {
-            RenderScene();
-        }
-    }
-#pragma warning restore 0162
 
     // ------------------------------------------------------------------ 
     // Desc: 
