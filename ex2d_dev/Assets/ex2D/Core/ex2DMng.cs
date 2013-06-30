@@ -167,13 +167,6 @@ public class ex2DMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void OnDestroy () {
-#if UNITY_EDITOR
-        if (EditorApplication.isPlaying) {
-            DestroyAllLayer();
-        }
-#else
-        DestroyAllLayer();
-#endif
         instance = null;
         cachedCamera = null;
     }
