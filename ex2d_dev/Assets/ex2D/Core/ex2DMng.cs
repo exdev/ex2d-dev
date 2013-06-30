@@ -198,7 +198,8 @@ public class ex2DMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public exLayer CreateLayer () {
-        exLayer layer = new exLayer();
+        GameObject layerGo = new GameObject();
+        exLayer layer = layerGo.AddComponent<exLayer>();
         layerList.Add(layer);
         return layer;
     }
@@ -212,6 +213,7 @@ public class ex2DMng : MonoBehaviour {
         exDebug.Assert(layerList.Contains(layer), "can't find layer in ex2DMng");
         layerList.Remove(layer);
         layer.Clear();
+        layer.gameObject.Destory();
     }
     
     // ------------------------------------------------------------------ 

@@ -35,8 +35,7 @@ public enum LayerType
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-[System.Serializable]
-public class exLayer
+public class exLayer : MonoBehaviour
 {
     const int MAX_DYNAMIC_VERTEX_COUNT = 300;    ///< 超过这个数量的话，layer将会自动进行拆分
     
@@ -227,7 +226,7 @@ public class exLayer
     // ------------------------------------------------------------------ 
 
     public void OnSerialize () {
-        Debug.Log("[OnSerialize|exLayer] ");
+        Debug.Log("[OnSerialize|exLayer] SpriteCount: " + spriteList.Count);
         // 将数据全部清除，但是保留spriteList，以便重新生成mesh
         foreach (exMesh mesh in meshList) {
             mesh.RemoveAll(false);
@@ -244,7 +243,7 @@ public class exLayer
     // ------------------------------------------------------------------ 
 
     public void OnDeserialize () {
-        Debug.Log("[OnDeserialize|exLayer] ");
+        Debug.Log("[OnDeserialize|exLayer] SpriteCount: " + spriteList.Count);
         // 根据spriteList重新生成mesh
         //spriteList.RemoveAll((sprite => !(bool)sprite));
         exSpriteBase[] oldSprites = new exSpriteBase[spriteList.Count];
