@@ -305,7 +305,7 @@ class exSceneEditor : EditorWindow {
                 if ( curIdx != -1 ) {
                     int nextIdx = System.Math.Max(curIdx-1,0);
                     layerListProp.MoveArrayElement ( curIdx, nextIdx );
-                    activeLayer = ex2DMng.instance.layerList[nextIdx];
+                    // activeLayer = ex2DMng.instance.layerList[nextIdx];
                 }
             }
             if ( GUILayout.Button( "DOWN", settingsStyles.toolbarButton ) ) 
@@ -314,7 +314,7 @@ class exSceneEditor : EditorWindow {
                 if ( curIdx != -1 ) {
                     int nextIdx = System.Math.Min(curIdx+1,ex2DMng.instance.layerList.Count-1);
                     layerListProp.MoveArrayElement ( curIdx, nextIdx );
-                    activeLayer = ex2DMng.instance.layerList[nextIdx];
+                    // activeLayer = ex2DMng.instance.layerList[nextIdx];
                 }
             }
             if ( GUILayout.Button( settingsStyles.iconToolbarPlus, 
@@ -543,7 +543,7 @@ class exSceneEditor : EditorWindow {
 
                 foreach ( Object o in DragAndDrop.objectReferences ) {
                     if ( o is exTextureInfo ) {
-                        GameObject gameObject = new GameObject("New Sprite");
+                        GameObject gameObject = new GameObject(o.name);
                         exSprite sprite = gameObject.AddComponent<exSprite>();
                         if ( sprite.shader == null )
                             sprite.shader = Shader.Find("ex2D/Alpha Blended");
@@ -586,7 +586,8 @@ class exSceneEditor : EditorWindow {
                                 (editCameraPos.y + _rect.height * 0.5f) / scale );
 
             // draw all nodes in the scene
-            foreach ( exLayer layer in ex2DMng.instance.layerList ) {
+            for ( int i = ex2DMng.instance.layerList.Count-1; i >= 0; --i ) {
+                exLayer layer = ex2DMng.instance.layerList[i];
                 if ( layer != null && layer.show ) {
                     exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
                     // TODO: sort the spriteList
