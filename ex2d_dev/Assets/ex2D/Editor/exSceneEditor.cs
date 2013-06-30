@@ -689,7 +689,7 @@ class exSceneEditor : EditorWindow {
 
     Vector3 SceneField_MapToWorld ( Rect _rect, Vector2 _mousePosition ) {
         return new Vector3 (  (_mousePosition.x - _rect.x - _rect.width/2.0f + editCameraPos.x)/scale,
-                             -(_mousePosition.y - _rect.y - _rect.height/2.0f + editCameraPos.y)/scale,
+                             -(_mousePosition.y - _rect.y - _rect.height/2.0f - editCameraPos.y)/scale,
                              0.0f );
     }
     Vector3 SceneField_MapToScreen ( Rect _rect, Vector2 _mousePosition ) {
