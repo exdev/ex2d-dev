@@ -103,7 +103,7 @@ public class exLayer : MonoBehaviour
         //// 将数据全部清除，但是保留spriteList，以便重新生成mesh
         //foreach (exMesh mesh in meshList) {
         //    mesh.RemoveAll(false);
-        //    mesh.gameObject.Destory();
+        //    mesh.gameObject.Destroy();
         //}
         //meshList.Clear();
         //foreach (exSpriteBase sprite in spriteList) {
