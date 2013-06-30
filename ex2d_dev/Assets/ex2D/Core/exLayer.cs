@@ -77,8 +77,10 @@ public class exLayer : MonoBehaviour
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
-    
-    [System.NonSerialized]
+
+#if !EX_DEBUG
+    [HideInInspector] 
+#endif
     public List<exMesh> meshList = new List<exMesh>();
 
     //public bool dirty = true;
@@ -225,33 +227,33 @@ public class exLayer : MonoBehaviour
     /// 销毁非序列化变量引用的资源
     // ------------------------------------------------------------------ 
 
-    public void OnSerialize () {
-        Debug.Log("[OnSerialize|exLayer] SpriteCount: " + spriteList.Count);
-        // 将数据全部清除，但是保留spriteList，以便重新生成mesh
-        foreach (exMesh mesh in meshList) {
-            mesh.RemoveAll(false);
-            mesh.gameObject.Destory();
-        }
-        meshList.Clear();
-        foreach (exSpriteBase sprite in spriteList) {
-            sprite.layer = null;
-        }
+    public void OnDisable () {
+        //Debug.Log("[OnDisable|exLayer] SpriteCount: " + spriteList.Count);
+        //// 将数据全部清除，但是保留spriteList，以便重新生成mesh
+        //foreach (exMesh mesh in meshList) {
+        //    mesh.RemoveAll(false);
+        //    mesh.gameObject.Destory();
+        //}
+        //meshList.Clear();
+        //foreach (exSpriteBase sprite in spriteList) {
+        //    sprite.layer = null;
+        //}
     }
     
     // ------------------------------------------------------------------ 
     /// 重新初始化私有变量
     // ------------------------------------------------------------------ 
 
-    public void OnDeserialize () {
-        Debug.Log("[OnDeserialize|exLayer] SpriteCount: " + spriteList.Count);
-        // 根据spriteList重新生成mesh
-        //spriteList.RemoveAll((sprite => !(bool)sprite));
-        exSpriteBase[] oldSprites = new exSpriteBase[spriteList.Count];
-        spriteList.CopyTo(oldSprites);
-        spriteList.Clear();
-        foreach (exSpriteBase sprite in oldSprites) {
-            Add(sprite);
-        }
+    public void OnEnable () {
+        //Debug.Log("[OnEnable|exLayer] SpriteCount: " + spriteList.Count);
+        //// 根据spriteList重新生成mesh
+        ////spriteList.RemoveAll((sprite => !(bool)sprite));
+        //exSpriteBase[] oldSprites = new exSpriteBase[spriteList.Count];
+        //spriteList.CopyTo(oldSprites);
+        //spriteList.Clear();
+        //foreach (exSpriteBase sprite in oldSprites) {
+        //    Add(sprite);
+        //}
     }
 
     ///////////////////////////////////////////////////////////////////////////////

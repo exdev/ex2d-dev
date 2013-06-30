@@ -24,7 +24,6 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-[ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
 [AddComponentMenu("ex2D/2D Manager")]
 public class ex2DMng : MonoBehaviour {
@@ -123,14 +122,11 @@ public class ex2DMng : MonoBehaviour {
 #if UNITY_EDITOR
         if (!EditorApplication.isPlaying) {
             //用于重新编译过后，重新初始化非序列化变量
-            exDebug.Assert(materialTable != null);
+            //exDebug.Assert(materialTable != null);
             if (!instance) {
                 instance = this;
             }
             cachedCamera = camera;
-            foreach (exLayer layer in layerList) {
-                layer.OnDeserialize();
-            }
             //for (int l = 0; l < layerList.Count; ++l) {
             //    exLayer layer = layerList[l];
             //    for (int i = 0; i < layer.spriteList.Count; ++i) {
@@ -147,9 +143,6 @@ public class ex2DMng : MonoBehaviour {
 #if UNITY_EDITOR
         if (!EditorApplication.isPlaying) {
             instance = null;
-            foreach (exLayer layer in layerList) {
-                layer.OnSerialize();
-            }
         }
 #endif
     }
