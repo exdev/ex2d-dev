@@ -166,7 +166,7 @@ public class exLayer : MonoBehaviour
         }
 
         _sprite.layer = this;
-        _sprite.cachedTransform.parent = this.cachedTransform;
+        _sprite.transform.parent = transform;
         // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
         exMesh sameDrawcallMesh = null;
         if (layerType == LayerType.Dynamic) {
