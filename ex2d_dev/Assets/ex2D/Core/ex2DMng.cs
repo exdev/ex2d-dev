@@ -176,6 +176,12 @@ public class ex2DMng : MonoBehaviour {
         }
     }
 
+#if EX_DEBUG
+    void Reset () {
+        instance = this;
+    } 
+#endif
+
     ///////////////////////////////////////////////////////////////////////////////
     // Other Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -186,7 +192,7 @@ public class ex2DMng : MonoBehaviour {
 
     public void DestroyAllLayer () {
         for (int i = 0; i < layerList.Count; ++i) {
-            layerList[i].Destroy();
+            layerList[i].gameObject.Destroy();
         }
         layerList.Clear();
     }
