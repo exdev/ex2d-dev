@@ -43,7 +43,6 @@ public class exLayer : MonoBehaviour
     // serialized
     ///////////////////////////////////////////////////////////////////////////////
     
-    public string name = "New Layer";
     public bool show = true;
     public List<exSpriteBase> spriteList; ///< all the sprites in this layer
 

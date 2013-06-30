@@ -334,8 +334,7 @@ class exSceneEditor : EditorWindow {
         for ( int i = 0; i < _layerListProp.arraySize; ++i ) {
             SerializedProperty layerProp = _layerListProp.GetArrayElementAtIndex(i);
             LayerElementField ( new Rect( cx, cy, _rect.width, settingsStyles.elementHeight ), 
-                                layerProp,
-                                i,
+                                layerProp.objectReferenceValue as exLayer,
                                 controlID ); 
             cy += settingsStyles.elementHeight;
         }
@@ -352,17 +351,19 @@ class exSceneEditor : EditorWindow {
         }
     }
 
-    void LayerElementField ( Rect _rect, SerializedProperty _prop, int _idx, int _controlID ) {
+    void LayerElementField ( Rect _rect, exLayer _layer, int _controlID ) {
         Vector2 size = Vector2.zero;
         float cur_x = _rect.x;
         Event e = Event.current;
-        exLayer layer = ex2DMng.instance.layerList[_idx];
+
+        if ( _layer == null )
+            return;
 
         cur_x += 5.0f;
         Rect draggingHandleRect = new Rect(cur_x, _rect.y + 10f, 10f, _rect.height);
         if ( Event.current.type == EventType.Repaint ) {
             // draw background
-            if ( activeLayer == layer ) {
+            if ( activeLayer == _layer ) {
                 settingsStyles.elementSelectionRect.Draw(_rect, false, false, false, false);
             }
             else {
@@ -376,15 +377,21 @@ class exSceneEditor : EditorWindow {
 
         cur_x += 5.0f;
         size = EditorStyles.toggle.CalcSize( GUIContent.none );
-        EditorGUI.PropertyField ( new Rect ( cur_x, _rect.y + 3f, size.x, size.y ),
-                                  _prop.FindPropertyRelative("show"), 
-                                  GUIContent.none );
+        bool newShow = EditorGUI.Toggle ( new Rect ( cur_x, _rect.y + 3f, size.x, size.y ),
+                                          _layer.show );
+        if ( newShow != _layer.show ) {
+            _layer.show = newShow;
+            EditorUtility.SetDirty(_layer);
+        }
         cur_x += 10.0f;
 
         cur_x += 10.0f;
-        EditorGUI.PropertyField ( new Rect ( cur_x, _rect.y + 4f, 100f, _rect.height - 8f ),
-                                  _prop.FindPropertyRelative("name"), 
-                                  GUIContent.none );
+        string newName = EditorGUI.TextField ( new Rect ( cur_x, _rect.y + 4f, 100f, _rect.height - 8f ),
+                                               _layer.gameObject.name ); 
+        if ( newName != _layer.gameObject.name ) {
+            _layer.gameObject.name = newName;
+            EditorUtility.SetDirty(_layer.gameObject);
+        }
         cur_x += 100.0f;
 
 
@@ -395,29 +402,25 @@ class exSceneEditor : EditorWindow {
                          settingsStyles.iconToolbarMinus, 
                          settingsStyles.removeButton) )
         {
-            string layerName = _prop.FindPropertyRelative("name").stringValue;
             if ( EditorUtility.DisplayDialog ( "Delete Layer?", 
-                                               string.Format("Are you sure you want to delete layer: {0}?", layerName),
+                                               string.Format("Are you sure you want to delete _layer: {0}?", _layer.gameObject.name),
                                                "Yes",
                                                "No" ) )
             {
-                ex2DMng.instance.DestroyLayer(_idx);
-                _prop.DeleteCommand();
-                if ( activeLayer == layer )
-                    activeLayer = null;
+                ex2DMng.instance.DestroyLayer(_layer);
             }
         }
 
-        // event process for layer
+        // event process for _layer
         switch ( e.GetTypeForControl(_controlID) ) {
         case EventType.MouseDown:
             if ( e.button == 0 && e.clickCount == 1 && _rect.Contains(e.mousePosition) ) {
                 GUIUtility.hotControl = _controlID;
                 GUIUtility.keyboardControl = _controlID;
-                activeLayer = layer;
+                activeLayer = _layer;
 
                 if ( draggingHandleRect.Contains(e.mousePosition) ) {
-                    draggingLayer = layer;
+                    draggingLayer = _layer;
                 }
 
                 e.Use();
@@ -581,7 +584,7 @@ class exSceneEditor : EditorWindow {
 
             // draw all nodes in the scene
             foreach ( exLayer layer in ex2DMng.instance.layerList ) {
-                if ( layer.show ) {
+                if ( layer != null && layer.show ) {
                     foreach ( exSpriteBase node in layer ) {
                         DrawNode ( node );
                     }

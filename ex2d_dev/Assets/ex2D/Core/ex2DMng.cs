@@ -198,7 +198,7 @@ public class ex2DMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public exLayer CreateLayer () {
-        GameObject layerGo = new GameObject();
+        GameObject layerGo = new GameObject("New Layer");
         exLayer layer = layerGo.AddComponent<exLayer>();
         layerList.Add(layer);
         return layer;
