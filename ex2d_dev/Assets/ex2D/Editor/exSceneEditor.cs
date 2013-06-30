@@ -585,7 +585,9 @@ class exSceneEditor : EditorWindow {
             // draw all nodes in the scene
             foreach ( exLayer layer in ex2DMng.instance.layerList ) {
                 if ( layer != null && layer.show ) {
-                    foreach ( exSpriteBase node in layer ) {
+                    exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
+                    // TODO: sort the spriteList
+                    foreach ( exSpriteBase node in spriteList ) {
                         DrawNode ( node );
                     }
                 }
