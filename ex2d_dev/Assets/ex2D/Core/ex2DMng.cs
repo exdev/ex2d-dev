@@ -24,6 +24,7 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
+[ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
 [AddComponentMenu("ex2D/2D Manager")]
 public class ex2DMng : MonoBehaviour {

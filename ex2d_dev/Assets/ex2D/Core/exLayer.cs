@@ -81,6 +81,8 @@ public class exLayer : MonoBehaviour
 #endif
     private List<exMesh> meshList = new List<exMesh>();
 
+    [System.NonSerialized] public Transform cachedTransform = null;     ///< only available after Awake
+
     //public bool dirty = true;
     
     ///////////////////////////////////////////////////////////////////////////////
@@ -88,6 +90,7 @@ public class exLayer : MonoBehaviour
     ///////////////////////////////////////////////////////////////////////////////
 
     void Awake () {
+        cachedTransform = transform;
         meshList.AddRange(GetComponentsInChildren<exMesh>());
     }
 
@@ -163,7 +166,7 @@ public class exLayer : MonoBehaviour
         }
 
         _sprite.layer = this;
-        spriteList.Add(_sprite);
+        _sprite.cachedTransform.parent = this.cachedTransform;
         // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
         exMesh sameDrawcallMesh = null;
         if (layerType == LayerType.Dynamic) {
@@ -202,6 +205,7 @@ public class exLayer : MonoBehaviour
         if (mesh != null) {
             mesh.Remove(_sprite);
             _sprite.layer = null;
+            _sprite.cachedTransform.parent = null;
         }
     }
     
