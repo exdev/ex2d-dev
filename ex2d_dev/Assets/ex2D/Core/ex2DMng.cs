@@ -186,7 +186,7 @@ public class ex2DMng : MonoBehaviour {
 
     public void DestroyAllLayer () {
         for (int i = 0; i < layerList.Count; ++i) {
-            layerList[i].Destory();
+            layerList[i].Destroy();
         }
         layerList.Clear();
     }
