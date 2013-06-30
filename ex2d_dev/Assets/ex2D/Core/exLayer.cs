@@ -127,6 +127,9 @@ public class exLayer : MonoBehaviour
         //}
     }
 
+    void Reset () {
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -262,17 +265,6 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public void Clear() {
-        for (int i = 0; i < meshList.Count; ++i) {
-            Object.DestroyImmediate(meshList[i].gameObject);
-        }
-        meshList.Clear();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
     private exMesh FindMesh (exSpriteBase _sprite) {
         Material mat = _sprite.material;
         for (int i = 0; i < meshList.Count; ++i) {
@@ -284,12 +276,4 @@ public class exLayer : MonoBehaviour
         Debug.LogError("sprite not exist");
         return null;
     }
-
-#if UNITY_EDITOR
-
-    // ------------------------------------------------------------------ 
-    /// 按照绘制的先后次序返回所有sprite，供编辑器使用
-    // ------------------------------------------------------------------ 
-
-#endif
 }

@@ -186,8 +186,7 @@ public class ex2DMng : MonoBehaviour {
 
     public void DestroyAllLayer () {
         for (int i = 0; i < layerList.Count; ++i) {
-            if ( layerList[i] != null )
-                layerList[i].Clear();
+            layerList[i].Destory();
         }
         layerList.Clear();
     }
@@ -211,7 +210,6 @@ public class ex2DMng : MonoBehaviour {
     public void DestroyLayer (exLayer layer) {
         exDebug.Assert(layerList.Contains(layer), "can't find layer in ex2DMng");
         layerList.Remove(layer);
-        layer.Clear();
         layer.gameObject.Destory();
     }
     

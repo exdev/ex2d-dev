@@ -116,6 +116,9 @@ public class exSpriteBase : MonoBehaviour {
                        "a sprite's logic visibility should equals to it's triangle visibility", this);
     }
 
+    void Reset () {
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////

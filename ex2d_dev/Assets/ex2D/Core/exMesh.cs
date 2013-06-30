@@ -135,7 +135,7 @@ public class exMesh : MonoBehaviour
 
     public static exMesh Create (exLayer _layer) {
         GameObject go = new GameObject("_exMesh");
-        go.hideFlags = exReleaseFlag.hideAndDontSave;
+        //go.hideFlags = exReleaseFlag.hideAndDontSave;
         go.transform.parent = _layer.transform;
         exMesh res = go.AddComponent<exMesh>();
         res.layer = _layer;
