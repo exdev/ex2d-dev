@@ -33,7 +33,7 @@ class ex2DAboutWindow : ScriptableWizard {
                          (Texture2D)AssetDatabase.LoadAssetAtPath( logoPath, typeof(Texture2D) ) );
         GUILayoutUtility.GetRect ( logoWidth, logoHeight );
 
-        string version = "ex2D v2.0.0 (beta)";
+        string version = "ex2D v2.0.1 (beta)";
         GUILayout.Space (10);
         GUILayout.BeginHorizontal();
             GUILayout.Space (10);
