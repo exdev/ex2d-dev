@@ -188,15 +188,13 @@ class exSceneEditor : EditorWindow {
                         ex2DCamera = go.AddComponent<Camera>();
                     }
                     ex2DCamera.gameObject.AddComponent<ex2DMng>();
-                    curSerializedObject = new SerializedObject(ex2DMng.instance);
                 }
             EditorGUILayout.EndHorizontal();
         }
 
-        // if SerializedObject is null
-        if ( ex2DMng.instance != null && curSerializedObject == null ) {
+        // SerializedObject
+        if ( ex2DMng.instance != null )
             curSerializedObject = new SerializedObject(ex2DMng.instance);
-        }
     }
 
     // ------------------------------------------------------------------ 
