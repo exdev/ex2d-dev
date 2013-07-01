@@ -54,6 +54,7 @@ public class exMesh : MonoBehaviour
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
     
+    // TODO: remove this
     [System.NonSerialized] public exLayer layer;
     
     //material
@@ -116,13 +117,17 @@ public class exMesh : MonoBehaviour
 
     void Awake () {
         cachedRenderer = gameObject.GetComponent<MeshRenderer>();
-    } 
+    }
 
     void OnDestroy () {
-        RemoveAll();
+        //RemoveAll();
         layer = null;
-        cachedRenderer = null;
+        mesh.Destroy();
         mesh = null;
+        MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
+        meshFilter.sharedMesh = null;
+        cachedRenderer.sharedMaterial = null;
+        cachedRenderer = null;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -148,6 +153,9 @@ public class exMesh : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void UpdateMesh () {
+        //if (mesh == null) {
+        //    CreateMesh();
+        //}
         for (int i = 0; i < spriteList.Count; ++i) {
             exSpriteBase sprite = spriteList[i];
             exDebug.Assert(sprite.isOnEnabled == sprite.isInIndexBuffer);
@@ -260,6 +268,12 @@ public class exMesh : MonoBehaviour
         
         exDebug.Assert(vertices.Count == uvs.Count, "uvs array needs to be the same size as the vertices array");
         exDebug.Assert(vertices.Count == colors32.Count, "colors32 array needs to be the same size as the vertices array");
+
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying) {
+            UpdateMesh();
+        }
+#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -310,6 +324,12 @@ public class exMesh : MonoBehaviour
         exDebug.Assert(_sprite.indexBufferIndex == -1);
         exDebug.Assert(vertices.Count == uvs.Count, "uvs array needs to be the same size as the vertices array");
         exDebug.Assert(vertices.Count == colors32.Count, "colors32 array needs to be the same size as the vertices array");
+
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying) {
+            UpdateMesh();
+        }
+#endif
     }
     
     // ------------------------------------------------------------------ 
@@ -327,6 +347,12 @@ public class exMesh : MonoBehaviour
         if (!_sprite.isInIndexBuffer) {
             AddIndices(_sprite);
         }
+
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying) {
+            UpdateMesh();
+        }
+#endif
     }
     
     // ------------------------------------------------------------------ 
@@ -345,6 +371,12 @@ public class exMesh : MonoBehaviour
             RemoveIndices(_sprite);
         }
         exDebug.Assert(_sprite.indexBufferIndex == -1);
+
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying) {
+            UpdateMesh();
+        }
+#endif
     }
     
     // ------------------------------------------------------------------ 
@@ -396,6 +428,11 @@ public class exMesh : MonoBehaviour
     [System.Diagnostics.Conditional("EX_DEBUG")]
     public void OutputDebugInfo () {
         Debug.Log("exLayer MeshInfo: SpriteCount: " + spriteList.Count, this);
+        if (mesh == null) {
+            Debug.Log("mesh is null");
+            return;
+        }
+
         string vertexInfo = "Cache Vertices: ";
         foreach (var v in vertices) {
             vertexInfo += v;
@@ -524,6 +561,12 @@ public class exMesh : MonoBehaviour
         indices.Clear();
         uvs.Clear();
         colors32.Clear();
+
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying) {
+            UpdateMesh();
+        }
+#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -534,13 +577,10 @@ public class exMesh : MonoBehaviour
         exDebug.Assert(!mesh);
         if (!mesh) {
             MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
-            cachedRenderer = gameObject.GetComponent<MeshRenderer>();
-            cachedRenderer.receiveShadows = false;
-            cachedRenderer.castShadows = false;
             if (!meshFilter.sharedMesh) {
                 mesh = new Mesh();
                 mesh.name = "ex2D mesh";
-                mesh.hideFlags = HideFlags.DontSave;
+                //mesh.hideFlags = HideFlags.DontSave;
                 meshFilter.sharedMesh = mesh;
             }
             else {
@@ -549,6 +589,9 @@ public class exMesh : MonoBehaviour
             if (layer.layerType == LayerType.Dynamic) {
                 mesh.MarkDynamic();
             }
+            cachedRenderer = gameObject.GetComponent<MeshRenderer>();
+            cachedRenderer.receiveShadows = false;
+            cachedRenderer.castShadows = false;
         }
     }
 }

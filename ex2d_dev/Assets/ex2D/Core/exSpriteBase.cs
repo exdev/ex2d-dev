@@ -66,7 +66,12 @@ public class exSpriteBase : MonoBehaviour {
     private bool isOnEnabled_;
     public bool isOnEnabled {
         get {
-            return isOnEnabled_;
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying) {
+            return enabled && gameObject.activeInHierarchy;
+        }
+#endif
+        return isOnEnabled_;
         }
     }
 
@@ -147,6 +152,11 @@ public class exSpriteBase : MonoBehaviour {
     // ------------------------------------------------------------------ 
     
     public void UpdateDirtyFlags () {
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying) {
+            cachedTransform = transform;
+        }
+#endif
         if (cachedTransform.hasChanged) {
             updateFlags |= UpdateFlags.Vertex;
             cachedTransform.hasChanged = false;

@@ -83,8 +83,6 @@ public class exLayer : MonoBehaviour
 
     [System.NonSerialized] public Transform cachedTransform = null;     ///< only available after Awake
 
-    //public bool dirty = true;
-    
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -94,63 +92,24 @@ public class exLayer : MonoBehaviour
         meshList.AddRange(GetComponentsInChildren<exMesh>());
     }
 
-    // ------------------------------------------------------------------ 
-    /// 销毁非序列化变量引用的资源
-    // ------------------------------------------------------------------ 
-
-    void OnDisable () {
-        //Debug.Log("[OnDisable|exLayer] SpriteCount: " + spriteList.Count);
-        //// 将数据全部清除，但是保留spriteList，以便重新生成mesh
-        //foreach (exMesh mesh in meshList) {
-        //    mesh.RemoveAll(false);
-        //    mesh.gameObject.Destroy();
-        //}
-        //meshList.Clear();
-        //foreach (exSpriteBase sprite in spriteList) {
-        //    sprite.layer = null;
-        //}
-    }
-    
-    // ------------------------------------------------------------------ 
-    /// 重新初始化私有变量
-    // ------------------------------------------------------------------ 
-
-    void OnEnable () {
-        //Debug.Log("[OnEnable|exLayer] SpriteCount: " + spriteList.Count);
-        //// 根据spriteList重新生成mesh
-        ////spriteList.RemoveAll((sprite => !(bool)sprite));
-        //exSpriteBase[] oldSprites = new exSpriteBase[spriteList.Count];
-        //spriteList.CopyTo(oldSprites);
-        //spriteList.Clear();
-        //foreach (exSpriteBase sprite in oldSprites) {
-        //    Add(sprite);
-        //}
-    }
-
-    void Reset () {
-    }
-
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
-    /// Maintains a mesh to render all sprites
+    /// Maintains meshes to render all sprites
     // ------------------------------------------------------------------ 
 
     public void UpdateAllMeshes () {
-        //if (dirty) {
-            for (int i = 0; i < meshList.Count; ++i) {
-                meshList[i].UpdateMesh();
-            }
-        //    dirty = false;
-        //}
+        for (int i = 0; i < meshList.Count; ++i) {
+            meshList[i].UpdateMesh();
+        }
     }
 
     // ------------------------------------------------------------------ 
     /// Add an exSpriteBase to this layer. 
     /// If sprite is disabled, it will keep invisible until you enable it.
-    /// NOTE: You can also use exSpriteBase.SetLayer.
+    /// NOTE: You can also use exSpriteBase.SetLayer for convenience.
     // ------------------------------------------------------------------ 
 
     public void Add (exSpriteBase _sprite) {
@@ -169,7 +128,16 @@ public class exLayer : MonoBehaviour
         }
 
         _sprite.layer = this;
-        _sprite.transform.parent = transform;
+#if UNITY_EDITOR
+        if (UnityEditor.EditorApplication.isPlaying) {
+            _sprite.cachedTransform.parent = cachedTransform;
+        }
+        else {
+            _sprite.transform.parent = transform;
+        }
+#else
+        _sprite.cachedTransform.parent = cachedTransform;
+#endif
         // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
         exMesh sameDrawcallMesh = null;
         if (layerType == LayerType.Dynamic) {
@@ -244,7 +212,6 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void Compact () {
-        meshList.TrimExcess();
         // TDDO: 如果是dynamic，尽量把每个mesh的顶点都填充满。如果是static，把同材质的mesh都合并起来
         for (int i = meshList.Count - 1; i >= 0; --i) {
             if (meshList[i].spriteList.Count == 0) {
@@ -255,6 +222,7 @@ public class exLayer : MonoBehaviour
                 meshList[i].Compact();
             }
         }
+        meshList.TrimExcess();
     }
 
     ///////////////////////////////////////////////////////////////////////////////

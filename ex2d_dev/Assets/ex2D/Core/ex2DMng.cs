@@ -10,10 +10,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -33,7 +29,7 @@ public class ex2DMng : MonoBehaviour {
     // nested classes, enums
     ///////////////////////////////////////////////////////////////////////////////
 
-    public struct MaterialTableKey : IComparable<MaterialTableKey>, IEquatable<MaterialTableKey> {
+    public struct MaterialTableKey : System.IComparable<MaterialTableKey>, System.IEquatable<MaterialTableKey> {
 
         public Shader shader;
         public Texture texture;
@@ -107,8 +103,8 @@ public class ex2DMng : MonoBehaviour {
         if (!instance) {
             instance = this;
         }
-        //materialTable = new Dictionary<MaterialTableKey, Material>();
         cachedCamera = camera;
+
         if (cachedCamera.orthographic != true) {
             Debug.LogWarning("Set ex2DMng's camera projection to orthographic");
             cachedCamera.orthographic = true;
@@ -121,28 +117,18 @@ public class ex2DMng : MonoBehaviour {
 
     void OnEnable () {
 #if UNITY_EDITOR
-        if (!EditorApplication.isPlaying) {
-            //用于重新编译过后，重新初始化非序列化变量
-            //exDebug.Assert(materialTable != null);
+        if (!UnityEditor.EditorApplication.isPlaying) {
             if (!instance) {
                 instance = this;
             }
             cachedCamera = camera;
-            //for (int l = 0; l < layerList.Count; ++l) {
-            //    exLayer layer = layerList[l];
-            //    for (int i = 0; i < layer.spriteList.Count; ++i) {
-            //        exSpriteBase sprite = layer.spriteList[i];
-            //        Material mat = sprite.material;
-            //        materialTable[new MaterialTableKey(mat)] = mat;
-            //    }
-            //}
         }
 #endif
     }
 
     void OnDisable () {
 #if UNITY_EDITOR
-        if (!EditorApplication.isPlaying) {
+        if (!UnityEditor.EditorApplication.isPlaying) {
             instance = null;
         }
 #endif
@@ -179,7 +165,7 @@ public class ex2DMng : MonoBehaviour {
 #if EX_DEBUG
     void Reset () {
         instance = this;
-    } 
+    }
 #endif
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -192,7 +178,10 @@ public class ex2DMng : MonoBehaviour {
 
     public void DestroyAllLayer () {
         for (int i = 0; i < layerList.Count; ++i) {
-            layerList[i].gameObject.Destroy();
+            exLayer layer = layerList[i];
+            if (layer != null) {
+                layer.gameObject.Destroy();
+            }
         }
         layerList.Clear();
     }
@@ -213,24 +202,26 @@ public class ex2DMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void DestroyLayer ( int _idx ) { DestroyLayer ( layerList[_idx] ); }
-    public void DestroyLayer (exLayer layer) {
-        exDebug.Assert(layerList.Contains(layer), "can't find layer in ex2DMng");
-        layerList.Remove(layer);
-        layer.gameObject.Destroy();
+    public void DestroyLayer (exLayer _layer) {
+        exDebug.Assert(layerList.Contains(_layer), "can't find layer in ex2DMng");
+        layerList.Remove(_layer);
+        if (_layer != null) {
+            _layer.gameObject.Destroy();
+        }
     }
     
     // ------------------------------------------------------------------ 
     /// Return shared material matchs given shader and texture
     // ------------------------------------------------------------------ 
 
-    public static Material GetMaterial (Shader shader, Texture texture) {
-        MaterialTableKey key = new MaterialTableKey(shader, texture);
+    public static Material GetMaterial (Shader _shader, Texture _texture) {
+        MaterialTableKey key = new MaterialTableKey(_shader, _texture);
         Material mat;
-        if ( ! materialTable.TryGetValue(key, out mat) ) {
-            mat = new Material(shader);
+        if ( !materialTable.TryGetValue(key, out mat) || mat == null ) {
+            mat = new Material(_shader);
             mat.hideFlags = HideFlags.DontSave;
-            mat.mainTexture = texture;
-            materialTable.Add(key, mat);
+            mat.mainTexture = _texture;
+            materialTable[key] = mat;
         }
         return mat;
     }
