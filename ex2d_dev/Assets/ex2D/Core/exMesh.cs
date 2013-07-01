@@ -54,9 +54,6 @@ public class exMesh : MonoBehaviour
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
     
-    // TODO: remove this
-    [System.NonSerialized] public exLayer layer;
-    
     //material
     Renderer cachedRenderer;
     public Material material {
@@ -116,12 +113,11 @@ public class exMesh : MonoBehaviour
     ///////////////////////////////////////////////////////////////////////////////
 
     void Awake () {
-        cachedRenderer = gameObject.GetComponent<MeshRenderer>();
+        CreateMesh();
     }
 
     void OnDestroy () {
         //RemoveAll();
-        layer = null;
         mesh.Destroy();
         mesh = null;
         MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
@@ -140,11 +136,13 @@ public class exMesh : MonoBehaviour
 
     public static exMesh Create (exLayer _layer) {
         GameObject go = new GameObject("_exMesh");
-        //go.hideFlags = exReleaseFlag.hideAndDontSave;
-        go.transform.parent = _layer.transform;
+        go.hideFlags = exReleaseFlag.hideAndDontSave;
         exMesh res = go.AddComponent<exMesh>();
-        res.layer = _layer;
-        res.CreateMesh();
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying) {
+            res.CreateMesh();
+        } 
+#endif
         return res;
     }
 
@@ -281,8 +279,7 @@ public class exMesh : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void Remove (exSpriteBase _sprite) {
-        bool hasSprite = object.ReferenceEquals(layer, _sprite.layer);
-        exDebug.Assert(hasSprite == spriteList.Contains(_sprite), "wrong sprite.layer");
+        bool hasSprite = spriteList.Contains(_sprite);
         if (!hasSprite) {
             Debug.LogError("can't find sprite to remove");
             return;
@@ -337,8 +334,7 @@ public class exMesh : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void ShowSprite (exSpriteBase _sprite) {
-        bool hasSprite = object.ReferenceEquals(layer, _sprite.layer);
-        exDebug.Assert(hasSprite == spriteList.Contains(_sprite), "wrong sprite.layer");
+        bool hasSprite = spriteList.Contains(_sprite);
         if (!hasSprite) {
             Debug.LogError("can't find sprite to show");
             return;
@@ -360,8 +356,7 @@ public class exMesh : MonoBehaviour
     // ------------------------------------------------------------------ 
     
     public void HideSprite (exSpriteBase _sprite) {
-        bool hasSprite = object.ReferenceEquals(layer, _sprite.layer);
-        exDebug.Assert(hasSprite == spriteList.Contains(_sprite), "wrong sprite.layer");
+        bool hasSprite = spriteList.Contains(_sprite);
         if (!hasSprite) {
             Debug.LogError("can't find sprite to hide");
             return;
@@ -387,9 +382,7 @@ public class exMesh : MonoBehaviour
         bool hasSprite = (_sprite.spriteIndex >= 0 && _sprite.spriteIndex < spriteList.Count && 
                           object.ReferenceEquals(spriteList[_sprite.spriteIndex], _sprite));
 #if EX_DEBUG
-        exDebug.Assert(hasSprite == spriteList.Contains(_sprite), "wrong sprite.layer");
-        bool sameLayer = object.ReferenceEquals(layer, _sprite.layer);
-        exDebug.Assert(sameLayer);
+        exDebug.Assert(hasSprite == spriteList.Contains(_sprite), "wrong sprite.spriteIndex");
         bool sameMaterial = (_sprite.material == material);
         exDebug.Assert(!hasSprite || sameMaterial);
 #endif
@@ -574,21 +567,19 @@ public class exMesh : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     void CreateMesh () {
-        exDebug.Assert(!mesh);
-        if (!mesh) {
+        if (mesh == null) {
             MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
             if (!meshFilter.sharedMesh) {
                 mesh = new Mesh();
                 mesh.name = "ex2D mesh";
-                //mesh.hideFlags = HideFlags.DontSave;
+                mesh.hideFlags = HideFlags.DontSave;
                 meshFilter.sharedMesh = mesh;
             }
             else {
                 mesh = meshFilter.sharedMesh;
             }
-            if (layer.layerType == LayerType.Dynamic) {
-                mesh.MarkDynamic();
-            }
+        }
+        if (cachedRenderer == null) {
             cachedRenderer = gameObject.GetComponent<MeshRenderer>();
             cachedRenderer.receiveShadows = false;
             cachedRenderer.castShadows = false;

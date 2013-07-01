@@ -34,7 +34,7 @@ public enum LayerType
 /// NOTE: Don't add this component yourself, use ex2DMng.CreateLayer instead.
 //
 ///////////////////////////////////////////////////////////////////////////////
-
+[ExecuteInEditMode]
 public class exLayer : MonoBehaviour
 {
     const int MAX_DYNAMIC_VERTEX_COUNT = 300;    ///< 超过这个数量的话，layer将会自动进行拆分
@@ -89,7 +89,32 @@ public class exLayer : MonoBehaviour
 
     void Awake () {
         cachedTransform = transform;
-        meshList.AddRange(GetComponentsInChildren<exMesh>());
+        meshList.Clear();
+        Debug.Log(string.Format("[Awake|exLayer] GetComponentsInChildren<exMesh>().Length: {0}", GetComponentsInChildren<exMesh>().Length));
+    }
+
+    void OnEnable () {
+        exSpriteBase[] spriteList = GetComponentsInChildren<exSpriteBase>();
+        foreach (exSpriteBase sprite in spriteList) {
+            Add(sprite);
+        }
+    }
+
+    void OnDisable () {
+        //exSpriteBase[] spriteList = GetComponentsInChildren<exSpriteBase>();
+        //foreach (exSpriteBase sprite in spriteList) {
+        //    // reset sprite
+        //    sprite.indexBufferIndex = -1;
+        //    sprite.layer = null;
+        //}
+        for (int i = meshList.Count - 1; i >= 0; --i) {
+            exMesh mesh = meshList[i];
+            if (mesh != null) {
+                mesh.RemoveAll(true);
+                mesh.gameObject.Destroy(); //dont save go will auto destroy
+            }
+        }
+		meshList.Clear();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -102,7 +127,9 @@ public class exLayer : MonoBehaviour
 
     public void UpdateAllMeshes () {
         for (int i = 0; i < meshList.Count; ++i) {
-            meshList[i].UpdateMesh();
+            if (meshList[i] != null) {
+                meshList[i].UpdateMesh();
+            }
         }
     }
 
@@ -128,16 +155,7 @@ public class exLayer : MonoBehaviour
         }
 
         _sprite.layer = this;
-#if UNITY_EDITOR
-        if (UnityEditor.EditorApplication.isPlaying) {
-            _sprite.cachedTransform.parent = cachedTransform;
-        }
-        else {
-            _sprite.transform.parent = transform;
-        }
-#else
-        _sprite.cachedTransform.parent = cachedTransform;
-#endif
+        _sprite.transform.parent = transform;
         // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
         exMesh sameDrawcallMesh = null;
         if (layerType == LayerType.Dynamic) {
@@ -161,6 +179,9 @@ public class exLayer : MonoBehaviour
         if (sameDrawcallMesh == null) {
             sameDrawcallMesh = exMesh.Create(this);
             sameDrawcallMesh.material = mat;
+            if (layerType == LayerType.Dynamic) {
+                sameDrawcallMesh.MarkDynamic();
+            }
             meshList.Add(sameDrawcallMesh);
         }
         bool show = _sprite.isOnEnabled;
@@ -175,9 +196,11 @@ public class exLayer : MonoBehaviour
         exMesh mesh = FindMesh(_sprite);
         if (mesh != null) {
             mesh.Remove(_sprite);
-            _sprite.layer = null;
-            _sprite.cachedTransform.parent = null;
         }
+        else {
+            _sprite.indexBufferIndex = -1;  //if mesh has been destroyed, just reset sprite
+        }
+        _sprite.layer = null;
     }
     
     // ------------------------------------------------------------------ 
@@ -241,7 +264,6 @@ public class exLayer : MonoBehaviour
                 return mesh;
 		    }
         }
-        Debug.LogError("sprite not exist");
         return null;
     }
 }
