@@ -34,6 +34,7 @@ public enum LayerType
 /// NOTE: Don't add this component yourself, use ex2DMng.CreateLayer instead.
 //
 ///////////////////////////////////////////////////////////////////////////////
+
 [ExecuteInEditMode]
 public class exLayer : MonoBehaviour
 {
@@ -76,9 +77,6 @@ public class exLayer : MonoBehaviour
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-#if !EX_DEBUG
-    [HideInInspector] 
-#endif
     private List<exMesh> meshList = new List<exMesh>();
 
     [System.NonSerialized] public Transform cachedTransform = null;     ///< only available after Awake
@@ -90,7 +88,6 @@ public class exLayer : MonoBehaviour
     void Awake () {
         cachedTransform = transform;
         meshList.Clear();
-        Debug.Log(string.Format("[Awake|exLayer] GetComponentsInChildren<exMesh>().Length: {0}", GetComponentsInChildren<exMesh>().Length));
     }
 
     void OnEnable () {
@@ -111,7 +108,7 @@ public class exLayer : MonoBehaviour
             exMesh mesh = meshList[i];
             if (mesh != null) {
                 mesh.RemoveAll(true);
-                mesh.gameObject.Destroy(); //dont save go will auto destroy
+                mesh.gameObject.DestroyImmediate(); //dont save go will auto destroy
             }
         }
 		meshList.Clear();
@@ -161,7 +158,7 @@ public class exLayer : MonoBehaviour
         if (layerType == LayerType.Dynamic) {
             for (int i = 0; i < meshList.Count; ++i) {
                 exMesh mesh = meshList[i];
-		        if (mesh.material == mat && mesh.vertexCount < MAX_DYNAMIC_VERTEX_COUNT) {
+		        if (mesh != null && mesh.material == mat && mesh.vertexCount < MAX_DYNAMIC_VERTEX_COUNT) {
                     sameDrawcallMesh = meshList[i];
                     break;
 		        }
@@ -170,7 +167,7 @@ public class exLayer : MonoBehaviour
         else {
             for (int i = 0; i < meshList.Count; ++i) {
                 exMesh mesh = meshList[i];
-		        if (mesh.material == mat) {
+		        if (mesh != null && mesh.material == mat) {
                     sameDrawcallMesh = meshList[i];
                     break;
 		        }
@@ -260,7 +257,7 @@ public class exLayer : MonoBehaviour
         Material mat = _sprite.material;
         for (int i = 0; i < meshList.Count; ++i) {
             exMesh mesh = meshList[i];
-		    if (object.ReferenceEquals(mesh.material, mat) && mesh.Contains(_sprite)) {
+		    if (mesh != null && object.ReferenceEquals(mesh.material, mat) && mesh.Contains(_sprite)) {
                 return mesh;
 		    }
         }
