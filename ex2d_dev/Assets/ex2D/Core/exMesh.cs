@@ -541,11 +541,11 @@ public class exMesh : MonoBehaviour
 
     public void RemoveAll (bool removeSpriteFromLayer = true) {
         if (removeSpriteFromLayer) {
-            while (spriteList.Count > 0) {
-                exSpriteBase sprite = spriteList[spriteList.Count - 1];
+            for (int i = 0; i < spriteList.Count; ++i) {
+            	exSpriteBase sprite = spriteList[spriteList.Count - 1];
                 exDebug.Assert(sprite);
                 if (sprite) {
-                    sprite.SetLayer(null);
+                    sprite.ResetLayerProperties();
                 }
             }
         }
