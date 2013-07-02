@@ -39,9 +39,11 @@ public class exSprite : exSpriteBase {
             }
             if (ReferenceEquals(textureInfo_.texture, value.texture) == false) {
                 // material changed, update layer to make mesh change
-                exLayer myLayer = layer_;
-                myLayer.Remove(this);
-                myLayer.Add(this);
+                if (layer_ != null) {
+                    exLayer myLayer = layer_;
+                    myLayer.Remove(this);
+                    myLayer.Add(this);
+                }
             }
             if (customSize_ == false && (value.width != width_ || value.height != height_)) {
                 width_ = width;
@@ -65,9 +67,11 @@ public class exSprite : exSpriteBase {
             if (ReferenceEquals(shader_, value)) {
                 return;
             }
-            exLayer myLayer = layer_;
-            myLayer.Remove(this);
-            myLayer.Add(this);
+            if (layer_ != null) {
+                exLayer myLayer = layer_;
+                myLayer.Remove(this);
+                myLayer.Add(this);
+            }
         }
     }
 
@@ -81,7 +85,12 @@ public class exSprite : exSpriteBase {
             if (material_ != null) {
                 return material_;
             }
-            material_ = ex2DMng.GetMaterial(shader, textureInfo.texture);
+            if (textureInfo != null) {
+                material_ = ex2DMng.GetMaterial(shader, textureInfo.texture);
+            }
+            else {
+                material_ = ex2DMng.GetMaterial(shader, null);
+            }
             return material_;
         }
         // TODO: if material changed, update sprite's exMesh
@@ -92,7 +101,7 @@ public class exSprite : exSpriteBase {
         set {
             if (customSize_ != value) {
                 customSize_ = value;
-                if (customSize_ == false) {
+                if (customSize_ == false && textureInfo != null) {
                     if (textureInfo.width != width_ || textureInfo.height != height_) {
                         width_ = textureInfo.width;
                         height_ = textureInfo.height;
