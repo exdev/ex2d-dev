@@ -23,7 +23,7 @@ using Diagnostics = System.Diagnostics;
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-internal class exReleaseFlag
+internal class exReleaseFlags
 {
 #if EX_DEBUG
     public const HideFlags hideAndDontSave = HideFlags.DontSave;

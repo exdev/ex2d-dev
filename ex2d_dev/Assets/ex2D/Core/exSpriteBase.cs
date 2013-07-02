@@ -76,39 +76,9 @@ public class exSpriteBase : MonoBehaviour {
     /// otherwise there is no effect when assign value to width or height.
     // ------------------------------------------------------------------ 
 
-    public bool customSize {
+    public virtual bool customSize {
         get { return customSize_; }
-        set {
-            if ( customSize_ != value ) {
-                customSize_ = value;
-                //if ( customSize_ == false) {
-                //    float newWidth = 0.0f;
-                //    float newHeight = 0.0f;
-
-                //    if ( useAtlas ) {
-                //        exAtlas.Element el = atlas_.elements[index_];
-                //        newWidth = el.coords.width * atlas_.texture.width;
-                //        newHeight = el.coords.height * atlas_.texture.height;
-                //        if ( el.rotated ) {
-                //            float tmp = newWidth;
-                //            newWidth = newHeight;
-                //            newHeight = tmp;
-                //        } 
-                //    }
-                //    else {
-                //        Texture texture = renderer.sharedMaterial.mainTexture;
-                //        newWidth = trimUV.width * texture.width;
-                //        newHeight = trimUV.height * texture.height;
-                //    }
-
-                //    if ( newWidth != width_ || newHeight != height_ ) {
-                //        width_ = newWidth;
-                //        height_ = newHeight;
-                //        updateFlags |= UpdateFlags.Vertex;
-                //    }
-                //}
-            }
-        }
+        set { customSize_ = value; }
     }
 
     // ------------------------------------------------------------------ 
@@ -171,7 +141,7 @@ public class exSpriteBase : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
 
     [System.NonSerialized]
-    private exLayer layer_ = null;
+    protected exLayer layer_ = null;
     public exLayer layer {
         get {
             return layer_;

@@ -25,13 +25,52 @@ public class exSprite : exSpriteBase {
     // serialize
     ///////////////////////////////////////////////////////////////////////////////
     
-    public exTextureInfo textureInfo = null;
-    public Shader shader = null;
+    // ------------------------------------------------------------------ 
+    /// The texture info used in this sprite
+    // ------------------------------------------------------------------ 
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // non-serialized
-    ///////////////////////////////////////////////////////////////////////////////
-    
+    [SerializeField]
+    private exTextureInfo textureInfo_ = null;
+    public exTextureInfo textureInfo {
+        get { return textureInfo_; }
+        set {
+            if (ReferenceEquals(textureInfo_, value)) {
+                return;
+            }
+            if (ReferenceEquals(textureInfo_.texture, value.texture) == false) {
+                // material changed, update layer to make mesh change
+                exLayer myLayer = layer_;
+                myLayer.Remove(this);
+                myLayer.Add(this);
+            }
+            if (customSize_ == false && (value.width != width_ || value.height != height_)) {
+                width_ = width;
+                height_ = height;
+                updateFlags |= UpdateFlags.Vertex;
+            }
+            updateFlags |= UpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
+            textureInfo_ = value;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// The shader used to render this sprite
+    // ------------------------------------------------------------------ 
+
+    [SerializeField]
+    private Shader shader_ = null;
+    public Shader shader {
+        get { return shader_; }
+        set {
+            if (ReferenceEquals(shader_, value)) {
+                return;
+            }
+            exLayer myLayer = layer_;
+            myLayer.Remove(this);
+            myLayer.Add(this);
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
@@ -46,6 +85,22 @@ public class exSprite : exSpriteBase {
             return material_;
         }
         // TODO: if material changed, update sprite's exMesh
+    }
+
+    public override bool customSize {
+        get { return customSize_; }
+        set {
+            if (customSize_ != value) {
+                customSize_ = value;
+                if (customSize_ == false) {
+                    if (textureInfo.width != width_ || textureInfo.height != height_) {
+                        width_ = textureInfo.width;
+                        height_ = textureInfo.height;
+                        updateFlags |= UpdateFlags.Vertex;
+                    }
+                }
+            }
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////

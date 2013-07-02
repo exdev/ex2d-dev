@@ -136,7 +136,7 @@ public class exMesh : MonoBehaviour
 
     public static exMesh Create (exLayer _layer) {
         GameObject go = new GameObject("_exMesh");
-        go.hideFlags = exReleaseFlag.hideAndDontSave;
+        go.hideFlags = exReleaseFlags.hideAndDontSave;
         exMesh res = go.AddComponent<exMesh>();
 #if UNITY_EDITOR
         if (!UnityEditor.EditorApplication.isPlaying) {
