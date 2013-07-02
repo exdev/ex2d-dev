@@ -83,6 +83,12 @@ class exSceneEditor : EditorWindow {
     exLayer activeLayer = null;
     exLayer draggingLayer = null;
 
+    // 
+    Vector2 mouseDownPos = Vector2.zero;
+    Rect selectRect = new Rect( 0, 0, 1, 1 );
+    bool inRectSelectState = false;
+    List<exSpriteBase> spriteNodes = new List<exSpriteBase>();
+
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
     ///////////////////////////////////////////////////////////////////////////////
@@ -447,6 +453,7 @@ class exSceneEditor : EditorWindow {
         switch ( e.type ) {
         case EventType.Repaint:
             sceneViewRect = new Rect( _rect.x + 2, _rect.y + 2, _rect.width - 4, _rect.height - 4 );
+
             float half_w = sceneViewRect.width/2.0f;
             float half_h = sceneViewRect.height/2.0f;
 
@@ -470,6 +477,7 @@ class exSceneEditor : EditorWindow {
                 exEditorUtility.DrawLine ( center_x, sceneViewRect.y, center_x, sceneViewRect.yMax, Color.white, 1 );
 
             // draw scene
+            DoCulling (sceneViewRect);
             DrawScene ( sceneViewRect );
 
             // border
@@ -583,16 +591,19 @@ class exSceneEditor : EditorWindow {
                                 (editCameraPos.y - _rect.height * 0.5f) / scale,
                                 (editCameraPos.y + _rect.height * 0.5f) / scale );
 
-            // draw all nodes in the scene
-            for ( int i = ex2DMng.instance.layerList.Count-1; i >= 0; --i ) {
-                exLayer layer = ex2DMng.instance.layerList[i];
-                if ( layer != null && layer.show ) {
-                    exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
-                    // TODO: sort the spriteList
-                    foreach ( exSpriteBase node in spriteList ) {
-                        DrawNode ( node );
-                    }
-                }
+            // // draw all nodes in the scene
+            // for ( int i = ex2DMng.instance.layerList.Count-1; i >= 0; --i ) {
+            //     exLayer layer = ex2DMng.instance.layerList[i];
+            //     if ( layer != null && layer.show ) {
+            //         exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
+            //         // TODO: sort the spriteList
+            //         foreach ( exSpriteBase node in spriteList ) {
+            //             DrawNode ( node );
+            //         }
+            //     }
+            // }
+            for ( int i = 0; i < spriteNodes.Count; ++i ) {
+                DrawNode ( spriteNodes[i] );
             }
 
         GL.PopMatrix();
@@ -671,10 +682,33 @@ class exSceneEditor : EditorWindow {
         Event e = Event.current;
 
         switch ( e.GetTypeForControl(controlID) ) {
+        case EventType.Repaint:
+            // draw select rect 
+            if ( inRectSelectState && (selectRect.width != 0.0f || selectRect.height != 0.0f) ) {
+                exEditorUtility.DrawRect( selectRect, new Color( 0.0f, 0.5f, 1.0f, 0.2f ), new Color( 0.0f, 0.5f, 1.0f, 1.0f ) );
+            }
+            break;
+
         case EventType.MouseDown:
             if ( e.button == 0 && e.clickCount == 1 ) {
                 GUIUtility.hotControl = controlID;
                 GUIUtility.keyboardControl = controlID;
+
+                mouseDownPos = e.mousePosition;
+                inRectSelectState = true;
+                UpdateSelectRect ();
+                ConfirmRectSelection();
+                Repaint();
+
+                e.Use();
+            }
+            break;
+
+        case EventType.MouseDrag:
+            if ( GUIUtility.hotControl == controlID && inRectSelectState ) {
+                UpdateSelectRect ();
+                ConfirmRectSelection();
+                Repaint();
 
                 e.Use();
             }
@@ -684,10 +718,64 @@ class exSceneEditor : EditorWindow {
 			if ( GUIUtility.hotControl == controlID ) {
 				GUIUtility.hotControl = 0;
 
+                if ( inRectSelectState && e.button == 0 ) {
+                    inRectSelectState = false;
+                    ConfirmRectSelection();
+                    Repaint();
+                }
+
                 e.Use();
 			}
             break;
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void UpdateSelectRect () {
+        float x = 0;
+        float y = 0;
+        float width = 0;
+        float height = 0;
+        Vector2 curMousePos = Event.current.mousePosition;
+
+        if ( mouseDownPos.x < curMousePos.x ) {
+            x = mouseDownPos.x;
+            width = curMousePos.x - mouseDownPos.x;
+        }
+        else {
+            x = curMousePos.x;
+            width = mouseDownPos.x - curMousePos.x;
+        }
+        if ( mouseDownPos.y < curMousePos.y ) {
+            y = mouseDownPos.y;
+            height = curMousePos.y - mouseDownPos.y;
+        }
+        else {
+            y = curMousePos.y;
+            height = mouseDownPos.y - curMousePos.y;
+        }
+
+        selectRect = new Rect( x, y, width, height );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void ConfirmRectSelection () {
+        List<GameObject> selectGOs = new List<GameObject>();
+        foreach ( exSpriteBase node in spriteNodes ) {
+            Rect boundingRect = MapBoundingRect ( sceneViewRect, node );
+            if ( exGeometryUtility.RectRect_Contains( selectRect, boundingRect ) != 0 ||
+                 exGeometryUtility.RectRect_Intersect( selectRect, boundingRect ) )
+            {
+                selectGOs.Add(node.gameObject);
+            }
+        }
+        Selection.objects = selectGOs.ToArray();
     }
 
     // ------------------------------------------------------------------ 
@@ -703,5 +791,53 @@ class exSceneEditor : EditorWindow {
         return new Vector3 ( _mousePosition.x - _rect.x,
                              _mousePosition.y - _rect.y,
                              0.0f );
+    }
+    Vector2 SceneField_WorldToScreen ( Rect _rect, Vector3 _worldPos ) {
+        return new Vector2 ( _worldPos.x * scale + _rect.x + _rect.width/2.0f - editCameraPos.x,
+                            -_worldPos.y * scale + _rect.y + _rect.height/2.0f + editCameraPos.y );
+    }
+
+    Rect MapBoundingRect ( Rect _rect, exSpriteBase _node ) {
+        exSprite sprite = _node as exSprite;
+        Vector2 screenPos = SceneField_WorldToScreen ( _rect, sprite.transform.position );
+
+        if ( sprite ) {
+            Rect boundingRect = new Rect ( screenPos.x - sprite.textureInfo.rotatedWidth/2.0f * scale,
+                                           screenPos.y - sprite.textureInfo.rotatedHeight/2.0f * scale,
+                                           sprite.textureInfo.rotatedWidth * scale,
+                                           sprite.textureInfo.rotatedHeight * scale );
+            boundingRect = exGeometryUtility.Rect_FloorToInt(boundingRect);
+
+            return boundingRect;
+        }
+
+        return new Rect (  screenPos.x * scale,
+                           screenPos.y * scale,
+                           1.0f * scale,
+                           1.0f * scale );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DoCulling ( Rect _rect ) {
+        spriteNodes.Clear();
+
+        // draw all nodes in the scene
+        for ( int i = ex2DMng.instance.layerList.Count-1; i >= 0; --i ) {
+            exLayer layer = ex2DMng.instance.layerList[i];
+            if ( layer != null && layer.show ) {
+                exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
+                foreach ( exSpriteBase node in spriteList ) {
+                    Rect boundingRect = MapBoundingRect ( _rect, node );
+                    if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||
+                         exGeometryUtility.RectRect_Intersect( _rect, boundingRect ) )
+                    {
+                        spriteNodes.Add(node);
+                    }
+                }
+            }
+        }
     }
 }
