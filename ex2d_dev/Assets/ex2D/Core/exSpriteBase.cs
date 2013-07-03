@@ -257,11 +257,31 @@ public abstract class exSpriteBase : MonoBehaviour {
         //}
     }
     
+#region Functions used to update geometry buffer.
+
     // ------------------------------------------------------------------ 
-    // Desc:
+    /// \return the update flags of changed buffer
+    /// 
+    /// Add sprite's geometry data to buffers
+    // ------------------------------------------------------------------ 
+
+    public abstract UpdateFlags FillBuffers (List<Vector3> _vertices, List<int> _indices, List<Vector2> _uvs, List<Color32> _colors32);
+
+    // ------------------------------------------------------------------ 
+    /// \return the update flags of changed buffer
+    /// 
+    /// Update sprite's geometry data to buffers
     // ------------------------------------------------------------------ 
 
     public abstract UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<int> _indices, List<Vector2> _uvs, List<Color32> _colors32);
+
+    // ------------------------------------------------------------------ 
+    /// Add sprite's vertex indices to the buffer
+    // ------------------------------------------------------------------ 
+
+    public abstract void AddToIndices (List<int> _indices);
+
+#endregion
 
     // ------------------------------------------------------------------ 
     /// Calculate the bounding rect of the plane

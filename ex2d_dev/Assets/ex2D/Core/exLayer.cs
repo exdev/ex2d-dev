@@ -107,7 +107,14 @@ public class exLayer : MonoBehaviour
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
             if (mesh != null) {
-                mesh.RemoveAll(true);
+                for (int s = 0; s < mesh.spriteList.Count; ++s) {
+            	    exSpriteBase sprite = mesh.spriteList[s];
+                    exDebug.Assert(sprite);
+                    if (sprite) {
+                        sprite.ResetLayerProperties();
+                    }
+                }
+                //mesh.Clear();
                 mesh.gameObject.DestroyImmediate(); //dont save go will auto destroy
             }
         }
@@ -125,11 +132,14 @@ public class exLayer : MonoBehaviour
     public void UpdateSprites () {
         for (int m = 0; m < meshList.Count; ++m) {
             exMesh mesh = meshList[m];
+            if (mesh == null) {
+                continue;
+            }
             UpdateFlags meshUpdateFlags = UpdateFlags.None;
             for (int i = 0; i < mesh.spriteList.Count; ++i) {
                 exSpriteBase sprite = mesh.spriteList[i];
                 exDebug.Assert(sprite.isOnEnabled == sprite.isInIndexBuffer);
-
+                
                 if (sprite.isOnEnabled) {
                     sprite.UpdateTransform();
                     UpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.indices, mesh.uvs, mesh.colors32);
@@ -191,8 +201,7 @@ public class exLayer : MonoBehaviour
             }
             meshList.Add(sameDrawcallMesh);
         }
-        bool show = _sprite.isOnEnabled;
-        sameDrawcallMesh.Add(_sprite, show);
+        Add(sameDrawcallMesh, _sprite);
     }
 
     // ------------------------------------------------------------------ 
@@ -202,7 +211,7 @@ public class exLayer : MonoBehaviour
     public void Remove (exSpriteBase _sprite) {
         exMesh mesh = FindMesh(_sprite);
         if (mesh != null) {
-            mesh.Remove(_sprite);
+            Remove(mesh, _sprite);
         }
         else {
             _sprite.indexBufferIndex = -1;  //if mesh has been destroyed, just reset sprite
@@ -219,9 +228,24 @@ public class exLayer : MonoBehaviour
         if (!_sprite.isInIndexBuffer) {
             exMesh mesh = FindMesh(_sprite);
             if (mesh != null) {
-                mesh.ShowSprite(_sprite);
+                bool hasSprite = mesh.spriteList.Contains(_sprite);
+                if (!hasSprite) {
+                    Debug.LogError("can't find sprite to show");
+                    return;
+                }
+                // show
+                if (!_sprite.isInIndexBuffer) {
+                    _sprite.AddToIndices(mesh.indices);
+                    mesh.updateFlags |= UpdateFlags.Index;
+                }
+
+#if UNITY_EDITOR
+                if (!UnityEditor.EditorApplication.isPlaying) {
+                    mesh.Apply();
+                }
+#endif
             }
-		}
+        }
     }
     
     // ------------------------------------------------------------------ 
@@ -232,9 +256,25 @@ public class exLayer : MonoBehaviour
         if (_sprite.isInIndexBuffer) {
             exMesh mesh = FindMesh(_sprite);
             if (mesh != null) {
-                mesh.HideSprite(_sprite);
+                bool hasSprite = mesh.spriteList.Contains(_sprite);
+                if (!hasSprite) {
+                    Debug.LogError("can't find sprite to hide");
+                    return;
+                }
+                // hide
+                if (_sprite.isInIndexBuffer) {
+                    RemoveIndices(mesh, _sprite);
+                    mesh.updateFlags |= UpdateFlags.Index;
+                }
+                exDebug.Assert(_sprite.indexBufferIndex == -1);
+
+#if UNITY_EDITOR
+                if (!UnityEditor.EditorApplication.isPlaying) {
+                    mesh.Apply();
+                }
+#endif
             }
-		}
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -272,5 +312,111 @@ public class exLayer : MonoBehaviour
 		    }
         }
         return null;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Add an exSpriteBase to the mesh. 
+    // ------------------------------------------------------------------ 
+
+    private void Add (exMesh _mesh, exSpriteBase _sprite) {
+        bool hasSprite = _mesh.spriteList.Contains(_sprite);
+        if (hasSprite) {
+            Debug.LogError("[Add|exLayer] can't add duplicated sprite");
+            return;
+        }
+
+        _sprite.spriteIndex = _mesh.spriteList.Count;
+        _mesh.spriteList.Add(_sprite);
+
+        UpdateFlags spriteUpdateFlags = _sprite.FillBuffers(_mesh.vertices, _mesh.indices, _mesh.uvs, _mesh.colors32);
+        _mesh.updateFlags |= spriteUpdateFlags;
+        
+        exDebug.Assert(_mesh.vertices.Count == _mesh.uvs.Count, "uvs array needs to be the same size as the vertices array");
+        exDebug.Assert(_mesh.vertices.Count == _mesh.colors32.Count, "colors32 array needs to be the same size as the vertices array");
+
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying) {
+            _mesh.Apply();
+        }
+#endif
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private void Remove (exMesh _mesh, exSpriteBase _sprite) {
+        bool hasSprite = _mesh.spriteList.Contains(_sprite);
+        if (!hasSprite) {
+            Debug.LogError("can't find sprite to remove");
+            return;
+        }
+        _mesh.spriteList.RemoveAt(_sprite.spriteIndex);
+        
+        for (int i = _sprite.spriteIndex; i < _mesh.spriteList.Count; ++i) {
+            exSpriteBase sprite = _mesh.spriteList[i];
+            // update sprite and vertic index after removed sprite
+            sprite.spriteIndex = i;
+            sprite.vertexBufferIndex -= _sprite.vertexCount;
+            // update indices to make them match new vertic index
+            if (sprite.isInIndexBuffer) {
+                for (int index = sprite.indexBufferIndex; index < sprite.indexBufferIndex + sprite.indexCount; ++index) {
+                    _mesh.indices[index] -= _sprite.vertexCount;
+                }
+            }
+        }
+        _mesh.updateFlags |= UpdateFlags.VertexAndIndex;
+
+        // update vertices
+        _mesh.vertices.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
+        _mesh.colors32.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
+        _mesh.uvs.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
+
+#if FORCE_UPDATE_VERTEX_INFO
+        bool removeBack = (_sprite.spriteIndex == spriteList.Count);
+        if (!removeBack) {
+            updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+        }
+#else
+        _mesh.updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+#endif
+
+        if (_sprite.isInIndexBuffer) {
+            RemoveIndices(_mesh, _sprite);
+        }
+
+        exDebug.Assert(_sprite.indexBufferIndex == -1);
+        exDebug.Assert(_mesh.vertices.Count == _mesh.uvs.Count, "uvs array needs to be the same size as the vertices array");
+        exDebug.Assert(_mesh.vertices.Count == _mesh.colors32.Count, "colors32 array needs to be the same size as the vertices array");
+
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying) {
+            _mesh.Apply();
+        }
+#endif
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private void RemoveIndices (exMesh _mesh, exSpriteBase _sprite) {
+        exDebug.Assert(_sprite.isInIndexBuffer);
+        if (_sprite.isInIndexBuffer) {
+            // update indices
+            _mesh.indices.RemoveRange(_sprite.indexBufferIndex, _sprite.indexCount);
+            _mesh.updateFlags |= UpdateFlags.Index;
+            
+            // update indexBufferIndex
+            // TODO: 这里是性能瓶颈，应该设法优化
+            for (int i = 0; i < _mesh.spriteList.Count; ++i) {
+                exSpriteBase sprite = _mesh.spriteList[i];
+                if (sprite.indexBufferIndex > _sprite.indexBufferIndex) {
+                    sprite.indexBufferIndex -= _sprite.indexCount;
+                    exDebug.Assert(sprite.indexBufferIndex >= _sprite.indexBufferIndex);
+                }
+            }
+            _sprite.indexBufferIndex = -1;
+        }
     }
 }

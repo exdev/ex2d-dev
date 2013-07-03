@@ -75,7 +75,6 @@ public class exMesh : MonoBehaviour
         }
     }
 
-    [System.NonSerialized]
     public List<exSpriteBase> spriteList = new List<exSpriteBase>();
     
     //mesh
@@ -96,7 +95,7 @@ public class exMesh : MonoBehaviour
     public List<Vector2> uvs = new List<Vector2>();       ///< cache mesh.vertices
     public List<Color32> colors32 = new List<Color32>();  ///< cache mesh.colors32
 
-    private UpdateFlags updateFlags = UpdateFlags.None;
+    public UpdateFlags updateFlags = UpdateFlags.None;
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -117,7 +116,7 @@ public class exMesh : MonoBehaviour
     }
 
     void OnDestroy () {
-        //RemoveAll();
+        Clear();
         mesh.Destroy();
         mesh = null;
         MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
@@ -136,6 +135,7 @@ public class exMesh : MonoBehaviour
 
     public static exMesh Create (exLayer _layer) {
         GameObject go = new GameObject("_exMesh");
+        // 当在EX_DEBUG模式下，如果显示着GO的Inspector，再启动游戏，由于GO是DontSave的，会先被销毁。这时Unity将会报错，但不影响运行，这个问题在类似插件中也会存在。
         go.hideFlags = exReleaseFlags.hideAndDontSave;
         exMesh res = go.AddComponent<exMesh>();
 #if UNITY_EDITOR
@@ -147,7 +147,7 @@ public class exMesh : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    /// \param _updateFlags Previous UpdateFlags of buffer changes.
+    /// \param _updateFlags   UpdateFlags of buffer changes.
     /// Actually apply all previous buffer changes
     // ------------------------------------------------------------------ 
 
@@ -178,162 +178,16 @@ public class exMesh : MonoBehaviour
             // 如果没有更新triangles并且更新了vertex位置，则需要手动更新bbox
             mesh.RecalculateBounds();
         }
-        //if ((updateFlags & UpdateFlags.Normal) != 0) {
-        //    var normals = new Vector3[vertices.Count];
-        //    for (int i = 0; i < normals.Length; ++i) {
-        //        normals[i] = new Vector3(0, 0, -1);
-        //    }
-        //    mesh.normals = normals;
-        //}
+        if ((updateFlags & UpdateFlags.Normal) != 0) {
+            var normals = new Vector3[vertices.Count];
+            for (int i = 0; i < normals.Length; ++i) {
+                normals[i] = new Vector3(0, 0, -1);
+            }
+            mesh.normals = normals;
+        }
         updateFlags = UpdateFlags.None;
     }
 
-    // ------------------------------------------------------------------ 
-    /// Add an exSpriteBase to this mesh. 
-    // ------------------------------------------------------------------ 
-
-    public void Add (exSpriteBase _sprite, bool _show = true) {
-        bool hasSprite = spriteList.Contains(_sprite);
-        if (hasSprite) {
-            Debug.LogError("[Add|exLayer] can't add duplicated sprite");
-            return;
-        }
-
-        _sprite.spriteIndex = spriteList.Count;
-        spriteList.Add(_sprite);
-
-        // TODO: 把添加过程放到sprite里，则不必更新_sprite.updateFlags
-        _sprite.vertexBufferIndex = vertices.Count;
-        vertices.Add(new Vector3());
-        vertices.Add(new Vector3());
-        vertices.Add(new Vector3());
-        vertices.Add(new Vector3());
-        colors32.Add(new Color32());
-        colors32.Add(new Color32());
-        colors32.Add(new Color32());
-        colors32.Add(new Color32());
-        uvs.Add(new Vector2());
-        uvs.Add(new Vector2());
-        uvs.Add(new Vector2());
-        uvs.Add(new Vector2());
-        _sprite.updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
-
-        updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
-
-        if (_show) {
-            AddIndices(_sprite);
-        }
-        
-        exDebug.Assert(vertices.Count == uvs.Count, "uvs array needs to be the same size as the vertices array");
-        exDebug.Assert(vertices.Count == colors32.Count, "colors32 array needs to be the same size as the vertices array");
-
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            Apply();
-        }
-#endif
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
-    public void Remove (exSpriteBase _sprite) {
-        bool hasSprite = spriteList.Contains(_sprite);
-        if (!hasSprite) {
-            Debug.LogError("can't find sprite to remove");
-            return;
-        }
-        spriteList.RemoveAt(_sprite.spriteIndex);
-        
-        for (int i = _sprite.spriteIndex; i < spriteList.Count; ++i) {
-            exSpriteBase sprite = spriteList[i];
-            // update sprite and vertic index after removed sprite
-            sprite.spriteIndex = i;
-            sprite.vertexBufferIndex -= _sprite.vertexCount;
-            // update indices to make them match new vertic index
-            if (sprite.isInIndexBuffer) {
-                for (int index = sprite.indexBufferIndex; index < sprite.indexBufferIndex + sprite.indexCount; ++index) {
-                    indices[index] -= _sprite.vertexCount;
-                }
-            }
-        }
-        updateFlags |= UpdateFlags.VertexAndIndex;
-
-        // update vertices
-        vertices.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
-        colors32.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
-        uvs.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
-
-#if FORCE_UPDATE_VERTEX_INFO
-        bool removeBack = (_sprite.spriteIndex == spriteList.Count);
-        if (!removeBack) {
-            updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
-        }
-#else
-        updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
-#endif
-
-        if (_sprite.isInIndexBuffer) {
-            RemoveIndices(_sprite);
-        }
-
-        exDebug.Assert(_sprite.indexBufferIndex == -1);
-        exDebug.Assert(vertices.Count == uvs.Count, "uvs array needs to be the same size as the vertices array");
-        exDebug.Assert(vertices.Count == colors32.Count, "colors32 array needs to be the same size as the vertices array");
-
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            Apply();
-        }
-#endif
-    }
-    
-    // ------------------------------------------------------------------ 
-    /// Show an exSpriteBase
-    // ------------------------------------------------------------------ 
-
-    public void ShowSprite (exSpriteBase _sprite) {
-        bool hasSprite = spriteList.Contains(_sprite);
-        if (!hasSprite) {
-            Debug.LogError("can't find sprite to show");
-            return;
-        }
-        // show
-        if (!_sprite.isInIndexBuffer) {
-            AddIndices(_sprite);
-        }
-
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            Apply();
-        }
-#endif
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-    
-    public void HideSprite (exSpriteBase _sprite) {
-        bool hasSprite = spriteList.Contains(_sprite);
-        if (!hasSprite) {
-            Debug.LogError("can't find sprite to hide");
-            return;
-        }
-        // hide
-        if (_sprite.isInIndexBuffer) {
-            RemoveIndices(_sprite);
-        }
-        exDebug.Assert(_sprite.indexBufferIndex == -1);
-
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            Apply();
-        }
-#endif
-    }
-    
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
@@ -386,7 +240,7 @@ public class exMesh : MonoBehaviour
             return;
         }
 
-        string vertexInfo = "Cache Vertices: ";
+        string vertexInfo = "Vertex Buffer: ";
         foreach (var v in vertices) {
             vertexInfo += v;
             vertexInfo += ", ";
@@ -400,7 +254,7 @@ public class exMesh : MonoBehaviour
         }
         Debug.Log(vertexInfo, this);
 
-        string indicesInfo = "Cache Indices: ";
+        string indicesInfo = "Index Buffer: ";
         foreach (var index in indices) {
             indicesInfo += index;
             indicesInfo += ",";
@@ -414,7 +268,7 @@ public class exMesh : MonoBehaviour
         }
         Debug.Log(indicesInfo, this);
 
-        string uvInfo = "Cache uvs: ";
+        string uvInfo = "UV Buffer: ";
         foreach (var uv in uvs) {
             uvInfo += uv;
             uvInfo += ",";
@@ -432,70 +286,12 @@ public class exMesh : MonoBehaviour
     ///////////////////////////////////////////////////////////////////////////////
     // Internal Functions
     ///////////////////////////////////////////////////////////////////////////////
-    
-    // ------------------------------------------------------------------ 
-    /// Add and resort indices by depth
-    // ------------------------------------------------------------------ 
-
-    void AddIndices (exSpriteBase _sprite) {
-        exDebug.Assert(!_sprite.isInIndexBuffer);
-        if (!_sprite.isInIndexBuffer) {
-            _sprite.indexBufferIndex = indices.Count;
-            indices.Add(_sprite.vertexBufferIndex + 0);
-            indices.Add(_sprite.vertexBufferIndex + 1);
-            indices.Add(_sprite.vertexBufferIndex + 2);
-            indices.Add(_sprite.vertexBufferIndex + 3);
-            indices.Add(_sprite.vertexBufferIndex + 0);
-            indices.Add(_sprite.vertexBufferIndex + 2);
-        
-            updateFlags |= UpdateFlags.Index;
-
-            // TODO: resort indices by depth
-            // TestIndices(_sprite);
-        }
-    }
 
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
-    
-    void RemoveIndices (exSpriteBase _sprite) {
-        exDebug.Assert(_sprite.isInIndexBuffer);
-        if (_sprite.isInIndexBuffer) {
-            // update indices
-            indices.RemoveRange(_sprite.indexBufferIndex, _sprite.indexCount);
-            
-            // update indexBufferIndex
-            // TODO: 这里是性能瓶颈，应该设法优化
-            for (int i = 0; i < spriteList.Count; ++i) {
-                exSpriteBase sprite = spriteList[i];
-                if (sprite.indexBufferIndex > _sprite.indexBufferIndex) {
-                    sprite.indexBufferIndex -= _sprite.indexCount;
-                    exDebug.Assert(sprite.indexBufferIndex >= _sprite.indexBufferIndex);
-                }
-            }
-            //TODO
-            _sprite.indexBufferIndex = -1;
 
-            updateFlags |= UpdateFlags.Index;
-        }
-    }
-
-
-    // ------------------------------------------------------------------ 
-    /// Remove all exSpriteBases out of this layer 
-    // ------------------------------------------------------------------ 
-
-    public void RemoveAll (bool removeSpriteFromLayer = true) {
-        if (removeSpriteFromLayer) {
-            for (int i = 0; i < spriteList.Count; ++i) {
-            	exSpriteBase sprite = spriteList[spriteList.Count - 1];
-                exDebug.Assert(sprite);
-                if (sprite) {
-                    sprite.ResetLayerProperties();
-                }
-            }
-        }
+    public void Clear () {
         spriteList.Clear();
         vertices.Clear();
         indices.Clear();

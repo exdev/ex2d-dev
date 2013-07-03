@@ -117,6 +117,38 @@ public class exSprite : exSpriteBase {
     // functions
     ///////////////////////////////////////////////////////////////////////////////
 
+#region Functions used to update geometry buffer.
+       
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    public override UpdateFlags FillBuffers (List<Vector3> _vertices, List<int> _indices, List<Vector2> _uvs, List<Color32> _colors32) {
+        updateFlags = UpdateFlags.None;
+        vertexBufferIndex = _vertices.Count;
+
+        _vertices.Add(new Vector3());
+        _vertices.Add(new Vector3());
+        _vertices.Add(new Vector3());
+        _vertices.Add(new Vector3());
+        _colors32.Add(new Color32());
+        _colors32.Add(new Color32());
+        _colors32.Add(new Color32());
+        _colors32.Add(new Color32());
+        _uvs.Add(new Vector2());
+        _uvs.Add(new Vector2());
+        _uvs.Add(new Vector2());
+        _uvs.Add(new Vector2());
+
+        updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+
+        bool show = isOnEnabled;
+        if (show) {
+            AddToIndices(_indices);
+        }
+        return updateFlags;
+    }
+
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
@@ -153,7 +185,31 @@ public class exSprite : exSpriteBase {
         updateFlags = UpdateFlags.None;
         return spriteUpdateFlags;
     }
+
+    // ------------------------------------------------------------------ 
+    // Add and resort indices by depth
+    // ------------------------------------------------------------------ 
+
+    public override void AddToIndices (List<int> _indices) {
+        exDebug.Assert(!isInIndexBuffer);
+        if (!isInIndexBuffer) {
+            indexBufferIndex = _indices.Count;
+            _indices.Add(vertexBufferIndex + 0);
+            _indices.Add(vertexBufferIndex + 1);
+            _indices.Add(vertexBufferIndex + 2);
+            _indices.Add(vertexBufferIndex + 3);
+            _indices.Add(vertexBufferIndex + 0);
+            _indices.Add(vertexBufferIndex + 2);
         
+            updateFlags |= UpdateFlags.Index;
+
+            // TODO: resort indices by depth
+            TestIndices(_indices);
+        }
+    }
+    
+#endregion
+
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
