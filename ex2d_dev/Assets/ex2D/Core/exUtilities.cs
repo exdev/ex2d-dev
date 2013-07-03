@@ -67,7 +67,7 @@ public static class exDebug {
 
     public static bool enabled {
         get {
-            string defs = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            string defs = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.activeBuildTarget.ToBuildTargetGroup());
             return ArrayUtility.Contains(defs.Split(';'), "EX_DEBUG");
         }
         set {
@@ -76,7 +76,8 @@ public static class exDebug {
                 return;
             }
             if (enabled != value) {
-                string defs = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+                BuildTargetGroup target = EditorUserBuildSettings.activeBuildTarget.ToBuildTargetGroup();
+                string defs = PlayerSettings.GetScriptingDefineSymbolsForGroup(target);
                 var defsAry = defs.Split(';');
                 if (value) {
                     ArrayUtility.Add(ref defsAry, "EX_DEBUG");
@@ -85,8 +86,50 @@ public static class exDebug {
                     ArrayUtility.Remove(ref defsAry, "EX_DEBUG");
                 }
                 defs = string.Join(";", defsAry);
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, defs);
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(target, defs);
             }
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// Get the corresponding BuildTargetGroup via BuildTarget
+    // ------------------------------------------------------------------ 
+
+    public static BuildTargetGroup ToBuildTargetGroup (this BuildTarget buildTarget) {
+        switch (buildTarget) {
+        case BuildTarget.StandaloneOSXUniversal:
+        case BuildTarget.StandaloneOSXPPC:
+        case BuildTarget.StandaloneOSXIntel:
+        case BuildTarget.StandaloneWindows:
+        case BuildTarget.StandaloneLinux:
+        case BuildTarget.StandaloneWindows64:
+        case BuildTarget.MetroPlayerX86:
+        case BuildTarget.MetroPlayerX64:
+        case BuildTarget.MetroPlayerARM:
+        case BuildTarget.StandaloneLinux64:
+        case BuildTarget.StandaloneLinuxUniversal:
+            return BuildTargetGroup.Standalone;
+        case BuildTarget.WebPlayer:
+        case BuildTarget.WebPlayerStreamed:
+            return BuildTargetGroup.WebPlayer;
+        case BuildTarget.Wii:
+            return BuildTargetGroup.Wii;
+        case BuildTarget.iPhone:
+            return BuildTargetGroup.iPhone;
+        case BuildTarget.PS3:
+            return BuildTargetGroup.PS3;
+        case BuildTarget.XBOX360:
+            return BuildTargetGroup.XBOX360;
+        case BuildTarget.Android:
+            return BuildTargetGroup.Android;
+        case BuildTarget.StandaloneGLESEmu:
+            return BuildTargetGroup.GLESEmu;
+        case BuildTarget.NaCl:
+            return BuildTargetGroup.NaCl;
+        case BuildTarget.FlashPlayer:
+            return BuildTargetGroup.FlashPlayer;
+        default:
+            return BuildTargetGroup.Unknown;
         }
     }
 
