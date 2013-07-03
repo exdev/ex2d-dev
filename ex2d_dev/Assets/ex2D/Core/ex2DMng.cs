@@ -215,6 +215,12 @@ public class ex2DMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public static Material GetMaterial (Shader _shader, Texture _texture) {
+        if (_shader == null) {
+            _shader = Shader.Find("ex2D/Alpha Blended");
+            if (_shader == null) {
+                _shader = new Shader();
+            }
+        }
         MaterialTableKey key = new MaterialTableKey(_shader, _texture);
         Material mat;
         if ( !materialTable.TryGetValue(key, out mat) || mat == null ) {
@@ -238,7 +244,7 @@ public class ex2DMng : MonoBehaviour {
         
         for (int i = 0; i < layerList.Count; ++i) {
             if ( layerList[i] != null )
-                layerList[i].UpdateAllMeshes();
+                layerList[i].UpdateSprites();
         }
     }
 }

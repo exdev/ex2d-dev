@@ -30,7 +30,7 @@ public enum UpdateFlags {
 	Vertex		= 2,  ///< update the vertices
 	UV	        = 4,  ///< update the uv coordination
 	Color	    = 8,  ///< update the vertex color
-	Normal	    = 16, ///< update the normal
+	Normal	    = 16, ///< update the normal, not implemented yet
 
 	VertexAndIndex = (Index | Vertex),
 	All = (Index | Vertex | UV | Color | Normal), ///< update all
@@ -87,14 +87,14 @@ public class exMesh : MonoBehaviour
     /// cache mesh.vertices
     /// 依照sprite在spriteList中的相同顺序排列，每个sprite的顶点都放在连续的一段区间中
     /// vertices的数量和索引都保持和uvs, colors, normals, tangents一致
-    private List<Vector3> vertices = new List<Vector3>();
+    public List<Vector3> vertices = new List<Vector3>();
 
     /// cache mesh.triangles
     /// 按深度排序，深度一样的话，按加入的时间排序
-    private List<int> indices = new List<int>(RESERVED_INDEX_COUNT);
+    public List<int> indices = new List<int>(RESERVED_INDEX_COUNT);
 
-    private List<Vector2> uvs = new List<Vector2>();       ///< cache mesh.vertices
-    private List<Color32> colors32 = new List<Color32>();  ///< cache mesh.colors32
+    public List<Vector2> uvs = new List<Vector2>();       ///< cache mesh.vertices
+    public List<Color32> colors32 = new List<Color32>();  ///< cache mesh.colors32
 
     private UpdateFlags updateFlags = UpdateFlags.None;
 
@@ -147,52 +147,12 @@ public class exMesh : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    /// Maintains a mesh to render all sprites
+    /// \param _updateFlags Previous UpdateFlags of buffer changes.
+    /// Actually apply all previous buffer changes
     // ------------------------------------------------------------------ 
 
-    public void UpdateMesh () {
-        //if (mesh == null) {
-        //    CreateMesh();
-        //}
-        for (int i = 0; i < spriteList.Count; ++i) {
-            exSpriteBase sprite = spriteList[i];
-            exDebug.Assert(sprite.isOnEnabled == sprite.isInIndexBuffer);
-
-            if (sprite.isOnEnabled) {
-                // TODO: 把对mesh的操作做成虚函数由各个sprite自己进行
-                sprite.UpdateDirtyFlags();
-                updateFlags |= sprite.updateFlags;
-                if ((sprite.updateFlags & UpdateFlags.Vertex) != 0) {
-                    var pos = sprite.cachedTransform.position;
-                    vertices[sprite.vertexBufferIndex + 0] = pos + new Vector3(-1.0f, -1.0f, 0.0f);
-                    vertices[sprite.vertexBufferIndex + 1] = pos + new Vector3(-1.0f, 1.0f, 0.0f);
-                    vertices[sprite.vertexBufferIndex + 2] = pos + new Vector3(1.0f, 1.0f, 0.0f);
-                    vertices[sprite.vertexBufferIndex + 3] = pos + new Vector3(1.0f, -1.0f, 0.0f);
-                }
-                if ((sprite.updateFlags & UpdateFlags.UV) != 0) {
-                    exTextureInfo textureInfo = (sprite as exSprite).textureInfo;
-                    float xStart = (float)textureInfo.x / (float)textureInfo.texture.width;
-                    float yStart = (float)textureInfo.y / (float)textureInfo.texture.height;
-                    float xEnd = (float)(textureInfo.x + textureInfo.width) / (float)textureInfo.texture.width;
-                    float yEnd = (float)(textureInfo.y + textureInfo.height) / (float)textureInfo.texture.height;
-                    uvs[sprite.vertexBufferIndex + 0] = new Vector2(xStart, yStart);
-                    uvs[sprite.vertexBufferIndex + 1] = new Vector2(xStart, yEnd);
-                    uvs[sprite.vertexBufferIndex + 2] = new Vector2(xEnd, yEnd);
-                    uvs[sprite.vertexBufferIndex + 3] = new Vector2(xEnd, yStart);
-                }
-                if ((sprite.updateFlags & UpdateFlags.Color) != 0) {
-                    colors32[sprite.vertexBufferIndex + 0] = new Color32(255, 255, 255, 255);
-                    colors32[sprite.vertexBufferIndex + 1] = new Color32(255, 255, 255, 255);
-                    colors32[sprite.vertexBufferIndex + 2] = new Color32(255, 255, 255, 255);
-                    colors32[sprite.vertexBufferIndex + 3] = new Color32(255, 255, 255, 255);
-                }
-                if ((sprite.updateFlags & UpdateFlags.Index) != 0) {
-                    // TODO: resort
-                    TestIndices(sprite);
-                }
-                sprite.updateFlags = UpdateFlags.None;
-            }
-        }
+    public void Apply (UpdateFlags _updateFlags = UpdateFlags.None) {
+        updateFlags |= _updateFlags;
         if ((updateFlags & UpdateFlags.VertexAndIndex) == UpdateFlags.VertexAndIndex) {
             // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
             mesh.triangles = null;  //这里如果使用clear，那么uv和color就必须赋值，否则有时会出错
@@ -218,13 +178,13 @@ public class exMesh : MonoBehaviour
             // 如果没有更新triangles并且更新了vertex位置，则需要手动更新bbox
             mesh.RecalculateBounds();
         }
-        if ((updateFlags & UpdateFlags.Normal) != 0) {
-            var normals = new Vector3[vertices.Count];
-            for (int i = 0; i < normals.Length; ++i) {
-                normals[i] = new Vector3(0, 0, -1);
-            }
-            mesh.normals = normals;
-        }
+        //if ((updateFlags & UpdateFlags.Normal) != 0) {
+        //    var normals = new Vector3[vertices.Count];
+        //    for (int i = 0; i < normals.Length; ++i) {
+        //        normals[i] = new Vector3(0, 0, -1);
+        //    }
+        //    mesh.normals = normals;
+        //}
         updateFlags = UpdateFlags.None;
     }
 
@@ -269,7 +229,7 @@ public class exMesh : MonoBehaviour
 
 #if UNITY_EDITOR
         if (!UnityEditor.EditorApplication.isPlaying) {
-            UpdateMesh();
+            Apply();
         }
 #endif
     }
@@ -324,7 +284,7 @@ public class exMesh : MonoBehaviour
 
 #if UNITY_EDITOR
         if (!UnityEditor.EditorApplication.isPlaying) {
-            UpdateMesh();
+            Apply();
         }
 #endif
     }
@@ -346,7 +306,7 @@ public class exMesh : MonoBehaviour
 
 #if UNITY_EDITOR
         if (!UnityEditor.EditorApplication.isPlaying) {
-            UpdateMesh();
+            Apply();
         }
 #endif
     }
@@ -369,7 +329,7 @@ public class exMesh : MonoBehaviour
 
 #if UNITY_EDITOR
         if (!UnityEditor.EditorApplication.isPlaying) {
-            UpdateMesh();
+            Apply();
         }
 #endif
     }
@@ -491,7 +451,7 @@ public class exMesh : MonoBehaviour
             updateFlags |= UpdateFlags.Index;
 
             // TODO: resort indices by depth
-            TestIndices(_sprite);
+            // TestIndices(_sprite);
         }
     }
 
@@ -520,20 +480,7 @@ public class exMesh : MonoBehaviour
             updateFlags |= UpdateFlags.Index;
         }
     }
-    
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-    
-    [System.Diagnostics.Conditional("EX_DEBUG")]
-    void TestIndices (exSpriteBase _sprite) {
-        // check indice is valid
-        for (int i = _sprite.indexBufferIndex; i < _sprite.indexBufferIndex + _sprite.indexCount; ++i) {
-            if (indices[i] < _sprite.vertexBufferIndex || indices[i] > _sprite.vertexBufferIndex + _sprite.vertexCount) {
-                Debug.LogError("[exLayer] Wrong triangle index!");
-            }
-        }
-    }
+
 
     // ------------------------------------------------------------------ 
     /// Remove all exSpriteBases out of this layer 
@@ -557,7 +504,7 @@ public class exMesh : MonoBehaviour
 
 #if UNITY_EDITOR
         if (!UnityEditor.EditorApplication.isPlaying) {
-            UpdateMesh();
+            Apply();
         }
 #endif
     }

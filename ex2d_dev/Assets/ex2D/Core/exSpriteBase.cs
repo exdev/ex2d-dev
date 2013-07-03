@@ -11,9 +11,10 @@
 
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 // ------------------------------------------------------------------ 
-/// The anchor position of the exPlane in 2D space
+/// The anchor position of the exSpriteBase in 2D space
 // ------------------------------------------------------------------ 
 
 public enum Anchor {
@@ -34,12 +35,57 @@ public enum Anchor {
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-public class exSpriteBase : MonoBehaviour {
+public abstract class exSpriteBase : MonoBehaviour {
     
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
     ///////////////////////////////////////////////////////////////////////////////
     
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected bool customSize_ = false;
+    /// if customSize set to true, users are free to set the exSpriteBase.width and exSpriteBase.height of the sprite,
+    /// otherwise there is no effect when assign value to width or height.
+    // ------------------------------------------------------------------ 
+
+    public virtual bool customSize {
+        get { return customSize_; }
+        set { customSize_ = value; }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected float width_ = 1.0f;
+    /// the width of the sprite
+    /// 
+    /// \note if you want to custom the width of it, you need to set exSpriteBase.customSize to true
+    // ------------------------------------------------------------------ 
+
+    public float width {
+        get { return width_; }
+        set {
+            if ( width_ != value ) {
+                width_ = value;
+                updateFlags |= UpdateFlags.Vertex;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected float height_ = 1.0f;
+    /// the height of the sprite
+    /// 
+    /// \note if you want to custom the height of it, you need to set exSpriteBase.customSize to true
+    // ------------------------------------------------------------------ 
+
+    public float height {
+        get { return height_; }
+        set {
+            if ( height_ != value ) {
+                height_ = value;
+                updateFlags |= UpdateFlags.Vertex;
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ 
     [SerializeField] protected Anchor anchor_ = Anchor.MidCenter;
     /// the anchor position used in this plane
@@ -70,51 +116,6 @@ public class exSpriteBase : MonoBehaviour {
         }
     }
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected bool customSize_ = false;
-    /// if customSize set to true, users are free to set the exSprite.width and exSprite.height of the sprite,
-    /// otherwise there is no effect when assign value to width or height.
-    // ------------------------------------------------------------------ 
-
-    public virtual bool customSize {
-        get { return customSize_; }
-        set { customSize_ = value; }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected float width_ = 1.0f;
-    /// the width of the sprite
-    /// 
-    /// \note if you want to custom the width of it, you need to set exSprite.customSize to true
-    // ------------------------------------------------------------------ 
-
-    public float width {
-        get { return width_; }
-        set {
-            if ( width_ != value ) {
-                width_ = value;
-                updateFlags |= UpdateFlags.Vertex;
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected float height_ = 1.0f;
-    /// the height of the sprite
-    /// 
-    /// \note if you want to custom the height of it, you need to set exSprite.customSize to true
-    // ------------------------------------------------------------------ 
-
-    public float height {
-        get { return height_; }
-        set {
-            if ( height_ != value ) {
-                height_ = value;
-                updateFlags |= UpdateFlags.Vertex;
-            }
-        }
-    }
-
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -130,7 +131,7 @@ public class exSpriteBase : MonoBehaviour {
     // ------------------------------------------------------------------ 
     /// The current updateFlags
     // ------------------------------------------------------------------ 
-    // TODO: this value will reset after every UpdateDirtyFlags()
+    // TODO: this value will reset after every UpdateBuffers()
 
     [System.NonSerialized] public UpdateFlags updateFlags = UpdateFlags.All;
 
@@ -153,16 +154,16 @@ public class exSpriteBase : MonoBehaviour {
 
     public virtual Material material { get { return null; } }
     
-    /// Is component enabled and gameobject activeInHierarchy? 
+    /// Is component enabled and gameobject activeInHierarchy? If false, the sprite is hidden.
     private bool isOnEnabled_;
     public bool isOnEnabled {
         get {
 #if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            return enabled && gameObject.activeInHierarchy;
-        }
+            if (!UnityEditor.EditorApplication.isPlaying) {
+                return enabled && gameObject.activeInHierarchy;
+            }
 #endif
-        return isOnEnabled_;
+            return isOnEnabled_;
         }
     }
     
@@ -259,24 +260,14 @@ public class exSpriteBase : MonoBehaviour {
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
-    
-    public void UpdateDirtyFlags () {
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
-            cachedTransform = transform;
-        }
-#endif
-        if (cachedTransform.hasChanged) {
-            updateFlags |= UpdateFlags.Vertex;
-            cachedTransform.hasChanged = false;
-        }
-    }
+
+    public abstract UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<int> _indices, List<Vector2> _uvs, List<Color32> _colors32);
 
     // ------------------------------------------------------------------ 
     /// Calculate the bounding rect of the plane
     // ------------------------------------------------------------------ 
 
-    public Rect GetBoundingRect() {
+    public Rect GetBoundingRect () {
 #if UNITY_EDITOR
         if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
             cachedTransform = transform;
@@ -288,5 +279,22 @@ public class exSpriteBase : MonoBehaviour {
         float w = 2;
         float h = 2;
         return new Rect(pos.x + x, pos.y + y, w, h);
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    public void UpdateTransform () {
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
+            cachedTransform = transform;
+        }
+#endif
+        if (cachedTransform.hasChanged) {
+            updateFlags |= UpdateFlags.Vertex;
+            cachedTransform.hasChanged = false;
+            // TODO: 根据parent更换layer
+        }
     }
 }

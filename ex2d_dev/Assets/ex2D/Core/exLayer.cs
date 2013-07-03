@@ -122,11 +122,21 @@ public class exLayer : MonoBehaviour
     /// Maintains meshes to render all sprites
     // ------------------------------------------------------------------ 
 
-    public void UpdateAllMeshes () {
-        for (int i = 0; i < meshList.Count; ++i) {
-            if (meshList[i] != null) {
-                meshList[i].UpdateMesh();
+    public void UpdateSprites () {
+        for (int m = 0; m < meshList.Count; ++m) {
+            exMesh mesh = meshList[m];
+            UpdateFlags meshUpdateFlags = UpdateFlags.None;
+            for (int i = 0; i < mesh.spriteList.Count; ++i) {
+                exSpriteBase sprite = mesh.spriteList[i];
+                exDebug.Assert(sprite.isOnEnabled == sprite.isInIndexBuffer);
+
+                if (sprite.isOnEnabled) {
+                    sprite.UpdateTransform();
+                    UpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.indices, mesh.uvs, mesh.colors32);
+                    meshUpdateFlags |= spriteUpdateFlags;
+                }
             }
+            mesh.Apply(meshUpdateFlags);
         }
     }
 
