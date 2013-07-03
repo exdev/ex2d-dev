@@ -9,6 +9,8 @@
 // defines
 ///////////////////////////////////////////////////////////////////////////////
 
+#define FORCE_UPDATE_VERTEX_INFO ///< 删除mesh最后面的顶点时，仅先从index buffer和vertex buffer中清除，其它数据不标记为脏。因为是尾端的冗余数据，不同步也可以。
+
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
@@ -19,19 +21,18 @@ using System.Collections.Generic;
 
 // ------------------------------------------------------------------ 
 /// The type of layer
-/// Dynamic: 当layerType转换成dynamic后，新添加的sprite时将判断mesh顶点数，超出限制的将自动添加到新的mesh中。
 // ------------------------------------------------------------------ 
 
 public enum LayerType
 {
     Static = 0,
-    Dynamic,
+    Dynamic,    ///< 当layerType转换成dynamic后，新添加的sprite时将判断mesh顶点数，超出限制的将自动添加到新的mesh中。
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 //
 /// The layer class
-/// NOTE: Don't add this component yourself, use ex2DMng.CreateLayer instead.
+/// NOTE: Don't add this component yourself, use ex2DMng.instance.CreateLayer instead.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -307,8 +308,17 @@ public class exLayer : MonoBehaviour
         Material mat = _sprite.material;
         for (int i = 0; i < meshList.Count; ++i) {
             exMesh mesh = meshList[i];
-		    if (mesh != null && object.ReferenceEquals(mesh.material, mat) && mesh.Contains(_sprite)) {
-                return mesh;
+		    if (mesh != null && object.ReferenceEquals(mesh.material, mat)) {
+                bool containsSprite = (_sprite.spriteIndex >= 0 && _sprite.spriteIndex < mesh.spriteList.Count && 
+                                      ReferenceEquals(mesh.spriteList[_sprite.spriteIndex], _sprite));
+#if EX_DEBUG
+                exDebug.Assert(containsSprite == mesh.spriteList.Contains(_sprite), "wrong sprite.spriteIndex");
+                bool sameMaterial = (_sprite.material == mesh.material);
+                exDebug.Assert(!containsSprite || sameMaterial);
+#endif
+                if (containsSprite) {
+                    return mesh;
+                }
 		    }
         }
         return null;
@@ -373,9 +383,9 @@ public class exLayer : MonoBehaviour
         _mesh.uvs.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
 
 #if FORCE_UPDATE_VERTEX_INFO
-        bool removeBack = (_sprite.spriteIndex == spriteList.Count);
+        bool removeBack = (_sprite.spriteIndex == _mesh.spriteList.Count);
         if (!removeBack) {
-            updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+            _mesh.updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
         }
 #else
         _mesh.updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);

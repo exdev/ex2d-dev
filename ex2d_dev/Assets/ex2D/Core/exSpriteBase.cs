@@ -123,7 +123,7 @@ public abstract class exSpriteBase : MonoBehaviour {
     [System.NonSerialized] public int vertexCount = 4;
     [System.NonSerialized] public int indexCount = 6;
     
-    // cached for exMesh
+    // cached for geometry buffers
     [System.NonSerialized] internal int spriteIndex = -1;
     [System.NonSerialized] internal int vertexBufferIndex = -1;
     [System.NonSerialized] internal int indexBufferIndex = -1;

@@ -6,12 +6,6 @@
 // ======================================================================================
 
 ///////////////////////////////////////////////////////////////////////////////
-// defines
-///////////////////////////////////////////////////////////////////////////////
-
-#define FORCE_UPDATE_VERTEX_INFO ///< 删除mesh最后面的顶点时，仅先从index buffer和vertex buffer中清除，其它数据不标记为脏。因为是尾端的冗余数据，不同步也可以。
-
-///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -38,9 +32,9 @@ public enum UpdateFlags {
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-/// Generated mesh operator. All exLayer have at least one.
+/// The exMesh component. All exLayer have at least one.
+/// Used to maintain and render the generated mesh, and flush geometry buffers to mesh.
 /// This class performs actions selectively depending on what has changed. 
-/// 通常来说这个类只需要对exLayer可见
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -75,6 +69,7 @@ public class exMesh : MonoBehaviour
         }
     }
 
+    /// The corresponding sprite list. Only used by exLayer, just place here for convenience.
     public List<exSpriteBase> spriteList = new List<exSpriteBase>();
     
     //mesh
@@ -189,21 +184,6 @@ public class exMesh : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-    
-    public bool Contains (exSpriteBase _sprite) {
-        bool hasSprite = (_sprite.spriteIndex >= 0 && _sprite.spriteIndex < spriteList.Count && 
-                          object.ReferenceEquals(spriteList[_sprite.spriteIndex], _sprite));
-#if EX_DEBUG
-        exDebug.Assert(hasSprite == spriteList.Contains(_sprite), "wrong sprite.spriteIndex");
-        bool sameMaterial = (_sprite.material == material);
-        exDebug.Assert(!hasSprite || sameMaterial);
-#endif
-        return hasSprite;
-    }
-
-    // ------------------------------------------------------------------ 
     /// Compact all reserved buffers
     // ------------------------------------------------------------------ 
 
@@ -214,9 +194,7 @@ public class exMesh : MonoBehaviour
         indices.TrimExcess();
         uvs.TrimExcess();
         colors32.TrimExcess();
-#if FORCE_UPDATE_VERTEX_INFO
-        updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
-#endif
+        updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);   //need to flush to mesh if not defined exLayer.FORCE_UPDATE_VERTEX_INFO
     }
  
     // ------------------------------------------------------------------ 
