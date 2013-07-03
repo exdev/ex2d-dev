@@ -618,38 +618,21 @@ class exSceneEditor : EditorWindow {
         Material material = _node.material;
         material.SetPass(0);
 
-        if ( _node is exSprite ) {
-            exSprite sprite = _node as exSprite;
+        List<Vector3> vertices = new List<Vector3>();
+        List<Vector2> uvs = new List<Vector2>();
+        _node.GetBuffers(vertices, uvs);
+        exDebug.Assert(uvs.Count == vertices.Count);
 
-            exTextureInfo textureInfo = sprite.textureInfo;
-
-            Vector2 halfSize = new Vector2( textureInfo.width * 0.5f * _node.transform.lossyScale.x, 
-                                            textureInfo.height * 0.5f * _node.transform.lossyScale.y );
-
-            float s0 = (float) textureInfo.x                      / (float) textureInfo.texture.width;
-            float s1 = (float) (textureInfo.x+textureInfo.width)  / (float) textureInfo.texture.width;
-            float t0 = (float) textureInfo.y                      / (float) textureInfo.texture.height;
-            float t1 = (float) (textureInfo.y+textureInfo.height) / (float) textureInfo.texture.height;
-
-            GL.PushMatrix();
-            GL.MultMatrix( _node.transform.localToWorldMatrix );
-            GL.Begin(GL.QUADS);
-                GL.Color( new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
-
-                GL.TexCoord2 ( s0, t0 );
-                GL.Vertex3 ( -halfSize.x, -halfSize.y, 0.0f );
-
-                GL.TexCoord2 ( s0, t1 );
-                GL.Vertex3 ( -halfSize.x,  halfSize.y, 0.0f );
-
-                GL.TexCoord2 ( s1, t1 );
-                GL.Vertex3 (  halfSize.x,  halfSize.y, 0.0f );
-
-                GL.TexCoord2 ( s1, t0 );
-                GL.Vertex3 (  halfSize.x, -halfSize.y, 0.0f );
-            GL.End();
-            GL.PopMatrix();
-        }
+        //GL.PushMatrix();
+        //GL.MultMatrix( _node.transform.localToWorldMatrix );
+        GL.Begin(GL.QUADS);
+            GL.Color( new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
+            for (int i = 0; i < vertices.Count; ++i) {
+                GL.TexCoord2 ( uvs[i].x, uvs[i].y );
+                GL.Vertex ( vertices[i] );
+            }
+        GL.End();
+        //GL.PopMatrix();
     }
 
     // ------------------------------------------------------------------ 
