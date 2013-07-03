@@ -117,14 +117,13 @@ public class exSprite : exSpriteBase {
     // functions
     ///////////////////////////////////////////////////////////////////////////////
 
-#region Functions used to update geometry buffer.
+#region Functions used to update geometry buffer
        
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
 
     public override UpdateFlags FillBuffers (List<Vector3> _vertices, List<int> _indices, List<Vector2> _uvs, List<Color32> _colors32) {
-        updateFlags = UpdateFlags.None;
         vertexBufferIndex = _vertices.Count;
 
         _vertices.Add(new Vector3());
@@ -140,7 +139,7 @@ public class exSprite : exSpriteBase {
         _uvs.Add(new Vector2());
         _uvs.Add(new Vector2());
 
-        updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+        updateFlags = (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
 
         bool show = isOnEnabled;
         if (show) {
@@ -155,11 +154,15 @@ public class exSprite : exSpriteBase {
 
     public override UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<int> _indices, List<Vector2> _uvs, List<Color32> _colors32) {
         if ((updateFlags & UpdateFlags.Vertex) != 0) {
-            var pos = cachedTransform.position;
-            _vertices[vertexBufferIndex + 0] = pos + new Vector3(-1.0f, -1.0f, 0.0f);
-            _vertices[vertexBufferIndex + 1] = pos + new Vector3(-1.0f, 1.0f, 0.0f);
-            _vertices[vertexBufferIndex + 2] = pos + new Vector3(1.0f, 1.0f, 0.0f);
-            _vertices[vertexBufferIndex + 3] = pos + new Vector3(1.0f, -1.0f, 0.0f);
+            //Matrix4x4 toWorld = cachedTransform.localToWorldMatrix;
+            //Vector3 pos = cachedTransform.position;
+            //toWorld = Matrix4x4.TRS(cachedTransform.position, cachedTransform.rotation, cachedTransform.lossyScale);
+            float halfWidth = width_ * 0.5f;
+            float halfHeight = height_ * 0.5f;
+            _vertices[vertexBufferIndex + 0] = cachedTransform.TransformPoint(new Vector3(-halfWidth, -halfHeight, 0.0f));
+            _vertices[vertexBufferIndex + 1] = cachedTransform.TransformPoint(new Vector3(-halfWidth, halfHeight, 0.0f));
+            _vertices[vertexBufferIndex + 2] = cachedTransform.TransformPoint(new Vector3(halfWidth, halfHeight, 0.0f));
+            _vertices[vertexBufferIndex + 3] = cachedTransform.TransformPoint(new Vector3(halfWidth, -halfHeight, 0.0f));
         }
         if ((updateFlags & UpdateFlags.UV) != 0) {
             Vector2 texelSize = textureInfo.texture.texelSize;

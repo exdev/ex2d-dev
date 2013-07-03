@@ -281,6 +281,37 @@ public abstract class exSpriteBase : MonoBehaviour {
 
     public abstract void AddToIndices (List<int> _indices);
 
+#if UNITY_EDITOR
+
+    // ------------------------------------------------------------------ 
+    /// Get sprite's geometry data
+    // ------------------------------------------------------------------ 
+
+    public void GetBuffers (List<Vector3> _vertices, List<Vector2> _uvs) {
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
+            cachedTransform = transform;
+        }
+#endif
+        UpdateFlags originalFlags = updateFlags;
+        int originalIndexBufferIndex = indexBufferIndex;
+        int originalVertexBufferIndex = vertexBufferIndex;
+
+        indexBufferIndex = -1;
+        _vertices.Clear();
+        _uvs.Clear();
+        List<int> indices = new List<int>(indexCount);
+        List<Color32> colors = new List<Color32>(vertexCount);
+        FillBuffers(_vertices, indices, _uvs, colors);
+        UpdateBuffers(_vertices, indices, _uvs, colors);
+
+        updateFlags = originalFlags;
+        indexBufferIndex = originalIndexBufferIndex;
+        vertexBufferIndex = originalVertexBufferIndex;
+    }
+
+#endif
+
 #endregion
 
     // ------------------------------------------------------------------ 
