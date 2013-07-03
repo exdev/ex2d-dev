@@ -270,7 +270,7 @@ public abstract class exSpriteBase : MonoBehaviour {
     // ------------------------------------------------------------------ 
     /// \return the update flags of changed buffer
     /// 
-    /// Update sprite's geometry data to buffers
+    /// Update sprite's geometry data to buffers selectively depending on what has changed. 
     // ------------------------------------------------------------------ 
 
     public abstract UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<int> _indices, List<Vector2> _uvs, List<Color32> _colors32);

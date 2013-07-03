@@ -162,10 +162,11 @@ public class exSprite : exSpriteBase {
             _vertices[vertexBufferIndex + 3] = pos + new Vector3(1.0f, -1.0f, 0.0f);
         }
         if ((updateFlags & UpdateFlags.UV) != 0) {
-            float xStart = (float)textureInfo.x / (float)textureInfo.texture.width;
-            float yStart = (float)textureInfo.y / (float)textureInfo.texture.height;
-            float xEnd = (float)(textureInfo.x + textureInfo.width) / (float)textureInfo.texture.width;
-            float yEnd = (float)(textureInfo.y + textureInfo.height) / (float)textureInfo.texture.height;
+            Vector2 texelSize = textureInfo.texture.texelSize;
+            float xStart = (float)textureInfo.x * texelSize.x;
+            float yStart = (float)textureInfo.y * texelSize.y;
+            float xEnd = (float)(textureInfo.x + textureInfo.width) * texelSize.x;
+            float yEnd = (float)(textureInfo.y + textureInfo.height) * texelSize.y;
             _uvs[vertexBufferIndex + 0] = new Vector2(xStart, yStart);
             _uvs[vertexBufferIndex + 1] = new Vector2(xStart, yEnd);
             _uvs[vertexBufferIndex + 2] = new Vector2(xEnd, yEnd);
