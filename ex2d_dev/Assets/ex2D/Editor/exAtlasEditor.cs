@@ -288,16 +288,18 @@ partial class exAtlasEditor : EditorWindow {
             // ======================================================== 
 
             EditorGUILayout.Space();
-			GUILayout.BeginVertical(new GUILayoutOption[0]);
-			GUILayout.Space(3f);
-            lockCurEdit = GUILayout.Toggle ( lockCurEdit, GUIContent.none, "IN LockButton" );
+			GUILayout.BeginVertical();
+            GUILayout.Space(3f);
+            lockCurEdit = GUILayout.Toggle ( lockCurEdit, GUIContent.none, "IN LockButton", new GUILayoutOption [] {
+                                                GUILayout.Width(20),
+                                                GUILayout.Height(20),
+                                             } );
 			GUILayout.EndVertical();
 
             // ======================================================== 
             // Help
             // ======================================================== 
 
-            EditorGUILayout.Space();
             if ( GUILayout.Button( exEditorUtility.HelpTexture(), EditorStyles.toolbarButton ) ) {
                 Help.BrowseURL("http://www.ex-dev.com/ex2d/wiki/doku.php?id=manual:atlas_editor");
             }
