@@ -591,6 +591,7 @@ class exSceneEditor : EditorWindow {
                                 (editCameraPos.y - _rect.height * 0.5f) / scale,
                                 (editCameraPos.y + _rect.height * 0.5f) / scale );
 
+            // DELME { 
             // // draw all nodes in the scene
             // for ( int i = ex2DMng.instance.layerList.Count-1; i >= 0; --i ) {
             //     exLayer layer = ex2DMng.instance.layerList[i];
@@ -602,8 +603,37 @@ class exSceneEditor : EditorWindow {
             //         }
             //     }
             // }
+            // } DELME end 
+
+            // draw culled sprite nodes
             for ( int i = 0; i < spriteNodes.Count; ++i ) {
                 DrawNode ( spriteNodes[i] );
+            }
+
+            // draw selected objects
+            Material material = new Material( Shader.Find("ex2D/Alpha Blended") );
+            material.SetPass(0);
+            for ( int i = 0; i < Selection.transforms.Length; ++i ) {
+                Transform trans = Selection.transforms[i];
+                exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
+                if ( spriteBase ) {
+                    Rect boundingRect = spriteBase.GetBoundingRect();
+                    GL.Begin( GL.LINES );
+                    GL.Color( Color.white );
+                    GL.Vertex3( boundingRect.xMin, boundingRect.yMin, 0.0f );
+                    GL.Vertex3( boundingRect.xMin, boundingRect.yMax, 0.0f );
+
+                    GL.Vertex3( boundingRect.xMin, boundingRect.yMax, 0.0f );
+                    GL.Vertex3( boundingRect.xMax, boundingRect.yMax, 0.0f );
+
+                    GL.Vertex3( boundingRect.xMax, boundingRect.yMax, 0.0f );
+                    GL.Vertex3( boundingRect.xMax, boundingRect.yMin, 0.0f );
+
+                    GL.Vertex3( boundingRect.xMax, boundingRect.yMin, 0.0f );
+                    GL.Vertex3( boundingRect.xMin, boundingRect.yMin, 0.0f );
+
+                    GL.End();
+                }
             }
 
         GL.PopMatrix();
@@ -652,6 +682,10 @@ class exSceneEditor : EditorWindow {
             text = "Viewport: " + new Vector2(sceneViewRect.width, sceneViewRect.height).ToString();
             // width = (int)EditorStyles.label.CalcSize(new GUIContent(text)).x;
             width = 180;
+            EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
+
+            text = "Sprites: " + spriteNodes.Count;
+            width = 100;
             EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
         EditorGUILayout.EndHorizontal();
     }
@@ -785,10 +819,15 @@ class exSceneEditor : EditorWindow {
         Vector2 screenPos = SceneField_WorldToScreen ( _rect, sprite.transform.position );
 
         if ( sprite ) {
-            Rect boundingRect = new Rect ( screenPos.x - sprite.textureInfo.rotatedWidth/2.0f * scale,
-                                           screenPos.y - sprite.textureInfo.rotatedHeight/2.0f * scale,
-                                           sprite.textureInfo.rotatedWidth * scale,
-                                           sprite.textureInfo.rotatedHeight * scale );
+            // Rect boundingRect = new Rect ( screenPos.x - sprite.textureInfo.rotatedWidth/2.0f * scale,
+            //                                screenPos.y - sprite.textureInfo.rotatedHeight/2.0f * scale,
+            //                                sprite.textureInfo.rotatedWidth * scale,
+            //                                sprite.textureInfo.rotatedHeight * scale );
+            Rect boundingRect = sprite.GetBoundingRect();
+            boundingRect = new Rect ( screenPos.x - boundingRect.width/2.0f * scale,
+                                      screenPos.y - boundingRect.height/2.0f * scale,
+                                      boundingRect.width * scale,
+                                      boundingRect.height * scale );
             boundingRect = exGeometryUtility.Rect_FloorToInt(boundingRect);
 
             return boundingRect;
