@@ -171,9 +171,10 @@ public class exLayer : MonoBehaviour
             Debug.LogError("no material assigned in sprite", _sprite);
             return;
         }
-
         _sprite.layer = this;
-        _sprite.transform.parent = transform;
+        if (_sprite.transform.IsChildOf(transform) == false) {
+            _sprite.transform.parent = transform;
+        }
         // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
         exMesh sameDrawcallMesh = null;
         if (layerType == LayerType.Dynamic) {
