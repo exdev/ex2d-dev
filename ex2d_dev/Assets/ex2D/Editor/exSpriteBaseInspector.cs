@@ -61,35 +61,42 @@ class exSpriteBaseInspector : Editor {
             }
         }
 
-        GUI.enabled = customSizeProp.boolValue;
+        if ( customSizeProp.boolValue ) {
+            // width
+            float oldWidth = widthProp.floatValue;
+            EditorGUILayout.PropertyField ( widthProp, new GUIContent("Width") );
+            if ( widthProp.floatValue != oldWidth ) {
+                foreach ( Object obj in serializedObject.targetObjects ) {
+                    exSpriteBase sp = obj as exSpriteBase;
+                    if ( sp ) {
+                        sp.width = widthProp.floatValue;
+                        EditorUtility.SetDirty(sp);
+                    }
+                }
+            }
 
-        // width
-        float oldWidth = widthProp.floatValue;
-        EditorGUILayout.PropertyField ( widthProp, new GUIContent("Width") );
-        if ( widthProp.floatValue != oldWidth ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteBase sp = obj as exSpriteBase;
-                if ( sp ) {
-                    sp.width = widthProp.floatValue;
-                    EditorUtility.SetDirty(sp);
+            // height
+            float oldHeight = heightProp.floatValue;
+            EditorGUILayout.PropertyField ( heightProp, new GUIContent("Height") );
+            if ( heightProp.floatValue != oldHeight ) {
+                foreach ( Object obj in serializedObject.targetObjects ) {
+                    exSpriteBase sp = obj as exSpriteBase;
+                    if ( sp ) {
+                        sp.height = heightProp.floatValue;
+                        EditorUtility.SetDirty(sp);
+                    }
                 }
             }
         }
-
-        // height
-        float oldHeight = heightProp.floatValue;
-        EditorGUILayout.PropertyField ( heightProp, new GUIContent("Height") );
-        if ( heightProp.floatValue != oldHeight ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteBase sp = obj as exSpriteBase;
-                if ( sp ) {
-                    sp.height = heightProp.floatValue;
-                    EditorUtility.SetDirty(sp);
-                }
+        else {
+            GUI.enabled = false;
+            if ( serializedObject.isEditingMultipleObjects == false ) {
+                exSpriteBase spriteBase = serializedObject.targetObject as exSpriteBase;
+                EditorGUILayout.FloatField ( new GUIContent("Width"), spriteBase.width );
+                EditorGUILayout.FloatField ( new GUIContent("Height"), spriteBase.height );
             }
+            GUI.enabled = true;
         }
-
-        GUI.enabled = true;
 
         //
         int oldAnchor = anchorProp.enumValueIndex;
