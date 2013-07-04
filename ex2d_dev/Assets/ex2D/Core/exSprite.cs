@@ -47,8 +47,8 @@ public class exSprite : exSpriteBase {
                 }
             }
             if (customSize_ == false && (value.width != width_ || value.height != height_)) {
-                width_ = width;
-                height_ = height;
+                width_ = value.width;
+                height_ = value.height;
                 updateFlags |= UpdateFlags.Vertex;
             }
             updateFlags |= UpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
