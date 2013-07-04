@@ -352,6 +352,9 @@ public class exSprite : exSpriteBase {
         //Matrix4x4 toWorld = cachedTransform.localToWorldMatrix;
         //Vector3 pos = cachedTransform.position;
         //toWorld = Matrix4x4.TRS(cachedTransform.position, cachedTransform.rotation, cachedTransform.lossyScale);
+
+        offsetX += offset_.x;
+        offsetY += offset_.y;
         _vertices[_startIndex + 0] = cachedTransform.TransformPoint(new Vector3(-halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
         _vertices[_startIndex + 1] = cachedTransform.TransformPoint(new Vector3(-halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
         _vertices[_startIndex + 2] = cachedTransform.TransformPoint(new Vector3( halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
