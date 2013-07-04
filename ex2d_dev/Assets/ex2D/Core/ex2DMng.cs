@@ -112,7 +112,7 @@ public class ex2DMng : MonoBehaviour {
     }
     
     // ------------------------------------------------------------------ 
-    //
+    // Desc:
     // ------------------------------------------------------------------ 
 
     void OnEnable () {
@@ -125,6 +125,10 @@ public class ex2DMng : MonoBehaviour {
         }
 #endif
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
 
     void OnDisable () {
 #if UNITY_EDITOR
@@ -238,31 +242,35 @@ public class ex2DMng : MonoBehaviour {
     }
 
     // ------------------------------------------------------------------ 
-    // Desc: 
+    /// Force refresh all layers. This is called by ex2D.
     // ------------------------------------------------------------------ 
     
     public void ForceRenderScene () {
         for (int i = 0; i < layerList.Count; ++i) {
-            if (layerList[i] != null) {
-                layerList[i].enabled = false;
-                layerList[i].enabled = true;
+            exLayer layer = layerList[i];
+            if (layer != null) {
+                layer.enabled = false;
+                layer.enabled = true;
             }
         }
         RenderScene();
     }
 
     // ------------------------------------------------------------------ 
-    // Desc: 
+    /// This is called by ex2D when it is about to render the scene.
     // ------------------------------------------------------------------ 
     
     public void RenderScene () {
         if (cachedCamera.orthographicSize != Screen.height) {
-            //cachedCamera.orthographicSize = Screen.height;
+            // pixel-perfect
+            cachedCamera.orthographicSize = Screen.height;
         }
         
         for (int i = 0; i < layerList.Count; ++i) {
-            if ( layerList[i] != null )
-                layerList[i].UpdateSprites();
+            exLayer layer = layerList[i];
+            if (layer != null) {
+                layer.UpdateSprites();
+            }
         }
     }
 }

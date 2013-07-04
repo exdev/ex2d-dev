@@ -121,8 +121,8 @@ public class exSprite : exSpriteBase {
                 customSize_ = value;
                 if (customSize_ == false && textureInfo != null) {
                     if (textureInfo.width != width_ || textureInfo.height != height_) {
-                        width_ = textureInfo.width;     // 存起来防止customSize变true时用户忘了设置
-                        height_ = textureInfo.height;   // 存起来防止customSize变true时用户忘了设置
+                        width_ = textureInfo.width;
+                        height_ = textureInfo.height;
                         updateFlags |= UpdateFlags.Vertex;
                     }
                 }
@@ -393,5 +393,6 @@ public class exSprite : exSpriteBase {
         _vertices[_startIndex + 1] = cachedTransform.TransformPoint(new Vector3(-halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
         _vertices[_startIndex + 2] = cachedTransform.TransformPoint(new Vector3( halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
         _vertices[_startIndex + 3] = cachedTransform.TransformPoint(new Vector3( halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
+        // TODO: pixel-perfect
     }
 }
