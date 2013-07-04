@@ -242,6 +242,9 @@ public class exSprite : exSpriteBase {
         }
 #endif
         List<Vector3> vertices = new List<Vector3>(vertexCount);
+        for (int i = 0; i < vertexCount; ++i) {
+            vertices.Add(new Vector3());
+        }
         UpdateVertexBuffer(vertices, 0);
         Rect boundingRect = new Rect();
         for (int i = 0; i < vertexCount; ++i) {
