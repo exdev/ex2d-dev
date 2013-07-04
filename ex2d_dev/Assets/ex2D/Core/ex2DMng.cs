@@ -232,12 +232,25 @@ public class ex2DMng : MonoBehaviour {
         return mat;
     }
 
-    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
     
-    void RenderScene () {
+    public void ForceRenderScene () {
+        for (int i = 0; i < layerList.Count; ++i) {
+            if (layerList[i] != null) {
+                layerList[i].enabled = false;
+                layerList[i].enabled = true;
+            }
+        }
+        RenderScene();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    public void RenderScene () {
         if (cachedCamera.orthographicSize != Screen.height) {
             //cachedCamera.orthographicSize = Screen.height;
         }
