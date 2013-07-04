@@ -635,8 +635,9 @@ class exSceneEditor : EditorWindow {
                 matLine.shader.hideFlags = HideFlags.HideAndDontSave;
             }
             matLine.SetPass(0);
-            for ( int i = 0; i < Selection.transforms.Length; ++i ) {
-                Transform trans = Selection.transforms[i];
+            Transform[] selection =  Selection.GetTransforms(SelectionMode.Editable);
+            for ( int i = 0; i < selection.Length; ++i ) {
+                Transform trans = selection[i];
                 exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
                 if ( spriteBase ) {
                     Rect boundingRect = spriteBase.GetBoundingRect();
@@ -709,8 +710,6 @@ class exSceneEditor : EditorWindow {
             text = "Sprites: " + spriteNodes.Count;
             width = 100;
             EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
-
-            EditorGUILayout.LabelField ( "selection count = " + Selection.objects.Length );
         EditorGUILayout.EndHorizontal();
     }
 
@@ -775,9 +774,10 @@ class exSceneEditor : EditorWindow {
             if ( (e.command || e.control) &&
                  (e.keyCode == KeyCode.Backspace || e.keyCode == KeyCode.Delete) ) 
             {
-                for ( int i = Selection.transforms.Length-1; i >= 0; --i ) {
-                    Transform trans = Selection.transforms[i];
-                    if ( trans.gameObject != null )
+                Transform[] selection =  Selection.GetTransforms(SelectionMode.Editable);
+                for ( int i = selection.Length-1; i >= 0; --i ) {
+                    Transform trans = selection[i];
+                    if ( trans != null )
                         Object.DestroyImmediate(trans.gameObject);
                 }
 
@@ -835,7 +835,7 @@ class exSceneEditor : EditorWindow {
         }
 
         if ( _toggle ) {
-            Transform[] oldSelection = Selection.transforms;
+            Transform[] oldSelection =  Selection.GetTransforms(SelectionMode.Editable);
             foreach ( Transform trans in oldSelection ) {
                 int idx = selectGOs.IndexOf (trans.gameObject);
                 if ( idx  == -1 ) {
