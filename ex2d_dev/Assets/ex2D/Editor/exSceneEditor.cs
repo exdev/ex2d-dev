@@ -224,6 +224,15 @@ class exSceneEditor : EditorWindow {
             GUILayout.FlexibleSpace();
 
             // ======================================================== 
+            // Update Scene 
+            // ======================================================== 
+
+            if ( GUILayout.Button ("Update Scene", EditorStyles.toolbarButton) ) {
+                ex2DMng.instance.SendMessage("RenderScene");
+                EditorUtility.SetDirty(ex2DMng.instance);
+            }
+
+            // ======================================================== 
             // Reset 
             // ======================================================== 
 

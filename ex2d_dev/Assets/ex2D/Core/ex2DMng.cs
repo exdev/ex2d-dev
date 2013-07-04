@@ -139,6 +139,11 @@ public class ex2DMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
     
     void OnPreRender () {
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying) {
+            return;
+        }
+#endif
         RenderScene();
     }
 
