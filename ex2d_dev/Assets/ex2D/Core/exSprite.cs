@@ -121,8 +121,8 @@ public class exSprite : exSpriteBase {
                 customSize_ = value;
                 if (customSize_ == false && textureInfo != null) {
                     if (textureInfo.width != width_ || textureInfo.height != height_) {
-                        width_ = textureInfo.width;
-                        height_ = textureInfo.height;
+                        width_ = textureInfo.width;     // 存起来防止customSize变true时用户忘了设置
+                        height_ = textureInfo.height;   // 存起来防止customSize变true时用户忘了设置
                         updateFlags |= UpdateFlags.Vertex;
                     }
                 }
@@ -316,8 +316,8 @@ public class exSprite : exSpriteBase {
     void UpdateVertexBuffer (List<Vector3> _vertices, int _startIndex) {
         float offsetX = 0.0f;
         float offsetY = 0.0f;
-        float halfWidth = width_ * 0.5f;
-        float halfHeight = height_ * 0.5f;
+        float halfWidth = width * 0.5f;
+        float halfHeight = height * 0.5f;
 
         if (useTextureOffset_) {
             switch (anchor_) {
