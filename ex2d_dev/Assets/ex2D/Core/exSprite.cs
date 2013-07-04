@@ -55,6 +55,22 @@ public class exSprite : exSpriteBase {
             textureInfo_ = value;
         }
     }
+    
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected bool useTextureOffset_ = true;
+    /// if useTextureOffset is true, the sprite calculate the anchor 
+    /// position depends on the original size of texture instead of the trimmed size 
+    // ------------------------------------------------------------------ 
+
+    public bool useTextureOffset {
+        get { return useTextureOffset_; }
+        set {
+            if ( useTextureOffset_ != value ) {
+                useTextureOffset_ = value;
+                updateFlags |= UpdateFlags.Vertex;
+            }
+        }
+    }
 
     // ------------------------------------------------------------------ 
     /// The shader used to render this sprite
@@ -154,15 +170,7 @@ public class exSprite : exSpriteBase {
 
     public override UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<int> _indices, List<Vector2> _uvs, List<Color32> _colors32) {
         if ((updateFlags & UpdateFlags.Vertex) != 0) {
-            //Matrix4x4 toWorld = cachedTransform.localToWorldMatrix;
-            //Vector3 pos = cachedTransform.position;
-            //toWorld = Matrix4x4.TRS(cachedTransform.position, cachedTransform.rotation, cachedTransform.lossyScale);
-            float halfWidth = width_ * 0.5f;
-            float halfHeight = height_ * 0.5f;
-            _vertices[vertexBufferIndex + 0] = cachedTransform.TransformPoint(new Vector3(-halfWidth, -halfHeight, 0.0f));
-            _vertices[vertexBufferIndex + 1] = cachedTransform.TransformPoint(new Vector3(-halfWidth, halfHeight, 0.0f));
-            _vertices[vertexBufferIndex + 2] = cachedTransform.TransformPoint(new Vector3(halfWidth, halfHeight, 0.0f));
-            _vertices[vertexBufferIndex + 3] = cachedTransform.TransformPoint(new Vector3(halfWidth, -halfHeight, 0.0f));
+            UpdateVertexBuffer(_vertices, vertexBufferIndex);
         }
         if ((updateFlags & UpdateFlags.UV) != 0) {
             Vector2 texelSize = textureInfo.texture.texelSize;
@@ -170,10 +178,18 @@ public class exSprite : exSpriteBase {
             float yStart = (float)textureInfo.y * texelSize.y;
             float xEnd = (float)(textureInfo.x + textureInfo.width) * texelSize.x;
             float yEnd = (float)(textureInfo.y + textureInfo.height) * texelSize.y;
-            _uvs[vertexBufferIndex + 0] = new Vector2(xStart, yStart);
-            _uvs[vertexBufferIndex + 1] = new Vector2(xStart, yEnd);
-            _uvs[vertexBufferIndex + 2] = new Vector2(xEnd, yEnd);
-            _uvs[vertexBufferIndex + 3] = new Vector2(xEnd, yStart);
+            if ( textureInfo.rotated ) {
+                _uvs[vertexBufferIndex + 0] = new Vector2(xStart, yEnd);
+                _uvs[vertexBufferIndex + 1] = new Vector2(xEnd, yEnd);
+                _uvs[vertexBufferIndex + 2] = new Vector2(xEnd, yStart);
+                _uvs[vertexBufferIndex + 3] = new Vector2(xStart, yStart);
+            }
+            else {
+                _uvs[vertexBufferIndex + 0] = new Vector2(xStart, yStart);
+                _uvs[vertexBufferIndex + 1] = new Vector2(xStart, yEnd);
+                _uvs[vertexBufferIndex + 2] = new Vector2(xEnd, yEnd);
+                _uvs[vertexBufferIndex + 3] = new Vector2(xEnd, yStart);
+            }
         }
         if ((updateFlags & UpdateFlags.Color) != 0) {
             _colors32[vertexBufferIndex + 0] = new Color32(255, 255, 255, 255);
@@ -212,6 +228,37 @@ public class exSprite : exSpriteBase {
         }
     }
     
+    // ------------------------------------------------------------------ 
+    /// Calculate the bounding rect of the plane
+    // ------------------------------------------------------------------ 
+
+    public override Rect GetBoundingRect () {
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
+            cachedTransform = transform;
+        }
+#endif
+        Vector3[] vertices = new Vector3[vertexCount];
+        UpdateVertexBuffer(vertices, 0);
+
+        Rect boundingRect = new Rect();
+        foreach (Vector3 vertex in vertices) {
+            if (vertex.x < boundingRect.xMin) {
+                boundingRect.xMin = vertex.x;
+            }
+            else if (vertex.x > boundingRect.xMax) {
+                boundingRect.xMax = vertex.x;
+            }
+            if (vertex.y < boundingRect.yMin) {
+                boundingRect.yMin = vertex.y;
+            }
+            else if (vertex.y > boundingRect.yMax) {
+                boundingRect.yMax = vertex.y;
+            }
+        }
+        return boundingRect;
+    }
+
 #endregion
 
     // ------------------------------------------------------------------ 
@@ -226,5 +273,88 @@ public class exSprite : exSpriteBase {
                 Debug.LogError("[exLayer] Wrong triangle index!");
             }
         }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    void UpdateVertexBuffer (IList<Vector3> _vertices, int _startIndex) {
+        float offsetX = 0.0f;
+        float offsetY = 0.0f;
+        float halfWidth = width_ * 0.5f;
+        float halfHeight = height_ * 0.5f;
+
+        if (useTextureOffset_) {
+            switch (anchor_) {
+            //
+            case Anchor.TopLeft:
+                offsetX = -halfWidth - textureInfo.trim_x + textureInfo.rawWidth;
+                offsetY = -halfHeight - textureInfo.trim_y;
+                break;
+            case Anchor.TopCenter:
+                offsetX = -halfWidth - textureInfo.trim_x + textureInfo.rawWidth * 0.5f;
+                offsetY = -halfHeight - textureInfo.trim_y;
+                break;
+            case Anchor.TopRight:
+                offsetX = -halfWidth - textureInfo.trim_x;
+                offsetY = -halfHeight - textureInfo.trim_y;
+                break;
+            //
+            case Anchor.MidLeft:
+                offsetX = -halfWidth - textureInfo.trim_x + textureInfo.rawWidth;
+                offsetY = -halfHeight - textureInfo.trim_y + textureInfo.rawHeight * 0.5f;
+                break;
+            case Anchor.MidCenter:
+                offsetX = -halfWidth - textureInfo.trim_x + textureInfo.rawWidth * 0.5f;
+                offsetY = -halfHeight - textureInfo.trim_y + textureInfo.rawHeight * 0.5f;
+                break;
+            case Anchor.MidRight:
+                offsetX = -halfWidth - textureInfo.trim_x;
+                offsetY = -halfHeight - textureInfo.trim_y + textureInfo.rawHeight * 0.5f;
+                break;
+            //
+            case Anchor.BotLeft:
+                offsetX = -halfWidth - textureInfo.trim_x + textureInfo.rawWidth;
+                offsetY = -halfHeight - textureInfo.trim_y + textureInfo.rawHeight;
+                break;
+            case Anchor.BotCenter:
+                offsetX = -halfWidth - textureInfo.trim_x + textureInfo.rawWidth * 0.5f;
+                offsetY = -halfHeight - textureInfo.trim_y + textureInfo.rawHeight;
+                break;
+            case Anchor.BotRight:
+                offsetX = -halfWidth - textureInfo.trim_x;
+                offsetY = -halfHeight - textureInfo.trim_y + textureInfo.rawHeight;
+                break;
+            default:
+                offsetX = -halfWidth - textureInfo.trim_x + textureInfo.rawWidth * 0.5f;
+                offsetY = -halfHeight - textureInfo.trim_y + textureInfo.rawHeight * 0.5f;
+                break;
+            }
+        }
+        else {
+            switch ( anchor_ ) {
+            case Anchor.TopLeft     : offsetX = halfWidth;   offsetY = -halfHeight;  break;
+            case Anchor.TopCenter   : offsetX = 0.0f;         offsetY = -halfHeight;  break;
+            case Anchor.TopRight    : offsetX = -halfWidth;    offsetY = -halfHeight;  break;
+
+            case Anchor.MidLeft     : offsetX = halfWidth;   offsetY = 0.0f;         break;
+            case Anchor.MidCenter   : offsetX = 0.0f;         offsetY = 0.0f;         break;
+            case Anchor.MidRight    : offsetX = -halfWidth;    offsetY = 0.0f;         break;
+
+            case Anchor.BotLeft     : offsetX = halfWidth;   offsetY = halfHeight;   break;
+            case Anchor.BotCenter   : offsetX = 0.0f;         offsetY = halfHeight;   break;
+            case Anchor.BotRight    : offsetX = -halfWidth;    offsetY = halfHeight;   break;
+
+            default                 : offsetX = 0.0f;         offsetY = 0.0f;         break;
+            }
+        }
+        //Matrix4x4 toWorld = cachedTransform.localToWorldMatrix;
+        //Vector3 pos = cachedTransform.position;
+        //toWorld = Matrix4x4.TRS(cachedTransform.position, cachedTransform.rotation, cachedTransform.lossyScale);
+        _vertices[_startIndex + 0] = cachedTransform.TransformPoint(new Vector3(-halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
+        _vertices[_startIndex + 1] = cachedTransform.TransformPoint(new Vector3(-halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
+        _vertices[_startIndex + 2] = cachedTransform.TransformPoint(new Vector3( halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
+        _vertices[_startIndex + 3] = cachedTransform.TransformPoint(new Vector3( halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
     }
 }

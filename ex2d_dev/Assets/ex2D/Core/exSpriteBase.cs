@@ -160,7 +160,7 @@ public abstract class exSpriteBase : MonoBehaviour {
         get {
 #if UNITY_EDITOR
             if (!UnityEditor.EditorApplication.isPlaying) {
-                return enabled && gameObject.activeInHierarchy;
+                return this && enabled && gameObject.activeInHierarchy;
             }
 #endif
             return isOnEnabled_;
@@ -220,9 +220,6 @@ public abstract class exSpriteBase : MonoBehaviour {
         }
         exDebug.Assert(isOnEnabled == isInIndexBuffer, 
                        "a sprite's logic visibility should equals to it's triangle visibility", this);
-    }
-
-    void Reset () {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -318,19 +315,7 @@ public abstract class exSpriteBase : MonoBehaviour {
     /// Calculate the bounding rect of the plane
     // ------------------------------------------------------------------ 
 
-    public Rect GetBoundingRect () {
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
-            cachedTransform = transform;
-        }
-#endif
-        Vector3 pos = cachedTransform.position;
-        float x = -1;
-        float y = -1;
-        float w = 2;
-        float h = 2;
-        return new Rect(pos.x + x, pos.y + y, w, h);
-    }
+    public abstract Rect GetBoundingRect ();
     
     // ------------------------------------------------------------------ 
     // Desc: 
