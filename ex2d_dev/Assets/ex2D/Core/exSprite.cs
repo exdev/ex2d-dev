@@ -57,7 +57,7 @@ public class exSprite : exSpriteBase {
     }
     
     // ------------------------------------------------------------------ 
-    [SerializeField] protected bool useTextureOffset_ = true;
+    [SerializeField] protected bool useTextureOffset_ = false;
     /// if useTextureOffset is true, the sprite calculate the anchor 
     /// position depends on the original size of texture instead of the trimmed size 
     // ------------------------------------------------------------------ 
@@ -247,7 +247,9 @@ public class exSprite : exSpriteBase {
         }
         UpdateVertexBuffer(vertices, 0);
         Rect boundingRect = new Rect();
-        for (int i = 0; i < vertexCount; ++i) {
+        boundingRect.x = vertices[0].x;
+        boundingRect.y = vertices[0].y;
+        for (int i = 1; i < vertexCount; ++i) {
             Vector3 vertex = vertices[i];
             if (vertex.x < boundingRect.xMin) {
                 boundingRect.xMin = vertex.x;
