@@ -59,12 +59,17 @@ public abstract class exSpriteBase : MonoBehaviour {
     /// \note if you want to custom the width of it, you need to set exSpriteBase.customSize to true
     // ------------------------------------------------------------------ 
 
-    public float width {
+    public virtual float width {
         get { return width_; }
         set {
-            if ( width_ != value ) {
-                width_ = value;
-                updateFlags |= UpdateFlags.Vertex;
+            if (customSize_) {
+                if (width_ != value) {
+                    width_ = value;
+                    updateFlags |= UpdateFlags.Vertex;
+                }
+            }
+            else {
+                Debug.LogWarning("Can not set sprite's width when sprite is not using customSize!");
             }
         }
     }
@@ -76,12 +81,17 @@ public abstract class exSpriteBase : MonoBehaviour {
     /// \note if you want to custom the height of it, you need to set exSpriteBase.customSize to true
     // ------------------------------------------------------------------ 
 
-    public float height {
+    public virtual float height {
         get { return height_; }
         set {
-            if ( height_ != value ) {
-                height_ = value;
-                updateFlags |= UpdateFlags.Vertex;
+            if (customSize_) {
+                if (height_ != value) {
+                    height_ = value;
+                    updateFlags |= UpdateFlags.Vertex;
+                }
+            }
+            else {
+                Debug.LogWarning("Can not set sprite's height when sprite is not using customSize!");
             }
         }
     }

@@ -130,6 +130,34 @@ public class exSprite : exSpriteBase {
         }
     }
 
+    public override float width {
+        get {
+            if (customSize_ == false) {
+                return textureInfo_ != null ? textureInfo_.width : 0;
+            }
+            else {
+                return width_;
+            }
+        }
+        set {
+            base.width = value;
+        }
+    }
+
+    public override float height {
+        get {
+            if (customSize_ == false) {
+                return textureInfo_ != null ? textureInfo_.height : 0;
+            }
+            else {
+                return height_;
+            }
+        }
+        set {
+            base.height = value;
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // functions
     ///////////////////////////////////////////////////////////////////////////////
