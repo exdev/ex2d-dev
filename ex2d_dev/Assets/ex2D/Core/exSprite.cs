@@ -1,4 +1,4 @@
-// ======================================================================================
+ï»¿// ======================================================================================
 // File         : exSprite.cs
 // Author       : 
 // Last Change  : 06/15/2013 | 09:49:04 AM | Saturday,June
@@ -51,7 +51,7 @@ public class exSprite : exSpriteBase {
                 height_ = value.height;
                 updateFlags |= UpdateFlags.Vertex;
             }
-            updateFlags |= UpdateFlags.UV;  // »»ÁËtexture£¬UVÒ²»áÖØËã£¬²»»»texture¾Í¸üÒª¸ÄUV£¬·ñÔòÃ»ÓĞ»»textureInfoµÄ±ØÒªÁË¡£
+            updateFlags |= UpdateFlags.UV;  // æ¢äº†textureï¼ŒUVä¹Ÿä¼šé‡ç®—ï¼Œä¸æ¢textureå°±æ›´è¦æ”¹UVï¼Œå¦åˆ™æ²¡æœ‰æ¢textureInfoçš„å¿…è¦äº†ã€‚
             textureInfo_ = value;
         }
     }
