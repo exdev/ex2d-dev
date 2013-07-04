@@ -89,6 +89,9 @@ class exSceneEditor : EditorWindow {
     bool inRectSelectState = false;
     List<exSpriteBase> spriteNodes = new List<exSpriteBase>();
 
+    //
+    Material matLine = null;
+
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
     ///////////////////////////////////////////////////////////////////////////////
@@ -619,8 +622,19 @@ class exSceneEditor : EditorWindow {
             }
 
             // draw selected objects
-            Material material = new Material( Shader.Find("ex2D/Alpha Blended") );
-            material.SetPass(0);
+            if ( matLine == null ) {
+                // matLine = new Material( Shader.Find("ex2D/Alpha Blended") );
+                matLine = new Material( "Shader \"Lines/Colored Blended\" {" +
+                                        "SubShader { Pass { " +
+                                        "    Blend SrcAlpha OneMinusSrcAlpha " +
+                                        "    ZWrite Off Cull Off Fog { Mode Off } " +
+                                        "    BindChannels {" +
+                                        "      Bind \"vertex\", vertex Bind \"color\", color }" +
+                                        "} } }" );
+                matLine.hideFlags = HideFlags.HideAndDontSave;
+                matLine.shader.hideFlags = HideFlags.HideAndDontSave;
+            }
+            matLine.SetPass(0);
             for ( int i = 0; i < Selection.transforms.Length; ++i ) {
                 Transform trans = Selection.transforms[i];
                 exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
@@ -695,6 +709,8 @@ class exSceneEditor : EditorWindow {
             text = "Sprites: " + spriteNodes.Count;
             width = 100;
             EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
+
+            EditorGUILayout.LabelField ( "selection count = " + Selection.objects.Length );
         EditorGUILayout.EndHorizontal();
     }
 
@@ -719,10 +735,12 @@ class exSceneEditor : EditorWindow {
                 GUIUtility.hotControl = controlID;
                 GUIUtility.keyboardControl = controlID;
 
+                bool toggle = (e.command||e.control);
+                inRectSelectState = (toggle==false);
+
                 mouseDownPos = e.mousePosition;
-                inRectSelectState = true;
                 UpdateSelectRect ();
-                ConfirmRectSelection();
+                ConfirmRectSelection(toggle);
                 Repaint();
 
                 e.Use();
@@ -751,6 +769,21 @@ class exSceneEditor : EditorWindow {
 
                 e.Use();
 			}
+            break;
+
+        case EventType.KeyDown:
+            if ( (e.command || e.control) &&
+                 (e.keyCode == KeyCode.Backspace || e.keyCode == KeyCode.Delete) ) 
+            {
+                for ( int i = Selection.transforms.Length-1; i >= 0; --i ) {
+                    Transform trans = Selection.transforms[i];
+                    if ( trans.gameObject != null )
+                        Object.DestroyImmediate(trans.gameObject);
+                }
+
+                Repaint();
+                e.Use();
+            }
             break;
         }
     }
@@ -790,7 +823,7 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void ConfirmRectSelection () {
+    void ConfirmRectSelection ( bool _toggle = false ) {
         List<GameObject> selectGOs = new List<GameObject>();
         foreach ( exSpriteBase node in spriteNodes ) {
             Rect boundingRect = MapBoundingRect ( sceneViewRect, node );
@@ -800,6 +833,20 @@ class exSceneEditor : EditorWindow {
                 selectGOs.Add(node.gameObject);
             }
         }
+
+        if ( _toggle ) {
+            Transform[] oldSelection = Selection.transforms;
+            foreach ( Transform trans in oldSelection ) {
+                int idx = selectGOs.IndexOf (trans.gameObject);
+                if ( idx  == -1 ) {
+                    selectGOs.Add(trans.gameObject);
+                }
+                else {
+                    selectGOs.RemoveAt(idx);
+                }
+            }
+        }
+
         Selection.objects = selectGOs.ToArray();
     }
 

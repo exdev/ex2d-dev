@@ -78,4 +78,14 @@ public static class MenuItems {
     public static void Open_AboutWindow () {
         ScriptableWizard.DisplayWizard<ex2DAboutWindow>("About ex2D");
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("ex2D/Unload Unused Assets", false, 200)]
+    static void ex2D_UnloadUnusedAssets () {
+        EditorUtility.UnloadUnusedAssets();
+        // EditorUtility.UnloadUnusedAssetsIgnoreManagedReferences();
+    }
 }
