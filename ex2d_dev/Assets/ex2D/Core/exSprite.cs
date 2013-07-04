@@ -84,6 +84,7 @@ public class exSprite : exSpriteBase {
             if (ReferenceEquals(shader_, value)) {
                 return;
             }
+            shader_ = value;
             if (layer_ != null) {
                 exLayer myLayer = layer_;
                 myLayer.Remove(this);
@@ -227,9 +228,11 @@ public class exSprite : exSpriteBase {
             TestIndices(_indices);
         }
     }
+
+#endregion // Functions used to update geometry buffer
     
     // ------------------------------------------------------------------ 
-    /// Calculate the bounding rect of the plane
+    /// Calculate the world bounding rect of the plane
     // ------------------------------------------------------------------ 
 
     public override Rect GetBoundingRect () {
@@ -238,11 +241,11 @@ public class exSprite : exSpriteBase {
             cachedTransform = transform;
         }
 #endif
-        Vector3[] vertices = new Vector3[vertexCount];
+        List<Vector3> vertices = new List<Vector3>(vertexCount);
         UpdateVertexBuffer(vertices, 0);
-
         Rect boundingRect = new Rect();
-        foreach (Vector3 vertex in vertices) {
+        for (int i = 0; i < vertexCount; ++i) {
+            Vector3 vertex = vertices[i];
             if (vertex.x < boundingRect.xMin) {
                 boundingRect.xMin = vertex.x;
             }
@@ -258,8 +261,6 @@ public class exSprite : exSpriteBase {
         }
         return boundingRect;
     }
-
-#endregion
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -279,7 +280,7 @@ public class exSprite : exSpriteBase {
     // Desc: 
     // ------------------------------------------------------------------ 
     
-    void UpdateVertexBuffer (IList<Vector3> _vertices, int _startIndex) {
+    void UpdateVertexBuffer (List<Vector3> _vertices, int _startIndex) {
         float offsetX = 0.0f;
         float offsetY = 0.0f;
         float halfWidth = width_ * 0.5f;
@@ -335,18 +336,18 @@ public class exSprite : exSpriteBase {
         else {
             switch ( anchor_ ) {
             case Anchor.TopLeft     : offsetX = halfWidth;   offsetY = -halfHeight;  break;
-            case Anchor.TopCenter   : offsetX = 0.0f;         offsetY = -halfHeight;  break;
-            case Anchor.TopRight    : offsetX = -halfWidth;    offsetY = -halfHeight;  break;
+            case Anchor.TopCenter   : offsetX = 0.0f;        offsetY = -halfHeight;  break;
+            case Anchor.TopRight    : offsetX = -halfWidth;  offsetY = -halfHeight;  break;
 
             case Anchor.MidLeft     : offsetX = halfWidth;   offsetY = 0.0f;         break;
-            case Anchor.MidCenter   : offsetX = 0.0f;         offsetY = 0.0f;         break;
-            case Anchor.MidRight    : offsetX = -halfWidth;    offsetY = 0.0f;         break;
+            case Anchor.MidCenter   : offsetX = 0.0f;        offsetY = 0.0f;         break;
+            case Anchor.MidRight    : offsetX = -halfWidth;  offsetY = 0.0f;         break;
 
             case Anchor.BotLeft     : offsetX = halfWidth;   offsetY = halfHeight;   break;
-            case Anchor.BotCenter   : offsetX = 0.0f;         offsetY = halfHeight;   break;
-            case Anchor.BotRight    : offsetX = -halfWidth;    offsetY = halfHeight;   break;
+            case Anchor.BotCenter   : offsetX = 0.0f;        offsetY = halfHeight;   break;
+            case Anchor.BotRight    : offsetX = -halfWidth;  offsetY = halfHeight;   break;
 
-            default                 : offsetX = 0.0f;         offsetY = 0.0f;         break;
+            default                 : offsetX = 0.0f;        offsetY = 0.0f;         break;
             }
         }
         //Matrix4x4 toWorld = cachedTransform.localToWorldMatrix;
