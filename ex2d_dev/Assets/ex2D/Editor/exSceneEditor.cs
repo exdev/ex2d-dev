@@ -75,7 +75,7 @@ class exSceneEditor : EditorWindow {
         }
     }
 
-    // Camera editCamera; // DISABLE
+    Camera editCamera; // DISABLE
     Color background = Color.gray;
     Vector2 editCameraPos = Vector2.zero;
     Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
@@ -101,23 +101,23 @@ class exSceneEditor : EditorWindow {
     void OnEnable () {
 
         // DISABLE { 
-        // // camera
-        // GameObject camGO 
-        //     = EditorUtility.CreateGameObjectWithHideFlags ( "SceneViewCamera", 
-        //                                                     HideFlags.HideAndDontSave, 
-        //                                                     new System.Type[] {
-        //                                                         typeof(Camera)
-        //                                                     } );
-        // editCamera = camGO.camera;
-        // editCamera.clearFlags = CameraClearFlags.Depth|CameraClearFlags.SolidColor;
-        // editCamera.farClipPlane = 10000.0f;
-        // editCamera.nearClipPlane = -1.0f;
-        // editCamera.backgroundColor = Color.black;
-        // editCamera.renderingPath = RenderingPath.Forward;
-        // editCamera.orthographic = true;
-        // editCamera.orthographicSize = 100.0f;
-        // editCamera.transform.position = Vector3.zero;
-        // editCamera.transform.rotation = Quaternion.identity;
+        // camera
+        GameObject camGO 
+            = EditorUtility.CreateGameObjectWithHideFlags ( "SceneViewCamera", 
+                                                            HideFlags.HideAndDontSave, 
+                                                            new System.Type[] {
+                                                                typeof(Camera)
+                                                            } );
+        editCamera = camGO.camera;
+        editCamera.clearFlags = CameraClearFlags.Depth|CameraClearFlags.SolidColor;
+        editCamera.farClipPlane = 10000.0f;
+        editCamera.nearClipPlane = -1.0f;
+        editCamera.backgroundColor = Color.black;
+        editCamera.renderingPath = RenderingPath.Forward;
+        editCamera.orthographic = true;
+        editCamera.orthographicSize = 100.0f;
+        editCamera.transform.position = Vector3.zero;
+        editCamera.transform.rotation = Quaternion.identity;
         // } DISABLE end 
 
         title = "2D Scene Editor";
@@ -174,6 +174,19 @@ class exSceneEditor : EditorWindow {
 
         //
         ProcessSceneEditorEvents();
+
+        // DISABLE { 
+        editCamera.orthographicSize = sceneViewRect.height/2.0f;
+        Handles.ClearCamera( sceneViewRect, editCamera );
+        Handles.SetCamera( sceneViewRect, editCamera );
+
+        Transform[] selection =  Selection.GetTransforms(SelectionMode.Editable);
+        for ( int i = 0; i < selection.Length; ++i ) {
+            Transform trans = selection[i];
+            trans.position = Handles.PositionHandle ( trans.position, trans.rotation );
+            break;
+        }
+        // } DISABLE end 
 
         curSerializedObject.ApplyModifiedProperties ();
     }
@@ -623,12 +636,6 @@ class exSceneEditor : EditorWindow {
                                        _rect.width, 
                                        _rect.height );
 
-        // DISABLE { 
-        // editCamera.orthographicSize = _rect.y/2.0f;
-        // Handles.ClearCamera( viewportRect, editCamera );
-        // Handles.SetCamera( viewportRect, editCamera );
-        // } DISABLE end 
-
         GL.Viewport(viewportRect);
 
         GL.PushMatrix();
@@ -654,6 +661,7 @@ class exSceneEditor : EditorWindow {
             }
 
             // draw handles
+            // TODO:
 
             // Show a copy icon on the drag
             if ( DragAndDrop.visualMode == DragAndDropVisualMode.Copy ) {
@@ -945,7 +953,7 @@ class exSceneEditor : EditorWindow {
 
     Rect MapBoundingRect ( Rect _rect, exSpriteBase _node ) {
         exSprite sprite = _node as exSprite;
-        Vector2 screenPos = SceneField_WorldToScreen ( _rect, sprite.transform.position );
+        Vector2 screenPos = Vector2.zero;
 
         if ( sprite ) {
             // Rect boundingRect = new Rect ( screenPos.x - sprite.textureInfo.rotatedWidth/2.0f * scale,
@@ -953,6 +961,7 @@ class exSceneEditor : EditorWindow {
             //                                sprite.textureInfo.rotatedWidth * scale,
             //                                sprite.textureInfo.rotatedHeight * scale );
             Rect boundingRect = sprite.GetAABoundingRect();
+            screenPos = SceneField_WorldToScreen ( _rect, boundingRect.center );
             boundingRect = new Rect ( screenPos.x - boundingRect.width/2.0f * scale,
                                       screenPos.y - boundingRect.height/2.0f * scale,
                                       boundingRect.width * scale,
@@ -962,6 +971,7 @@ class exSceneEditor : EditorWindow {
             return boundingRect;
         }
 
+        screenPos = SceneField_WorldToScreen ( _rect, sprite.transform.position );
         return new Rect (  screenPos.x * scale,
                            screenPos.y * scale,
                            1.0f * scale,
