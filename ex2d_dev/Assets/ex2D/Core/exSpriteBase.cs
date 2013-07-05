@@ -325,7 +325,7 @@ public abstract class exSpriteBase : MonoBehaviour {
     /// Calculate the bounding rect of the plane
     // ------------------------------------------------------------------ 
 
-    public abstract Rect GetBoundingRect ();
+    public abstract Rect GetAABoundingRect ();
 
     // ------------------------------------------------------------------ 
     // Desc: 

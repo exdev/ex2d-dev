@@ -732,7 +732,7 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawAABoundingRect ( exSpriteBase _node ) {
-        Rect boundingRect = _node.GetBoundingRect();
+        Rect boundingRect = _node.GetAABoundingRect();
 
         exEditorUtility.DrawRectLine ( new Vector3[] {
                                             new Vector3 ( boundingRect.xMin, boundingRect.yMin, 0.0f ),
@@ -952,7 +952,7 @@ class exSceneEditor : EditorWindow {
             //                                screenPos.y - sprite.textureInfo.rotatedHeight/2.0f * scale,
             //                                sprite.textureInfo.rotatedWidth * scale,
             //                                sprite.textureInfo.rotatedHeight * scale );
-            Rect boundingRect = sprite.GetBoundingRect();
+            Rect boundingRect = sprite.GetAABoundingRect();
             boundingRect = new Rect ( screenPos.x - boundingRect.width/2.0f * scale,
                                       screenPos.y - boundingRect.height/2.0f * scale,
                                       boundingRect.width * scale,
