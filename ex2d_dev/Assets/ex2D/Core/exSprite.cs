@@ -296,6 +296,19 @@ public class exSprite : exSpriteBase {
     }
 
     // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public override Vector3[] GetVertices () {
+        List<Vector3> vertices = new List<Vector3>(vertexCount);
+        for (int i = 0; i < vertexCount; ++i) {
+            vertices.Add(new Vector3());
+        }
+        UpdateVertexBuffer(vertices, 0);
+        return vertices.ToArray();
+    }
+
+    // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
     

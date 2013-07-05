@@ -75,22 +75,20 @@ class exSceneEditor : EditorWindow {
         }
     }
 
+    // Camera editCamera; // DISABLE
     Color background = Color.gray;
     Vector2 editCameraPos = Vector2.zero;
     Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
     SerializedObject curSerializedObject = null;
 
     exLayer activeLayer = null;
-    exLayer draggingLayer = null;
+    // exLayer draggingLayer = null; TODO
 
     // 
     Vector2 mouseDownPos = Vector2.zero;
     Rect selectRect = new Rect( 0, 0, 1, 1 );
     bool inRectSelectState = false;
     List<exSpriteBase> spriteNodes = new List<exSpriteBase>();
-
-    //
-    Material matLine = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -101,6 +99,27 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void OnEnable () {
+
+        // DISABLE { 
+        // // camera
+        // GameObject camGO 
+        //     = EditorUtility.CreateGameObjectWithHideFlags ( "SceneViewCamera", 
+        //                                                     HideFlags.HideAndDontSave, 
+        //                                                     new System.Type[] {
+        //                                                         typeof(Camera)
+        //                                                     } );
+        // editCamera = camGO.camera;
+        // editCamera.clearFlags = CameraClearFlags.Depth|CameraClearFlags.SolidColor;
+        // editCamera.farClipPlane = 10000.0f;
+        // editCamera.nearClipPlane = -1.0f;
+        // editCamera.backgroundColor = Color.black;
+        // editCamera.renderingPath = RenderingPath.Forward;
+        // editCamera.orthographic = true;
+        // editCamera.orthographicSize = 100.0f;
+        // editCamera.transform.position = Vector3.zero;
+        // editCamera.transform.rotation = Quaternion.identity;
+        // } DISABLE end 
+
         title = "2D Scene Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = true;
@@ -170,7 +189,7 @@ class exSceneEditor : EditorWindow {
     void Reset () {
         curSerializedObject = null;
         activeLayer = null;
-        draggingLayer = null;
+        // draggingLayer = null; TODO
     }
 
     // ------------------------------------------------------------------ 
@@ -368,7 +387,7 @@ class exSceneEditor : EditorWindow {
         case EventType.MouseUp:
 			if ( GUIUtility.hotControl == controlID ) {
 				GUIUtility.hotControl = 0;
-                draggingLayer = null;
+                // draggingLayer = null; TODO
                 e.Use();
 			}
             break;
@@ -444,7 +463,7 @@ class exSceneEditor : EditorWindow {
                 activeLayer = _layer;
 
                 if ( draggingHandleRect.Contains(e.mousePosition) ) {
-                    draggingLayer = _layer;
+                    // draggingLayer = _layer; TODO
                 }
 
                 e.Use();
@@ -603,6 +622,13 @@ class exSceneEditor : EditorWindow {
                                        position.height - _rect.yMax,
                                        _rect.width, 
                                        _rect.height );
+
+        // DISABLE { 
+        // editCamera.orthographicSize = _rect.y/2.0f;
+        // Handles.ClearCamera( viewportRect, editCamera );
+        // Handles.SetCamera( viewportRect, editCamera );
+        // } DISABLE end 
+
         GL.Viewport(viewportRect);
 
         GL.PushMatrix();
@@ -611,60 +637,31 @@ class exSceneEditor : EditorWindow {
                                 (editCameraPos.y - _rect.height * 0.5f) / scale,
                                 (editCameraPos.y + _rect.height * 0.5f) / scale );
 
-            // DELME { 
-            // // draw all nodes in the scene
-            // for ( int i = ex2DMng.instance.layerList.Count-1; i >= 0; --i ) {
-            //     exLayer layer = ex2DMng.instance.layerList[i];
-            //     if ( layer != null && layer.show ) {
-            //         exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
-            //         // TODO: sort the spriteList
-            //         foreach ( exSpriteBase node in spriteList ) {
-            //             DrawNode ( node );
-            //         }
-            //     }
-            // }
-            // } DELME end 
-
             // draw culled sprite nodes
             for ( int i = 0; i < spriteNodes.Count; ++i ) {
                 DrawNode ( spriteNodes[i] );
             }
 
             // draw selected objects
-            if ( matLine == null ) {
-                // matLine = new Material( Shader.Find("ex2D/Alpha Blended") );
-                matLine = new Material( "Shader \"Lines/Colored Blended\" {" +
-                                        "SubShader { Pass { " +
-                                        "    Blend SrcAlpha OneMinusSrcAlpha " +
-                                        "    ZWrite Off Cull Off Fog { Mode Off } " +
-                                        "    BindChannels {" +
-                                        "      Bind \"vertex\", vertex Bind \"color\", color }" +
-                                        "} } }" );
-                matLine.hideFlags = HideFlags.HideAndDontSave;
-                matLine.shader.hideFlags = HideFlags.HideAndDontSave;
-            }
-            matLine.SetPass(0);
             Transform[] selection =  Selection.GetTransforms(SelectionMode.Editable);
             for ( int i = 0; i < selection.Length; ++i ) {
                 Transform trans = selection[i];
                 exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
                 if ( spriteBase ) {
-                    Rect boundingRect = spriteBase.GetBoundingRect();
-                    GL.Begin( GL.LINES );
-                    GL.Color( Color.white );
-                    GL.Vertex3( boundingRect.xMin, boundingRect.yMin, 0.0f );
-                    GL.Vertex3( boundingRect.xMin, boundingRect.yMax, 0.0f );
+                    // DrawAABoundingRect (spriteBase);
+                    DrawBoundingRect (spriteBase);
+                }
+            }
 
-                    GL.Vertex3( boundingRect.xMin, boundingRect.yMax, 0.0f );
-                    GL.Vertex3( boundingRect.xMax, boundingRect.yMax, 0.0f );
+            // draw handles
 
-                    GL.Vertex3( boundingRect.xMax, boundingRect.yMax, 0.0f );
-                    GL.Vertex3( boundingRect.xMax, boundingRect.yMin, 0.0f );
-
-                    GL.Vertex3( boundingRect.xMax, boundingRect.yMin, 0.0f );
-                    GL.Vertex3( boundingRect.xMin, boundingRect.yMin, 0.0f );
-
-                    GL.End();
+            // Show a copy icon on the drag
+            if ( DragAndDrop.visualMode == DragAndDropVisualMode.Copy ) {
+                foreach ( Object o in DragAndDrop.objectReferences ) {
+                    if ( o is exTextureInfo ) {
+                        DrawTextureInfoPreview ( o as exTextureInfo, 
+                                                 SceneField_MapToWorld( _rect, Event.current.mousePosition) );
+                    }
                 }
             }
 
@@ -695,6 +692,74 @@ class exSceneEditor : EditorWindow {
             }
         GL.End();
         //GL.PopMatrix();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawTextureInfoPreview ( exTextureInfo _textureInfo, Vector3 _pos ) {
+
+        Vector2 halfSize = new Vector2( _textureInfo.width * 0.5f * scale,
+                                        _textureInfo.height * 0.5f * scale );
+
+        float s0 = (float) _textureInfo.x / (float) _textureInfo.texture.width;
+        float s1 = (float) (_textureInfo.x+_textureInfo.width)  / (float) _textureInfo.texture.width;
+        float t0 = (float) _textureInfo.y / (float) _textureInfo.texture.height;
+        float t1 = (float) (_textureInfo.y+_textureInfo.height) / (float) _textureInfo.texture.height;
+
+        exEditorUtility.AlphaBlendedMaterial().mainTexture = _textureInfo.texture;
+        exEditorUtility.AlphaBlendedMaterial().SetPass(0);
+        GL.Begin(GL.QUADS);
+            GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
+
+            GL.TexCoord2 ( s0, t0 );
+            GL.Vertex3 ( -halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+
+            GL.TexCoord2 ( s0, t1 );
+            GL.Vertex3 ( -halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
+
+            GL.TexCoord2 ( s1, t1 );
+            GL.Vertex3 (  halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
+
+            GL.TexCoord2 ( s1, t0 );
+            GL.Vertex3 (  halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+        GL.End();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawAABoundingRect ( exSpriteBase _node ) {
+        Rect boundingRect = _node.GetBoundingRect();
+
+        exEditorUtility.DrawRectLine ( new Vector3[] {
+                                            new Vector3 ( boundingRect.xMin, boundingRect.yMin, 0.0f ),
+                                            new Vector3 ( boundingRect.xMin, boundingRect.yMax, 0.0f ),
+                                            new Vector3 ( boundingRect.xMax, boundingRect.yMax, 0.0f ),
+                                            new Vector3 ( boundingRect.xMax, boundingRect.yMin, 0.0f ),
+                                       }, Color.white );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawBoundingRect ( exSpriteBase _node ) {
+        Vector3[] vertices = _node.GetVertices();
+        if ( _node is exSprite ) {
+            exEditorUtility.DrawRectLine ( vertices, Color.white );
+            // DISABLE { 
+            // Handles.DrawPolyLine ( new Vector3[] {
+            //                            vertices[0],
+            //                            vertices[1],
+            //                            vertices[2],
+            //                            vertices[3],
+            //                            vertices[0],
+            //                        } );
+            // } DISABLE end 
+        }
     }
 
     // ------------------------------------------------------------------ 

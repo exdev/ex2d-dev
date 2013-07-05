@@ -28,10 +28,47 @@ public static class exEditorUtility {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
+    static Material materialLine;
+    static Material materialAlphaBlended;
+
     static Texture2D textureCheckerboard;
     static Texture2D textureHelp;
 
     static GUIStyle styleRectBorder = null;
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // special material
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static Material LineMaterial () {
+        if ( materialLine == null ) {
+            materialLine = new Material( "Shader \"Lines/Colored Blended\" {" +
+                                    "SubShader { Pass { " +
+                                    "    Blend SrcAlpha OneMinusSrcAlpha " +
+                                    "    ZWrite Off Cull Off Fog { Mode Off } " +
+                                    "    BindChannels {" +
+                                    "      Bind \"vertex\", vertex Bind \"color\", color }" +
+                                    "} } }" );
+            materialLine.hideFlags = HideFlags.HideAndDontSave;
+            materialLine.shader.hideFlags = HideFlags.HideAndDontSave;
+        }
+        return materialLine;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static Material AlphaBlendedMaterial () {
+        if ( materialAlphaBlended == null ) {
+            materialAlphaBlended = new Material( Shader.Find("ex2D/Alpha Blended") );
+        }
+        return materialAlphaBlended;
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // special texture
@@ -180,6 +217,29 @@ public static class exEditorUtility {
         // GL.Vertex3( xStart, yStart, 0 );
         // GL.Vertex3( xEnd, yEnd, 0 );
         // GL.End();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void DrawRectLine ( Vector3[] _points, Color _color ) {
+        LineMaterial().SetPass(0);
+        GL.Begin( GL.LINES );
+            GL.Color(_color);
+
+            GL.Vertex3( _points[0].x, _points[0].y, 0.0f );
+            GL.Vertex3( _points[1].x, _points[1].y, 0.0f );
+
+            GL.Vertex3( _points[1].x, _points[1].y, 0.0f );
+            GL.Vertex3( _points[2].x, _points[2].y, 0.0f );
+
+            GL.Vertex3( _points[2].x, _points[2].y, 0.0f );
+            GL.Vertex3( _points[3].x, _points[3].y, 0.0f );
+
+            GL.Vertex3( _points[3].x, _points[3].y, 0.0f );
+            GL.Vertex3( _points[0].x, _points[0].y, 0.0f );
+        GL.End();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
