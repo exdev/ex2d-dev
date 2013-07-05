@@ -654,6 +654,7 @@ class exSceneEditor : EditorWindow {
             }
 
             // draw handles
+            // TODO:
 
             // Show a copy icon on the drag
             if ( DragAndDrop.visualMode == DragAndDropVisualMode.Copy ) {
@@ -945,7 +946,7 @@ class exSceneEditor : EditorWindow {
 
     Rect MapBoundingRect ( Rect _rect, exSpriteBase _node ) {
         exSprite sprite = _node as exSprite;
-        Vector2 screenPos = SceneField_WorldToScreen ( _rect, sprite.transform.position );
+        Vector2 screenPos = Vector2.zero;
 
         if ( sprite ) {
             // Rect boundingRect = new Rect ( screenPos.x - sprite.textureInfo.rotatedWidth/2.0f * scale,
@@ -953,6 +954,7 @@ class exSceneEditor : EditorWindow {
             //                                sprite.textureInfo.rotatedWidth * scale,
             //                                sprite.textureInfo.rotatedHeight * scale );
             Rect boundingRect = sprite.GetAABoundingRect();
+            screenPos = SceneField_WorldToScreen ( _rect, boundingRect.center );
             boundingRect = new Rect ( screenPos.x - boundingRect.width/2.0f * scale,
                                       screenPos.y - boundingRect.height/2.0f * scale,
                                       boundingRect.width * scale,
@@ -962,6 +964,7 @@ class exSceneEditor : EditorWindow {
             return boundingRect;
         }
 
+        screenPos = SceneField_WorldToScreen ( _rect, sprite.transform.position );
         return new Rect (  screenPos.x * scale,
                            screenPos.y * scale,
                            1.0f * scale,
