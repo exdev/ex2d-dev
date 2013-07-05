@@ -246,9 +246,9 @@ public class exSprite : exSpriteBase {
             _indices.Add(vertexBufferIndex + 0);
             _indices.Add(vertexBufferIndex + 1);
             _indices.Add(vertexBufferIndex + 2);
+            _indices.Add(vertexBufferIndex + 2);
             _indices.Add(vertexBufferIndex + 3);
             _indices.Add(vertexBufferIndex + 0);
-            _indices.Add(vertexBufferIndex + 2);
         
             updateFlags |= UpdateFlags.Index;
 
@@ -402,10 +402,19 @@ public class exSprite : exSpriteBase {
 
         offsetX += offset_.x;
         offsetY += offset_.y;
-        _vertices[_startIndex + 0] = cachedTransform.TransformPoint(new Vector3(-halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
-        _vertices[_startIndex + 1] = cachedTransform.TransformPoint(new Vector3(-halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
-        _vertices[_startIndex + 2] = cachedTransform.TransformPoint(new Vector3( halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
-        _vertices[_startIndex + 3] = cachedTransform.TransformPoint(new Vector3( halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
+
+        Vector3 v0 = cachedTransform.TransformPoint(new Vector3(-halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
+        v0.z = 0;
+        _vertices[_startIndex + 0] = v0;
+        Vector3 v1 = cachedTransform.TransformPoint(new Vector3(-halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
+        v1.z = 0;
+        _vertices[_startIndex + 1] = v1;
+        Vector3 v2 = cachedTransform.TransformPoint(new Vector3( halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
+        v2.z = 0;
+        _vertices[_startIndex + 2] = v2;
+        Vector3 v3 = cachedTransform.TransformPoint(new Vector3( halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
+        v3.z = 0;
+        _vertices[_startIndex + 3] = v3;
         // TODO: pixel-perfect
     }
 }

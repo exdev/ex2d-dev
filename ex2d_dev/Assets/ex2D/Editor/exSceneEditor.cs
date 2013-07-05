@@ -247,7 +247,7 @@ class exSceneEditor : EditorWindow {
             // ======================================================== 
 
             if ( GUILayout.Button ("Update Scene", EditorStyles.toolbarButton) ) {
-                ex2DMng.instance.SendMessage("RenderScene");
+                ex2DMng.instance.RenderScene();
                 EditorUtility.SetDirty(ex2DMng.instance);
             }
 
