@@ -649,7 +649,7 @@ class exSceneEditor : EditorWindow {
                 Transform trans = selection[i];
                 exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
                 if ( spriteBase ) {
-                    Rect boundingRect = spriteBase.GetBoundingRect();
+                    Rect boundingRect = spriteBase.GetAABoundingRect();
                     GL.Begin( GL.LINES );
                     GL.Color( Color.white );
                     GL.Vertex3( boundingRect.xMin, boundingRect.yMin, 0.0f );
@@ -887,7 +887,7 @@ class exSceneEditor : EditorWindow {
             //                                screenPos.y - sprite.textureInfo.rotatedHeight/2.0f * scale,
             //                                sprite.textureInfo.rotatedWidth * scale,
             //                                sprite.textureInfo.rotatedHeight * scale );
-            Rect boundingRect = sprite.GetBoundingRect();
+            Rect boundingRect = sprite.GetAABoundingRect();
             boundingRect = new Rect ( screenPos.x - boundingRect.width/2.0f * scale,
                                       screenPos.y - boundingRect.height/2.0f * scale,
                                       boundingRect.width * scale,

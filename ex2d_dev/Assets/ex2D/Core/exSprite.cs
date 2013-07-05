@@ -260,10 +260,10 @@ public class exSprite : exSpriteBase {
 #endregion // Functions used to update geometry buffer
     
     // ------------------------------------------------------------------ 
-    /// Calculate the world bounding rect of the plane
+    /// Calculate the world AABB rect of the sprite
     // ------------------------------------------------------------------ 
 
-    public override Rect GetBoundingRect () {
+    public override Rect GetAABoundingRect () {
 #if UNITY_EDITOR
         if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
             cachedTransform = transform;
