@@ -79,6 +79,7 @@ class exSceneEditor : EditorWindow {
     Color background = Color.gray;
     Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
     SerializedObject curSerializedObject = null;
+    List<Object> draggingObjects = new List<Object>();
 
     exLayer activeLayer = null;
     // exLayer draggingLayer = null; TODO
@@ -177,7 +178,6 @@ class exSceneEditor : EditorWindow {
         editCamera.orthographicSize = (sceneViewRect.height/2.0f) / scale;
         Handles.ClearCamera( sceneViewRect, editCamera );
         Handles.SetCamera( sceneViewRect, editCamera );
-        Handles.DrawCamera(sceneViewRect, editCamera, DrawCameraMode.Textured);
 
         Transform[] selection =  Selection.GetTransforms(SelectionMode.Editable);
         for ( int i = 0; i < selection.Length; ++i ) {
@@ -186,7 +186,7 @@ class exSceneEditor : EditorWindow {
             trans.position = Handles.Slider ( trans.position, trans.rotation * Vector3.right );
             break;
         }
-        // Handles.SetCamera( new Rect( -position.width/2.0f, -position.height/2.0f, position.width, position.height ), editCamera );
+        // // Handles.SetCamera( new Rect( -position.width/2.0f, -position.height/2.0f, position.width, position.height ), editCamera );
 
         curSerializedObject.ApplyModifiedProperties ();
     }
@@ -260,7 +260,7 @@ class exSceneEditor : EditorWindow {
             // ======================================================== 
 
             if ( GUILayout.Button ("Update Scene", EditorStyles.toolbarButton) ) {
-                ex2DMng.instance.RenderScene();
+                ex2DMng.instance.ForceRenderScene();
                 EditorUtility.SetDirty(ex2DMng.instance);
             }
 
@@ -590,6 +590,12 @@ class exSceneEditor : EditorWindow {
                         break;
                     }
                 }
+                draggingObjects.Clear();
+                foreach ( Object o in DragAndDrop.objectReferences ) {
+                    draggingObjects.Add(o);
+                }
+
+                Repaint();
                 e.Use();
             }
             break;
@@ -620,6 +626,10 @@ class exSceneEditor : EditorWindow {
                 Repaint();
                 e.Use();
             }
+            break;
+
+        case EventType.DragExited:
+            draggingObjects.Clear();
             break;
         }
     }
@@ -664,7 +674,7 @@ class exSceneEditor : EditorWindow {
 
             // Show a copy icon on the drag
             if ( DragAndDrop.visualMode == DragAndDropVisualMode.Copy ) {
-                foreach ( Object o in DragAndDrop.objectReferences ) {
+                foreach ( Object o in draggingObjects ) {
                     if ( o is exTextureInfo ) {
                         DrawTextureInfoPreview ( o as exTextureInfo, 
                                                  SceneField_MapToWorld( _rect, Event.current.mousePosition) );
