@@ -1,38 +1,43 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 using System.Collections;
 
 public class EasyProfiler : MonoBehaviour {
-
-    public float eachTestTime = 5;
 
     private int beginFrame;
     private float beginTime;
 
     string testName;
 
-    protected void Print (string _info) {
+    public void Print (string _info) {
         exDebugHelper.ScreenLog(_info, exDebugHelper.LogType.Normal, null, false);
     }
-    protected void Print (string _format, params object[] _args) {
+    public void Print (string _format, params object[] _args) {
         Print(string.Format(_format, _args));
     }
-    protected void RenderProfilerBegin (string _testName) {
+
+    public void RenderProfilerBegin (string _testName) {
         Print(_testName);
         beginFrame = Time.frameCount;
         beginTime = Time.realtimeSinceStartup;
     }
-    protected void RenderProfilerEnd () {
+    public void RenderProfilerEnd () {
         float elapse = Time.realtimeSinceStartup - beginTime;
         int frameCount = Time.frameCount - beginFrame;
-        Print("{0}√Î‘À––¡À{1}÷° FPS: {2}", elapse, frameCount, frameCount / elapse);
+        Print("{0}ÁßíËøêË°å‰∫Ü{1}Â∏ß FPS: {2}", elapse, frameCount, frameCount / elapse);
     }
-    protected void CpuProfilerBegin (string _testName) {
+
+    public void CpuProfilerBegin (string _testName) {
         testName = _testName;
-        Print("ø™ º÷¥––" + testName);
+        Print("ÂºÄÂßãÊâßË°å" + testName);
         beginTime = Time.realtimeSinceStartup;
     }
-    protected void CpuProfilerEnd () {
+    public void CpuProfilerEnd () {
         float elapse = Time.realtimeSinceStartup - beginTime;
-        Print("ÕÍ≥…{0}, ”√ ± {1} √Î", testName, elapse);
+        Print("ÂÆåÊàê{0}, Áî®Êó∂ {1} Áßí", testName, elapse);
+    }
+    public void CpuProfiler (string _testName, System.Action _testFunc) {
+        CpuProfilerBegin(_testName);
+        _testFunc();
+        CpuProfilerEnd();
     }
 }
