@@ -1,4 +1,4 @@
-// ======================================================================================
+﻿// ======================================================================================
 // File         : exSceneEditor.cs
 // Author       : Wu Jie 
 // Last Change  : 06/18/2013 | 17:11:09 PM | Tuesday,June
@@ -102,22 +102,24 @@ class exSceneEditor : EditorWindow {
 
         // DISABLE { 
         // camera
-        GameObject camGO 
+        if (editCamera == null) {
+            GameObject camGO 
             = EditorUtility.CreateGameObjectWithHideFlags ( "SceneViewCamera", 
                                                             HideFlags.HideAndDontSave, 
                                                             new System.Type[] {
                                                                 typeof(Camera)
                                                             } );
-        editCamera = camGO.camera;
-        editCamera.clearFlags = CameraClearFlags.Depth|CameraClearFlags.SolidColor;
-        editCamera.farClipPlane = 10000.0f;
-        editCamera.nearClipPlane = -1.0f;
-        editCamera.backgroundColor = Color.black;
-        editCamera.renderingPath = RenderingPath.Forward;
-        editCamera.orthographic = true;
-        editCamera.orthographicSize = 100.0f;
-        editCamera.transform.position = Vector3.zero;
-        editCamera.transform.rotation = Quaternion.identity;
+            editCamera = camGO.camera;
+            editCamera.clearFlags = CameraClearFlags.Depth|CameraClearFlags.SolidColor;
+            editCamera.farClipPlane = 10000.0f;
+            editCamera.nearClipPlane = -1.0f;
+            editCamera.backgroundColor = Color.black;
+            editCamera.renderingPath = RenderingPath.Forward;
+            editCamera.orthographic = true;
+            editCamera.orthographicSize = 100.0f;
+            editCamera.transform.position = Vector3.zero;
+            editCamera.transform.rotation = Quaternion.identity;
+        }
         // } DISABLE end 
 
         title = "2D Scene Editor";
@@ -127,6 +129,16 @@ class exSceneEditor : EditorWindow {
 
         Reset();
         Repaint();
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    
+    void OnDisable () {
+        if (editCamera != null) {
+            editCamera.Destroy();
+        }
     }
 
     // ------------------------------------------------------------------ 
