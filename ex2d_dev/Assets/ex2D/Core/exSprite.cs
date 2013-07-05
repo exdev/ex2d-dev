@@ -269,7 +269,7 @@ public class exSprite : exSpriteBase {
             cachedTransform = transform;
         }
 #endif
-        List<Vector3> vertices = new List<Vector3>(vertexCount);
+        List<Vector3> vertices = new List<Vector3>(vertexCount);    // TODO: use global static temp List instead
         for (int i = 0; i < vertexCount; ++i) {
             vertices.Add(new Vector3());
         }
@@ -327,6 +327,11 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
     
     void UpdateVertexBuffer (List<Vector3> _vertices, int _startIndex) {
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
+            cachedTransform = transform;
+        }
+#endif
         float offsetX = 0.0f;
         float offsetY = 0.0f;
         float halfWidth = width * 0.5f;
@@ -403,16 +408,21 @@ public class exSprite : exSpriteBase {
         offsetX += offset_.x;
         offsetY += offset_.y;
 
-        Vector3 v0 = cachedTransform.TransformPoint(new Vector3(-halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
+        Matrix4x4 l2w = cachedTransform.localToWorldMatrix;   // TODO: 把l2w缓存起来速度更快，其它地方也用的到
+
+        Vector3 v0 = l2w.MultiplyPoint3x4(new Vector3(-halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
         v0.z = 0;
         _vertices[_startIndex + 0] = v0;
-        Vector3 v1 = cachedTransform.TransformPoint(new Vector3(-halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
+
+        Vector3 v1 = l2w.MultiplyPoint3x4(new Vector3(-halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
         v1.z = 0;
         _vertices[_startIndex + 1] = v1;
-        Vector3 v2 = cachedTransform.TransformPoint(new Vector3( halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
+
+        Vector3 v2 = l2w.MultiplyPoint3x4(new Vector3( halfWidth + offsetX,  halfHeight + offsetY, 0.0f));
         v2.z = 0;
         _vertices[_startIndex + 2] = v2;
-        Vector3 v3 = cachedTransform.TransformPoint(new Vector3( halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
+
+        Vector3 v3 = l2w.MultiplyPoint3x4(new Vector3( halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
         v3.z = 0;
         _vertices[_startIndex + 3] = v3;
         // TODO: pixel-perfect
