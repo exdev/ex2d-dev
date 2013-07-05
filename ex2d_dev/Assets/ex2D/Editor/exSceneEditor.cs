@@ -75,9 +75,8 @@ class exSceneEditor : EditorWindow {
         }
     }
 
-    Camera editCamera; // DISABLE
+    Camera editCamera;
     Color background = Color.gray;
-    Vector2 editCameraPos = Vector2.zero;
     Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
     SerializedObject curSerializedObject = null;
 
@@ -100,7 +99,6 @@ class exSceneEditor : EditorWindow {
 
     void OnEnable () {
 
-        // DISABLE { 
         // camera
         GameObject camGO 
             = EditorUtility.CreateGameObjectWithHideFlags ( "SceneViewCamera", 
@@ -111,14 +109,13 @@ class exSceneEditor : EditorWindow {
         editCamera = camGO.camera;
         editCamera.clearFlags = CameraClearFlags.Depth|CameraClearFlags.SolidColor;
         editCamera.farClipPlane = 10000.0f;
-        editCamera.nearClipPlane = -1.0f;
+        editCamera.nearClipPlane = -100.0f;
         editCamera.backgroundColor = Color.black;
         editCamera.renderingPath = RenderingPath.Forward;
         editCamera.orthographic = true;
         editCamera.orthographicSize = 100.0f;
         editCamera.transform.position = Vector3.zero;
         editCamera.transform.rotation = Quaternion.identity;
-        // } DISABLE end 
 
         title = "2D Scene Editor";
         wantsMouseMove = true;
@@ -175,18 +172,21 @@ class exSceneEditor : EditorWindow {
         //
         ProcessSceneEditorEvents();
 
-        // DISABLE { 
-        editCamera.orthographicSize = sceneViewRect.height/2.0f;
+        //
+        editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
+        editCamera.orthographicSize = (sceneViewRect.height/2.0f) / scale;
         Handles.ClearCamera( sceneViewRect, editCamera );
         Handles.SetCamera( sceneViewRect, editCamera );
+        Handles.DrawCamera(sceneViewRect, editCamera, DrawCameraMode.Textured);
 
         Transform[] selection =  Selection.GetTransforms(SelectionMode.Editable);
         for ( int i = 0; i < selection.Length; ++i ) {
             Transform trans = selection[i];
-            trans.position = Handles.PositionHandle ( trans.position, trans.rotation );
+            // trans.position = Handles.PositionHandle ( trans.position, trans.rotation );
+            trans.position = Handles.Slider ( trans.position, trans.rotation * Vector3.right );
             break;
         }
-        // } DISABLE end 
+        // Handles.SetCamera( new Rect( -position.width/2.0f, -position.height/2.0f, position.width, position.height ), editCamera );
 
         curSerializedObject.ApplyModifiedProperties ();
     }
@@ -269,7 +269,7 @@ class exSceneEditor : EditorWindow {
             // ======================================================== 
 
             if ( GUILayout.Button( "Reset", EditorStyles.toolbarButton ) ) {
-                editCameraPos = Vector2.zero;
+                editCamera.transform.position = Vector3.zero;
             }
 
             // ======================================================== 
@@ -514,15 +514,15 @@ class exSceneEditor : EditorWindow {
                 Texture2D checker = exEditorUtility.CheckerboardTexture();
                 // background
                 GUI.DrawTextureWithTexCoords ( sceneViewRect, checker, 
-                                               new Rect( (-half_w + editCameraPos.x)/(checker.width * scale), 
-                                                         (-half_h + editCameraPos.y)/(checker.height * scale), 
+                                               new Rect( (-half_w/scale + editCamera.transform.position.x)/checker.width,
+                                                         (-half_h/scale + editCamera.transform.position.y)/checker.height,
                                                          sceneViewRect.width/(checker.width * scale), 
                                                          sceneViewRect.height/(checker.height * scale) ) );
             GUI.color = old;
 
             // center line
-            float center_x = -editCameraPos.x + sceneViewRect.x + half_w;
-            float center_y =  editCameraPos.y + sceneViewRect.y + half_h;
+            float center_x = -editCamera.transform.position.x * scale + sceneViewRect.x + half_w;
+            float center_y =  editCamera.transform.position.y * scale + sceneViewRect.y + half_h;
             if ( center_y >= sceneViewRect.y && center_y <= sceneViewRect.yMax )
                 exEditorUtility.DrawLine ( sceneViewRect.x, center_y, sceneViewRect.xMax, center_y, Color.white, 1 );
             if ( center_x >= sceneViewRect.x && center_x <= sceneViewRect.xMax )
@@ -561,8 +561,7 @@ class exSceneEditor : EditorWindow {
 
         case EventType.MouseDrag:
             if ( GUIUtility.hotControl == controlID ) {
-                editCameraPos.x -= e.delta.x;
-                editCameraPos.y += e.delta.y;
+                editCamera.transform.position += new Vector3 ( -e.delta.x / scale, e.delta.y / scale, 0.0f );
 
                 Repaint();
                 e.Use();
@@ -639,10 +638,10 @@ class exSceneEditor : EditorWindow {
         GL.Viewport(viewportRect);
 
         GL.PushMatrix();
-            GL.LoadPixelMatrix( (editCameraPos.x - _rect.width  * 0.5f) / scale, 
-                                (editCameraPos.x + _rect.width  * 0.5f) / scale, 
-                                (editCameraPos.y - _rect.height * 0.5f) / scale,
-                                (editCameraPos.y + _rect.height * 0.5f) / scale );
+            GL.LoadPixelMatrix( editCamera.transform.position.x - (_rect.width  * 0.5f) / scale, 
+                                editCamera.transform.position.x + (_rect.width  * 0.5f) / scale, 
+                                editCamera.transform.position.y - (_rect.height * 0.5f) / scale,
+                                editCamera.transform.position.y + (_rect.height * 0.5f) / scale );
 
             // draw culled sprite nodes
             for ( int i = 0; i < spriteNodes.Count; ++i ) {
@@ -758,15 +757,6 @@ class exSceneEditor : EditorWindow {
         Vector3[] vertices = _node.GetVertices();
         if ( _node is exSprite ) {
             exEditorUtility.DrawRectLine ( vertices, Color.white );
-            // DISABLE { 
-            // Handles.DrawPolyLine ( new Vector3[] {
-            //                            vertices[0],
-            //                            vertices[1],
-            //                            vertices[2],
-            //                            vertices[3],
-            //                            vertices[0],
-            //                        } );
-            // } DISABLE end 
         }
     }
 
@@ -779,7 +769,7 @@ class exSceneEditor : EditorWindow {
             string text = "";
             int width = -1;
             
-            text = "Camera Pos: " + editCameraPos;
+            text = "Camera Pos: " + editCamera.transform.position;
             // width = (int)EditorStyles.label.CalcSize(new GUIContent(text)).x;
             width = 180;
             EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
@@ -791,6 +781,10 @@ class exSceneEditor : EditorWindow {
 
             text = "Sprites: " + spriteNodes.Count;
             width = 100;
+            EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
+
+            text = "Mouse: " + SceneField_MapToWorld( sceneViewRect, Event.current.mousePosition);
+            width = 300;
             EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
         EditorGUILayout.EndHorizontal();
     }
@@ -937,8 +931,9 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     Vector3 SceneField_MapToWorld ( Rect _rect, Vector2 _mousePosition ) {
-        return new Vector3 (  (_mousePosition.x - _rect.x - _rect.width/2.0f + editCameraPos.x)/scale,
-                             -(_mousePosition.y - _rect.y - _rect.height/2.0f - editCameraPos.y)/scale,
+        Vector3 screenPos = SceneField_MapToScreen( _rect, _mousePosition );
+        return new Vector3 (  (screenPos.x - _rect.width/2.0f)/scale + editCamera.transform.position.x,
+                             -(screenPos.y - _rect.height/2.0f)/scale + editCamera.transform.position.y,
                              0.0f );
     }
     Vector3 SceneField_MapToScreen ( Rect _rect, Vector2 _mousePosition ) {
@@ -947,8 +942,8 @@ class exSceneEditor : EditorWindow {
                              0.0f );
     }
     Vector2 SceneField_WorldToScreen ( Rect _rect, Vector3 _worldPos ) {
-        return new Vector2 ( _worldPos.x * scale + _rect.x + _rect.width/2.0f - editCameraPos.x,
-                            -_worldPos.y * scale + _rect.y + _rect.height/2.0f + editCameraPos.y );
+        return new Vector2 ( (_worldPos.x - editCamera.transform.position.x) * scale + _rect.x + _rect.width/2.0f,
+                            -(_worldPos.y - editCamera.transform.position.y) * scale + _rect.y + _rect.height/2.0f  );
     }
 
     Rect MapBoundingRect ( Rect _rect, exSpriteBase _node ) {
@@ -962,8 +957,8 @@ class exSceneEditor : EditorWindow {
             //                                sprite.textureInfo.rotatedHeight * scale );
             Rect boundingRect = sprite.GetAABoundingRect();
             screenPos = SceneField_WorldToScreen ( _rect, boundingRect.center );
-            boundingRect = new Rect ( screenPos.x - boundingRect.width/2.0f * scale,
-                                      screenPos.y - boundingRect.height/2.0f * scale,
+            boundingRect = new Rect ( screenPos.x - boundingRect.width * scale / 2.0f,
+                                      screenPos.y - boundingRect.height * scale / 2.0f,
                                       boundingRect.width * scale,
                                       boundingRect.height * scale );
             boundingRect = exGeometryUtility.Rect_FloorToInt(boundingRect);
