@@ -72,11 +72,7 @@ public class exMesh : MonoBehaviour
     /// The corresponding sprite list. Only used by exLayer, just place here for convenience.
     public List<exSpriteBase> spriteList = new List<exSpriteBase>();
     
-    //mesh
-#if EX_DEBUG
-    [SerializeField]
-#endif
-    private Mesh mesh;
+    [HideInInspector] public Mesh mesh;
 
     /// cache mesh.vertices
     /// 依照sprite在spriteList中的相同顺序排列，每个sprite的顶点都放在连续的一段区间中
@@ -163,18 +159,23 @@ public class exMesh : MonoBehaviour
             mesh.colors32 = colors32.ToArray();
         }
         if ((updateFlags & UpdateFlags.Index) != 0) {
-            mesh.triangles = indices.ToArray();      // Assigning triangles will automatically Recalculate the bounding volume.
-            bool visible =  (indices.Count > 0);
+            mesh.triangles = indices.ToArray();      // During runtime, assigning triangles will automatically Recalculate the bounding volume.
+            bool visible = (indices.Count > 0);
             if (gameObject.activeSelf != visible) {
                 gameObject.SetActive(visible);
             }
+#if UNITY_EDITOR
+            if (UnityEditor.EditorApplication.isPlaying == false) {
+                mesh.RecalculateBounds();
+            }
+#endif
         }
         else if((updateFlags & UpdateFlags.Vertex) != 0) { 
             // 如果没有更新triangles并且更新了vertex位置，则需要手动更新bbox
             mesh.RecalculateBounds();
         }
         if ((updateFlags & UpdateFlags.Normal) != 0) {
-            var normals = new Vector3[vertices.Count];
+            Vector3[] normals = new Vector3[vertices.Count];
             for (int i = 0; i < normals.Length; ++i) {
                 normals[i] = new Vector3(0, 0, -1);
             }

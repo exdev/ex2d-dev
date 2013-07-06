@@ -163,7 +163,7 @@ public abstract class exSpriteBase : MonoBehaviour {
         }
     }
 
-    public virtual Material material { get { return null; } }
+    public abstract Material material { get; }
     
     /// Is component enabled and gameobject activeInHierarchy? If false, the sprite is hidden.
     private bool isOnEnabled_;
