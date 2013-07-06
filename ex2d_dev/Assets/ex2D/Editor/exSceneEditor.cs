@@ -109,6 +109,7 @@ class exSceneEditor : EditorWindow {
                                                                 typeof(Camera)
                                                             } );
             editCamera = camGO.camera;
+            editCamera.enabled = false;
             editCamera.clearFlags = CameraClearFlags.Depth|CameraClearFlags.SolidColor;
             editCamera.farClipPlane = 10000.0f;
             editCamera.nearClipPlane = -100.0f;
@@ -186,6 +187,7 @@ class exSceneEditor : EditorWindow {
         ProcessSceneEditorEvents();
 
         //
+        editCamera.enabled = true;
         editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
         editCamera.orthographicSize = (sceneViewRect.height/2.0f) / scale;
         Handles.ClearCamera( sceneViewRect, editCamera );
@@ -199,6 +201,7 @@ class exSceneEditor : EditorWindow {
             break;
         }
         // // Handles.SetCamera( new Rect( -position.width/2.0f, -position.height/2.0f, position.width, position.height ), editCamera );
+        editCamera.enabled = false;
 
         curSerializedObject.ApplyModifiedProperties ();
     }
