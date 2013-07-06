@@ -181,19 +181,19 @@ public class ex2DMng : MonoBehaviour {
     // Other Functions
     ///////////////////////////////////////////////////////////////////////////////
 
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
+    //// ------------------------------------------------------------------ 
+    //// Desc:
+    //// ------------------------------------------------------------------ 
 
-    public void DestroyAllLayer () {
-        for (int i = 0; i < layerList.Count; ++i) {
-            exLayer layer = layerList[i];
-            if (layer != null) {
-                layer.gameObject.Destroy();
-            }
-        }
-        layerList.Clear();
-    }
+    //public void DestroyAllLayers () {
+    //    for (int i = 0; i < layerList.Count; ++i) {
+    //        exLayer layer = layerList[i];
+    //        if (layer != null) {
+    //            layer.gameObject.Destroy();
+    //        }
+    //    }
+    //    layerList.Clear();
+    //}
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -203,6 +203,7 @@ public class ex2DMng : MonoBehaviour {
         GameObject layerGo = new GameObject("New Layer");
         exLayer layer = layerGo.AddComponent<exLayer>();
         layerList.Add(layer);
+        UpdateLayerDepth();
         return layer;
     }
 
@@ -219,6 +220,22 @@ public class ex2DMng : MonoBehaviour {
         }
     }
     
+    // ------------------------------------------------------------------ 
+    /// 重新排列所有layer的Z轴，使在LayerList越尾端的layer能渲染在越上层。
+    // ------------------------------------------------------------------ 
+
+    public void UpdateLayerDepth () {
+        const float interval = 1.0f;
+        float cameraZ = cachedCamera.transform.position.z;
+        float occupiedZ = cameraZ;
+        for (int i = layerList.Count - 1; i >= 0 ; --i) {
+            exLayer layer = layerList[i];
+            if (layer != null) {
+                occupiedZ = layer.SetWorldBoundsMinZ(occupiedZ + interval);
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ 
     /// Return shared material matchs given shader and texture
     // ------------------------------------------------------------------ 
@@ -254,6 +271,7 @@ public class ex2DMng : MonoBehaviour {
             }
         }
         RenderScene();
+        UpdateLayerDepth();
     }
 
     // ------------------------------------------------------------------ 

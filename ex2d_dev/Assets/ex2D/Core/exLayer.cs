@@ -297,6 +297,21 @@ public class exLayer : MonoBehaviour
         meshList.TrimExcess();
     }
 
+    // ------------------------------------------------------------------ 
+    /// \z      限定整个layer的World BoundingBox的最小z值
+    /// \return 整个layer的World BoundingBox的最大z值
+    /// 
+    /// 设置layer的深度，用于layer之间的排序
+    // ------------------------------------------------------------------ 
+
+    public float SetWorldBoundsMinZ (float z) {
+        for (int i = 0; i < meshList.Count; ++i) {
+            exMesh mesh = meshList[i];
+            mesh.transform.position = new Vector3(0, 0, z);
+        }
+        return z;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Internal Functions
     ///////////////////////////////////////////////////////////////////////////////
