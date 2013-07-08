@@ -184,11 +184,14 @@ class exSceneEditor : EditorWindow {
         DebugInfos ();
 
         //
+
+        GUI.BeginGroup( sceneViewRect );
         editCamera.enabled = true;
         editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
         editCamera.orthographicSize = (sceneViewRect.height/2.0f) / scale;
-        Handles.ClearCamera( sceneViewRect, editCamera );
-        Handles.SetCamera( sceneViewRect, editCamera );
+        Rect rect = new Rect( 0, 0, sceneViewRect.width, sceneViewRect.height );
+        Handles.ClearCamera( rect, editCamera );
+        Handles.SetCamera( rect, editCamera );
 
         Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
         if ( selection.Length == 1 ) {
@@ -217,6 +220,7 @@ class exSceneEditor : EditorWindow {
             // } TODO end 
         }
         editCamera.enabled = false;
+        GUI.EndGroup();
 
         //
         ProcessSceneEditorEvents();
@@ -688,7 +692,7 @@ class exSceneEditor : EditorWindow {
                                 editCamera.transform.position.y + (_rect.height * 0.5f) / scale );
 
             // draw culled sprite nodes
-            for ( int i = 0; i < spriteNodes.Count; ++i ) {
+            for ( int i = spriteNodes.Count-1; i >= 0; --i ) {
                 DrawNode ( spriteNodes[i] );
             }
 
@@ -751,8 +755,8 @@ class exSceneEditor : EditorWindow {
 
     void DrawTextureInfoPreview ( exTextureInfo _textureInfo, Vector3 _pos ) {
 
-        Vector2 halfSize = new Vector2( _textureInfo.width * 0.5f * scale,
-                                        _textureInfo.height * 0.5f * scale );
+        Vector2 halfSize = new Vector2( _textureInfo.width * 0.5f,
+                                        _textureInfo.height * 0.5f );
 
         float s0 = (float) _textureInfo.x / (float) _textureInfo.texture.width;
         float s1 = (float) (_textureInfo.x+_textureInfo.width)  / (float) _textureInfo.texture.width;
@@ -1025,7 +1029,7 @@ class exSceneEditor : EditorWindow {
         spriteNodes.Clear();
 
         // draw all nodes in the scene
-        for ( int i = ex2DMng.instance.layerList.Count-1; i >= 0; --i ) {
+        for ( int i = 0; i < ex2DMng.instance.layerList.Count; ++i ) {
             exLayer layer = ex2DMng.instance.layerList[i];
             if ( layer != null && layer.show ) {
                 exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
