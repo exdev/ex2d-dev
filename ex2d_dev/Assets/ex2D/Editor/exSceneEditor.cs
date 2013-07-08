@@ -184,9 +184,6 @@ class exSceneEditor : EditorWindow {
         DebugInfos ();
 
         //
-        ProcessSceneEditorEvents();
-
-        //
         editCamera.enabled = true;
         editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
         editCamera.orthographicSize = (sceneViewRect.height/2.0f) / scale;
@@ -196,18 +193,33 @@ class exSceneEditor : EditorWindow {
         Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
         if ( selection.Length == 1 ) {
             Transform trans = selection[0];
-            trans.position = Handles.Slider ( trans.position, trans.rotation * Vector3.right );
+
+            Vector3 trans_position = trans.position;
+            Quaternion trans_rotation = trans.rotation;
+            float handleSize = HandleUtility.GetHandleSize(trans_position);
+
+            Handles.color = Color.red;
+            trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.right );
+
+            Handles.color = Color.green;
+            trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.up );
+
+            Handles.color = new Color( 0.8f, 0.8f, 0.8f, 0.93f );
+            trans_position = Handles.FreeMoveHandle ( trans_position, trans_rotation, handleSize * 0.15f, Vector3.zero, Handles.DrawRectangle );
+
+            trans.position = trans_position;
         }
         else {
             // TODO { 
-            for ( int i = 0; i < selection.Length; ++i ) {
-                Transform trans = selection[i];
-                // trans.position = Handles.PositionHandle ( trans.position, trans.rotation );
-                trans.position = Handles.Slider ( trans.position, trans.rotation * Vector3.right );
-            }
+            // for ( int i = 0; i < selection.Length; ++i ) {
+            //     Transform trans = selection[i];
+            // }
             // } TODO end 
         }
         editCamera.enabled = false;
+
+        //
+        ProcessSceneEditorEvents();
 
         //
         curSerializedObject.ApplyModifiedProperties ();

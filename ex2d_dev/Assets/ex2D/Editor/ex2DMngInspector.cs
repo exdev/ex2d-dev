@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : exAtlasInspector.cs
+// File         : ex2DMngInspector.cs
 // Author       : Wu Jie 
-// Last Change  : 06/18/2013 | 00:17:37 AM | Tuesday,June
+// Last Change  : 07/08/2013 | 10:51:18 AM | Monday,July
 // Description  : 
 // ======================================================================================
 
@@ -20,8 +20,8 @@ using System.IO;
 ///////////////////////////////////////////////////////////////////////////////
 
 [CanEditMultipleObjects]
-[CustomEditor(typeof(exAtlas))]
-class exAtlasInspector : Editor {
+[CustomEditor(typeof(ex2DMng))]
+class ex2DMngInspector : Editor {
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -35,8 +35,7 @@ class exAtlasInspector : Editor {
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
             if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
-                exAtlasEditor editor = EditorWindow.GetWindow<exAtlasEditor>();
-                editor.Edit(target);
+                EditorWindow.GetWindow<exSceneEditor>();
             }
         GUILayout.Space(5);
         GUILayout.EndHorizontal();
