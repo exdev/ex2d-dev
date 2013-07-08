@@ -246,21 +246,22 @@ partial class exAtlasEditor : EditorWindow {
 
             GUILayout.Label ("Zoom");
             EditorGUILayout.Space();
-            curEdit.scale = GUILayout.HorizontalSlider ( curEdit.scale, 
-                                                         0.1f, 
-                                                         2.0f, 
-                                                         new GUILayoutOption[] {
-                                                             GUILayout.MinWidth(50),
-                                                             GUILayout.MaxWidth(150)
-                                                         } );
-            EditorGUILayout.Space();
-            curEdit.scale = EditorGUILayout.FloatField( curEdit.scale,
-                                                        EditorStyles.toolbarTextField,
-                                                        new GUILayoutOption[] {
-                                                            GUILayout.Width(30)
-                                                        } );
-            if ( GUI.changed ) {
-                GUI.changed = false;
+
+            EditorGUI.BeginChangeCheck();
+                curEdit.scale = GUILayout.HorizontalSlider ( curEdit.scale, 
+                                                             0.1f, 
+                                                             2.0f, 
+                                                             new GUILayoutOption[] {
+                                                                 GUILayout.MinWidth(50),
+                                                                 GUILayout.MaxWidth(150)
+                                                             } );
+                EditorGUILayout.Space();
+                curEdit.scale = EditorGUILayout.FloatField( curEdit.scale,
+                                                            EditorStyles.toolbarTextField,
+                                                            new GUILayoutOption[] {
+                                                                GUILayout.Width(30)
+                                                            } );
+            if ( EditorGUI.EndChangeCheck() ) {
                 EditorUtility.SetDirty(curEdit);
             }
 
@@ -320,6 +321,7 @@ partial class exAtlasEditor : EditorWindow {
                                            GUILayout.MaxWidth(250),
                                            GUILayout.ExpandWidth(false)
                                        } );
+        EditorGUI.BeginChangeCheck();
 
             // ======================================================== 
             // canvas
@@ -529,16 +531,11 @@ partial class exAtlasEditor : EditorWindow {
             // }
             // } TODO end 
 
-        EditorGUILayout.EndVertical();
-
-        // ======================================================== 
         // check gui changes 
-        // ======================================================== 
-
-        if ( GUI.changed ) {
-            GUI.changed = false;
+        if ( EditorGUI.EndChangeCheck() ) {
             EditorUtility.SetDirty(curEdit);
         }
+        EditorGUILayout.EndVertical();
     }
 
     // ------------------------------------------------------------------ 
