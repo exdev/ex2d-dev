@@ -193,16 +193,23 @@ class exSceneEditor : EditorWindow {
         Handles.ClearCamera( sceneViewRect, editCamera );
         Handles.SetCamera( sceneViewRect, editCamera );
 
-        Transform[] selection =  Selection.GetTransforms(SelectionMode.Editable);
-        for ( int i = 0; i < selection.Length; ++i ) {
-            Transform trans = selection[i];
-            // trans.position = Handles.PositionHandle ( trans.position, trans.rotation );
+        Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
+        if ( selection.Length == 1 ) {
+            Transform trans = selection[0];
             trans.position = Handles.Slider ( trans.position, trans.rotation * Vector3.right );
-            break;
         }
-        // // Handles.SetCamera( new Rect( -position.width/2.0f, -position.height/2.0f, position.width, position.height ), editCamera );
+        else {
+            // TODO { 
+            for ( int i = 0; i < selection.Length; ++i ) {
+                Transform trans = selection[i];
+                // trans.position = Handles.PositionHandle ( trans.position, trans.rotation );
+                trans.position = Handles.Slider ( trans.position, trans.rotation * Vector3.right );
+            }
+            // } TODO end 
+        }
         editCamera.enabled = false;
 
+        //
         curSerializedObject.ApplyModifiedProperties ();
     }
 
@@ -674,7 +681,7 @@ class exSceneEditor : EditorWindow {
             }
 
             // draw selected objects
-            Transform[] selection =  Selection.GetTransforms(SelectionMode.Editable);
+            Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
             for ( int i = 0; i < selection.Length; ++i ) {
                 Transform trans = selection[i];
                 exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
@@ -875,7 +882,7 @@ class exSceneEditor : EditorWindow {
             if ( (e.command || e.control) &&
                  (e.keyCode == KeyCode.Backspace || e.keyCode == KeyCode.Delete) ) 
             {
-                Transform[] selection =  Selection.GetTransforms(SelectionMode.Editable);
+                Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
                 for ( int i = selection.Length-1; i >= 0; --i ) {
                     Transform trans = selection[i];
                     if ( trans != null )
@@ -936,7 +943,7 @@ class exSceneEditor : EditorWindow {
         }
 
         if ( _toggle ) {
-            Transform[] oldSelection =  Selection.GetTransforms(SelectionMode.Editable);
+            Transform[] oldSelection = Selection.GetTransforms(SelectionMode.Editable);
             foreach ( Transform trans in oldSelection ) {
                 int idx = selectGOs.IndexOf (trans.gameObject);
                 if ( idx  == -1 ) {
