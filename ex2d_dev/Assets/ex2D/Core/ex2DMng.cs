@@ -104,11 +104,6 @@ public class ex2DMng : MonoBehaviour {
             instance = this;
         }
         cachedCamera = camera;
-
-        if (cachedCamera.orthographic != true) {
-            Debug.LogWarning("Set ex2DMng's camera projection to orthographic");
-            cachedCamera.orthographic = true;
-        }
     }
     
     // ------------------------------------------------------------------ 
@@ -285,16 +280,29 @@ public class ex2DMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
     
     public void RenderScene () {
-        if (cachedCamera.orthographicSize != Screen.height) {
-            // pixel-perfect
-            cachedCamera.orthographicSize = Screen.height/2.0f;
-        }
-        
         for (int i = 0; i < layerList.Count; ++i) {
             exLayer layer = layerList[i];
             if (layer != null) {
                 layer.UpdateSprites();
             }
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // \param exclusiveCamera 是否独占相机，如果为true，将会自动设置相机的cullingMask
+    // ------------------------------------------------------------------ 
+
+    public void ResetCamera (bool exclusiveCamera) {
+        if (cachedCamera.orthographic != true) {
+            cachedCamera.orthographic = true;
+        }
+        if (cachedCamera.orthographicSize != Screen.height) {
+            cachedCamera.orthographicSize = Screen.height/2.0f;
+        }
+        cachedCamera.transform.rotation = Quaternion.identity;
+        cachedCamera.transform.SetLossyScale(Vector3.one);
+        if (exclusiveCamera) {
+            // TODO: set layer
         }
     }
 }

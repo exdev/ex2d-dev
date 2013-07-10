@@ -320,7 +320,6 @@ public class exMesh : MonoBehaviour
             string[] splitted = gameObject.name.Split('@');
             if (splitted.Length > 0) {
                 layerName = gameObject.name.Split('@')[1];
-                Debug.Log("[UpdateDebugName|exMesh] ");
             }
         }
         string newName = "_exMesh";
