@@ -84,10 +84,9 @@ class exSceneEditor : EditorWindow {
     exLayer activeLayer = null;
     // exLayer draggingLayer = null; TODO
 
+    exRectSelection rectSelection = null;
+
     // 
-    Vector2 mouseDownPos = Vector2.zero;
-    Rect selectRect = new Rect( 0, 0, 1, 1 );
-    bool inRectSelectState = false;
     List<exSpriteBase> spriteNodes = new List<exSpriteBase>();
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -125,6 +124,10 @@ class exSceneEditor : EditorWindow {
         wantsMouseMove = true;
         autoRepaintOnSceneChange = true;
         // position = new Rect ( 50, 50, 800, 600 );
+
+        rectSelection = new exRectSelection( PickObject,
+                                             PickRectObjects,
+                                             ConfirmRectSelection );
 
         Reset();
         Repaint();
@@ -184,46 +187,11 @@ class exSceneEditor : EditorWindow {
         DebugInfos ();
 
         //
-
-        GUI.BeginGroup( sceneViewRect );
-        editCamera.enabled = true;
-        editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
-        editCamera.orthographicSize = (sceneViewRect.height/2.0f) / scale;
-        Rect rect = new Rect( 0, 0, sceneViewRect.width, sceneViewRect.height );
-        Handles.ClearCamera( rect, editCamera );
-        Handles.SetCamera( rect, editCamera );
-
-        Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
-        if ( selection.Length == 1 ) {
-            Transform trans = selection[0];
-
-            Vector3 trans_position = trans.position;
-            Quaternion trans_rotation = trans.rotation;
-            float handleSize = HandleUtility.GetHandleSize(trans_position);
-
-            Handles.color = Color.red;
-            trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.right );
-
-            Handles.color = Color.green;
-            trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.up );
-
-            Handles.color = new Color( 0.8f, 0.8f, 0.8f, 0.93f );
-            trans_position = Handles.FreeMoveHandle ( trans_position, trans_rotation, handleSize * 0.15f, Vector3.zero, Handles.DrawRectangle );
-
-            trans.position = trans_position;
-        }
-        else {
-            // TODO { 
-            // for ( int i = 0; i < selection.Length; ++i ) {
-            //     Transform trans = selection[i];
-            // }
-            // } TODO end 
-        }
-        editCamera.enabled = false;
-        GUI.EndGroup();
+        ProcessSceneEditorHandles();
 
         //
         ProcessSceneEditorEvents();
+        rectSelection.OnGUI();
 
         //
         curSerializedObject.ApplyModifiedProperties ();
@@ -841,59 +809,55 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void ProcessSceneEditorHandles () {
+        //
+        GUI.BeginGroup( sceneViewRect );
+        editCamera.enabled = true;
+        editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
+        editCamera.orthographicSize = (sceneViewRect.height/2.0f) / scale;
+        Rect rect = new Rect( 0, 0, sceneViewRect.width, sceneViewRect.height );
+        Handles.ClearCamera( rect, editCamera );
+        Handles.SetCamera( rect, editCamera );
+
+        Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
+        if ( selection.Length == 1 ) {
+            Transform trans = selection[0];
+
+            Vector3 trans_position = trans.position;
+            Quaternion trans_rotation = trans.rotation;
+            float handleSize = HandleUtility.GetHandleSize(trans_position);
+
+            Handles.color = Color.red;
+            trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.right );
+
+            Handles.color = Color.green;
+            trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.up );
+
+            Handles.color = new Color( 0.8f, 0.8f, 0.8f, 0.93f );
+            trans_position = Handles.FreeMoveHandle ( trans_position, trans_rotation, handleSize * 0.15f, Vector3.zero, Handles.DrawRectangle );
+
+            trans.position = trans_position;
+        }
+        else {
+            // TODO { 
+            // for ( int i = 0; i < selection.Length; ++i ) {
+            //     Transform trans = selection[i];
+            // }
+            // } TODO end 
+        }
+        editCamera.enabled = false;
+        GUI.EndGroup();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void ProcessSceneEditorEvents () {
         int controlID = GUIUtility.GetControlID(sceneEditorHash, FocusType.Passive);
         Event e = Event.current;
 
         switch ( e.GetTypeForControl(controlID) ) {
-        case EventType.Repaint:
-            // draw select rect 
-            if ( inRectSelectState && (selectRect.width != 0.0f || selectRect.height != 0.0f) ) {
-                exEditorUtility.DrawRect( selectRect, new Color( 0.0f, 0.5f, 1.0f, 0.2f ), new Color( 0.0f, 0.5f, 1.0f, 1.0f ) );
-            }
-            break;
-
-        case EventType.MouseDown:
-            if ( e.button == 0 && e.clickCount == 1 ) {
-                GUIUtility.hotControl = controlID;
-                GUIUtility.keyboardControl = controlID;
-
-                bool toggle = (e.command||e.control);
-                inRectSelectState = (toggle==false);
-
-                mouseDownPos = e.mousePosition;
-                UpdateSelectRect ();
-                ConfirmRectSelection(toggle);
-                Repaint();
-
-                e.Use();
-            }
-            break;
-
-        case EventType.MouseDrag:
-            if ( GUIUtility.hotControl == controlID && inRectSelectState ) {
-                UpdateSelectRect ();
-                ConfirmRectSelection();
-                Repaint();
-
-                e.Use();
-            }
-            break;
-
-        case EventType.MouseUp:
-			if ( GUIUtility.hotControl == controlID ) {
-				GUIUtility.hotControl = 0;
-
-                if ( inRectSelectState && e.button == 0 ) {
-                    inRectSelectState = false;
-                    ConfirmRectSelection();
-                    Repaint();
-                }
-
-                e.Use();
-			}
-            break;
-
         case EventType.KeyDown:
             if ( (e.command || e.control) &&
                  (e.keyCode == KeyCode.Backspace || e.keyCode == KeyCode.Delete) ) 
@@ -916,62 +880,35 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void UpdateSelectRect () {
-        float x = 0;
-        float y = 0;
-        float width = 0;
-        float height = 0;
-        Vector2 curMousePos = Event.current.mousePosition;
-
-        if ( mouseDownPos.x < curMousePos.x ) {
-            x = mouseDownPos.x;
-            width = curMousePos.x - mouseDownPos.x;
-        }
-        else {
-            x = curMousePos.x;
-            width = mouseDownPos.x - curMousePos.x;
-        }
-        if ( mouseDownPos.y < curMousePos.y ) {
-            y = mouseDownPos.y;
-            height = curMousePos.y - mouseDownPos.y;
-        }
-        else {
-            y = curMousePos.y;
-            height = mouseDownPos.y - curMousePos.y;
-        }
-
-        selectRect = new Rect( x, y, width, height );
+    Object PickObject ( Vector2 _position ) {
+        return null;
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void ConfirmRectSelection ( bool _toggle = false ) {
-        List<GameObject> selectGOs = new List<GameObject>();
+    Object[] PickRectObjects ( Rect _rect ) {
+        List<Object> objects = new List<Object>();
+
         foreach ( exSpriteBase node in spriteNodes ) {
             Rect boundingRect = MapBoundingRect ( sceneViewRect, node );
-            if ( exGeometryUtility.RectRect_Contains( selectRect, boundingRect ) != 0 ||
-                 exGeometryUtility.RectRect_Intersect( selectRect, boundingRect ) )
+            if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||
+                 exGeometryUtility.RectRect_Intersect( _rect, boundingRect ) )
             {
-                selectGOs.Add(node.gameObject);
+                objects.Add(node.gameObject);
             }
         }
 
-        if ( _toggle ) {
-            Transform[] oldSelection = Selection.GetTransforms(SelectionMode.Editable);
-            foreach ( Transform trans in oldSelection ) {
-                int idx = selectGOs.IndexOf (trans.gameObject);
-                if ( idx  == -1 ) {
-                    selectGOs.Add(trans.gameObject);
-                }
-                else {
-                    selectGOs.RemoveAt(idx);
-                }
-            }
-        }
+        return objects.ToArray();
+    }
 
-        Selection.objects = selectGOs.ToArray();
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void ConfirmRectSelection ( Object[] _objs ) {
+        Selection.objects = _objs;
     }
 
     // ------------------------------------------------------------------ 

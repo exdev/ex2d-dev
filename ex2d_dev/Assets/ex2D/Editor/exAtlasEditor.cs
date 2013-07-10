@@ -55,13 +55,12 @@ partial class exAtlasEditor : EditorWindow {
     bool foldoutBuild = true;
 
     // GUI states
-    Vector2 mouseDownPos = Vector2.zero;
-    Rect selectRect = new Rect( 0, 0, 1, 1 );
-    bool inRectSelectState = false;
     // bool inDraggingTextureInfoState = false;
     List<Object> importObjects = new List<Object>();
     Object oldSelActiveObject;
     List<Object> oldSelObjects = new List<Object>();
+
+    exRectSelection rectSelection = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -76,6 +75,10 @@ partial class exAtlasEditor : EditorWindow {
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
         // position = new Rect ( 50, 50, 800, 600 );
+
+        rectSelection = new exRectSelection( PickObject,
+                                             PickRectObjects,
+                                             ConfirmRectSelection );
 
         Reset();
         Repaint();
@@ -173,6 +176,7 @@ partial class exAtlasEditor : EditorWindow {
 
             //
             ProcessEvents();
+            rectSelection.OnGUI();
 
         EditorGUILayout.EndScrollView();
 
@@ -198,7 +202,6 @@ partial class exAtlasEditor : EditorWindow {
         oldSelActiveObject = null;
         oldSelObjects.Clear();
 
-        inRectSelectState = false;
         // inDraggingTextureInfoState = false;
     }
 
@@ -592,20 +595,6 @@ partial class exAtlasEditor : EditorWindow {
                 foreach ( exTextureInfo textureInfo in curEdit.textureInfos ) {
                     if ( textureInfo == null )
                         continue;
-
-                    if ( MapTextureInfo( _rect, textureInfo ).Contains (e.mousePosition) ) {
-                        if ( e.command || e.control ) {
-                            ToggleSelected(textureInfo);
-                        }
-                        else {
-                            // inDraggingTextureInfoState = true; 
-                            if ( selectedTextureInfos.IndexOf(textureInfo) == -1 ) {
-                                selectedTextureInfos.Clear();
-                                selectedTextureInfos.Add(textureInfo);
-                            }
-                        }
-                        e.Use();
-                    }
                 }
             }
             break;
@@ -716,52 +705,6 @@ partial class exAtlasEditor : EditorWindow {
         Event e = Event.current;
 
         switch ( e.GetTypeForControl(controlID) ) {
-        case EventType.Repaint:
-            // draw select rect 
-            if ( inRectSelectState && (selectRect.width != 0.0f || selectRect.height != 0.0f) ) {
-                exEditorUtility.DrawRect( selectRect, new Color( 0.0f, 0.5f, 1.0f, 0.2f ), new Color( 0.0f, 0.5f, 1.0f, 1.0f ) );
-            }
-            break;
-
-        case EventType.MouseDown:
-            if ( e.button == 0 && e.clickCount == 1 ) {
-                GUIUtility.hotControl = controlID;
-                GUIUtility.keyboardControl = controlID;
-
-                mouseDownPos = e.mousePosition;
-                inRectSelectState = true;
-                UpdateSelectRect ();
-                ConfirmRectSelection();
-                Repaint();
-
-                e.Use();
-            }
-            break;
-
-        case EventType.MouseDrag:
-            if ( GUIUtility.hotControl == controlID && inRectSelectState ) {
-                UpdateSelectRect ();
-                ConfirmRectSelection();
-                Repaint();
-
-                e.Use();
-            }
-            break;
-
-        case EventType.MouseUp:
-			if ( GUIUtility.hotControl == controlID ) {
-				GUIUtility.hotControl = 0;
-
-                if ( inRectSelectState && e.button == 0 ) {
-                    inRectSelectState = false;
-                    ConfirmRectSelection();
-                    Repaint();
-                }
-
-                e.Use();
-			}
-            break;
-
         case EventType.ScrollWheel:
             if ( e.control ) {
                 curEdit.scale += -e.delta.y * 0.1f;
@@ -798,65 +741,40 @@ partial class exAtlasEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void UpdateSelectRect () {
-        float x = 0;
-        float y = 0;
-        float width = 0;
-        float height = 0;
-        Vector2 curMousePos = Event.current.mousePosition;
-
-        if ( mouseDownPos.x < curMousePos.x ) {
-            x = mouseDownPos.x;
-            width = curMousePos.x - mouseDownPos.x;
-        }
-        else {
-            x = curMousePos.x;
-            width = mouseDownPos.x - curMousePos.x;
-        }
-        if ( mouseDownPos.y < curMousePos.y ) {
-            y = mouseDownPos.y;
-            height = curMousePos.y - mouseDownPos.y;
-        }
-        else {
-            y = curMousePos.y;
-            height = mouseDownPos.y - curMousePos.y;
-        }
-
-        selectRect = new Rect( x, y, width, height );
+    Object PickObject ( Vector2 _position ) {
+        return null;
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void ToggleSelected ( exTextureInfo _textureInfo ) {
-        int i = selectedTextureInfos.IndexOf(_textureInfo);
-        if ( i != -1 ) {
-            selectedTextureInfos.RemoveAt(i);
-        }
-        else {
-            selectedTextureInfos.Add(_textureInfo);
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void ConfirmRectSelection () {
-        selectedTextureInfos.Clear();
+    Object[] PickRectObjects ( Rect _rect ) {
+        List<Object> objects = new List<Object>();
 
         foreach ( exTextureInfo textureInfo in curEdit.textureInfos ) {
             if ( textureInfo == null )
                 continue;
 
             Rect textureInfoRect = MapTextureInfo ( atlasRect, textureInfo );
-            if ( exGeometryUtility.RectRect_Contains( selectRect, textureInfoRect ) != 0 ||
-                 exGeometryUtility.RectRect_Intersect( selectRect, textureInfoRect ) )
+            if ( exGeometryUtility.RectRect_Contains( _rect, textureInfoRect ) != 0 ||
+                 exGeometryUtility.RectRect_Intersect( _rect, textureInfoRect ) )
             {
-                selectedTextureInfos.Add (textureInfo);
+                objects.Add (textureInfo);
             }
         }
+
+        return objects.ToArray();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void ConfirmRectSelection ( Object[] _objs ) {
+        selectedTextureInfos.Clear();
+        foreach ( Object obj in _objs )
+            selectedTextureInfos.Add (obj as exTextureInfo);
     }
 
     // ------------------------------------------------------------------ 
