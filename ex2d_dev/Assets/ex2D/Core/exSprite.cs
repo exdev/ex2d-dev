@@ -409,34 +409,36 @@ public class exSprite : exSpriteBase {
                                                               // TODO: cache vertices before transform
         //v1 v2
         //v0 v3
-
         Vector3 v0 = l2w.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
-        v0.z = 0;   // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
-
         Vector3 v1 = l2w.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
-        v1.z = 0;
-
         Vector3 v2 = l2w.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
-        v2.z = 0;
-
         Vector3 v3 = l2w.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
+
+        // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
+        v0.z = 0;
+        v1.z = 0;
+        v2.z = 0;
         v3.z = 0;
 
-        // TODO: 优化成对l2w矩阵运算
         if (shear_.x != 0) {
-            float offsetX = shear_.x * (v1.y - v0.y);
-            v0.x += offsetX;
-            v1.x -= offsetX;
-            v2.x -= offsetX;
-            v3.x += offsetX;
+            float offsetX = cachedTransform.lossyScale.y * shear_.x;
+            float topOffset = offsetX * (halfHeight + anchorOffsetY);
+            float botOffset = offsetX * (-halfHeight + anchorOffsetY);
+            v0.x += botOffset;
+            v1.x += topOffset;
+            v2.x += topOffset;
+            v3.x += botOffset;
         }
         if (shear_.y != 0) {
-            float offsetY = shear_.y * (v2.x - v1.x);
-            v0.y += offsetY;
-            v1.y += offsetY;
-            v2.y -= offsetY;
-            v3.y -= offsetY;
+            float offsetY = cachedTransform.lossyScale.x * shear_.y;
+            float leftOffset = offsetY * (-halfWidth + anchorOffsetX);
+            float rightOffset = offsetY * (halfWidth + anchorOffsetX);
+            v0.y += leftOffset;
+            v1.y += leftOffset;
+            v2.y += rightOffset;
+            v3.y += rightOffset;
         }
+
         _vertices[_startIndex + 0] = v0;
         _vertices[_startIndex + 1] = v1;
         _vertices[_startIndex + 2] = v2;

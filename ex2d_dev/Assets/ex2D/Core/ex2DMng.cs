@@ -290,6 +290,8 @@ public class ex2DMng : MonoBehaviour {
     
     // ------------------------------------------------------------------ 
     // \param exclusiveCamera 是否独占相机，如果为true，将会自动设置相机的cullingMask
+    //
+    // Desc:
     // ------------------------------------------------------------------ 
 
     public void ResetCamera (bool exclusiveCamera) {
