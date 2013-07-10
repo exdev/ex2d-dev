@@ -834,7 +834,7 @@ class exSceneEditor : EditorWindow {
             trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.up );
 
             Handles.color = new Color( 0.8f, 0.8f, 0.8f, 0.93f );
-            trans_position = Handles.FreeMoveHandle ( trans_position, trans_rotation, handleSize * 0.15f, Vector3.zero, Handles.DrawRectangle );
+            trans_position = Handles.FreeMoveHandle ( trans_position, trans_rotation, handleSize * 0.15f, Vector3.zero, Handles.RectangleCap );
 
             trans.position = trans_position;
         }
