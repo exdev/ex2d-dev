@@ -332,8 +332,8 @@ public class exSprite : exSpriteBase {
             cachedTransform = transform;
         }
 #endif
-        float offsetX = 0.0f;
-        float offsetY = 0.0f;
+        float anchorOffsetX = 0.0f;
+        float anchorOffsetY = 0.0f;
         float halfWidth = width * 0.5f;
         float halfHeight = height * 0.5f;
 
@@ -341,87 +341,107 @@ public class exSprite : exSpriteBase {
             switch (anchor_) {
             //
             case Anchor.TopLeft:
-                offsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth;
-                offsetY = -halfHeight - textureInfo_.trim_y;
+                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth;
+                anchorOffsetY = -halfHeight - textureInfo_.trim_y;
                 break;
             case Anchor.TopCenter:
-                offsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth * 0.5f;
-                offsetY = -halfHeight - textureInfo_.trim_y;
+                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth * 0.5f;
+                anchorOffsetY = -halfHeight - textureInfo_.trim_y;
                 break;
             case Anchor.TopRight:
-                offsetX = -halfWidth - textureInfo_.trim_x;
-                offsetY = -halfHeight - textureInfo_.trim_y;
+                anchorOffsetX = -halfWidth - textureInfo_.trim_x;
+                anchorOffsetY = -halfHeight - textureInfo_.trim_y;
                 break;
             //
             case Anchor.MidLeft:
-                offsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth;
-                offsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight * 0.5f;
+                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth;
+                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight * 0.5f;
                 break;
             case Anchor.MidCenter:
-                offsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth * 0.5f;
-                offsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight * 0.5f;
+                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth * 0.5f;
+                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight * 0.5f;
                 break;
             case Anchor.MidRight:
-                offsetX = -halfWidth - textureInfo_.trim_x;
-                offsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight * 0.5f;
+                anchorOffsetX = -halfWidth - textureInfo_.trim_x;
+                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight * 0.5f;
                 break;
             //
             case Anchor.BotLeft:
-                offsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth;
-                offsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight;
+                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth;
+                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight;
                 break;
             case Anchor.BotCenter:
-                offsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth * 0.5f;
-                offsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight;
+                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth * 0.5f;
+                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight;
                 break;
             case Anchor.BotRight:
-                offsetX = -halfWidth - textureInfo_.trim_x;
-                offsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight;
+                anchorOffsetX = -halfWidth - textureInfo_.trim_x;
+                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight;
                 break;
             default:
-                offsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth * 0.5f;
-                offsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight * 0.5f;
+                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth * 0.5f;
+                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight * 0.5f;
                 break;
             }
         }
         else {
             switch ( anchor_ ) {
-            case Anchor.TopLeft     : offsetX = halfWidth;   offsetY = -halfHeight;  break;
-            case Anchor.TopCenter   : offsetX = 0.0f;        offsetY = -halfHeight;  break;
-            case Anchor.TopRight    : offsetX = -halfWidth;  offsetY = -halfHeight;  break;
+            case Anchor.TopLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = -halfHeight;  break;
+            case Anchor.TopCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = -halfHeight;  break;
+            case Anchor.TopRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = -halfHeight;  break;
 
-            case Anchor.MidLeft     : offsetX = halfWidth;   offsetY = 0.0f;         break;
-            case Anchor.MidCenter   : offsetX = 0.0f;        offsetY = 0.0f;         break;
-            case Anchor.MidRight    : offsetX = -halfWidth;  offsetY = 0.0f;         break;
+            case Anchor.MidLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = 0.0f;         break;
+            case Anchor.MidCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
+            case Anchor.MidRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = 0.0f;         break;
 
-            case Anchor.BotLeft     : offsetX = halfWidth;   offsetY = halfHeight;   break;
-            case Anchor.BotCenter   : offsetX = 0.0f;        offsetY = halfHeight;   break;
-            case Anchor.BotRight    : offsetX = -halfWidth;  offsetY = halfHeight;   break;
+            case Anchor.BotLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = halfHeight;   break;
+            case Anchor.BotCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = halfHeight;   break;
+            case Anchor.BotRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = halfHeight;   break;
 
-            default                 : offsetX = 0.0f;        offsetY = 0.0f;         break;
+            default                 : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
             }
         }
 
-        offsetX += offset_.x;
-        offsetY += offset_.y;
+        anchorOffsetX += offset_.x;
+        anchorOffsetY += offset_.y;
 
         Matrix4x4 l2w = cachedTransform.localToWorldMatrix;   // TODO: 把l2w缓存起来速度更快，其它地方也用的到
-        
-        Vector3 v0 = l2w.MultiplyPoint3x4(new Vector3(-halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
+                                                              // TODO: cache vertices before transform
+        //v1 v2
+        //v0 v3
+
+        Vector3 v0 = l2w.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
         v0.z = 0;   // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
-        _vertices[_startIndex + 0] = v0;
 
-        Vector3 v1 = l2w.MultiplyPoint3x4(new Vector3(-halfWidth + offsetX, halfHeight + offsetY, 0.0f));
+        Vector3 v1 = l2w.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
         v1.z = 0;
-        _vertices[_startIndex + 1] = v1;
 
-        Vector3 v2 = l2w.MultiplyPoint3x4(new Vector3(halfWidth + offsetX, halfHeight + offsetY, 0.0f));
+        Vector3 v2 = l2w.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
         v2.z = 0;
-        _vertices[_startIndex + 2] = v2;
 
-        Vector3 v3 = l2w.MultiplyPoint3x4(new Vector3(halfWidth + offsetX, -halfHeight + offsetY, 0.0f));
+        Vector3 v3 = l2w.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
         v3.z = 0;
+
+        // TODO: 优化成对l2w矩阵运算
+        if (shear_.x != 0) {
+            float offsetX = shear_.x * (v1.y - v0.y);
+            v0.x += offsetX;
+            v1.x -= offsetX;
+            v2.x -= offsetX;
+            v3.x += offsetX;
+        }
+        if (shear_.y != 0) {
+            float offsetY = shear_.y * (v2.x - v1.x);
+            v0.y += offsetY;
+            v1.y += offsetY;
+            v2.y -= offsetY;
+            v3.y -= offsetY;
+        }
+        _vertices[_startIndex + 0] = v0;
+        _vertices[_startIndex + 1] = v1;
+        _vertices[_startIndex + 2] = v2;
         _vertices[_startIndex + 3] = v3;
+        
         // TODO: pixel-perfect
     }
 }

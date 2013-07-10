@@ -126,6 +126,36 @@ public abstract class exSpriteBase : MonoBehaviour {
             }
         }
     }
+    
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Vector2 shear_ = Vector2.zero;
+    /// stretch sprite into skew
+    // ------------------------------------------------------------------ 
+
+    public Vector2 shear {
+        get { return shear_; }
+        set { 
+            if ( shear_ != value ) {
+                shear_ = value;
+                updateFlags |= UpdateFlags.Vertex;
+            }
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Vector2 perspective_ = Vector2.zero;
+    /// stretch sprite into trapezoid
+    // ------------------------------------------------------------------ 
+
+    public Vector2 perspective {
+        get { return perspective_; }
+        set { 
+            if ( perspective_ != value ) {
+                perspective_ = value;
+                updateFlags |= UpdateFlags.Vertex;
+            }
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
