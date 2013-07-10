@@ -62,6 +62,7 @@ public class exMesh : MonoBehaviour
         set {
             if (cachedRenderer) {
                 cachedRenderer.sharedMaterial = value;
+                UpdateDebugName();
             }
             else {
                 Debug.LogError("no MeshRenderer");
@@ -125,14 +126,15 @@ public class exMesh : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public static exMesh Create (exLayer _layer) {
-        GameObject go = new GameObject("_exMesh");
+        GameObject go = new GameObject();
         // 当在EX_DEBUG模式下，如果显示着GO的Inspector，再启动游戏，由于GO是DontSave的，会先被销毁。这时Unity将会报错，但不影响运行，这个问题在类似插件中也会存在。
         go.hideFlags = exReleaseFlags.hideAndDontSave | exReleaseFlags.notEditable;
         exMesh res = go.AddComponent<exMesh>();
+        res.UpdateDebugName(_layer.name);
 #if UNITY_EDITOR
         if (!UnityEditor.EditorApplication.isPlaying) {
             res.CreateMesh();
-        } 
+        }
 #endif
         return res;
     }
@@ -306,5 +308,32 @@ public class exMesh : MonoBehaviour
             cachedRenderer.receiveShadows = false;
             cachedRenderer.castShadows = false;
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    [System.Diagnostics.Conditional("UNITY_EDITOR"), System.Diagnostics.Conditional("EX_DEBUG")]
+    void UpdateDebugName (string layerName = null) {
+        if (string.IsNullOrEmpty(layerName)) {
+            string[] splitted = gameObject.name.Split('@');
+            if (splitted.Length > 0) {
+                layerName = gameObject.name.Split('@')[1];
+                Debug.Log("[UpdateDebugName|exMesh] ");
+            }
+        }
+        string newName = "_exMesh";
+        Material mat = material;
+        if (mat != null) {
+            if (mat.mainTexture) {
+                newName += ("[" + mat.mainTexture.name + "]");
+            }
+            else {
+                newName += ("[" + mat.name + "]");
+            }
+        }
+        newName += ("@" + layerName);
+        gameObject.name = newName;
     }
 }

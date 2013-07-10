@@ -221,14 +221,20 @@ public class ex2DMng : MonoBehaviour {
     }
     
     // ------------------------------------------------------------------ 
-    /// 重新排列所有layer的Z轴，使在LayerList越尾端的layer能渲染在越上层。
+    /// 重新排列所有layer的Z轴，使在LayerList越前端的layer能渲染在越上层。
     // ------------------------------------------------------------------ 
 
     public void UpdateLayerDepth () {
-        const float interval = 1.0f;
-        float cameraZ = cachedCamera.transform.position.z;
+        float cameraZ = cachedCamera.transform.position.z + cachedCamera.nearClipPlane;
+        float interval = 0.01f;
+        //if (Mathf.Abs(cameraZ) < 100000) {
+        //    interval = 0.01f;
+        //}
+        //else {
+        //    interval = 1f;
+        //}
         float occupiedZ = cameraZ;
-        for (int i = layerList.Count - 1; i >= 0 ; --i) {
+        for (int i = 0; i < layerList.Count; ++i) {
             exLayer layer = layerList[i];
             if (layer != null) {
                 occupiedZ = layer.SetWorldBoundsMinZ(occupiedZ + interval);
