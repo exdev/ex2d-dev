@@ -225,6 +225,20 @@ namespace UnityEngine {
         }
 #endregion
 
+        // ------------------------------------------------------------------ 
+        /// Set the global scale of the object
+        /// lossyScale is a convenience property that attempts to match the actual world scale as much as it can. 
+        /// If your objects are not skewed the value will be completely correct and 
+        /// most likely the value will not be very different if it contains skew too
+        // ------------------------------------------------------------------ 
+    
+        public static void SetLossyScale(this Transform trans, Vector3 worldScale) {
+            Vector3 oldWorldScale = trans.lossyScale;
+            Vector3 localScale = trans.localScale;
+            trans.localScale = new Vector3(worldScale.x / oldWorldScale.x * localScale.x,
+                                            worldScale.y / oldWorldScale.y * localScale.y,
+                                            worldScale.z / oldWorldScale.z * localScale.z);
+        }
     }
 
 }
