@@ -47,7 +47,7 @@ public static class MenuItems {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    [MenuItem ("ex2D/Atlas Editor", false, 100)]
+    [MenuItem ("ex2D/Atlas Editor", false, 101)]
     static void Open_AtlasEditor () {
         EditorWindow.GetWindow<exAtlasEditor>();
     }
@@ -56,7 +56,7 @@ public static class MenuItems {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    [MenuItem ("ex2D/2D Scene Editor", false, 101)]
+    [MenuItem ("ex2D/2D Scene Editor", false, 100)]
     static void Open_SceneEditor () {
         EditorWindow.GetWindow<exSceneEditor>();
     }

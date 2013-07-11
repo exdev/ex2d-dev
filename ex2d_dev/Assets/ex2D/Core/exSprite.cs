@@ -197,7 +197,7 @@ public class exSprite : exSpriteBase {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public override UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<int> _indices, List<Vector2> _uvs, List<Color32> _colors32) {
+    public override UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32) {
         if ((updateFlags & UpdateFlags.Vertex) != 0) {
             UpdateVertexBuffer(_vertices, vertexBufferIndex);
         }
@@ -225,10 +225,6 @@ public class exSprite : exSpriteBase {
             _colors32[vertexBufferIndex + 1] = new Color32(255, 255, 255, 255);
             _colors32[vertexBufferIndex + 2] = new Color32(255, 255, 255, 255);
             _colors32[vertexBufferIndex + 3] = new Color32(255, 255, 255, 255);
-        }
-        if ((updateFlags & UpdateFlags.Index) != 0) {
-            // TODO: resort
-            TestIndices(_indices);
         }
         UpdateFlags spriteUpdateFlags = updateFlags;
         updateFlags = UpdateFlags.None;

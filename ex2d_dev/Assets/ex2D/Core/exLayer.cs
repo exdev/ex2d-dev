@@ -143,10 +143,11 @@ public class exLayer : MonoBehaviour
                 
                 if (sprite.isOnEnabled) {
                     sprite.UpdateTransform();
-                    UpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.indices, mesh.uvs, mesh.colors32);
+                    UpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32);
                     meshUpdateFlags |= spriteUpdateFlags;
                 }
             }
+            // TODO: 如果需要排序，进行排序并且更新相关mesh的indices
             mesh.Apply(meshUpdateFlags);
         }
     }
