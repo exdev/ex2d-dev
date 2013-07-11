@@ -48,9 +48,9 @@ class exSpriteInspector : exSpriteBaseInspector {
         EditorGUILayout.Space();
 
         // textureInfo
-        Object oldTextureInfo = textureInfoProp.objectReferenceValue;
+        EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( textureInfoProp, new GUIContent("Texture Info") );
-        if ( textureInfoProp.objectReferenceValue != oldTextureInfo ) {
+        if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
                 exSprite sp = obj as exSprite;
                 if ( sp ) {
@@ -61,9 +61,9 @@ class exSpriteInspector : exSpriteBaseInspector {
         }
 
         // useTextureOffset
-        bool oldUseTextureOffset = useTextureOffsetProp.boolValue;
+        EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( useTextureOffsetProp, new GUIContent("Use Texture Offset") );
-        if ( useTextureOffsetProp.boolValue != oldUseTextureOffset ) {
+        if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
                 exSprite sp = obj as exSprite;
                 if ( sp ) {
@@ -73,10 +73,10 @@ class exSpriteInspector : exSpriteBaseInspector {
             }
         }
 
-        // useTextureOffset
-        Object oldShader = shaderProp.objectReferenceValue;
+        // shader
+        EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( shaderProp, new GUIContent("Shader") );
-        if ( shaderProp.objectReferenceValue != oldShader ) {
+        if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
                 exSprite sp = obj as exSprite;
                 if ( sp ) {

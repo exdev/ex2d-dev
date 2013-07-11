@@ -28,6 +28,7 @@ class exSpriteBaseInspector : Editor {
     SerializedProperty heightProp;
     SerializedProperty anchorProp;
     SerializedProperty offsetProp;
+    SerializedProperty shearProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -49,9 +50,9 @@ class exSpriteBaseInspector : Editor {
         EditorGUIUtility.LookLikeInspector();
 
         // customSize
-        bool oldCustomSize = customSizeProp.boolValue;
+        EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( customSizeProp, new GUIContent("Custom Size") );
-        if ( customSizeProp.boolValue != oldCustomSize ) {
+        if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
                 exSpriteBase sp = obj as exSpriteBase;
                 if ( sp ) {
@@ -61,11 +62,12 @@ class exSpriteBaseInspector : Editor {
             }
         }
 
+        // if customSize == true
         if ( customSizeProp.boolValue ) {
             // width
-            float oldWidth = widthProp.floatValue;
+            EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField ( widthProp, new GUIContent("Width") );
-            if ( widthProp.floatValue != oldWidth ) {
+            if ( EditorGUI.EndChangeCheck() ) {
                 foreach ( Object obj in serializedObject.targetObjects ) {
                     exSpriteBase sp = obj as exSpriteBase;
                     if ( sp ) {
@@ -76,9 +78,9 @@ class exSpriteBaseInspector : Editor {
             }
 
             // height
-            float oldHeight = heightProp.floatValue;
+            EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField ( heightProp, new GUIContent("Height") );
-            if ( heightProp.floatValue != oldHeight ) {
+            if ( EditorGUI.EndChangeCheck() ) {
                 foreach ( Object obj in serializedObject.targetObjects ) {
                     exSpriteBase sp = obj as exSpriteBase;
                     if ( sp ) {
@@ -88,6 +90,7 @@ class exSpriteBaseInspector : Editor {
                 }
             }
         }
+        // if customSize == false
         else {
             GUI.enabled = false;
             if ( serializedObject.isEditingMultipleObjects == false ) {
@@ -98,10 +101,10 @@ class exSpriteBaseInspector : Editor {
             GUI.enabled = true;
         }
 
-        //
-        int oldAnchor = anchorProp.enumValueIndex;
+        // anchor
+        EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( anchorProp, new GUIContent("Anchor") );
-        if ( anchorProp.enumValueIndex != oldAnchor ) {
+        if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
                 exSpriteBase sp = obj as exSpriteBase;
                 if ( sp ) {
@@ -111,14 +114,27 @@ class exSpriteBaseInspector : Editor {
             }
         }
 
-        //
-        Vector2 oldOffset = offsetProp.vector2Value;
-        EditorGUILayout.PropertyField ( offsetProp, new GUIContent("Offset"), true ); // TODO: don't expand, just display in one line
-        if ( offsetProp.vector2Value != oldOffset ) {
+        // offset
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( offsetProp, new GUIContent("Offset"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
                 exSpriteBase sp = obj as exSpriteBase;
                 if ( sp ) {
                     sp.offset = offsetProp.vector2Value;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        // shear
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( shearProp, new GUIContent("Shear"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteBase sp = obj as exSpriteBase;
+                if ( sp ) {
+                    sp.shear = shearProp.vector2Value;
                     EditorUtility.SetDirty(sp);
                 }
             }
@@ -135,6 +151,7 @@ class exSpriteBaseInspector : Editor {
         heightProp = serializedObject.FindProperty("height_");
         anchorProp = serializedObject.FindProperty("anchor_");
         offsetProp = serializedObject.FindProperty("offset_");
+        shearProp = serializedObject.FindProperty("shear_");
     }
 }
 
