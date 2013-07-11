@@ -235,9 +235,9 @@ namespace UnityEngine {
         public static void SetLossyScale(this Transform trans, Vector3 worldScale) {
             Vector3 oldWorldScale = trans.lossyScale;
             Vector3 localScale = trans.localScale;
-            trans.localScale = new Vector3(worldScale.x / oldWorldScale.x * localScale.x,
+            trans.localScale = new Vector3( worldScale.x / oldWorldScale.x * localScale.x,
                                             worldScale.y / oldWorldScale.y * localScale.y,
-                                            worldScale.z / oldWorldScale.z * localScale.z);
+                                            worldScale.z / oldWorldScale.z * localScale.z );
         }
     }
 
