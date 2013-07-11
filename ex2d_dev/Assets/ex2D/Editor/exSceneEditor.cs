@@ -116,8 +116,6 @@ class exSceneEditor : EditorWindow {
             editCamera.renderingPath = RenderingPath.Forward;
             editCamera.orthographic = true;
             editCamera.orthographicSize = 100.0f;
-            editCamera.transform.position = Vector3.zero;
-            editCamera.transform.rotation = Quaternion.identity;
         }
 
         title = "2D Scene Editor";
@@ -829,6 +827,29 @@ class exSceneEditor : EditorWindow {
             Vector3 trans_position = trans.position;
             Quaternion trans_rotation = trans.rotation;
             float handleSize = HandleUtility.GetHandleSize(trans_position);
+
+            // resize
+            exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
+            if ( spriteBase ) {
+                Vector2 center = new Vector2( trans_position.x, trans_position.y );
+                Vector2 size = new Vector2( spriteBase.width, spriteBase.height );
+                Vector2 min = center - size * 0.5f;
+                Vector2 max = center + size * 0.5f;
+                Vector2 dir = size.normalized;
+                Vector3 dir_a = new Vector3( dir.x, dir.y, 0.0f );
+                Vector3 dir_b = new Vector3( -dir.x, dir.y, 0.0f );
+
+                Handles.color = Color.white;
+                Handles.Slider ( trans_position + trans.up * size.y * 0.5f, trans_rotation * Vector3.up, handleSize * 0.05f, Handles.DotCap, 1 );
+                Handles.Slider ( trans_position - trans.up * size.y * 0.5f, trans_rotation * Vector3.up, handleSize * 0.05f, Handles.DotCap, 1 );
+                Handles.Slider ( trans_position + trans.right * size.x * 0.5f, trans_rotation * Vector3.right, handleSize * 0.05f, Handles.DotCap, 1 );
+                Handles.Slider ( trans_position - trans.right * size.x * 0.5f, trans_rotation * Vector3.right, handleSize * 0.05f, Handles.DotCap, 1 );
+
+                Handles.Slider ( trans_position + trans.up * size.y * 0.5f + trans.right * size.x * 0.5f, trans_rotation * dir_a, handleSize * 0.05f, Handles.DotCap, 1 );
+                Handles.Slider ( trans_position + trans.up * size.y * 0.5f - trans.right * size.x * 0.5f, trans_rotation * dir_b, handleSize * 0.05f, Handles.DotCap, 1 );
+                Handles.Slider ( trans_position - trans.up * size.y * 0.5f + trans.right * size.x * 0.5f, trans_rotation * dir_a, handleSize * 0.05f, Handles.DotCap, 1 );
+                Handles.Slider ( trans_position - trans.up * size.y * 0.5f - trans.right * size.x * 0.5f, trans_rotation * dir_b, handleSize * 0.05f, Handles.DotCap, 1 );
+            }
 
             // position
             Handles.color = new Color ( 0.858823538f, 0.243137255f, 0.113725491f, 0.93f );
