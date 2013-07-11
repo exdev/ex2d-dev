@@ -99,7 +99,7 @@ public abstract class exSpriteBase : MonoBehaviour {
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected Anchor anchor_ = Anchor.MidCenter;
-    /// the anchor position used in this plane
+    /// the anchor position used in this sprite
     // ------------------------------------------------------------------ 
 
     public Anchor anchor {
@@ -108,6 +108,21 @@ public abstract class exSpriteBase : MonoBehaviour {
             if ( anchor_ != value ) {
                 anchor_ = value;
                 updateFlags |= UpdateFlags.Vertex;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected float depth_ = 0;
+    /// The sorting depth of this sprite in its layer. Sprite with lower depth are rendered before sprites with higher depth.
+    // ------------------------------------------------------------------ 
+
+    public float depth {
+        get { return depth_; }
+        set {
+            if ( depth_ != value ) {
+                depth_ = value;
+                updateFlags |= UpdateFlags.Index;
             }
         }
     }
@@ -296,7 +311,7 @@ public abstract class exSpriteBase : MonoBehaviour {
     /// Update sprite's geometry data to buffers selectively depending on what has changed. 
     // ------------------------------------------------------------------ 
 
-    public abstract UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<int> _indices, List<Vector2> _uvs, List<Color32> _colors32);
+    public abstract UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32);
 
     // ------------------------------------------------------------------ 
     /// Add sprite's vertex indices to the buffer
@@ -326,7 +341,7 @@ public abstract class exSpriteBase : MonoBehaviour {
         List<int> indices = new List<int>(indexCount);
         List<Color32> colors = new List<Color32>(vertexCount);
         FillBuffers(_vertices, indices, _uvs, colors);
-        UpdateBuffers(_vertices, indices, _uvs, colors);
+        UpdateBuffers(_vertices, _uvs, colors);
 
         updateFlags = originalFlags;
         indexBufferIndex = originalIndexBufferIndex;

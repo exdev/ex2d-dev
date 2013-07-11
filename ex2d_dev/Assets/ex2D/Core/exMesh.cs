@@ -140,12 +140,11 @@ public class exMesh : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    /// \param _updateFlags   UpdateFlags of buffer changes.
-    /// Actually apply all previous buffer changes
+    /// Actually apply all buffer changes
     // ------------------------------------------------------------------ 
 
-    public void Apply (UpdateFlags _updateFlags = UpdateFlags.None) {
-        updateFlags |= _updateFlags;
+    public void Apply (UpdateFlags _additionalUpdateFlags = UpdateFlags.None) {
+        updateFlags |= _additionalUpdateFlags;
         if ((updateFlags & UpdateFlags.VertexAndIndex) == UpdateFlags.VertexAndIndex) {
             // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
             mesh.triangles = null;  //这里如果使用clear，那么uv和color就必须赋值，否则有时会出错
