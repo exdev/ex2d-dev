@@ -971,11 +971,13 @@ class exSceneEditor : EditorWindow {
             if ( layer != null && layer.show ) {
                 exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
                 foreach ( exSpriteBase node in spriteList ) {
-                    Rect boundingRect = MapBoundingRect ( _rect, node );
-                    if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||
-                         exGeometryUtility.RectRect_Intersect( _rect, boundingRect ) )
-                    {
-                        spriteNodes.Add(node);
+                    if ( node.enabled ) {
+                        Rect boundingRect = MapBoundingRect ( _rect, node );
+                        if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||
+                             exGeometryUtility.RectRect_Intersect( _rect, boundingRect ) )
+                        {
+                            spriteNodes.Add(node);
+                        }
                     }
                 }
             }
