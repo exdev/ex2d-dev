@@ -742,6 +742,9 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     Object PickObject ( Vector2 _position ) {
+        Object[] objs = PickRectObjects( new Rect(_position.x-1,_position.y-1,2,2) );
+        if ( objs.Length > 0 )
+            return objs[0];
         return null;
     }
 

@@ -191,6 +191,8 @@ class exSceneEditor : EditorWindow {
 
         //
         ProcessSceneEditorEvents();
+
+        rectSelection.SetSelection( Selection.objects );
         rectSelection.OnGUI();
 
         //
@@ -626,6 +628,8 @@ class exSceneEditor : EditorWindow {
                             EditorUtility.SetDirty(activeLayer);
                             EditorUtility.SetDirty(sprite);
                         }
+
+                        Selection.activeObject = gameObject;
                     }
                 }
 
@@ -819,31 +823,30 @@ class exSceneEditor : EditorWindow {
         Handles.ClearCamera( rect, editCamera );
         Handles.SetCamera( rect, editCamera );
 
-        Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
-        if ( selection.Length == 1 ) {
-            Transform trans = selection[0];
-
+        //
+        Transform trans = Selection.activeTransform;
+        if ( trans ) {
             Vector3 trans_position = trans.position;
             Quaternion trans_rotation = trans.rotation;
             float handleSize = HandleUtility.GetHandleSize(trans_position);
 
-            Handles.color = Color.red;
+            // position
+            Handles.color = new Color ( 0.858823538f, 0.243137255f, 0.113725491f, 0.93f );
             trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.right );
 
-            Handles.color = Color.green;
+            Handles.color = new Color ( 0.6039216f, 0.9529412f, 0.282352954f, 0.93f );
             trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.up );
 
             Handles.color = new Color( 0.8f, 0.8f, 0.8f, 0.93f );
             trans_position = Handles.FreeMoveHandle ( trans_position, trans_rotation, handleSize * 0.15f, Vector3.zero, Handles.RectangleCap );
 
+            // rotation
+            Handles.color = new Color ( 0.227450982f, 0.478431374f, 0.972549f, 0.93f );
+            trans_rotation = Handles.Disc ( trans_rotation, trans_position, Vector3.forward, handleSize * 0.5f, true, 1 );
+
+            //
             trans.position = trans_position;
-        }
-        else {
-            // TODO { 
-            // for ( int i = 0; i < selection.Length; ++i ) {
-            //     Transform trans = selection[i];
-            // }
-            // } TODO end 
+            trans.rotation = trans_rotation;
         }
         editCamera.enabled = false;
         GUI.EndGroup();
@@ -881,6 +884,9 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     Object PickObject ( Vector2 _position ) {
+        Object[] objs = PickRectObjects( new Rect(_position.x-1,_position.y-1,2,2) );
+        if ( objs.Length > 0 )
+            return objs[0];
         return null;
     }
 
@@ -909,6 +915,10 @@ class exSceneEditor : EditorWindow {
 
     void ConfirmRectSelection ( Object[] _objs ) {
         Selection.objects = _objs;
+        if ( _objs.Length > 0 )
+            Selection.activeObject = _objs[0];
+        else
+            Selection.activeObject = null;
     }
 
     // ------------------------------------------------------------------ 
