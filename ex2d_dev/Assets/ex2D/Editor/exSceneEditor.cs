@@ -830,7 +830,7 @@ class exSceneEditor : EditorWindow {
 
             // resize
             exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
-            if ( spriteBase ) {
+            if ( spriteBase && spriteBase.customSize ) {
                 Vector2 center = new Vector2( trans_position.x, trans_position.y );
                 Vector2 size = new Vector2( spriteBase.width, spriteBase.height );
                 Vector2 min = center - size * 0.5f;
@@ -838,18 +838,63 @@ class exSceneEditor : EditorWindow {
                 Vector2 dir = size.normalized;
                 Vector3 dir_a = new Vector3( dir.x, dir.y, 0.0f );
                 Vector3 dir_b = new Vector3( -dir.x, dir.y, 0.0f );
+                Vector3 result = Vector3.zero; 
 
                 Handles.color = Color.white;
-                Handles.Slider ( trans_position + trans.up * size.y * 0.5f, trans_rotation * Vector3.up, handleSize * 0.05f, Handles.DotCap, 1 );
-                Handles.Slider ( trans_position - trans.up * size.y * 0.5f, trans_rotation * Vector3.up, handleSize * 0.05f, Handles.DotCap, 1 );
-                Handles.Slider ( trans_position + trans.right * size.x * 0.5f, trans_rotation * Vector3.right, handleSize * 0.05f, Handles.DotCap, 1 );
-                Handles.Slider ( trans_position - trans.right * size.x * 0.5f, trans_rotation * Vector3.right, handleSize * 0.05f, Handles.DotCap, 1 );
 
-                Handles.Slider ( trans_position + trans.up * size.y * 0.5f + trans.right * size.x * 0.5f, trans_rotation * dir_a, handleSize * 0.05f, Handles.DotCap, 1 );
-                Handles.Slider ( trans_position + trans.up * size.y * 0.5f - trans.right * size.x * 0.5f, trans_rotation * dir_b, handleSize * 0.05f, Handles.DotCap, 1 );
-                Handles.Slider ( trans_position - trans.up * size.y * 0.5f + trans.right * size.x * 0.5f, trans_rotation * dir_a, handleSize * 0.05f, Handles.DotCap, 1 );
-                Handles.Slider ( trans_position - trans.up * size.y * 0.5f - trans.right * size.x * 0.5f, trans_rotation * dir_b, handleSize * 0.05f, Handles.DotCap, 1 );
+                EditorGUI.BeginChangeCheck();
+                result = Handles.Slider ( trans_position + trans.right * size.x * 0.5f, trans_rotation * Vector3.right, handleSize * 0.05f, Handles.DotCap, 1 );
+                max.x = result.x;
+                if ( EditorGUI.EndChangeCheck() ) goto UPDATE_SIZE;
+
+                EditorGUI.BeginChangeCheck();
+                result = Handles.Slider ( trans_position - trans.right * size.x * 0.5f, trans_rotation * Vector3.right, handleSize * 0.05f, Handles.DotCap, 1 );
+                min.x = result.x;
+                if ( EditorGUI.EndChangeCheck() ) goto UPDATE_SIZE;
+
+                EditorGUI.BeginChangeCheck();
+                result = Handles.Slider ( trans_position + trans.up * size.y * 0.5f, trans_rotation * Vector3.up, handleSize * 0.05f, Handles.DotCap, 1 );
+                max.y = result.y;
+                if ( EditorGUI.EndChangeCheck() ) goto UPDATE_SIZE;
+
+                EditorGUI.BeginChangeCheck();
+                result = Handles.Slider ( trans_position - trans.up * size.y * 0.5f, trans_rotation * Vector3.up, handleSize * 0.05f, Handles.DotCap, 1 );
+                min.y = result.y;
+                if ( EditorGUI.EndChangeCheck() ) goto UPDATE_SIZE;
+
+                EditorGUI.BeginChangeCheck();
+                result = Handles.Slider ( trans_position + trans.right * size.x * 0.5f + trans.up * size.y * 0.5f, trans_rotation * dir_a, handleSize * 0.05f, Handles.DotCap, 1 );
+                max = result;
+                if ( EditorGUI.EndChangeCheck() ) goto UPDATE_SIZE;
+
+                EditorGUI.BeginChangeCheck();
+                result = Handles.Slider ( trans_position - trans.right * size.x * 0.5f + trans.up * size.y * 0.5f, trans_rotation * dir_b, handleSize * 0.05f, Handles.DotCap, 1 );
+                min.x = result.x;
+                max.y = result.y;
+                if ( EditorGUI.EndChangeCheck() ) goto UPDATE_SIZE;
+
+                EditorGUI.BeginChangeCheck();
+                result = Handles.Slider ( trans_position + trans.right * size.x * 0.5f - trans.up * size.y * 0.5f, trans_rotation * dir_b, handleSize * 0.05f, Handles.DotCap, 1 );
+                max.x = result.x;
+                min.y = result.y;
+                if ( EditorGUI.EndChangeCheck() ) goto UPDATE_SIZE;
+
+                EditorGUI.BeginChangeCheck();
+                result = Handles.Slider ( trans_position - trans.right * size.x * 0.5f - trans.up * size.y * 0.5f, trans_rotation * dir_a, handleSize * 0.05f, Handles.DotCap, 1 );
+                min = result;
+                if ( EditorGUI.EndChangeCheck() ) goto UPDATE_SIZE;
+
+                goto SKIP;
+UPDATE_SIZE:
+                center = (max + min) * 0.5f;
+                size = max - min;
+
+                trans_position.x = center.x;
+                trans_position.y = center.y;
+                spriteBase.width = size.x;
+                spriteBase.height = size.y;
             }
+SKIP:
 
             // position
             Handles.color = new Color ( 0.858823538f, 0.243137255f, 0.113725491f, 0.93f );
