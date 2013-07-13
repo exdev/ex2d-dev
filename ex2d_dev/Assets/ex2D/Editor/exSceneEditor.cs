@@ -209,6 +209,10 @@ class exSceneEditor : EditorWindow {
         curSerializedObject = null;
         activeLayer = null;
         // draggingLayer = null; TODO
+
+        if ( ex2DMng.instance ) {
+            ex2DMng.instance.ForceRenderScene();
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -248,8 +252,10 @@ class exSceneEditor : EditorWindow {
         }
 
         // SerializedObject
-        if ( ex2DMng.instance != null )
+        if ( ex2DMng.instance != null ) {
             curSerializedObject = new SerializedObject(ex2DMng.instance);
+            ex2DMng.instance.ForceRenderScene();
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -812,11 +818,12 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void ProcessSceneEditorHandles () {
+
         //
         GUI.BeginGroup( sceneViewRect );
         editCamera.enabled = true;
         editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
-        editCamera.orthographicSize = (sceneViewRect.height/2.0f) / scale;
+        editCamera.orthographicSize = (sceneViewRect.height * 0.5f) / scale;
         Rect rect = new Rect( 0, 0, sceneViewRect.width, sceneViewRect.height );
         Handles.ClearCamera( rect, editCamera );
         Handles.SetCamera( rect, editCamera );
@@ -850,43 +857,31 @@ class exSceneEditor : EditorWindow {
 
                 EditorGUI.BeginChangeCheck();
 
-                result = Handles.Slider ( new Vector3( max.x, 0.0f, 0.0f ), dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
-                max.x = result.x;
-                max.x = Mathf.Max( min.x, max.x );
+                    result = Handles.Slider ( new Vector3( max.x, 0.0f, 0.0f ), dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
+                    max.x = result.x;
 
-                result = Handles.Slider ( new Vector3( min.x, 0.0f, 0.0f ), dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
-                min.x = result.x;
-                min.x = Mathf.Min( min.x, max.x );
+                    result = Handles.Slider ( new Vector3( min.x, 0.0f, 0.0f ), dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
+                    min.x = result.x;
 
-                result = Handles.Slider ( new Vector3( 0.0f, max.y, 0.0f ), dir_up, handleSize * 0.05f, Handles.DotCap, -1 );
-                max.y = result.y;
-                max.y = Mathf.Max( min.y, max.y );
+                    result = Handles.Slider ( new Vector3( 0.0f, max.y, 0.0f ), dir_up, handleSize * 0.05f, Handles.DotCap, -1 );
+                    max.y = result.y;
 
-                result = Handles.Slider ( new Vector3( 0.0f, min.y, 0.0f ), dir_up, handleSize * 0.05f, Handles.DotCap, -1 );
-                min.y = result.y;
-                min.y = Mathf.Min( min.y, max.y );
+                    result = Handles.Slider ( new Vector3( 0.0f, min.y, 0.0f ), dir_up, handleSize * 0.05f, Handles.DotCap, -1 );
+                    min.y = result.y;
 
-                result = Handles.Slider ( new Vector3( max.x, max.y, 0.0f ), dir_a, handleSize * 0.05f, Handles.DotCap, -1 );
-                max = result;
-                max.x = Mathf.Max( min.x, max.x );
-                max.y = Mathf.Max( min.y, max.y );
+                    result = Handles.Slider ( new Vector3( max.x, max.y, 0.0f ), dir_a, handleSize * 0.05f, Handles.DotCap, -1 );
+                    max = result;
 
-                result = Handles.Slider ( new Vector3( min.x, max.y, 0.0f ), dir_b, handleSize * 0.05f, Handles.DotCap, -1 );
-                min.x = result.x;
-                min.x = Mathf.Min( min.x, max.x );
-                max.y = result.y;
-                max.y = Mathf.Max( min.y, max.y );
+                    result = Handles.Slider ( new Vector3( min.x, max.y, 0.0f ), dir_b, handleSize * 0.05f, Handles.DotCap, -1 );
+                    min.x = result.x;
+                    max.y = result.y;
 
-                result = Handles.Slider ( new Vector3( max.x, min.y, 0.0f ), dir_b, handleSize * 0.05f, Handles.DotCap, -1 );
-                max.x = result.x;
-                max.x = Mathf.Max( min.x, max.x );
-                min.y = result.y;
-                min.y = Mathf.Min( min.y, max.y );
+                    result = Handles.Slider ( new Vector3( max.x, min.y, 0.0f ), dir_b, handleSize * 0.05f, Handles.DotCap, -1 );
+                    max.x = result.x;
+                    min.y = result.y;
 
-                result = Handles.Slider ( new Vector3( min.x, min.y, 0.0f ), dir_a, handleSize * 0.05f, Handles.DotCap, -1 );
-                min = result;
-                min.x = Mathf.Min( min.x, max.x );
-                min.y = Mathf.Min( min.y, max.y );
+                    result = Handles.Slider ( new Vector3( min.x, min.y, 0.0f ), dir_a, handleSize * 0.05f, Handles.DotCap, -1 );
+                    min = result;
 
                 if ( EditorGUI.EndChangeCheck() ) {
                     center = (max + min) * 0.5f;
@@ -897,28 +892,37 @@ class exSceneEditor : EditorWindow {
                     trans_position.y = pos.y;
                     spriteBase.width = size.x;
                     spriteBase.height = size.y;
-
                 }
                 Handles.matrix = oldMatrix;
             }
 
-            // position
-            Handles.color = new Color ( 0.858823538f, 0.243137255f, 0.113725491f, 0.93f );
-            trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.right );
+            EditorGUI.BeginChangeCheck();
 
-            Handles.color = new Color ( 0.6039216f, 0.9529412f, 0.282352954f, 0.93f );
-            trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.up );
+                // position
+                Handles.color = new Color ( 0.858823538f, 0.243137255f, 0.113725491f, 0.93f );
+                trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.right );
 
-            Handles.color = new Color( 0.8f, 0.8f, 0.8f, 0.93f );
-            trans_position = Handles.FreeMoveHandle ( trans_position, trans_rotation, handleSize * 0.15f, Vector3.zero, Handles.RectangleCap );
+                Handles.color = new Color ( 0.6039216f, 0.9529412f, 0.282352954f, 0.93f );
+                trans_position = Handles.Slider ( trans_position, trans_rotation * Vector3.up );
 
-            // rotation
-            Handles.color = new Color ( 0.227450982f, 0.478431374f, 0.972549f, 0.93f );
-            trans_rotation = Handles.Disc ( trans_rotation, trans_position, Vector3.forward, handleSize * 0.5f, true, 1 );
+                Handles.color = new Color( 0.8f, 0.8f, 0.8f, 0.93f );
+                trans_position = Handles.FreeMoveHandle ( trans_position, trans_rotation, handleSize * 0.15f, Vector3.zero, Handles.RectangleCap );
 
-            //
-            trans.position = trans_position;
-            trans.rotation = trans_rotation;
+                // rotation
+                Handles.color = new Color ( 0.227450982f, 0.478431374f, 0.972549f, 0.93f );
+                trans_rotation = Handles.Disc ( trans_rotation, trans_position, Vector3.forward, handleSize * 0.5f, true, 1 );
+
+            if ( EditorGUI.EndChangeCheck() ) {
+                trans.position = trans_position;
+                trans.rotation = trans_rotation;
+            }
+
+            if ( spriteBase ) {
+                spriteBase.UpdateTransform ();
+                if ( spriteBase.updateFlags != UpdateFlags.None ) {
+                    ex2DMng.instance.RenderScene();
+                }
+            }
         }
         editCamera.enabled = false;
         GUI.EndGroup();
