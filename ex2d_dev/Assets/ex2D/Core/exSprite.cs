@@ -163,43 +163,23 @@ public class exSprite : exSpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
 
 #region Functions used to update geometry buffer
-       
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
-    public override UpdateFlags FillBuffers (List<Vector3> _vertices, List<int> _indices, List<Vector2> _uvs, List<Color32> _colors32) {
-        vertexBufferIndex = _vertices.Count;
-
-        _vertices.Add(new Vector3());
-        _vertices.Add(new Vector3());
-        _vertices.Add(new Vector3());
-        _vertices.Add(new Vector3());
-        _colors32.Add(new Color32());
-        _colors32.Add(new Color32());
-        _colors32.Add(new Color32());
-        _colors32.Add(new Color32());
-        _uvs.Add(new Vector2());
-        _uvs.Add(new Vector2());
-        _uvs.Add(new Vector2());
-        _uvs.Add(new Vector2());
-
-        updateFlags = (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
-
-        bool show = isOnEnabled;
-        if (show) {
-            AddToIndices(_indices);
-        }
-        return updateFlags;
-    }
 
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public override UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32) {
+    public override UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
         if ((updateFlags & UpdateFlags.Vertex) != 0) {
             UpdateVertexBuffer(_vertices, vertexBufferIndex);
+        }
+        if ((updateFlags & UpdateFlags.Index) != 0 && _indices != null) {
+            _indices[indexBufferIndex]     = vertexBufferIndex;
+            _indices[indexBufferIndex + 1] = vertexBufferIndex + 1;
+            _indices[indexBufferIndex + 2] = vertexBufferIndex + 2;
+            _indices[indexBufferIndex + 3] = vertexBufferIndex + 2;
+            _indices[indexBufferIndex + 4] = vertexBufferIndex + 3;
+            _indices[indexBufferIndex + 5] = vertexBufferIndex;
+            TestIndices(_indices);
         }
         if ((updateFlags & UpdateFlags.UV) != 0) {
             Vector2 texelSize = textureInfo.texture.texelSize;
@@ -231,28 +211,6 @@ public class exSprite : exSpriteBase {
         return spriteUpdateFlags;
     }
 
-    // ------------------------------------------------------------------ 
-    // Add and resort indices by depth
-    // ------------------------------------------------------------------ 
-
-    public override void AddToIndices (List<int> _indices) {
-        exDebug.Assert(!isInIndexBuffer);
-        if (!isInIndexBuffer) {
-            indexBufferIndex = _indices.Count;
-            _indices.Add(vertexBufferIndex);
-            _indices.Add(vertexBufferIndex + 1);
-            _indices.Add(vertexBufferIndex + 2);
-            _indices.Add(vertexBufferIndex + 2);
-            _indices.Add(vertexBufferIndex + 3);
-            _indices.Add(vertexBufferIndex);
-        
-            updateFlags |= UpdateFlags.Index;
-
-            // TODO: resort indices by depth
-            TestIndices(_indices);
-        }
-    }
-
 #endregion // Functions used to update geometry buffer
     
     // ------------------------------------------------------------------ 
@@ -260,11 +218,6 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     public override Rect GetAABoundingRect () {
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
-            cachedTransform = transform;
-        }
-#endif
         List<Vector3> vertices = new List<Vector3>(vertexCount);    // TODO: use global static temp List instead
         for (int i = 0; i < vertexCount; ++i) {
             vertices.Add(new Vector3());
@@ -323,11 +276,6 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
     
     void UpdateVertexBuffer (List<Vector3> _vertices, int _startIndex) {
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
-            cachedTransform = transform;
-        }
-#endif
         float anchorOffsetX = 0.0f;
         float anchorOffsetY = 0.0f;
         float halfWidth = width * 0.5f;

@@ -28,6 +28,7 @@ class exSpriteBaseInspector : Editor {
     SerializedProperty heightProp;
     SerializedProperty anchorProp;
     SerializedProperty offsetProp;
+    SerializedProperty depthProp;
     SerializedProperty shearProp;
 
     // ------------------------------------------------------------------ 
@@ -116,6 +117,19 @@ class exSpriteBaseInspector : Editor {
 
         // offset
         EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( depthProp, new GUIContent("Depth") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteBase sp = obj as exSpriteBase;
+                if ( sp ) {
+                    sp.depth = depthProp.floatValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        // depth
+        EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( offsetProp, new GUIContent("Offset"), true );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
@@ -151,6 +165,7 @@ class exSpriteBaseInspector : Editor {
         heightProp = serializedObject.FindProperty("height_");
         anchorProp = serializedObject.FindProperty("anchor_");
         offsetProp = serializedObject.FindProperty("offset_");
+        depthProp = serializedObject.FindProperty("depth_");
         shearProp = serializedObject.FindProperty("shear_");
     }
 }

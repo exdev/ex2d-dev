@@ -42,7 +42,7 @@ public enum UpdateFlags {
 [RequireComponent(typeof(MeshRenderer))]
 public class exMesh : MonoBehaviour
 {
-    const int RESERVED_INDEX_COUNT = 6;    // 如果不手动给出，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
+    public const int QUAD_INDEX_COUNT = 6;
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -70,8 +70,11 @@ public class exMesh : MonoBehaviour
         }
     }
 
-    /// The corresponding sprite list. Only used by exLayer, just place here for convenience.
+    /// sprite序列，用于索引vertices。Only used by exLayer, just place here for convenience.
     public List<exSpriteBase> spriteList = new List<exSpriteBase>();
+
+    /// sprite序列，用于索引indices，顺序和sprite在indices中的顺序一致，也就是按照深度值从小到大排序。Only used by exLayer, just place here for convenience.
+    public List<exSpriteBase> sortedSpriteList = new List<exSpriteBase>();
     
     [HideInInspector] public Mesh mesh;
 
@@ -80,9 +83,9 @@ public class exMesh : MonoBehaviour
     /// vertices的数量和索引都保持和uvs, colors, normals, tangents一致
     public List<Vector3> vertices = new List<Vector3>();
 
-    /// cache mesh.triangles
-    /// 按深度排序，深度一样的话，按加入的时间排序
-    public List<int> indices = new List<int>(RESERVED_INDEX_COUNT);
+    /// cache mesh.triangles (按深度排序)
+    // 如果不手动给出，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
+    public List<int> indices = new List<int>(QUAD_INDEX_COUNT); 
 
     public List<Vector2> uvs = new List<Vector2>();       ///< cache mesh.vertices
     public List<Color32> colors32 = new List<Color32>();  ///< cache mesh.colors32
@@ -273,13 +276,14 @@ public class exMesh : MonoBehaviour
 
     public void Clear () {
         spriteList.Clear();
+        sortedSpriteList.Clear();
         vertices.Clear();
         indices.Clear();
         uvs.Clear();
         colors32.Clear();
 
 #if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
+        if (UnityEditor.EditorApplication.isPlaying == false) {
             Apply();
         }
 #endif

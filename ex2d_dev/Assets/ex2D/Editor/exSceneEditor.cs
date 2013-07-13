@@ -254,7 +254,8 @@ class exSceneEditor : EditorWindow {
         // SerializedObject
         if ( ex2DMng.instance != null ) {
             curSerializedObject = new SerializedObject(ex2DMng.instance);
-            ex2DMng.instance.ForceRenderScene();
+            ex2DMng.instance.RenderScene();
+            ex2DMng.instance.UpdateLayerDepth();
         }
     }
 
@@ -668,8 +669,8 @@ class exSceneEditor : EditorWindow {
                                 editCamera.transform.position.y + (_rect.height * 0.5f) / scale );
 
             // draw culled sprite nodes
-            for ( int i = spriteNodes.Count-1; i >= 0; --i ) {
-                DrawNode ( spriteNodes[i] );
+            foreach (exSpriteBase node in spriteNodes) {
+                DrawNode ( node );
             }
 
             // draw selected objects
@@ -972,8 +973,8 @@ class exSceneEditor : EditorWindow {
 
     Object[] PickRectObjects ( Rect _rect ) {
         List<Object> objects = new List<Object>();
-
-        foreach ( exSpriteBase node in spriteNodes ) {
+        for ( int i = spriteNodes.Count-1; i >= 0; --i ) {
+            exSpriteBase node = spriteNodes[i];
             Rect boundingRect = MapBoundingRect ( sceneViewRect, node );
             if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||
                  exGeometryUtility.RectRect_Intersect( _rect, boundingRect ) )
@@ -1056,6 +1057,7 @@ class exSceneEditor : EditorWindow {
             exLayer layer = ex2DMng.instance.layerList[i];
             if ( layer != null && layer.show ) {
                 exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
+                System.Array.Sort<exSpriteBase>(spriteList);
                 foreach ( exSpriteBase node in spriteList ) {
                     if ( node.enabled ) {
                         Rect boundingRect = MapBoundingRect ( _rect, node );

@@ -36,8 +36,8 @@ public enum Anchor {
 ///////////////////////////////////////////////////////////////////////////////
 
 [ExecuteInEditMode]
-public abstract class exSpriteBase : MonoBehaviour {
-    
+public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteBase> {
+
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -179,8 +179,6 @@ public abstract class exSpriteBase : MonoBehaviour {
 
     [System.NonSerialized] public UpdateFlags updateFlags = UpdateFlags.All;    // this value will reset after every UpdateBuffers()
 
-    [System.NonSerialized] public Transform cachedTransform = null;
-/*  // we dont need to do this if ExecuteInEditMode.
 #if !UNITY_EDITOR
     /// cached transform, optimized runtime version, only available after Awake
     [System.NonSerialized] public Transform cachedTransform = null;
@@ -189,7 +187,7 @@ public abstract class exSpriteBase : MonoBehaviour {
     [System.NonSerialized] private Transform cachedTransform_ = null;
     public Transform cachedTransform {
         get {
-            if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
+            if (UnityEditor.EditorApplication.isPlaying == false && cachedTransform_ == null) {
                 cachedTransform_ = transform;
             }
             return cachedTransform_;
@@ -199,7 +197,6 @@ public abstract class exSpriteBase : MonoBehaviour {
         }
     }
 #endif
-*/
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
@@ -286,6 +283,22 @@ public abstract class exSpriteBase : MonoBehaviour {
                        "a sprite's logic visibility should equals to it's triangle visibility", this);
     }
 
+    // ------------------------------------------------------------------ 
+    /// Compare sprites by depth
+    /// 排序时，如果depth重复了，当两个sprite在同一个mesh时，将是稳定排序(按添加的先后次序比较)；
+    /// 如果不在同一个mesh，将是不稳定排序。
+    // ------------------------------------------------------------------ 
+    
+    public int CompareTo(exSpriteBase _other) {
+        int depthCompare = depth_.CompareTo(_other.depth);
+        if (depthCompare != 0) {
+            return depthCompare;
+        }
+        else {
+            return spriteIndex.CompareTo(_other.spriteIndex);
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -321,12 +334,20 @@ public abstract class exSpriteBase : MonoBehaviour {
 #region Functions used to update geometry buffer.
 
     // ------------------------------------------------------------------ 
-    /// \return the update flags of changed buffer
-    /// 
     /// Add sprite's geometry data to buffers
     // ------------------------------------------------------------------ 
 
-    public abstract UpdateFlags FillBuffers (List<Vector3> _vertices, List<int> _indices, List<Vector2> _uvs, List<Color32> _colors32);
+    public void FillBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32) {
+        vertexBufferIndex = _vertices.Count;
+
+        for (int i = 0; i < vertexCount; ++i) {
+            _vertices.Add(new Vector3());
+            _colors32.Add(new Color32());
+            _uvs.Add(new Vector2());
+        }
+        
+        updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+    }
 
     // ------------------------------------------------------------------ 
     /// \return the update flags of changed buffer
@@ -334,13 +355,14 @@ public abstract class exSpriteBase : MonoBehaviour {
     /// Update sprite's geometry data to buffers selectively depending on what has changed. 
     // ------------------------------------------------------------------ 
 
-    public abstract UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32);
+    public abstract UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices = null);
 
     // ------------------------------------------------------------------ 
+    /// \param _sortedSpriteList 表示_indices对应的sprite序列
     /// Add sprite's vertex indices to the buffer
     // ------------------------------------------------------------------ 
 
-    public abstract void AddToIndices (List<int> _indices);
+    //public abstract void InsertToIndexBuffer (List<int> _indices, List<exSpriteBase> _sortedSpriteList);
 
 #if UNITY_EDITOR
 
@@ -349,25 +371,16 @@ public abstract class exSpriteBase : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void GetBuffers (List<Vector3> _vertices, List<Vector2> _uvs) {
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
-            cachedTransform = transform;
-        }
-#endif
         UpdateFlags originalFlags = updateFlags;
-        int originalIndexBufferIndex = indexBufferIndex;
         int originalVertexBufferIndex = vertexBufferIndex;
 
-        indexBufferIndex = -1;
         _vertices.Clear();
         _uvs.Clear();
-        List<int> indices = new List<int>(indexCount);
         List<Color32> colors = new List<Color32>(vertexCount);
-        FillBuffers(_vertices, indices, _uvs, colors);
+        FillBuffers(_vertices, _uvs, colors);
         UpdateBuffers(_vertices, _uvs, colors);
 
         updateFlags = originalFlags;
-        indexBufferIndex = originalIndexBufferIndex;
         vertexBufferIndex = originalVertexBufferIndex;
     }
 
@@ -392,11 +405,6 @@ public abstract class exSpriteBase : MonoBehaviour {
     // ------------------------------------------------------------------ 
     
     public void UpdateTransform () {
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
-            cachedTransform = transform;
-        }
-#endif
         if (cachedTransform.hasChanged) {
             updateFlags |= UpdateFlags.Vertex;
             cachedTransform.hasChanged = false;
