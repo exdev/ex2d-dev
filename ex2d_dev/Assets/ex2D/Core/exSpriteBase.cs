@@ -122,7 +122,11 @@ public abstract class exSpriteBase : MonoBehaviour {
         set {
             if ( depth_ != value ) {
                 depth_ = value;
-                updateFlags |= UpdateFlags.Index;
+                // 先直接重加到layer里，以后再做优化
+                exLayer originalLayer = layer_;
+                SetLayer(null);
+                SetLayer(originalLayer);
+                //updateFlags |= UpdateFlags.Index;
             }
         }
     }
@@ -172,11 +176,30 @@ public abstract class exSpriteBase : MonoBehaviour {
     // ------------------------------------------------------------------ 
     /// The current updateFlags
     // ------------------------------------------------------------------ 
-    // TODO: this value will reset after every UpdateBuffers()
 
-    [System.NonSerialized] public UpdateFlags updateFlags = UpdateFlags.All;
+    [System.NonSerialized] public UpdateFlags updateFlags = UpdateFlags.All;    // this value will reset after every UpdateBuffers()
 
-    [System.NonSerialized] public Transform cachedTransform = null;     ///< only available after Awake
+    [System.NonSerialized] public Transform cachedTransform = null;
+/*  // we dont need to do this if ExecuteInEditMode.
+#if !UNITY_EDITOR
+    /// cached transform, optimized runtime version, only available after Awake
+    [System.NonSerialized] public Transform cachedTransform = null;
+#else
+    /// cached transform, editor version. 
+    [System.NonSerialized] private Transform cachedTransform_ = null;
+    public Transform cachedTransform {
+        get {
+            if (!UnityEditor.EditorApplication.isPlaying && cachedTransform == null) {
+                cachedTransform_ = transform;
+            }
+            return cachedTransform_;
+        }
+        set {
+            cachedTransform_ = value;
+        }
+    }
+#endif
+*/
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties

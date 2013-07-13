@@ -110,13 +110,13 @@ public class exLayer : MonoBehaviour
             if (mesh != null) {
                 for (int s = 0; s < mesh.spriteList.Count; ++s) {
             	    exSpriteBase sprite = mesh.spriteList[s];
-                    exDebug.Assert(sprite);
-                    if (sprite) {
+                    exDebug.Assert(sprite != null);
+                    if (sprite != null) {
                         sprite.ResetLayerProperties();
                     }
                 }
                 //mesh.Clear();
-                mesh.gameObject.DestroyImmediate(); //dont save go will auto destroy
+                mesh.gameObject.DestroyImmediate(); //dont save GO will auto destroy
             }
         }
 		meshList.Clear();
@@ -173,7 +173,7 @@ public class exLayer : MonoBehaviour
             return;
         }
         _sprite.layer = this;
-        if (_sprite.transform.IsChildOf(transform) == false) {
+        if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
             _sprite.transform.parent = transform;
         }
         // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
@@ -231,17 +231,10 @@ public class exLayer : MonoBehaviour
         if (!_sprite.isInIndexBuffer) {
             exMesh mesh = FindMesh(_sprite);
             if (mesh != null) {
-                bool hasSprite = mesh.spriteList.Contains(_sprite);
-                if (!hasSprite) {
-                    Debug.LogError("can't find sprite to show");
-                    return;
-                }
-                // show
                 if (!_sprite.isInIndexBuffer) {
                     _sprite.AddToIndices(mesh.indices);
                     mesh.updateFlags |= UpdateFlags.Index;
                 }
-
 #if UNITY_EDITOR
                 if (!UnityEditor.EditorApplication.isPlaying) {
                     mesh.Apply();
@@ -259,18 +252,11 @@ public class exLayer : MonoBehaviour
         if (_sprite.isInIndexBuffer) {
             exMesh mesh = FindMesh(_sprite);
             if (mesh != null) {
-                bool hasSprite = mesh.spriteList.Contains(_sprite);
-                if (!hasSprite) {
-                    Debug.LogError("can't find sprite to hide");
-                    return;
-                }
-                // hide
                 if (_sprite.isInIndexBuffer) {
                     RemoveIndices(mesh, _sprite);
                     mesh.updateFlags |= UpdateFlags.Index;
                 }
                 exDebug.Assert(_sprite.indexBufferIndex == -1);
-
 #if UNITY_EDITOR
                 if (!UnityEditor.EditorApplication.isPlaying) {
                     mesh.Apply();
@@ -373,11 +359,6 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     private void Remove (exMesh _mesh, exSpriteBase _sprite) {
-        bool hasSprite = _mesh.spriteList.Contains(_sprite);
-        if (!hasSprite) {
-            Debug.LogError("can't find sprite to remove");
-            return;
-        }
         _mesh.spriteList.RemoveAt(_sprite.spriteIndex);
         
         for (int i = _sprite.spriteIndex; i < _mesh.spriteList.Count; ++i) {
