@@ -39,7 +39,8 @@ public enum LayerType
 [ExecuteInEditMode]
 public class exLayer : MonoBehaviour
 {
-    const int MAX_DYNAMIC_VERTEX_COUNT = 300;    ///< 超过这个数量的话，layer将会自动进行拆分
+    const int MAX_DYNAMIC_VERTEX_COUNT = 300;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
+    const int MAX_STATIC_VERTEX_COUNT = 65000;   ///< 超过这个数量的话，static layer将会自动进行拆分
     
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -195,24 +196,16 @@ public class exLayer : MonoBehaviour
         }
         // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
         exMesh sameDrawcallMesh = null;
-        if (layerType == LayerType.Dynamic) {
-            for (int i = 0; i < meshList.Count; ++i) {
-                exMesh mesh = meshList[i];
-		        if (mesh != null && mesh.material == mat && mesh.vertexCount < MAX_DYNAMIC_VERTEX_COUNT) {
-                    sameDrawcallMesh = meshList[i];
-                    break;
-		        }
-            }
+        int maxVertexCount = (layerType == LayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : MAX_STATIC_VERTEX_COUNT;
+        maxVertexCount -= _sprite.vertexCount;
+        for (int i = 0; i < meshList.Count; ++i) {
+            exMesh mesh = meshList[i];
+		    if (mesh != null && mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
+                sameDrawcallMesh = meshList[i];
+                break;
+		    }
         }
-        else {
-            for (int i = 0; i < meshList.Count; ++i) {
-                exMesh mesh = meshList[i];
-		        if (mesh != null && mesh.material == mat) {
-                    sameDrawcallMesh = meshList[i];
-                    break;
-		        }
-            }
-        }
+        
         if (sameDrawcallMesh == null) {
             sameDrawcallMesh = exMesh.Create(this);
             sameDrawcallMesh.material = mat;
@@ -264,10 +257,8 @@ public class exLayer : MonoBehaviour
         if (_sprite.isInIndexBuffer) {
             exMesh mesh = FindMesh(_sprite);
             if (mesh != null) {
-                if (_sprite.isInIndexBuffer) {
-                    RemoveIndices(mesh, _sprite);
-                    mesh.updateFlags |= UpdateFlags.Index;
-                }
+                RemoveIndices(mesh, _sprite);
+                mesh.updateFlags |= UpdateFlags.Index;
                 exDebug.Assert(_sprite.indexBufferIndex == -1);
                 UpdateNowInEditMode();
             }

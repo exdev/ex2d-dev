@@ -34,7 +34,10 @@ class ex2DMngInspector : Editor {
         EditorGUILayout.Space();
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
-            if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
+            if ( GUILayout.Button("Reset Camera", GUILayout.Height(20) ) ) {
+                ((ex2DMng)target).ResetCamera(true);
+            }
+            if ( GUILayout.Button("Edit...", GUILayout.MinWidth(50), GUILayout.Height(20) ) ) {
                 EditorWindow.GetWindow<exSceneEditor>();
             }
         GUILayout.Space(5);

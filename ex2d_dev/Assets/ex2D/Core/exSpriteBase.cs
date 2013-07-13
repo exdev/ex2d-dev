@@ -219,11 +219,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     private bool isOnEnabled_;
     public bool isOnEnabled {
         get {
-#if UNITY_EDITOR
-            if (!UnityEditor.EditorApplication.isPlaying) {
-                return this && enabled && gameObject.activeInHierarchy;
-            }
-#endif
             return isOnEnabled_;
         }
     }
@@ -242,16 +237,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             }
         }
     }
-
-    //public bool isInVertexBuffer {
-    //    get {
-    //        bool awaked = cachedTransform;
-    //        bool isInLayer = layer_ && awaked;
-    //        exDebug.Assert(isInLayer == layer && 0 <= spriteIndex && spriteIndex < layer.spriteList.Count &&
-    //                       object.ReferenceEquals(this, layer.spriteList[spriteIndex]));
-    //        return isInLayer;
-    //    }
-    //}
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
@@ -353,16 +338,10 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// \return the update flags of changed buffer
     /// 
     /// Update sprite's geometry data to buffers selectively depending on what has changed. 
+    /// NOTE: 这个方法不应修改对象中除了updateFlags外的其它字段
     // ------------------------------------------------------------------ 
 
     public abstract UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices = null);
-
-    // ------------------------------------------------------------------ 
-    /// \param _sortedSpriteList 表示_indices对应的sprite序列
-    /// Add sprite's vertex indices to the buffer
-    // ------------------------------------------------------------------ 
-
-    //public abstract void InsertToIndexBuffer (List<int> _indices, List<exSpriteBase> _sortedSpriteList);
 
 #if UNITY_EDITOR
 
@@ -372,16 +351,16 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
 
     public void GetBuffers (List<Vector3> _vertices, List<Vector2> _uvs) {
         UpdateFlags originalFlags = updateFlags;
-        int originalVertexBufferIndex = vertexBufferIndex;
-
         _vertices.Clear();
         _uvs.Clear();
         List<Color32> colors = new List<Color32>(vertexCount);
+
+        int originalVertexBufferIndex = vertexBufferIndex;
         FillBuffers(_vertices, _uvs, colors);
         UpdateBuffers(_vertices, _uvs, colors);
+        vertexBufferIndex = originalVertexBufferIndex;
 
         updateFlags = originalFlags;
-        vertexBufferIndex = originalVertexBufferIndex;
     }
 
 #endif
