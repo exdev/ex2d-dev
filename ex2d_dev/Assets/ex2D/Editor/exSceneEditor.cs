@@ -669,8 +669,8 @@ class exSceneEditor : EditorWindow {
                                 editCamera.transform.position.y + (_rect.height * 0.5f) / scale );
 
             // draw culled sprite nodes
-            foreach (exSpriteBase node in spriteNodes) {
-                DrawNode ( node );
+            for ( int i = spriteNodes.Count-1; i >= 0; --i ) {
+                DrawNode ( spriteNodes[i] );
             }
 
             // draw selected objects
@@ -973,7 +973,7 @@ class exSceneEditor : EditorWindow {
 
     Object[] PickRectObjects ( Rect _rect ) {
         List<Object> objects = new List<Object>();
-        for ( int i = spriteNodes.Count-1; i >= 0; --i ) {
+        for ( int i = 0; i < spriteNodes.Count; ++i ) {
             exSpriteBase node = spriteNodes[i];
             Rect boundingRect = MapBoundingRect ( sceneViewRect, node );
             if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||
