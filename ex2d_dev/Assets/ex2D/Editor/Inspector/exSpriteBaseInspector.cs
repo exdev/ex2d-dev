@@ -115,7 +115,7 @@ class exSpriteBaseInspector : Editor {
             }
         }
 
-        // offset
+        // depth
         EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( depthProp, new GUIContent("Depth") );
         if ( EditorGUI.EndChangeCheck() ) {
@@ -128,7 +128,7 @@ class exSpriteBaseInspector : Editor {
             }
         }
 
-        // depth
+        // offset
         EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( offsetProp, new GUIContent("Offset"), true );
         if ( EditorGUI.EndChangeCheck() ) {

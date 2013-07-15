@@ -669,7 +669,7 @@ class exSceneEditor : EditorWindow {
                                 editCamera.transform.position.y + (_rect.height * 0.5f) / scale );
 
             // draw culled sprite nodes
-            for ( int i = spriteNodes.Count-1; i >= 0; --i ) {
+            for ( int i = 0; i < spriteNodes.Count; ++i ) {
                 DrawNode ( spriteNodes[i] );
             }
 
@@ -922,6 +922,7 @@ class exSceneEditor : EditorWindow {
                 spriteBase.UpdateTransform ();
                 if ( spriteBase.updateFlags != UpdateFlags.None ) {
                     ex2DMng.instance.RenderScene();
+                    ex2DMng.instance.UpdateLayerDepth();
                 }
             }
         }
@@ -973,7 +974,7 @@ class exSceneEditor : EditorWindow {
 
     Object[] PickRectObjects ( Rect _rect ) {
         List<Object> objects = new List<Object>();
-        for ( int i = 0; i < spriteNodes.Count; ++i ) {
+        for ( int i = spriteNodes.Count-1; i >= 0; --i ) {
             exSpriteBase node = spriteNodes[i];
             Rect boundingRect = MapBoundingRect ( sceneViewRect, node );
             if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||
@@ -1053,7 +1054,7 @@ class exSceneEditor : EditorWindow {
         spriteNodes.Clear();
 
         // draw all nodes in the scene
-        for ( int i = 0; i < ex2DMng.instance.layerList.Count; ++i ) {
+        for ( int i = ex2DMng.instance.layerList.Count-1; i >= 0; --i ) {
             exLayer layer = ex2DMng.instance.layerList[i];
             if ( layer != null && layer.show ) {
                 exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
