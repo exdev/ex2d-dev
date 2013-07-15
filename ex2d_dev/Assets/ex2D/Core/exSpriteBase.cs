@@ -179,24 +179,15 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
 
     [System.NonSerialized] public UpdateFlags updateFlags = UpdateFlags.All;    // this value will reset after every UpdateBuffers()
 
-#if !UNITY_EDITOR
-    /// cached transform, optimized runtime version, only available after Awake
-    [System.NonSerialized] public Transform cachedTransform = null;
-#else
-    /// cached transform, editor version. 
     [System.NonSerialized] private Transform cachedTransform_ = null;
     public Transform cachedTransform {
         get {
-            if (UnityEditor.EditorApplication.isPlaying == false && cachedTransform_ == null) {
+            if (ReferenceEquals(cachedTransform_, null)) {
                 cachedTransform_ = transform;
             }
             return cachedTransform_;
         }
-        set {
-            cachedTransform_ = value;
-        }
     }
-#endif
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
@@ -241,10 +232,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
-
-    void Awake () {
-        cachedTransform = transform;
-    }
 
     void OnEnable () {
         isOnEnabled_ = true;

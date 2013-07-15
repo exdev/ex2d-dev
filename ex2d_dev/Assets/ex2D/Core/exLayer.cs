@@ -81,31 +81,21 @@ public class exLayer : MonoBehaviour
 
     private List<exMesh> meshList = new List<exMesh>();
 
-#if !UNITY_EDITOR
-    /// cached transform, optimized runtime version, only available after Awake
-    [System.NonSerialized] public Transform cachedTransform = null;
-#else
-    /// cached transform, editor version. 
     [System.NonSerialized] private Transform cachedTransform_ = null;
     public Transform cachedTransform {
         get {
-            if (UnityEditor.EditorApplication.isPlaying == false && cachedTransform_ == null) {
+            if (ReferenceEquals(cachedTransform_, null)) {
                 cachedTransform_ = transform;
             }
             return cachedTransform_;
         }
-        set {
-            cachedTransform_ = value;
-        }
     }
-#endif
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
     void Awake () {
-        cachedTransform = transform;
         meshList.Clear();
     }
 
@@ -192,7 +182,7 @@ public class exLayer : MonoBehaviour
         }
         _sprite.layer = this;
         if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
-            _sprite.transform.parent = transform;
+            _sprite.cachedTransform.parent = cachedTransform;
         }
         // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
         exMesh sameDrawcallMesh = null;

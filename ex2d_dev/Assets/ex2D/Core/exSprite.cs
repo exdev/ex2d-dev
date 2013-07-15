@@ -365,9 +365,10 @@ public class exSprite : exSpriteBase {
         v3.z = 0;
 
         if (shear_.x != 0) {
-            //float offsetX = cachedTransform.lossyScale.y * shear_.x;
-            // Vector3(m00, m10, m20).magnitude获得不计入rotation的scale，在已知l2w的情况下，速度比较快lossyScale了6倍
-            float offsetX = (new Vector3(l2w.m01, l2w.m11, l2w.m21)).magnitude * shear_.x;
+            // 这里直接从matrix拿未计入rotation影响的scale，在已知matrix的情况下，速度比较快lossyScale了6倍。
+            // 在有rotation时，shear本来就会有冲突，所以这里不需要lossyScale。
+            float worldScaleY = (new Vector3(l2w.m01, l2w.m11, l2w.m21)).magnitude;
+            float offsetX = worldScaleY * shear_.x;
             float topOffset = offsetX * (halfHeight + anchorOffsetY);
             float botOffset = offsetX * (-halfHeight + anchorOffsetY);
             v0.x += botOffset;
@@ -376,8 +377,8 @@ public class exSprite : exSpriteBase {
             v3.x += botOffset;
         }
         if (shear_.y != 0) {
-            //float offsetY = cachedTransform.lossyScale.x * shear_.y;
-            float offsetY = (new Vector3(l2w.m00, l2w.m10, l2w.m20)).magnitude * shear_.y;
+            float worldScaleX = (new Vector3(l2w.m00, l2w.m10, l2w.m20)).magnitude;
+            float offsetY = worldScaleX * shear_.y;
             float leftOffset = offsetY * (-halfWidth + anchorOffsetX);
             float rightOffset = offsetY * (halfWidth + anchorOffsetX);
             v0.y += leftOffset;
