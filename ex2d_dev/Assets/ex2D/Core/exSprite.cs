@@ -168,7 +168,7 @@ public class exSprite : exSpriteBase {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public override UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
+    internal override UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
         if ((updateFlags & UpdateFlags.Vertex) != 0) {
             UpdateVertexBuffer(_vertices, vertexBufferIndex);
         }

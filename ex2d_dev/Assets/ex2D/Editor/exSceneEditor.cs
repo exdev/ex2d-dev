@@ -254,8 +254,8 @@ class exSceneEditor : EditorWindow {
         // SerializedObject
         if ( ex2DMng.instance != null ) {
             curSerializedObject = new SerializedObject(ex2DMng.instance);
-            ex2DMng.instance.RenderScene();
-            ex2DMng.instance.UpdateLayerDepth();
+            ex2DMng.instance.ResortLayerDepth();
+            ex2DMng.instance.UpdateLayers();
         }
     }
 
@@ -922,8 +922,8 @@ class exSceneEditor : EditorWindow {
             if ( spriteBase ) {
                 spriteBase.UpdateTransform ();
                 if ( spriteBase.updateFlags != UpdateFlags.None ) {
-                    ex2DMng.instance.RenderScene();
-                    ex2DMng.instance.UpdateLayerDepth();
+                    ex2DMng.instance.ResortLayerDepth();
+                    ex2DMng.instance.UpdateLayers();
                 }
             }
         }
