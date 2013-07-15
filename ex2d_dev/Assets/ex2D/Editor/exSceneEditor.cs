@@ -891,6 +891,7 @@ class exSceneEditor : EditorWindow {
                     Vector3 pos = trans.TransformPoint(center);
                     trans_position.x = pos.x;
                     trans_position.y = pos.y;
+                    trans.position = trans_position;
                     spriteBase.width = size.x;
                     spriteBase.height = size.y;
                 }
