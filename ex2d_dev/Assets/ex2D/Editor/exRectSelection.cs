@@ -31,11 +31,12 @@ public class exRectSelection {
 
     System.Func<Vector2,Object> cb_PickObject;
     System.Func<Rect,Object[]> cb_PickRectObjects;
-    System.Action<Object[]> cb_ConfirmSelection;
+    System.Action<Object,Object[]> cb_ConfirmSelection;
 
     bool isRectSelecting = false;
     Vector2 selectStartPoint;
     Object[] selectedObjs = new Object[0];
+    Object activeObj = null;
     Dictionary<Object, bool> lastSelection;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -48,7 +49,7 @@ public class exRectSelection {
 
     public exRectSelection ( System.Func<Vector2,Object> _pickObjectCallback,
                              System.Func<Rect,Object[]> _pickRectObjectsCallback,
-                             System.Action<Object[]> _confirmSelectionCallback ) 
+                             System.Action<Object,Object[]> _confirmSelectionCallback ) 
     {
         cb_PickObject = _pickObjectCallback;
         cb_PickRectObjects = _pickRectObjectsCallback;
@@ -63,6 +64,7 @@ public class exRectSelection {
 
         // DEBUG { 
         EditorGUILayout.BeginHorizontal();
+        GUILayout.Label ( "active = " + ((activeObj == null) ? "null" : activeObj.name) );
         foreach ( Object obj in selectedObjs )
             if ( obj != null )
                 GUILayout.Label ( obj.name );
@@ -105,7 +107,8 @@ public class exRectSelection {
                 if ( isRectSelecting ) {
                     Rect selectRect = FromToRect( selectStartPoint, e.mousePosition );
                     selectedObjs = cb_PickRectObjects ( selectRect );
-                    cb_ConfirmSelection( selectedObjs );
+                    activeObj = selectedObjs.Length > 0 ? selectedObjs[0] : null; 
+                    cb_ConfirmSelection( activeObj, selectedObjs );
                 }
 
                 e.Use();
@@ -124,26 +127,26 @@ public class exRectSelection {
                     // like command/ctrl selecting, but also switch the active object
                     if ( e.shift ) {
                         if ( IsActiveSelection (obj) ) {
-                            selectedObjs = UpdateSelection(obj, SelectionType.Subtractive);
+                            UpdateSelection(obj, SelectionType.Subtractive);
                         }
                         else {
-                            selectedObjs = UpdateSelection(obj, SelectionType.Additive);
+                            UpdateSelection(obj, SelectionType.Additive);
                         }
                     }
                     else {
                         if ( EditorGUI.actionKey ) {
                             if ( IsInSelectedList (obj) ) {
-                                selectedObjs = UpdateSelection(obj, SelectionType.Subtractive);
+                                UpdateSelection(obj, SelectionType.Subtractive);
                             }
                             else {
-                                selectedObjs = UpdateSelection(obj, SelectionType.Additive);
+                                UpdateSelection(obj, SelectionType.Additive);
                             }
                         }
                         else {
-                            selectedObjs = UpdateSelection(obj, SelectionType.Normal);
+                            UpdateSelection(obj, SelectionType.Normal);
                         }
                     }
-                    cb_ConfirmSelection( selectedObjs );
+                    cb_ConfirmSelection( activeObj, selectedObjs );
                 }
 
                 e.Use();
@@ -185,7 +188,7 @@ public class exRectSelection {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    Object[] UpdateSelection( Object _obj, SelectionType _type ) {
+    void UpdateSelection( Object _obj, SelectionType _type ) {
         Object[] objs;
         if ( _obj == null ) {
             objs = new Object[0];
@@ -195,14 +198,14 @@ public class exRectSelection {
                 _obj
             };
         }
-        return UpdateSelection(objs, _type);
+        UpdateSelection(objs, _type);
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    Object[] UpdateSelection ( Object[] _objs, SelectionType _type ) {
+    void UpdateSelection ( Object[] _objs, SelectionType _type ) {
         Object[] selectionStart = selectedObjs;
         switch (_type) {
         case SelectionType.Additive:
@@ -212,9 +215,20 @@ public class exRectSelection {
                 for ( int i = 0; i < _objs.Length; ++i ) {
                     array[selectionStart.Length + i] = _objs[i];
                 }
-                return array;
+
+                if ( isRectSelecting ) {
+                    activeObj = array[0];
+                }
+                else {
+                    activeObj = _objs[0];
+                }
+
+                selectedObjs = array;
+                return;
             }
-            return selectionStart;
+
+            selectedObjs = selectionStart;
+            return;
 
         case SelectionType.Subtractive:
             Dictionary<Object, bool> dictionary = new Dictionary<Object, bool>(selectionStart.Length);
@@ -231,10 +245,21 @@ public class exRectSelection {
             }
             Object[] array = new Object[dictionary.Keys.Count];
             dictionary.Keys.CopyTo(array, 0);
-            return array;
+
+            selectedObjs = array;
+
+            if ( IsInSelectedList ( activeObj ) == false ) {
+                activeObj = selectedObjs.Length > 0 ? selectedObjs[0] : null; 
+            }
+            return;
         }
 
-        return _objs;
+        selectedObjs = _objs;
+        if ( IsInSelectedList ( activeObj ) == false ) {
+            activeObj = selectedObjs.Length > 0 ? selectedObjs[0] : null; 
+        }
+
+        return;
     }
 
     // ------------------------------------------------------------------ 
@@ -254,6 +279,6 @@ public class exRectSelection {
     // ------------------------------------------------------------------ 
 
     bool IsActiveSelection ( Object _obj ) {
-        return selectedObjs.Length > 0 && selectedObjs[0] == _obj;
+        return activeObj == _obj;
     }
 }

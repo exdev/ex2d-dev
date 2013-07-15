@@ -991,12 +991,9 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void ConfirmRectSelection ( Object[] _objs ) {
-        Selection.objects = _objs;
-        if ( _objs.Length > 0 )
-            Selection.activeObject = _objs[0];
-        else
-            Selection.activeObject = null;
+    void ConfirmRectSelection ( Object _activeObj, Object[] _selectedObjs ) {
+        Selection.activeObject = _activeObj;
+        Selection.objects = _selectedObjs;
     }
 
     // ------------------------------------------------------------------ 

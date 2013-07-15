@@ -774,9 +774,9 @@ partial class exAtlasEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void ConfirmRectSelection ( Object[] _objs ) {
+    void ConfirmRectSelection ( Object _activeObj, Object[] _selectedObjs ) {
         selectedTextureInfos.Clear();
-        foreach ( Object obj in _objs )
+        foreach ( Object obj in _selectedObjs )
             selectedTextureInfos.Add (obj as exTextureInfo);
     }
 
