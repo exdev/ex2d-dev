@@ -35,9 +35,11 @@ public class exRectSelection {
 
     bool isRectSelecting = false;
     Vector2 selectStartPoint;
-    Object[] selectedObjs = new Object[0];
     Object activeObj = null;
+    Object[] selectedObjs = new Object[0];
+
     Dictionary<Object, bool> lastSelection;
+    Object[] currentSelection;
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
@@ -102,13 +104,60 @@ public class exRectSelection {
 
                 if ( isRectSelecting == false && (e.mousePosition - selectStartPoint).magnitude > 6f ) {
                     isRectSelecting = true;
+                    lastSelection = null;
+                    currentSelection = null;
                 }
 
                 if ( isRectSelecting ) {
                     Rect selectRect = FromToRect( selectStartPoint, e.mousePosition );
-                    selectedObjs = cb_PickRectObjects ( selectRect );
-                    activeObj = selectedObjs.Length > 0 ? selectedObjs[0] : null; 
-                    cb_ConfirmSelection( activeObj, selectedObjs );
+                    Object[] array = cb_PickRectObjects ( selectRect );
+                    currentSelection = array;
+                    bool flag = false;
+
+                    if ( lastSelection == null ) {
+                        lastSelection = new Dictionary<Object, bool>();
+                        flag = true;
+                    }
+
+                    flag |= (lastSelection.Count != array.Length);
+                    if ( !flag ) {
+                        Dictionary<Object, bool> dictionary = new Dictionary<Object, bool>(array.Length);
+                        Object[] array2 = array;
+                        for ( int i = 0; i < array2.Length; ++i ) {
+                            Object key = array2[i];
+                            dictionary.Add(key, false);
+                        }
+                        foreach ( Object current2 in lastSelection.Keys ) {
+                            if ( !dictionary.ContainsKey(current2) ) {
+                                flag = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ( flag ) {
+                        lastSelection = new Dictionary<Object, bool>(array.Length);
+                        Object[] array3 = array;
+                        for ( int j = 0; j < array3.Length; ++j ) {
+                            Object key2 = array3[j];
+                            lastSelection.Add(key2, false);
+                        }
+                        if ( array != null ) {
+                            if ( e.shift ) {
+                                UpdateSelection(array, SelectionType.Additive);
+                            }
+                            else {
+                                if ( EditorGUI.actionKey ) {
+                                    UpdateSelection(array, SelectionType.Subtractive);
+                                }
+                                else {
+                                    UpdateSelection(array, SelectionType.Normal);
+                                }
+                            }
+
+                            cb_ConfirmSelection( activeObj, selectedObjs );
+                        }
+                    }
                 }
 
                 e.Use();
@@ -116,8 +165,8 @@ public class exRectSelection {
             break;
 
         case EventType.MouseUp:
-			if ( GUIUtility.hotControl == controlID && e.button == 0 ) {
-				GUIUtility.hotControl = 0;
+            if ( GUIUtility.hotControl == controlID && e.button == 0 ) {
+                GUIUtility.hotControl = 0;
 
                 if ( isRectSelecting ) {
                     isRectSelecting = false;
@@ -150,7 +199,7 @@ public class exRectSelection {
                 }
 
                 e.Use();
-			}
+            }
             break;
 
         case EventType.KeyDown:
