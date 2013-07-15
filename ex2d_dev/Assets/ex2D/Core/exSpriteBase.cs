@@ -279,7 +279,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// 只重设layer相关属性，但不真的从layer或mesh中删除。
     // ------------------------------------------------------------------ 
     
-    public void ResetLayerProperties () {
+    internal void ResetLayerProperties () {
         layer_ = null;
         isInIndexBuffer = false;
     }
@@ -309,7 +309,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// Add sprite's geometry data to buffers
     // ------------------------------------------------------------------ 
 
-    public void FillBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32) {
+    internal void FillBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32) {
         vertexBufferIndex = _vertices.Count;
 
         for (int i = 0; i < vertexCount; ++i) {
@@ -328,7 +328,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// NOTE: 这个方法不应修改对象中除了updateFlags外的其它字段
     // ------------------------------------------------------------------ 
 
-    public abstract UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices = null);
+    internal abstract UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices = null);
 
 #if UNITY_EDITOR
 

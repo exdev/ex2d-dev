@@ -75,7 +75,7 @@ public class ex2DMng : MonoBehaviour {
     // serialized
     ///////////////////////////////////////////////////////////////////////////////
     
-    public List<exLayer> layerList = new List<exLayer>();
+    public List<exLayer> layerList = new List<exLayer>();   ///< 按Layer的渲染次序排序，先渲染的放在前面。
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -143,7 +143,7 @@ public class ex2DMng : MonoBehaviour {
             return;
         }
 #endif
-        RenderScene();
+        UpdateLayers();
     }
 
     // ------------------------------------------------------------------ 
@@ -198,7 +198,7 @@ public class ex2DMng : MonoBehaviour {
         GameObject layerGo = new GameObject("New Layer");
         exLayer layer = layerGo.AddComponent<exLayer>();
         layerList.Add(layer);
-        UpdateLayerDepth();
+        ResortLayerDepth();
         return layer;
     }
 
@@ -219,7 +219,7 @@ public class ex2DMng : MonoBehaviour {
     /// 重新排列所有layer的Z轴，使在LayerList越前端的layer能渲染在越上层。
     // ------------------------------------------------------------------ 
 
-    public void UpdateLayerDepth () {
+    public void ResortLayerDepth () {
         float cameraZ = cachedCamera.transform.position.z + cachedCamera.nearClipPlane;
         float interval = 0.01f;
         //if (Mathf.Abs(cameraZ) < 100000) {
@@ -271,15 +271,15 @@ public class ex2DMng : MonoBehaviour {
                 layer.enabled = true;
             }
         }
-        RenderScene();
-        UpdateLayerDepth();
+        ResortLayerDepth();
+        UpdateLayers();
     }
 
     // ------------------------------------------------------------------ 
     /// This is called by ex2D when it is about to render the scene.
     // ------------------------------------------------------------------ 
     
-    public void RenderScene () {
+    public void UpdateLayers () {
         for (int i = 0; i < layerList.Count; ++i) {
             exLayer layer = layerList[i];
             if (layer != null) {
