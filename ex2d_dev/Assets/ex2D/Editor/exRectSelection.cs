@@ -37,9 +37,9 @@ public class exRectSelection {
     Vector2 selectStartPoint;
     Object activeObj = null;
     Object[] selectedObjs = new Object[0];
-
+    Object[] selectionStart = new Object[0];
     Dictionary<Object, bool> lastSelection;
-    Object[] currentSelection;
+    // Object[] currentSelection;
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
@@ -65,12 +65,12 @@ public class exRectSelection {
     public void OnGUI () {
 
         // DEBUG { 
-        EditorGUILayout.BeginHorizontal();
-        GUILayout.Label ( "active = " + ((activeObj == null) ? "null" : activeObj.name) );
-        foreach ( Object obj in selectedObjs )
-            if ( obj != null )
-                GUILayout.Label ( obj.name );
-        EditorGUILayout.EndHorizontal();
+        // EditorGUILayout.BeginHorizontal();
+        // GUILayout.Label ( "active = " + ((activeObj == null) ? "null" : activeObj.name) );
+        // foreach ( Object obj in selectedObjs )
+        //     if ( obj != null )
+        //         GUILayout.Label ( obj.name );
+        // EditorGUILayout.EndHorizontal();
         // } DEBUG end 
 
         Event e = Event.current;
@@ -92,6 +92,8 @@ public class exRectSelection {
             if ( e.button == 0 ) {
                 GUIUtility.hotControl = controlID;
                 GUIUtility.keyboardControl = controlID;
+
+                selectionStart = selectedObjs;
                 selectStartPoint = e.mousePosition;
                 isRectSelecting = false;
 
@@ -99,19 +101,37 @@ public class exRectSelection {
             }
             break;
 
+        // case EventType.MouseMove:
+        //     if ( GUIUtility.hotControl == controlID ) {
+        //         if ( e.shift ) {
+        //             this.UpdateSelection(currentSelection, SelectionType.Additive);
+        //         }
+        //         else
+        //         {
+        //             if ( EditorGUI.actionKey ) {
+        //                 this.UpdateSelection(currentSelection, SelectionType.Subtractive);
+        //             }
+        //             else {
+        //                 this.UpdateSelection(currentSelection, SelectionType.Normal);
+        //             }
+        //         }
+        //         e.Use();
+        //     }
+        //     break;
+
         case EventType.MouseDrag:
             if ( GUIUtility.hotControl == controlID ) {
 
                 if ( isRectSelecting == false && (e.mousePosition - selectStartPoint).magnitude > 6f ) {
                     isRectSelecting = true;
                     lastSelection = null;
-                    currentSelection = null;
+                    // currentSelection = null;
                 }
 
                 if ( isRectSelecting ) {
                     Rect selectRect = FromToRect( selectStartPoint, e.mousePosition );
                     Object[] array = cb_PickRectObjects ( selectRect );
-                    currentSelection = array;
+                    // currentSelection = array;
                     bool flag = false;
 
                     if ( lastSelection == null ) {
@@ -170,6 +190,7 @@ public class exRectSelection {
 
                 if ( isRectSelecting ) {
                     isRectSelecting = false;
+                    selectionStart = new Object[0];
                 }
                 else {
                     Object obj = cb_PickObject(e.mousePosition);
@@ -255,16 +276,30 @@ public class exRectSelection {
     // ------------------------------------------------------------------ 
 
     void UpdateSelection ( Object[] _objs, SelectionType _type ) {
-        Object[] selectionStart = selectedObjs;
         switch (_type) {
         case SelectionType.Additive:
             if ( _objs.Length > 0 ) {
                 Object[] array = new Object[selectionStart.Length + _objs.Length];
                 System.Array.Copy(selectionStart, array, selectionStart.Length);
-                for ( int i = 0; i < _objs.Length; ++i ) {
-                    array[selectionStart.Length + i] = _objs[i];
-                }
 
+                // add unique object
+                int count = selectionStart.Length;
+                for ( int i = 0; i < _objs.Length; ++i ) {
+                    bool exists = false;
+                    for ( int j = 0; j < selectionStart.Length; ++j ) {
+                        if ( selectionStart[j] == _objs[i] ) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if ( exists == false ) {
+                        array[count] = _objs[i];
+                        ++count;
+                    }
+                }
+                System.Array.Resize( ref array, count );
+
+                // switch active object
                 if ( isRectSelecting ) {
                     activeObj = array[0];
                 }
@@ -281,9 +316,8 @@ public class exRectSelection {
 
         case SelectionType.Subtractive:
             Dictionary<Object, bool> dictionary = new Dictionary<Object, bool>(selectionStart.Length);
-            Object[] array2 = selectionStart;
-            for ( int j = 0; j < array2.Length; ++j ) {
-                Object key = array2[j];
+            for ( int j = 0; j < selectionStart.Length; ++j ) {
+                Object key = selectionStart[j];
                 dictionary.Add(key, false);
             }
             for ( int k = 0; k < _objs.Length; ++k ) {

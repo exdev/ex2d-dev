@@ -176,6 +176,7 @@ partial class exAtlasEditor : EditorWindow {
 
             //
             ProcessEvents();
+            rectSelection.SetSelection(selectedTextureInfos.ToArray());
             rectSelection.OnGUI();
 
         EditorGUILayout.EndScrollView();
