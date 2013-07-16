@@ -46,9 +46,36 @@ public class exLayer : MonoBehaviour
     // serialized
     ///////////////////////////////////////////////////////////////////////////////
     
-    public bool show = true;
-
-    [HideInInspector] [SerializeField] private LayerType layerType_ = LayerType.Dynamic;
+    // ------------------------------------------------------------------ 
+    /// show/hide layer and all its sprites.
+    // ------------------------------------------------------------------ 
+    
+    [HideInInspector] [SerializeField] 
+    private bool show_ = true;
+    public bool show {
+        get {
+            return show_;
+        }
+        set { 
+            if (show_ == value) {
+                return;
+            }
+            for (int i = 0; i < meshList.Count; ++i) {
+                exMesh mesh = meshList[i];
+                if (mesh != null) {
+                    mesh.gameObject.SetActive(value);
+                }
+            }
+            show_ = value;
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    
+    [HideInInspector] [SerializeField] 
+    private LayerType layerType_ = LayerType.Dynamic;
     public LayerType layerType {
         get {
             return layerType_;
@@ -79,7 +106,7 @@ public class exLayer : MonoBehaviour
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    private List<exMesh> meshList = new List<exMesh>();
+    private List<exMesh> meshList = new List<exMesh>(); ///< 排在前面的mesh会被先渲染
 
     [System.NonSerialized] private Transform cachedTransform_ = null;
     public Transform cachedTransform {
@@ -123,7 +150,7 @@ public class exLayer : MonoBehaviour
                         sprite.ResetLayerProperties();
                     }
                 }
-                //mesh.Clear();
+                mesh.Clear();
                 mesh.gameObject.DestroyImmediate(); //dont save GO will auto destroy
             }
         }
@@ -139,24 +166,27 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void UpdateSprites () {
-        for (int m = 0; m < meshList.Count; ++m) {
-            exMesh mesh = meshList[m];
-            if (mesh == null) {
-                continue;
-            }
-            UpdateFlags meshUpdateFlags = UpdateFlags.None;
-            for (int i = 0; i < mesh.spriteList.Count; ++i) {
-                exSpriteBase sprite = mesh.spriteList[i];
-                exDebug.Assert(sprite.isOnEnabled == sprite.isInIndexBuffer);
-                
-                if (sprite.isOnEnabled) {
-                    sprite.UpdateTransform();
-                    UpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
-                    meshUpdateFlags |= spriteUpdateFlags;
+        if (show_) {
+            for (int m = meshList.Count - 1; m >= 0 ; --m) {
+                exMesh mesh = meshList[m];
+                if (mesh == null) {
+                    meshList.RemoveAt(m);
+                    continue;
                 }
+                UpdateFlags meshUpdateFlags = UpdateFlags.None;
+                for (int i = 0; i < mesh.spriteList.Count; ++i) {
+                    exSpriteBase sprite = mesh.spriteList[i];
+                    exDebug.Assert(sprite.isOnEnabled == sprite.isInIndexBuffer);
+                
+                    if (sprite.isOnEnabled) {
+                        sprite.UpdateTransform();
+                        UpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
+                        meshUpdateFlags |= spriteUpdateFlags;
+                    }
+                }
+                // TODO: 如果需要排序，进行排序并且更新相关mesh的indices
+                mesh.Apply(meshUpdateFlags);
             }
-            // TODO: 如果需要排序，进行排序并且更新相关mesh的indices
-            mesh.Apply(meshUpdateFlags);
         }
     }
 
@@ -174,7 +204,6 @@ public class exLayer : MonoBehaviour
         if (oldLayer != null) {
             oldLayer.Remove(_sprite);
         }
-        // TODO: 在exSpriteBase中添加
         Material mat = _sprite.material;
         if (!mat) {
             Debug.LogError("no material assigned in sprite", _sprite);
@@ -184,13 +213,18 @@ public class exLayer : MonoBehaviour
         if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
             _sprite.cachedTransform.parent = cachedTransform;
         }
+
+        // Find available mesh
         // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
         exMesh sameDrawcallMesh = null;
         int maxVertexCount = (layerType == LayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : MAX_STATIC_VERTEX_COUNT;
         maxVertexCount -= _sprite.vertexCount;
-        for (int i = 0; i < meshList.Count; ++i) {
+        for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
 		    if (mesh != null && mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
+                //if (mesh.sortedSpriteList.Count > 0 && mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1].depth) {
+
+                //}
                 sameDrawcallMesh = meshList[i];
                 break;
 		    }
@@ -341,11 +375,7 @@ public class exLayer : MonoBehaviour
         exDebug.Assert(_mesh.vertices.Count == _mesh.uvs.Count, "uvs array needs to be the same size as the vertices array");
         exDebug.Assert(_mesh.vertices.Count == _mesh.colors32.Count, "colors32 array needs to be the same size as the vertices array");
 
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            UpdateSprites();
-        }
-#endif
+        UpdateNowInEditMode();
     }
     
     // ------------------------------------------------------------------ 
@@ -482,7 +512,8 @@ public class exLayer : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    //
+    /// To update scene view in edit mode immediately
+    /// 所有方法调用，及用作调用参数的表达式都不会被编译进*非*EX_DEBUG的版本
     // ------------------------------------------------------------------ 
 
     [System.Diagnostics.Conditional("UNITY_EDITOR")]

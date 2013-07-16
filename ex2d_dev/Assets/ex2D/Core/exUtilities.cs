@@ -162,7 +162,7 @@ namespace UnityEngine {
             return Object.Instantiate(original, position, rotation) as T;
         }
 
-#region Destroy
+        #region Destroy
 
         // ------------------------------------------------------------------ 
         /// If in edit mode, destory immediatelly
@@ -223,7 +223,8 @@ namespace UnityEngine {
         public static void DestroyImmediate(this Object obj, bool allowDestroyingAssets) {
             Object.DestroyImmediate(obj, allowDestroyingAssets);
         }
-#endregion
+
+        #endregion
 
         // ------------------------------------------------------------------ 
         /// Set the global scale of the object

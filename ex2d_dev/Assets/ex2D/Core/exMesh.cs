@@ -281,12 +281,8 @@ public class exMesh : MonoBehaviour
         indices.Clear();
         uvs.Clear();
         colors32.Clear();
-
-#if UNITY_EDITOR
-        if (UnityEditor.EditorApplication.isPlaying == false) {
-            Apply();
-        }
-#endif
+        mesh.Clear();
+        updateFlags = UpdateFlags.None;
     }
 
     // ------------------------------------------------------------------ 
