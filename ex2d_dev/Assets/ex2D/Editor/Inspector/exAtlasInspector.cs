@@ -36,7 +36,7 @@ class exAtlasInspector : Editor {
         GUILayout.FlexibleSpace();
             if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
                 exAtlasEditor editor = EditorWindow.GetWindow<exAtlasEditor>();
-                editor.Edit(target);
+                editor.Edit(target as exAtlas);
             }
         GUILayout.Space(5);
         GUILayout.EndHorizontal();

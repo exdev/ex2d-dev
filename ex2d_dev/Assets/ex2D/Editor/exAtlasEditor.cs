@@ -90,7 +90,26 @@ partial class exAtlasEditor : EditorWindow {
 
     void OnSelectionChange () {
         if ( lockCurEdit == false ) {
-            Edit ( Selection.activeObject );
+            exAtlas atlas = Selection.activeObject as exAtlas;
+            if ( atlas != null ) {
+                Edit (atlas);
+            }
+        }
+
+        //
+        if ( curEdit != null ) {
+            bool needRepaint = false;
+            selectedTextureInfos.Clear();
+            foreach ( Object obj in Selection.objects ) {
+                exTextureInfo textureInfo = obj as exTextureInfo;
+                if ( textureInfo != null && curEdit.textureInfos.IndexOf(textureInfo) != -1 ) {
+                    selectedTextureInfos.Add(textureInfo);
+                    needRepaint = true;
+                }
+            }
+            if ( needRepaint ) {
+                Repaint();
+            }
         }
     }
 
@@ -211,9 +230,9 @@ partial class exAtlasEditor : EditorWindow {
     /// Check if the object is valid atlas and open it in atlas editor.
     // ------------------------------------------------------------------ 
 
-    public void Edit ( Object _obj ) {
-        if ( _obj is exAtlas && curEdit != _obj ) {
-            curEdit = _obj as exAtlas;
+    public void Edit ( exAtlas _atlas ) {
+        if ( curEdit != _atlas ) {
+            curEdit = _atlas;
 
             Reset ();
             Repaint ();
@@ -231,27 +250,34 @@ partial class exAtlasEditor : EditorWindow {
 
             GUILayout.FlexibleSpace();
 
-            // ======================================================== 
-            // Select 
-            // ======================================================== 
+            // DISABLE { 
+            // // ======================================================== 
+            // // Select 
+            // // ======================================================== 
 
-            GUI.enabled = selectedTextureInfos.Count != 0;
-            if ( GUILayout.Button( "Select In Project...", EditorStyles.toolbarButton ) ) {
-                selectIdx = (selectIdx + 1) % selectedTextureInfos.Count;  
-                Selection.objects = selectedTextureInfos.ToArray();
-                EditorGUIUtility.PingObject(Selection.objects[selectIdx]);
-            }
-            GUI.enabled = true;
-            EditorGUILayout.Space();
+            // GUI.enabled = selectedTextureInfos.Count != 0;
+            // if ( GUILayout.Button( "Select In Project...", EditorStyles.toolbarButton ) ) {
+            //     selectIdx = (selectIdx + 1) % selectedTextureInfos.Count;  
+            //     Selection.objects = selectedTextureInfos.ToArray();
+            //     EditorGUIUtility.PingObject(Selection.objects[selectIdx]);
+            // }
+            // GUI.enabled = true;
+            // EditorGUILayout.Space();
+            // } DISABLE end 
 
             // ======================================================== 
-            // zoom in/out slider 
+            // zoom in/out button & slider 
             // ======================================================== 
-
-            GUILayout.Label ("Zoom");
-            EditorGUILayout.Space();
 
             EditorGUI.BeginChangeCheck();
+                // button 
+                if ( GUILayout.Button( "Zoom", EditorStyles.toolbarButton ) ) {
+                    curEdit.scale = 1.0f;
+                }
+
+                EditorGUILayout.Space();
+
+                // slider
                 curEdit.scale = GUILayout.HorizontalSlider ( curEdit.scale, 
                                                              0.1f, 
                                                              2.0f, 
@@ -779,6 +805,8 @@ partial class exAtlasEditor : EditorWindow {
         selectedTextureInfos.Clear();
         foreach ( Object obj in _selectedObjs )
             selectedTextureInfos.Add (obj as exTextureInfo);
+        Selection.activeObject = _activeObj;
+        Selection.objects = _selectedObjs;
     }
 
     // ------------------------------------------------------------------ 

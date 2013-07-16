@@ -286,11 +286,16 @@ class exSceneEditor : EditorWindow {
             }
 
             // ======================================================== 
-            // zoom in/out slider 
+            // zoom in/out button & slider 
             // ======================================================== 
 
-            GUILayout.Label ("Zoom");
+            // button 
+            if ( GUILayout.Button( "Zoom", EditorStyles.toolbarButton ) ) {
+                scale = 1.0f;
+            }
             EditorGUILayout.Space();
+
+            // slider
             scale = GUILayout.HorizontalSlider ( scale, 
                                                  0.1f, 
                                                  10.0f, 
