@@ -88,29 +88,25 @@ partial class exAtlasEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void OnFocus () {
+        UpdateSelection();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void OnSelectionChange () {
         if ( lockCurEdit == false ) {
             exAtlas atlas = Selection.activeObject as exAtlas;
-            if ( atlas != null ) {
+            if ( atlas != null && atlas != curEdit ) {
                 Edit (atlas);
+                return;
             }
         }
 
         //
-        if ( curEdit != null ) {
-            bool needRepaint = false;
-            selectedTextureInfos.Clear();
-            foreach ( Object obj in Selection.objects ) {
-                exTextureInfo textureInfo = obj as exTextureInfo;
-                if ( textureInfo != null && curEdit.textureInfos.IndexOf(textureInfo) != -1 ) {
-                    selectedTextureInfos.Add(textureInfo);
-                    needRepaint = true;
-                }
-            }
-            if ( needRepaint ) {
-                Repaint();
-            }
-        }
+        UpdateSelection();
     }
 
     // ------------------------------------------------------------------ 
@@ -222,6 +218,8 @@ partial class exAtlasEditor : EditorWindow {
         oldSelActiveObject = null;
         oldSelObjects.Clear();
 
+        UpdateSelection();
+
         // inDraggingTextureInfoState = false;
     }
 
@@ -231,15 +229,32 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void Edit ( exAtlas _atlas ) {
-        if ( curEdit != _atlas ) {
-            curEdit = _atlas;
+        curEdit = _atlas;
 
-            Reset ();
-            Repaint ();
-
-            return;
-        }
+        Reset ();
+        Repaint ();
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void UpdateSelection () {
+        if ( curEdit != null ) {
+            bool needRepaint = false;
+            selectedTextureInfos.Clear();
+            foreach ( Object obj in Selection.objects ) {
+                exTextureInfo textureInfo = obj as exTextureInfo;
+                if ( textureInfo != null && curEdit.textureInfos.IndexOf(textureInfo) != -1 ) {
+                    selectedTextureInfos.Add(textureInfo);
+                    needRepaint = true;
+                }
+            }
+            if ( needRepaint ) {
+                Repaint();
+            }
+        }
+    } 
 
     // ------------------------------------------------------------------ 
     // Desc: 

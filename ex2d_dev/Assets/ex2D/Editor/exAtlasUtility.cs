@@ -173,6 +173,7 @@ public static class exAtlasUtility {
 
                 //
                 exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate( path, rawTexture.name );
+                textureInfo.rawAtlasGUID = exEditorUtility.AssetToGUID(_atlas);
                 textureInfo.rawTextureGUID = exEditorUtility.AssetToGUID(rawTexture);
                 textureInfo.name = rawTexture.name;
                 textureInfo.texture = _atlas.texture;
@@ -281,15 +282,24 @@ public static class exAtlasUtility {
 
         // fill raw texture to atlas
         _progress( 0.4f, "Filling texture-info to atlas" );
+        string rawAtlasGUID = exEditorUtility.AssetToGUID(_atlas);
         foreach ( exTextureInfo textureInfo in _atlas.textureInfos ) {
             Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>(textureInfo.rawTextureGUID); 
             if ( exEditorUtility.IsValidForAtlas(rawTexture) == false ) {
                 exEditorUtility.ImportTextureForAtlas(rawTexture);
             }
+
+            bool dirty = false;
+            if ( textureInfo.rawAtlasGUID != rawAtlasGUID ) {
+                textureInfo.rawAtlasGUID = rawAtlasGUID;
+                dirty = true;
+            }
             if ( textureInfo.texture != atlasTexture ) {
                 textureInfo.texture = atlasTexture;
-                EditorUtility.SetDirty(textureInfo);
+                dirty = true;
             }
+            if ( dirty )
+                EditorUtility.SetDirty(textureInfo);
 
             // NOTE: we do this because the texture already been trimmed, and only this way to make texture have better filter
             // apply contour bleed

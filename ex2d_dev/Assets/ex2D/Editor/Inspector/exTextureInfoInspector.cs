@@ -66,14 +66,19 @@ class exTextureInfoInspector : Editor {
             }
         }
 
-        GUILayout.BeginHorizontal();
-        GUILayout.FlexibleSpace();
-            if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
-                // exAtlasInfoEditor editor = EditorWindow.GetWindow<exAtlasInfoEditor>();
-                // editor.Edit(target);
-            }
-        GUILayout.Space(5);
-        GUILayout.EndHorizontal();
+        // Edit
+        if ( serializedObject.isEditingMultipleObjects == false ) {
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+                if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
+                    exAtlasEditor editor = EditorWindow.GetWindow<exAtlasEditor>();
+                    exTextureInfo textureInfo = target as exTextureInfo; 
+                    exAtlas atlas = exEditorUtility.LoadAssetFromGUID<exAtlas>( textureInfo.rawAtlasGUID );
+                    editor.Edit(atlas);
+                }
+            GUILayout.Space(5);
+            GUILayout.EndHorizontal();
+        }
     }
 
     // ------------------------------------------------------------------ 

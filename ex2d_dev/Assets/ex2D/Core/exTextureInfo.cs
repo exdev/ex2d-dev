@@ -19,6 +19,7 @@ using UnityEngine;
 
 public class exTextureInfo : ScriptableObject {
     public string rawTextureGUID = "";
+    public string rawAtlasGUID = "";
     public Texture2D texture; ///< the atlas or raw texture
 
     public bool rotated = false; ///< if rotate the texture in atlas 
