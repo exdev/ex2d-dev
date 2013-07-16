@@ -23,7 +23,7 @@ using System.Collections.Generic;
 /// The type of layer
 // ------------------------------------------------------------------ 
 
-public enum LayerType
+public enum exLayerType
 {
     Static = 0,
     Dynamic,    ///< 当layerType转换成dynamic后，新添加的sprite时将判断mesh顶点数，超出限制的将自动添加到新的mesh中。
@@ -31,7 +31,7 @@ public enum LayerType
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-/// The layer class
+/// The layer component
 /// NOTE: Don't add this component yourself, use ex2DMng.instance.CreateLayer instead.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -63,7 +63,7 @@ public class exLayer : MonoBehaviour
             for (int i = 0; i < meshList.Count; ++i) {
                 exMesh mesh = meshList[i];
                 if (mesh != null) {
-                    mesh.gameObject.SetActive(value);
+                    mesh.gameObject.SetActive(value && mesh.hasTriangle);
                 }
             }
             show_ = value;
@@ -75,8 +75,8 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     
     [HideInInspector] [SerializeField] 
-    private LayerType layerType_ = LayerType.Dynamic;
-    public LayerType layerType {
+    private exLayerType layerType_ = exLayerType.Dynamic;
+    public exLayerType layerType {
         get {
             return layerType_;
         }
@@ -86,16 +86,16 @@ public class exLayer : MonoBehaviour
             }
             layerType_ = value;
 #if UNITY_EDITOR
-            if (value == LayerType.Static && Application.isPlaying) {
+            if (value == exLayerType.Static && Application.isPlaying) {
                 Debug.LogWarning("can't change to static during runtime");
             }
 #endif
-            if (value == LayerType.Dynamic) {
+            if (value == exLayerType.Dynamic) {
                 for (int i = 0; i < meshList.Count; ++i) {
                     meshList[i].MarkDynamic();
                 }
             }
-            else if (value == LayerType.Static){
+            else if (value == exLayerType.Static){
                 Compact();
                 // TODO: batch same material meshes
             }
@@ -173,14 +173,14 @@ public class exLayer : MonoBehaviour
                     meshList.RemoveAt(m);
                     continue;
                 }
-                UpdateFlags meshUpdateFlags = UpdateFlags.None;
+                exUpdateFlags meshUpdateFlags = exUpdateFlags.None;
                 for (int i = 0; i < mesh.spriteList.Count; ++i) {
                     exSpriteBase sprite = mesh.spriteList[i];
                     exDebug.Assert(sprite.isOnEnabled == sprite.isInIndexBuffer);
                 
                     if (sprite.isOnEnabled) {
                         sprite.UpdateTransform();
-                        UpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
+                        exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
                         meshUpdateFlags |= spriteUpdateFlags;
                     }
                 }
@@ -217,7 +217,7 @@ public class exLayer : MonoBehaviour
         // Find available mesh
         // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
         exMesh sameDrawcallMesh = null;
-        int maxVertexCount = (layerType == LayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : MAX_STATIC_VERTEX_COUNT;
+        int maxVertexCount = (layerType == exLayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : MAX_STATIC_VERTEX_COUNT;
         maxVertexCount -= _sprite.vertexCount;
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
@@ -233,7 +233,7 @@ public class exLayer : MonoBehaviour
         if (sameDrawcallMesh == null) {
             sameDrawcallMesh = exMesh.Create(this);
             sameDrawcallMesh.material = mat;
-            if (layerType == LayerType.Dynamic) {
+            if (layerType == exLayerType.Dynamic) {
                 sameDrawcallMesh.MarkDynamic();
             }
             meshList.Add(sameDrawcallMesh);
@@ -282,7 +282,7 @@ public class exLayer : MonoBehaviour
             exMesh mesh = FindMesh(_sprite);
             if (mesh != null) {
                 RemoveIndices(mesh, _sprite);
-                mesh.updateFlags |= UpdateFlags.Index;
+                mesh.updateFlags |= exUpdateFlags.Index;
                 exDebug.Assert(_sprite.indexBufferIndex == -1);
                 UpdateNowInEditMode();
             }
@@ -396,7 +396,7 @@ public class exLayer : MonoBehaviour
                 }
             }
         }
-        _mesh.updateFlags |= UpdateFlags.VertexAndIndex;
+        _mesh.updateFlags |= exUpdateFlags.VertexAndIndex;
 
         // update vertices
         _mesh.vertices.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
@@ -406,7 +406,7 @@ public class exLayer : MonoBehaviour
 #if FORCE_UPDATE_VERTEX_INFO
         bool removeBack = (_sprite.spriteIndex == _mesh.spriteList.Count);
         if (!removeBack) {
-            _mesh.updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+            _mesh.updateFlags |= (exUpdateFlags.Color | exUpdateFlags.UV | exUpdateFlags.Normal);
         }
 #else
         _mesh.updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
@@ -472,7 +472,7 @@ public class exLayer : MonoBehaviour
             for (int i = _mesh.indices.Count - 1 - indexCount; i >= _sprite.indexBufferIndex ; --i) {
                 _mesh.indices[i + indexCount] = _mesh.indices[i];
             }
-            _sprite.updateFlags |= UpdateFlags.Index;
+            _sprite.updateFlags |= exUpdateFlags.Index;
             // update other sprites indexBufferIndex
             for (int i = sortedSpriteIndex; i < _mesh.sortedSpriteList.Count; ++i) {
                 exSpriteBase otherSprite = _mesh.sortedSpriteList[i];
@@ -492,7 +492,7 @@ public class exLayer : MonoBehaviour
         if (_sprite.isInIndexBuffer) {
             // update indices
             _mesh.indices.RemoveRange(_sprite.indexBufferIndex, _sprite.indexCount);
-            _mesh.updateFlags |= UpdateFlags.Index;
+            _mesh.updateFlags |= exUpdateFlags.Index;
             
             // update indexBufferIndex and sortedSpriteList
             for (int i = _mesh.sortedSpriteList.Count - 1; i >= 0; --i) {

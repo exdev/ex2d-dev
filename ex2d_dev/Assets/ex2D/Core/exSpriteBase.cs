@@ -66,7 +66,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             if (customSize_) {
                 if (width_ != value) {
                     width_ = value;
-                    updateFlags |= UpdateFlags.Vertex;
+                    updateFlags |= exUpdateFlags.Vertex;
                 }
             }
             else {
@@ -88,7 +88,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             if (customSize_) {
                 if (height_ != value) {
                     height_ = value;
-                    updateFlags |= UpdateFlags.Vertex;
+                    updateFlags |= exUpdateFlags.Vertex;
                 }
             }
             else {
@@ -107,7 +107,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         set {
             if ( anchor_ != value ) {
                 anchor_ = value;
-                updateFlags |= UpdateFlags.Vertex;
+                updateFlags |= exUpdateFlags.Vertex;
             }
         }
     }
@@ -141,7 +141,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         set { 
             if ( offset_ != value ) {
                 offset_ = value;
-                updateFlags |= UpdateFlags.Vertex;
+                updateFlags |= exUpdateFlags.Vertex;
             }
         }
     }
@@ -156,7 +156,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         set { 
             if ( shear_ != value ) {
                 shear_ = value;
-                updateFlags |= UpdateFlags.Vertex;
+                updateFlags |= exUpdateFlags.Vertex;
             }
         }
     }
@@ -177,7 +177,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// The current updateFlags
     // ------------------------------------------------------------------ 
 
-    [System.NonSerialized] public UpdateFlags updateFlags = UpdateFlags.All;    // this value will reset after every UpdateBuffers()
+    [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
 
     [System.NonSerialized] private Transform cachedTransform_ = null;
     public Transform cachedTransform {
@@ -318,7 +318,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             _uvs.Add(new Vector2());
         }
         
-        updateFlags |= (UpdateFlags.Vertex | UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);
+        updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.Color | exUpdateFlags.UV | exUpdateFlags.Normal);
     }
 
     // ------------------------------------------------------------------ 
@@ -328,7 +328,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// NOTE: 这个方法不应修改对象中除了updateFlags外的其它字段
     // ------------------------------------------------------------------ 
 
-    internal abstract UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices = null);
+    internal abstract exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices = null);
 
 #if UNITY_EDITOR
 
@@ -337,7 +337,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // ------------------------------------------------------------------ 
 
     public void GetBuffers (List<Vector3> _vertices, List<Vector2> _uvs) {
-        UpdateFlags originalFlags = updateFlags;
+        exUpdateFlags originalFlags = updateFlags;
         _vertices.Clear();
         _uvs.Clear();
         List<Color32> colors = new List<Color32>(vertexCount);
@@ -372,7 +372,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     
     public void UpdateTransform () {
         if (cachedTransform.hasChanged) {
-            updateFlags |= UpdateFlags.Vertex;
+            updateFlags |= exUpdateFlags.Vertex;
             cachedTransform.hasChanged = false;
             // TODO: 根据parent更换layer
         }

@@ -49,9 +49,9 @@ public class exSprite : exSpriteBase {
             if (customSize_ == false && (value.width != width_ || value.height != height_)) {
                 width_ = value.width;
                 height_ = value.height;
-                updateFlags |= UpdateFlags.Vertex;
+                updateFlags |= exUpdateFlags.Vertex;
             }
-            updateFlags |= UpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
+            updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
             textureInfo_ = value;
         }
     }
@@ -67,7 +67,7 @@ public class exSprite : exSpriteBase {
         set {
             if ( useTextureOffset_ != value ) {
                 useTextureOffset_ = value;
-                updateFlags |= UpdateFlags.Vertex;
+                updateFlags |= exUpdateFlags.Vertex;
             }
         }
     }
@@ -123,7 +123,7 @@ public class exSprite : exSpriteBase {
                     if (textureInfo.width != width_ || textureInfo.height != height_) {
                         width_ = textureInfo.width;
                         height_ = textureInfo.height;
-                        updateFlags |= UpdateFlags.Vertex;
+                        updateFlags |= exUpdateFlags.Vertex;
                     }
                 }
             }
@@ -168,11 +168,11 @@ public class exSprite : exSpriteBase {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    internal override UpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
-        if ((updateFlags & UpdateFlags.Vertex) != 0) {
+    internal override exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
+        if ((updateFlags & exUpdateFlags.Vertex) != 0) {
             UpdateVertexBuffer(_vertices, vertexBufferIndex);
         }
-        if ((updateFlags & UpdateFlags.Index) != 0 && _indices != null) {
+        if ((updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
             _indices[indexBufferIndex]     = vertexBufferIndex;
             _indices[indexBufferIndex + 1] = vertexBufferIndex + 1;
             _indices[indexBufferIndex + 2] = vertexBufferIndex + 2;
@@ -181,7 +181,7 @@ public class exSprite : exSpriteBase {
             _indices[indexBufferIndex + 5] = vertexBufferIndex;
             TestIndices(_indices);
         }
-        if ((updateFlags & UpdateFlags.UV) != 0) {
+        if ((updateFlags & exUpdateFlags.UV) != 0) {
             Vector2 texelSize = textureInfo.texture.texelSize;
             Vector2 start = new Vector2((float)textureInfo.x * texelSize.x, 
                                          (float)textureInfo.y * texelSize.y);
@@ -200,14 +200,14 @@ public class exSprite : exSpriteBase {
                 _uvs[vertexBufferIndex + 3] = new Vector2(end.x, start.y);
             }
         }
-        if ((updateFlags & UpdateFlags.Color) != 0) {
+        if ((updateFlags & exUpdateFlags.Color) != 0) {
             _colors32[vertexBufferIndex + 0] = new Color32(255, 255, 255, 255);
             _colors32[vertexBufferIndex + 1] = new Color32(255, 255, 255, 255);
             _colors32[vertexBufferIndex + 2] = new Color32(255, 255, 255, 255);
             _colors32[vertexBufferIndex + 3] = new Color32(255, 255, 255, 255);
         }
-        UpdateFlags spriteUpdateFlags = updateFlags;
-        updateFlags = UpdateFlags.None;
+        exUpdateFlags spriteUpdateFlags = updateFlags;
+        updateFlags = exUpdateFlags.None;
         return spriteUpdateFlags;
     }
 

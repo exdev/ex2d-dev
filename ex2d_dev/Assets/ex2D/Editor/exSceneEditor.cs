@@ -923,7 +923,7 @@ class exSceneEditor : EditorWindow {
 
             if ( spriteBase ) {
                 spriteBase.UpdateTransform ();
-                if ( spriteBase.updateFlags != UpdateFlags.None ) {
+                if ( spriteBase.updateFlags != exUpdateFlags.None ) {
                     ex2DMng.instance.ResortLayerDepth();
                     ex2DMng.instance.UpdateLayers();
                 }

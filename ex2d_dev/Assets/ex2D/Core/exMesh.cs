@@ -18,7 +18,7 @@ using System.Collections.Generic;
 // ------------------------------------------------------------------ 
 
 [System.FlagsAttribute]
-public enum UpdateFlags {
+public enum exUpdateFlags {
 	None		= 0,  ///< none
 	Index	    = 1,  ///< update the indices
 	Vertex		= 2,  ///< update the vertices
@@ -74,6 +74,7 @@ public class exMesh : MonoBehaviour
     public List<exSpriteBase> spriteList = new List<exSpriteBase>();
 
     /// sprite序列，用于索引indices，顺序和sprite在indices中的顺序一致，也就是按照深度值从小到大排序。Only used by exLayer, just place here for convenience.
+    /// 可用此序列访问到所有在能在mesh显示的sprite
     public List<exSpriteBase> sortedSpriteList = new List<exSpriteBase>();
     
     [HideInInspector] public Mesh mesh;
@@ -84,13 +85,13 @@ public class exMesh : MonoBehaviour
     public List<Vector3> vertices = new List<Vector3>();
 
     /// cache mesh.triangles (按深度排序)
-    // 如果不手动给出，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
+    // 如果不手动给出QUAD_INDEX_COUNT，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
     public List<int> indices = new List<int>(QUAD_INDEX_COUNT); 
 
     public List<Vector2> uvs = new List<Vector2>();       ///< cache mesh.vertices
     public List<Color32> colors32 = new List<Color32>();  ///< cache mesh.colors32
 
-    public UpdateFlags updateFlags = UpdateFlags.None;
+    public exUpdateFlags updateFlags = exUpdateFlags.None;
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -99,6 +100,12 @@ public class exMesh : MonoBehaviour
     public int vertexCount {
         get {
             return vertices.Count;
+        }
+    }
+
+    public bool hasTriangle {
+        get {
+            return sortedSpriteList.Count > 0;
         }
     }
 
@@ -146,23 +153,23 @@ public class exMesh : MonoBehaviour
     /// Actually apply all buffer changes
     // ------------------------------------------------------------------ 
 
-    public void Apply (UpdateFlags _additionalUpdateFlags = UpdateFlags.None) {
+    public void Apply (exUpdateFlags _additionalUpdateFlags = exUpdateFlags.None) {
         updateFlags |= _additionalUpdateFlags;
-        if ((updateFlags & UpdateFlags.VertexAndIndex) == UpdateFlags.VertexAndIndex) {
+        if ((updateFlags & exUpdateFlags.VertexAndIndex) == exUpdateFlags.VertexAndIndex) {
             // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
             mesh.triangles = null;  //这里如果使用clear，那么uv和color就必须赋值，否则有时会出错
         }
-        if ((updateFlags & UpdateFlags.Vertex) != 0 || 
-            (updateFlags & UpdateFlags.Index) != 0) {           // 如果要重设triangles，则必须同时重设vertices，否则mesh将显示不出来
+        if ((updateFlags & exUpdateFlags.Vertex) != 0 || 
+            (updateFlags & exUpdateFlags.Index) != 0) {           // 如果要重设triangles，则必须同时重设vertices，否则mesh将显示不出来
             mesh.vertices = vertices.ToArray();
         }
-        if ((updateFlags & UpdateFlags.UV) != 0) {
+        if ((updateFlags & exUpdateFlags.UV) != 0) {
             mesh.uv = uvs.ToArray();
         }
-        if ((updateFlags & UpdateFlags.Color) != 0) {
+        if ((updateFlags & exUpdateFlags.Color) != 0) {
             mesh.colors32 = colors32.ToArray();
         }
-        if ((updateFlags & UpdateFlags.Index) != 0) {
+        if ((updateFlags & exUpdateFlags.Index) != 0) {
             mesh.triangles = indices.ToArray();      // During runtime, assigning triangles will automatically Recalculate the bounding volume.
             bool visible = (indices.Count > 0);
             if (gameObject.activeSelf != visible) {
@@ -174,18 +181,18 @@ public class exMesh : MonoBehaviour
             }
 #endif
         }
-        else if((updateFlags & UpdateFlags.Vertex) != 0) { 
+        else if((updateFlags & exUpdateFlags.Vertex) != 0) { 
             // 如果没有更新triangles并且更新了vertex位置，则需要手动更新bbox
             mesh.RecalculateBounds();
         }
-        if ((updateFlags & UpdateFlags.Normal) != 0) {
+        if ((updateFlags & exUpdateFlags.Normal) != 0) {
             Vector3[] normals = new Vector3[vertices.Count];
             for (int i = 0; i < normals.Length; ++i) {
                 normals[i] = new Vector3(0, 0, -1);
             }
             mesh.normals = normals;
         }
-        updateFlags = UpdateFlags.None;
+        updateFlags = exUpdateFlags.None;
     }
 
     // ------------------------------------------------------------------ 
@@ -199,7 +206,7 @@ public class exMesh : MonoBehaviour
         indices.TrimExcess();
         uvs.TrimExcess();
         colors32.TrimExcess();
-        updateFlags |= (UpdateFlags.Color | UpdateFlags.UV | UpdateFlags.Normal);   //need to flush to mesh if not defined exLayer.FORCE_UPDATE_VERTEX_INFO
+        updateFlags |= (exUpdateFlags.Color | exUpdateFlags.UV | exUpdateFlags.Normal);   //need to flush to mesh if not defined exLayer.FORCE_UPDATE_VERTEX_INFO
     }
  
     // ------------------------------------------------------------------ 
@@ -282,7 +289,7 @@ public class exMesh : MonoBehaviour
         uvs.Clear();
         colors32.Clear();
         mesh.Clear();
-        updateFlags = UpdateFlags.None;
+        updateFlags = exUpdateFlags.None;
     }
 
     // ------------------------------------------------------------------ 
