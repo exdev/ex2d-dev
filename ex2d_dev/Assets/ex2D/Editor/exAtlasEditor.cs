@@ -617,6 +617,17 @@ partial class exAtlasEditor : EditorWindow {
 
 
             // texture info list 
+            // Rect oldViewport = new Rect( 0, 0, Screen.width, Screen.height ); 
+            // Rect viewportRect = new Rect ( _rect.x,
+            //                                position.height - _rect.yMax,
+            //                                _rect.width, 
+            //                                _rect.height );
+            // GL.Viewport(viewportRect);
+            // GL.PushMatrix();
+            // GL.LoadPixelMatrix( 0.0f, 
+            //                     _rect.width, 
+            //                     _rect.height,
+            //                     0.0f );
             GUI.BeginGroup( atlasRect );
             foreach ( exTextureInfo textureInfo in curEdit.textureInfos ) {
                 if ( textureInfo == null )
@@ -625,6 +636,8 @@ partial class exAtlasEditor : EditorWindow {
                 DrawTextureInfo ( MapTextureInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), textureInfo ), textureInfo );
             }
             GUI.EndGroup();
+            // GL.PopMatrix();
+            // GL.Viewport(oldViewport);
 
             // border
             exEditorUtility.DrawRect( _rect,

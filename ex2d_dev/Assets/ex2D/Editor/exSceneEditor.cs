@@ -689,9 +689,6 @@ class exSceneEditor : EditorWindow {
                 }
             }
 
-            // draw handles
-            // TODO:
-
             // Show a copy icon on the drag
             if ( DragAndDrop.visualMode == DragAndDropVisualMode.Copy ) {
                 foreach ( Object o in draggingObjects ) {
