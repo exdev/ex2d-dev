@@ -43,7 +43,6 @@ partial class exAtlasEditor : EditorWindow {
     SerializedObject curSerializedObject = null;
 
     Vector2 scrollPos = Vector2.zero;
-    int selectIdx = 0;
     List<exTextureInfo> selectedTextureInfos = new List<exTextureInfo>();
     Rect atlasRect = new Rect( 0, 0, 1, 1 );
 
@@ -57,7 +56,7 @@ partial class exAtlasEditor : EditorWindow {
     // GUI states
     // bool inDraggingTextureInfoState = false;
     List<Object> importObjects = new List<Object>();
-    Object oldSelActiveObject;
+    Object oldSelActiveObject = null;
     List<Object> oldSelObjects = new List<Object>();
 
     exRectSelection rectSelection = null;
@@ -74,14 +73,10 @@ partial class exAtlasEditor : EditorWindow {
         title = "Atlas Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
-        // position = new Rect ( 50, 50, 800, 600 );
 
         rectSelection = new exRectSelection( PickObject,
                                              PickRectObjects,
                                              ConfirmRectSelection );
-
-        Reset();
-        Repaint();
     }
 
     // ------------------------------------------------------------------ 
@@ -143,6 +138,9 @@ partial class exAtlasEditor : EditorWindow {
             GUILayout.Label ( "Please select an Atlas" );
             return;
         }
+        if ( curSerializedObject == null )
+            curSerializedObject = new SerializedObject(curEdit);
+
 
         curSerializedObject.Update ();
 
@@ -166,8 +164,7 @@ partial class exAtlasEditor : EditorWindow {
                                                            , typeof(exAtlas)
                                                            , false 
                                                            , new GUILayoutOption[] {
-                                                               GUILayout.Width(300), 
-                                                               GUILayout.MaxWidth(300)
+                                                               GUILayout.Width(400), 
                                                            }
                                                          );
             if ( newAtlas != curEdit ) 
@@ -208,11 +205,8 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void Reset () {
-        if ( curEdit != null )
-            curSerializedObject = new SerializedObject(curEdit);
-
+        curSerializedObject = null;
         scrollPos = Vector2.zero;
-        selectIdx = 0;
         selectedTextureInfos.Clear();
         importObjects.Clear();
         oldSelActiveObject = null;
@@ -229,6 +223,9 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void Edit ( exAtlas _atlas ) {
+        if ( _atlas == null )
+            return;
+
         curEdit = _atlas;
 
         Reset ();

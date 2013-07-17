@@ -33,6 +33,9 @@ public static class exEditorUtility {
 
     static Texture2D textureCheckerboard;
     static Texture2D textureHelp;
+    static Texture2D textureAnimationPlay;
+    static Texture2D textureAnimationNext;
+    static Texture2D textureAnimationPrev;
 
     static GUIStyle styleRectBorder = null;
 
@@ -75,32 +78,25 @@ public static class exEditorUtility {
     ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
-    /// \return the helper texture
-    /// return a help texture
+    // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static Texture2D HelpTexture () {
+    static Texture2D FindBuiltinTexture ( ref Texture2D _texture, string _name ) {
         // NOTE: hack from "unity editor resources" in Unity3D Contents
-        if ( textureHelp == null ) {
-            textureHelp = EditorGUIUtility.FindTexture("_help");
-            if ( textureHelp == null ) {
-                Debug.LogError ( "can't find help texture" );
+        if ( _texture == null ) {
+            _texture = EditorGUIUtility.FindTexture(_name);
+            if ( _texture == null ) {
+                Debug.LogError ( string.Format ( "can't find {0} texture", _name ) );
                 return null;
             }
         }
-        return textureHelp;
+        return _texture;
     }
 
-    // ------------------------------------------------------------------ 
-    /// \return the checkerboard texture
-    /// return a checkerboard texture
-    // ------------------------------------------------------------------ 
-
-    public static Texture2D CheckerboardTexture () {
-        if ( textureCheckerboard == null )
-            textureCheckerboard = FindTexture ( "checkerboard_64x64.png" ); 
-        return textureCheckerboard;
-    }
+    public static Texture2D HelpTexture () { return FindBuiltinTexture( ref textureHelp, "_help" ); }
+    public static Texture2D AnimationPlayTexture () { return FindBuiltinTexture( ref textureAnimationPlay, "d_animation.play" ); }
+    public static Texture2D AnimationNextTexture () { return FindBuiltinTexture( ref textureAnimationNext, "d_animation.nextkey" ); }
+    public static Texture2D AnimationPrevTexture () { return FindBuiltinTexture( ref textureAnimationPrev, "d_animation.prevkey" ); }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -115,6 +111,17 @@ public static class exEditorUtility {
             return null;
         }
         return tex;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// \return the checkerboard texture
+    /// return a checkerboard texture
+    // ------------------------------------------------------------------ 
+
+    public static Texture2D CheckerboardTexture () {
+        if ( textureCheckerboard == null )
+            textureCheckerboard = FindTexture ( "checkerboard_64x64.png" ); 
+        return textureCheckerboard;
     }
 
     ///////////////////////////////////////////////////////////////////////////////

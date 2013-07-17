@@ -27,21 +27,39 @@ public static class MenuItems {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    [MenuItem ("Assets/Create/ex2D/Texture Info")]
+    [MenuItem ("Assets/Create/ex2D/Texture Info", false, 1000)]
     static void Create_TextureInfo () { exGenericAssetUtility<exTextureInfo>.CreateInCurrentDirectory ("New TextureInfo"); }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    [MenuItem ("Assets/Create/ex2D/Atlas")]
+    [MenuItem ("Assets/Create/ex2D/Atlas", false, 1001)]
     static void Create_Atlas () {
         exGenericAssetUtility<exAtlas>.CreateInCurrentDirectory ("New Atlas");
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("Assets/Create/ex2D/Sprite Animation Clip", false, 1002)]
+    static void Create_SpriteAnimationClip () {
+        exGenericAssetUtility<exSpriteAnimationClip>.CreateInCurrentDirectory ("New SpriteAnimationClip");
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Window
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("ex2D/2D Scene Editor", false, 100)]
+    static void Open_SceneEditor () {
+        EditorWindow.GetWindow<exSceneEditor>();
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -56,9 +74,9 @@ public static class MenuItems {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    [MenuItem ("ex2D/2D Scene Editor", false, 100)]
-    static void Open_SceneEditor () {
-        EditorWindow.GetWindow<exSceneEditor>();
+    [MenuItem ("ex2D/Sprite Animation Editor", false, 102)]
+    static void Open_SpriteAnimationEditor () {
+        EditorWindow.GetWindow<exSpriteAnimationEditor>();
     }
 
     // ------------------------------------------------------------------ 

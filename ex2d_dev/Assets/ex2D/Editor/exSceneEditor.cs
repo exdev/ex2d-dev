@@ -121,14 +121,10 @@ class exSceneEditor : EditorWindow {
         title = "2D Scene Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = true;
-        // position = new Rect ( 50, 50, 800, 600 );
 
         rectSelection = new exRectSelection( PickObject,
                                              PickRectObjects,
                                              ConfirmRectSelection );
-
-        Reset();
-        Repaint();
     }
     
     // ------------------------------------------------------------------ 
@@ -156,9 +152,15 @@ class exSceneEditor : EditorWindow {
     void OnGUI () {
         // pre-check
         PreCheck ();
+
+        //
         if ( ex2DMng.instance == null )
             return;
 
+        if ( curSerializedObject == null )
+            curSerializedObject = new SerializedObject(ex2DMng.instance);
+
+        //
         curSerializedObject.Update ();
 
         // toolbar
@@ -249,13 +251,12 @@ class exSceneEditor : EditorWindow {
                     ex2DCamera.gameObject.AddComponent<ex2DMng>();
                 }
             EditorGUILayout.EndHorizontal();
-        }
 
-        // SerializedObject
-        if ( ex2DMng.instance != null ) {
-            curSerializedObject = new SerializedObject(ex2DMng.instance);
-            ex2DMng.instance.ResortLayerDepth();
-            ex2DMng.instance.UpdateLayers();
+            // SerializedObject
+            if ( ex2DMng.instance != null ) {
+                ex2DMng.instance.ResortLayerDepth();
+                ex2DMng.instance.UpdateLayers();
+            }
         }
     }
 
@@ -650,6 +651,7 @@ class exSceneEditor : EditorWindow {
 
         case EventType.DragExited:
             draggingObjects.Clear();
+            Repaint();
             break;
         }
     }
