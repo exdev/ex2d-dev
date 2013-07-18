@@ -59,7 +59,7 @@ partial class exAtlasEditor : EditorWindow {
     Object oldSelActiveObject = null;
     List<Object> oldSelObjects = new List<Object>();
 
-    exRectSelection rectSelection = null;
+    exRectSelection<Object> rectSelection = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -74,9 +74,9 @@ partial class exAtlasEditor : EditorWindow {
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
 
-        rectSelection = new exRectSelection( PickObject,
-                                             PickRectObjects,
-                                             ConfirmRectSelection );
+        rectSelection = new exRectSelection<Object>( PickObject,
+                                                     PickRectObjects,
+                                                     ConfirmRectSelection );
     }
 
     // ------------------------------------------------------------------ 

@@ -15,7 +15,7 @@ using System.Collections.Generic;
 /// 
 ///////////////////////////////////////////////////////////////////////////////
 
-public class exRectSelection {
+public class exRectSelection<T> {
 
     public enum SelectionType {
         Normal,
@@ -29,17 +29,17 @@ public class exRectSelection {
     // properties
     ///////////////////////////////////////////////////////////////////////////////
 
-    System.Func<Vector2,Object> cb_PickObject;
-    System.Func<Rect,Object[]> cb_PickRectObjects;
-    System.Action<Object,Object[]> cb_ConfirmSelection;
+    System.Func<Vector2,T> cb_PickObject;
+    System.Func<Rect,T[]> cb_PickRectObjects;
+    System.Action<T,T[]> cb_ConfirmSelection;
 
     bool isRectSelecting = false;
     Vector2 selectStartPoint;
-    Object activeObj = null;
-    Object[] selectedObjs = new Object[0];
-    Object[] selectionStart = new Object[0];
-    Dictionary<Object, bool> lastSelection;
-    // Object[] currentSelection;
+    T activeObj = default(T);
+    T[] selectedObjs = new T[0];
+    T[] selectionStart = new T[0];
+    Dictionary<T, bool> lastSelection;
+    // T[] currentSelection;
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
@@ -49,9 +49,9 @@ public class exRectSelection {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public exRectSelection ( System.Func<Vector2,Object> _pickObjectCallback,
-                             System.Func<Rect,Object[]> _pickRectObjectsCallback,
-                             System.Action<Object,Object[]> _confirmSelectionCallback ) 
+    public exRectSelection ( System.Func<Vector2,T> _pickObjectCallback,
+                             System.Func<Rect,T[]> _pickRectObjectsCallback,
+                             System.Action<T,T[]> _confirmSelectionCallback ) 
     {
         cb_PickObject = _pickObjectCallback;
         cb_PickRectObjects = _pickRectObjectsCallback;
@@ -67,7 +67,7 @@ public class exRectSelection {
         // DEBUG { 
         // EditorGUILayout.BeginHorizontal();
         // GUILayout.Label ( "active = " + ((activeObj == null) ? "null" : activeObj.name) );
-        // foreach ( Object obj in selectedObjs )
+        // foreach ( T obj in selectedObjs )
         //     if ( obj != null )
         //         GUILayout.Label ( obj.name );
         // EditorGUILayout.EndHorizontal();
@@ -130,24 +130,24 @@ public class exRectSelection {
 
                 if ( isRectSelecting ) {
                     Rect selectRect = FromToRect( selectStartPoint, e.mousePosition );
-                    Object[] array = cb_PickRectObjects ( selectRect );
+                    T[] array = cb_PickRectObjects ( selectRect );
                     // currentSelection = array;
                     bool flag = false;
 
                     if ( lastSelection == null ) {
-                        lastSelection = new Dictionary<Object, bool>();
+                        lastSelection = new Dictionary<T, bool>();
                         flag = true;
                     }
 
                     flag |= (lastSelection.Count != array.Length);
                     if ( !flag ) {
-                        Dictionary<Object, bool> dictionary = new Dictionary<Object, bool>(array.Length);
-                        Object[] array2 = array;
+                        Dictionary<T, bool> dictionary = new Dictionary<T, bool>(array.Length);
+                        T[] array2 = array;
                         for ( int i = 0; i < array2.Length; ++i ) {
-                            Object key = array2[i];
+                            T key = array2[i];
                             dictionary.Add(key, false);
                         }
-                        foreach ( Object current2 in lastSelection.Keys ) {
+                        foreach ( T current2 in lastSelection.Keys ) {
                             if ( !dictionary.ContainsKey(current2) ) {
                                 flag = true;
                                 break;
@@ -156,10 +156,10 @@ public class exRectSelection {
                     }
 
                     if ( flag ) {
-                        lastSelection = new Dictionary<Object, bool>(array.Length);
-                        Object[] array3 = array;
+                        lastSelection = new Dictionary<T, bool>(array.Length);
+                        T[] array3 = array;
                         for ( int j = 0; j < array3.Length; ++j ) {
-                            Object key2 = array3[j];
+                            T key2 = array3[j];
                             lastSelection.Add(key2, false);
                         }
                         if ( array != null ) {
@@ -190,10 +190,10 @@ public class exRectSelection {
 
                 if ( isRectSelecting ) {
                     isRectSelecting = false;
-                    selectionStart = new Object[0];
+                    selectionStart = new T[0];
                 }
                 else {
-                    Object obj = cb_PickObject(e.mousePosition);
+                    T obj = cb_PickObject(e.mousePosition);
                     // like command/ctrl selecting, but also switch the active object
                     if ( e.shift ) {
                         if ( IsActiveSelection (obj) ) {
@@ -250,7 +250,7 @@ public class exRectSelection {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void SetSelection ( Object[] _objs ) {
+    public void SetSelection ( T[] _objs ) {
         selectedObjs = _objs;
     }
 
@@ -258,13 +258,13 @@ public class exRectSelection {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void UpdateSelection( Object _obj, SelectionType _type ) {
-        Object[] objs;
+    void UpdateSelection( T _obj, SelectionType _type ) {
+        T[] objs;
         if ( _obj == null ) {
-            objs = new Object[0];
+            objs = new T[0];
         }
         else {
-            objs = new Object[] {
+            objs = new T[] {
                 _obj
             };
         }
@@ -275,11 +275,11 @@ public class exRectSelection {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void UpdateSelection ( Object[] _objs, SelectionType _type ) {
+    void UpdateSelection ( T[] _objs, SelectionType _type ) {
         switch (_type) {
         case SelectionType.Additive:
             if ( _objs.Length > 0 ) {
-                Object[] array = new Object[selectionStart.Length + _objs.Length];
+                T[] array = new T[selectionStart.Length + _objs.Length];
                 System.Array.Copy(selectionStart, array, selectionStart.Length);
 
                 // add unique object
@@ -287,7 +287,7 @@ public class exRectSelection {
                 for ( int i = 0; i < _objs.Length; ++i ) {
                     bool exists = false;
                     for ( int j = 0; j < selectionStart.Length; ++j ) {
-                        if ( selectionStart[j] == _objs[i] ) {
+                        if ( ReferenceEquals( selectionStart[j], _objs[i] ) ) {
                             exists = true;
                             break;
                         }
@@ -315,31 +315,31 @@ public class exRectSelection {
             return;
 
         case SelectionType.Subtractive:
-            Dictionary<Object, bool> dictionary = new Dictionary<Object, bool>(selectionStart.Length);
+            Dictionary<T, bool> dictionary = new Dictionary<T, bool>(selectionStart.Length);
             for ( int j = 0; j < selectionStart.Length; ++j ) {
-                Object key = selectionStart[j];
+                T key = selectionStart[j];
                 dictionary.Add(key, false);
             }
             for ( int k = 0; k < _objs.Length; ++k ) {
-                Object key2 = _objs[k];
+                T key2 = _objs[k];
                 if ( dictionary.ContainsKey(key2) ) {
                     dictionary.Remove(key2);
                 }
             }
-            Object[] array = new Object[dictionary.Keys.Count];
+            T[] array = new T[dictionary.Keys.Count];
             dictionary.Keys.CopyTo(array, 0);
 
             selectedObjs = array;
 
             if ( IsInSelectedList ( activeObj ) == false ) {
-                activeObj = selectedObjs.Length > 0 ? selectedObjs[0] : null; 
+                activeObj = selectedObjs.Length > 0 ? selectedObjs[0] : default(T); 
             }
             return;
         }
 
         selectedObjs = _objs;
         if ( IsInSelectedList ( activeObj ) == false ) {
-            activeObj = selectedObjs.Length > 0 ? selectedObjs[0] : null; 
+            activeObj = selectedObjs.Length > 0 ? selectedObjs[0] : default(T); 
         }
 
         return;
@@ -349,9 +349,9 @@ public class exRectSelection {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    bool IsInSelectedList ( Object _obj ) {
-        foreach ( Object obj in selectedObjs ) {
-            if ( obj == _obj )
+    bool IsInSelectedList ( T _obj ) {
+        foreach ( T obj in selectedObjs ) {
+            if ( ReferenceEquals ( obj, _obj ) )
                 return true;
         }
         return false;
@@ -361,7 +361,7 @@ public class exRectSelection {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    bool IsActiveSelection ( Object _obj ) {
-        return activeObj == _obj;
+    bool IsActiveSelection ( T _obj ) {
+        return ReferenceEquals ( activeObj, _obj );
     }
 }

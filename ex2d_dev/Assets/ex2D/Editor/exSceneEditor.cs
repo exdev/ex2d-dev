@@ -84,7 +84,7 @@ class exSceneEditor : EditorWindow {
     exLayer activeLayer = null;
     // exLayer draggingLayer = null; TODO
 
-    exRectSelection rectSelection = null;
+    exRectSelection<Object> rectSelection = null;
 
     // 
     List<exSpriteBase> spriteNodes = new List<exSpriteBase>();
@@ -122,9 +122,9 @@ class exSceneEditor : EditorWindow {
         wantsMouseMove = true;
         autoRepaintOnSceneChange = true;
 
-        rectSelection = new exRectSelection( PickObject,
-                                             PickRectObjects,
-                                             ConfirmRectSelection );
+        rectSelection = new exRectSelection<Object>( PickObject,
+                                                     PickRectObjects,
+                                                     ConfirmRectSelection );
     }
     
     // ------------------------------------------------------------------ 
