@@ -180,9 +180,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     FrameInfo PickObject_FrameInfo ( Vector2 _position ) {
-        // Object[] objs = PickRectObjects( new Rect(_position.x-1,_position.y-1,2,2) );
-        // if ( objs.Length > 0 )
-        //     return objs[0];
+        FrameInfo[] objs = PickRectObjects_FrameInfo( new Rect(_position.x-1,_position.y-1,2,2) );
+        if ( objs.Length > 0 )
+            return objs[0];
         return null;
     }
 
@@ -729,12 +729,14 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     borderColor = Color.white;
 
                 exEditorUtility.DrawRect ( frameRect, new Color( 1.0f, 0.0f, 0.85f, 0.2f ), borderColor );
-                if ( i == 0 ) {
-                    exEditorUtility.DrawLine ( offset+1, yStart + eventViewHeight + 10.0f, 
-                                               offset+1, yStart + boxHeight - 10.0f, 
-                                               borderColor,
-                                               1 );
-                }
+                // DISABLE { 
+                // if ( i == 0 ) {
+                //     exEditorUtility.DrawLine ( offset+1, yStart + eventViewHeight + 10.0f, 
+                //                                offset+1, yStart + boxHeight - 10.0f, 
+                //                                borderColor,
+                //                                1 );
+                // }
+                // } DISABLE end 
 
                 DrawTextureInfo ( new Rect ( frameRect.x + 5.0f,
                                              frameRect.y + 5.0f,
