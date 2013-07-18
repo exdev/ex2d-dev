@@ -15,6 +15,9 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 
+using FrameInfo = exSpriteAnimationClip.FrameInfo;
+using EventInfo = exSpriteAnimationClip.EventInfo;
+
 ///////////////////////////////////////////////////////////////////////////////
 ///
 /// the sprite animation clip editor
@@ -31,7 +34,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
     SerializedObject curSerializedObject = null;
 
     Vector2 scrollPos = Vector2.zero;
-    exRectSelection rectSelection = null;
+    exRectSelection<FrameInfo> frameRectSelection = null;
+    List<FrameInfo> selectedFrameInfos = new List<FrameInfo>();
 
     bool isPlaying = false; 
     float previewSpeed = 1.0f;
@@ -52,7 +56,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
     float offset = 0.0f;
 
     //
+    Rect timelineRect;
     Rect eventInfoViewRect;
+    Rect frameInfoViewRect;
     List<Object> draggingObjects = new List<Object>();
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -68,9 +74,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
 
-        rectSelection = new exRectSelection( PickObject,
-                                             PickRectObjects,
-                                             ConfirmRectSelection );
+        frameRectSelection = new exRectSelection<FrameInfo>( PickObject_FrameInfo,
+                                                             PickRectObjects_FrameInfo,
+                                                             ConfirmRectSelection_FrameInfo );
     }
 
     // ------------------------------------------------------------------ 
@@ -133,8 +139,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 Layout_TimelineField ( (int)position.width - 80, 200 );
             EditorGUILayout.EndHorizontal();
 
-            // rectSelection.SetSelection(selectedTextureInfos.ToArray());
-            rectSelection.OnGUI();
+            frameRectSelection.SetSelection(selectedFrameInfos.ToArray());
+            frameRectSelection.OnGUI();
 
         EditorGUILayout.EndScrollView();
 
@@ -173,7 +179,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    Object PickObject ( Vector2 _position ) {
+    FrameInfo PickObject_FrameInfo ( Vector2 _position ) {
         // Object[] objs = PickRectObjects( new Rect(_position.x-1,_position.y-1,2,2) );
         // if ( objs.Length > 0 )
         //     return objs[0];
@@ -184,20 +190,28 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    Object[] PickRectObjects ( Rect _rect ) {
-        List<Object> objects = new List<Object>();
+    FrameInfo[] PickRectObjects_FrameInfo ( Rect _rect ) {
+        List<FrameInfo> objects = new List<FrameInfo>();
 
-        // foreach ( exTextureInfo textureInfo in curEdit.textureInfos ) {
-        //     if ( textureInfo == null )
-        //         continue;
+        float curX = frameInfoViewRect.x;
+        int totalFrames = curEdit.GetTotalFrames();
 
-        //     Rect textureInfoRect = MapTextureInfo ( atlasRect, textureInfo );
-        //     if ( exGeometryUtility.RectRect_Contains( _rect, textureInfoRect ) != 0 ||
-        //          exGeometryUtility.RectRect_Intersect( _rect, textureInfoRect ) )
-        //     {
-        //         objects.Add (textureInfo);
-        //     }
-        // }
+        for ( int i = 0; i < curEdit.frameInfos.Count; ++i ) {
+            FrameInfo fi = curEdit.frameInfos[i];
+            float frameWidth = ((float)fi.frames/(float)totalFrames) * frameInfoViewRect.width;
+            Rect frameRect = new Rect ( curX + timelineRect.x,
+                                        frameInfoViewRect.y + timelineRect.y + 10.0f,
+                                        frameWidth,
+                                        frameInfoViewRect.height - 20.0f );
+
+            if ( exGeometryUtility.RectRect_Contains( _rect, frameRect ) != 0 ||
+                 exGeometryUtility.RectRect_Intersect( _rect, frameRect ) )
+            {
+                objects.Add(fi);
+            }
+
+            curX += frameWidth;
+        }
 
         return objects.ToArray();
     }
@@ -206,12 +220,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void ConfirmRectSelection ( Object _activeObj, Object[] _selectedObjs ) {
-        // selectedTextureInfos.Clear();
-        // foreach ( Object obj in _selectedObjs )
-        //     selectedTextureInfos.Add (obj as exTextureInfo);
-        // Selection.activeObject = _activeObj;
-        // Selection.objects = _selectedObjs;
+    void ConfirmRectSelection_FrameInfo ( FrameInfo _activeObj, FrameInfo[] _selectedObjs ) {
+        selectedFrameInfos.Clear();
+        foreach ( FrameInfo obj in _selectedObjs )
+            selectedFrameInfos.Add (obj);
     }
 
     // ------------------------------------------------------------------ 
@@ -253,7 +265,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
             if ( GUILayout.Button ( exEditorUtility.AnimationPrevTexture(), EditorStyles.toolbarButton ) ) {
                 // TODO { 
-                // exSpriteAnimClip.FrameInfo fi = curEdit.GetFrameInfoBySeconds ( curSeconds, WrapMode.Once );
+                // FrameInfo fi = curEdit.GetFrameInfoBySeconds ( curSeconds, WrapMode.Once );
                 // int i = curEdit.frameInfos.IndexOf(fi) - 1;
                 // if ( i >= 0  ) {
                 //     curSeconds = 0.0f;
@@ -271,7 +283,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
             if ( GUILayout.Button ( exEditorUtility.AnimationNextTexture(), EditorStyles.toolbarButton ) ) {
                 // TODO { 
-                // exSpriteAnimClip.FrameInfo fi = curEdit.GetFrameInfoBySeconds ( curSeconds, WrapMode.Once );
+                // FrameInfo fi = curEdit.GetFrameInfoBySeconds ( curSeconds, WrapMode.Once );
                 // int i = curEdit.frameInfos.IndexOf(fi) + 1;
                 // if ( i < curEdit.frameInfos.Count ) {
                 //     curSeconds = 0.0f;
@@ -427,7 +439,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             GUILayout.Label( "secs" );
         GUILayout.EndHorizontal();
 
-        // frame rate
+        // Frame Rate
         EditorGUI.BeginChangeCheck();
         float newFrameRate = EditorGUILayout.FloatField( "Frame Rate", 
                                                          curEdit.frameRate, 
@@ -483,6 +495,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         int topHeight = 20;
         int botHeight = 20;
+        int eventViewHeight = 25;
         int scalarHeight = 14; // 20 for scalar + label, 14 for scalar
 
         float boxWidth = _rect.width;
@@ -608,8 +621,12 @@ partial class exSpriteAnimationEditor : EditorWindow {
             }
         }
 
+        // calc event info view and frame info view rect
+        timelineRect = _rect;
+        eventInfoViewRect = new Rect ( offset, topHeight, totalWidth, eventViewHeight );
+        frameInfoViewRect = new Rect ( offset, topHeight + eventViewHeight, totalWidth, boxHeight - eventViewHeight );
+
         // ======================================================== 
-        Rect rect = new Rect ( _rect.x, _rect.y, _rect.width, _rect.height );
         GUI.BeginGroup(_rect);
         // ======================================================== 
 
@@ -676,11 +693,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
             GUI.color = old;
 
             // draw event info view background (before in-box scalar) 
-            int eventViewHeight = 25;
-            eventInfoViewRect = new Rect( offset, 
-                                          yStart, 
-                                          totalWidth, 
-                                          eventViewHeight );
             old = GUI.color;
             GUI.color = new Color ( 0.65f, 0.65f, 0.65f, 1.0f );
                 GUI.DrawTexture( eventInfoViewRect, EditorGUIUtility.whiteTexture );
@@ -704,17 +716,26 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 }
             }
 
-            // draw frame info
+            // draw frame infos
             float curX = offset;
             int totalFrames = curEdit.GetTotalFrames();
-            exEditorUtility.DrawLine ( offset+1, yStart + eventViewHeight + 10.0f, 
-                                       offset+1, yStart + boxHeight - 10.0f, 
-                                       Color.white, 1 );
             for ( int i = 0; i < curEdit.frameInfos.Count; ++i ) {
-                exSpriteAnimationClip.FrameInfo fi = curEdit.frameInfos[i];
+                FrameInfo fi = curEdit.frameInfos[i];
                 float frameWidth = ((float)fi.frames/(float)totalFrames) * totalWidth;
                 Rect frameRect = new Rect ( curX-1, yStart + eventViewHeight + 10.0f, frameWidth+1, (boxHeight - eventViewHeight) - 20.0f );
-                exEditorUtility.DrawRect ( frameRect, new Color( 1.0f, 0.0f, 0.85f, 0.2f ), Color.white );
+
+                Color borderColor = Color.black;
+                if ( selectedFrameInfos.IndexOf(fi) != -1 )
+                    borderColor = Color.white;
+
+                exEditorUtility.DrawRect ( frameRect, new Color( 1.0f, 0.0f, 0.85f, 0.2f ), borderColor );
+                if ( i == 0 ) {
+                    exEditorUtility.DrawLine ( offset+1, yStart + eventViewHeight + 10.0f, 
+                                               offset+1, yStart + boxHeight - 10.0f, 
+                                               borderColor,
+                                               1 );
+                }
+
                 DrawTextureInfo ( new Rect ( frameRect.x + 5.0f,
                                              frameRect.y + 5.0f,
                                              frameRect.width - 10.0f,
@@ -801,7 +822,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
             e.Use();
             break;
         }
+
+        // ======================================================== 
         GUI.EndGroup();
+        // ======================================================== 
 
         // draw border
         switch ( e.type ) {
