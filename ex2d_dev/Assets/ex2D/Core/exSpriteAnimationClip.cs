@@ -49,8 +49,13 @@ public class exSpriteAnimationClip : ScriptableObject {
 
     [System.Serializable]
     public class FrameInfo {
-        public int frames = 0;     ///< frame count
         public exTextureInfo textureInfo; ///< the texture info used in this frame
+        public int frames = 1;     ///< frame count
+
+        public FrameInfo ( exTextureInfo _textureInfo, int _frames ) {
+            textureInfo = _textureInfo;
+            frames = _frames;
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -105,14 +110,6 @@ public class exSpriteAnimationClip : ScriptableObject {
     public List<EventInfo> eventInfos = new List<EventInfo>(); ///< the list of event info
     public float speed = 1.0f; ///< the default speed of the animation clip
 
-    // DELME { 
-    // // editor only
-    // public float editorPreviewSize = 256.0f; ///< the preview size used in editor
-    // public float editorOffset = 0.0f; ///< the offset used in editor timeline view
-    // public float editorSpeed = 1.0f; ///< the preview speed in sprite animation editor 
-    // public bool editorNeedRebuild = false; ///< check if the sprite animation clip need rebuild
-    // } DELME end 
-
     ///////////////////////////////////////////////////////////////////////////////
     // functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -135,6 +132,31 @@ public class exSpriteAnimationClip : ScriptableObject {
 
     public float GetLength () {
         return (float)GetTotalFrames() / frameRate_;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void AddFrame ( exTextureInfo _info, int _frames = 1 ) {
+        InsertFrameInfo ( frameInfos.Count, new FrameInfo(_info,_frames) );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void AddFrameAt ( int _idx, exTextureInfo _info, int _frames = 1 ) {
+        InsertFrameInfo ( _idx, new FrameInfo(_info,_frames) );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void InsertFrameInfo ( int _idx, FrameInfo _frameInfo ) {
+        frameInfos.Insert (_idx,_frameInfo);
+        // TODO: should move all events behind this frame
     }
 
     // // ------------------------------------------------------------------ 
