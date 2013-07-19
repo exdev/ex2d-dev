@@ -341,7 +341,7 @@ public class exLayer : MonoBehaviour
             _sprite.cachedTransform.parent = cachedTransform;
         }
         
-        if (_newSprite) {
+        if (_newSprite || _sprite.spriteIdInLayer == -1) {
             _sprite.spriteIdInLayer = nextSpriteUniqueId;
             ++nextSpriteUniqueId;
         }

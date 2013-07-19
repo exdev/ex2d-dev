@@ -118,7 +118,30 @@ public class exSpriteAnimation : MonoBehaviour {
     
     //private float curWrappedTime = 0.0f;
     private int curIndex = -1;
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // other properties
+    ///////////////////////////////////////////////////////////////////////////////
     
+    // ------------------------------------------------------------------ 
+    /// \param _name the name of the animation
+    /// \return the animation state
+    /// Get the animation state by _name
+    // ------------------------------------------------------------------ 
+
+    public exSpriteAnimationState this[string _name] {
+        get {
+            Init();
+            exSpriteAnimationState state;
+            if (nameToState.TryGetValue(_name, out state)) {
+                return state;
+            }
+            else {
+                return null;
+            }
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -268,14 +291,7 @@ public class exSpriteAnimation : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public exSpriteAnimationState GetAnimation (string _name) {
-        Init();
-        exSpriteAnimationState state;
-        if (nameToState.TryGetValue(_name, out state)) {
-            return state;
-        }
-        else {
-            return null;
-        }
+        return this[_name];
     }
 
     // ------------------------------------------------------------------ 

@@ -211,7 +211,21 @@ namespace UnityEngine {
         }
         public static void DestroyImmediate(this GameObject obj) {
             obj.transform.parent = null;
-            Object.DestroyImmediate(obj);
+/*
+#           if UNITY_EDITOR
+                if (UnityEditor.Selection.activeGameObject == obj) {
+                    UnityEditor.Selection.activeTransform = null;
+                    int index = UnityEditor.ArrayUtility.IndexOf(UnityEditor.Selection.transforms, obj.transform);
+                    if (index != -1) {
+                        UnityEditor.Selection.transforms[index] = null;
+                        Debug.Log("[DestroyImmediate|UnityEngineExtends] ");
+                    }
+                }
+                obj.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+                UnityEditor.EditorUtility.SetDirty(obj);
+#           endif
+*/
+            Object.DestroyImmediate(obj); 
         }
         public static void DestroyImmediate(this GameObject obj, bool allowDestroyingAssets) {
             obj.transform.parent = null;
