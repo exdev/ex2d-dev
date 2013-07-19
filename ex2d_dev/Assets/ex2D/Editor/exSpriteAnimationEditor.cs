@@ -40,6 +40,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
     bool isPlaying = false; 
     float previewSpeed = 1.0f;
     bool lockCurEdit = false; 
+    int curFrame = 0;
 
     // 
     float scale_ = 1.0f; ///< the zoom value of the atlas
@@ -59,6 +60,13 @@ partial class exSpriteAnimationEditor : EditorWindow {
     Rect timelineRect;
     Rect eventInfoViewRect;
     Rect frameInfoViewRect;
+    float totalWidth;
+
+    // handles
+    bool inDraggingNeedleState = false;
+    bool inDraggingFrameInfoState = false;
+
+    //
     List<Object> draggingObjects = new List<Object>();
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -128,7 +136,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
             Settings ();
 
-            EditorGUILayout.Space();
+            GUILayout.Space(30);
 
             EditorGUILayout.BeginHorizontal();
                 GUILayoutUtility.GetRect ( 40, 200, 
@@ -139,6 +147,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 Layout_TimelineField ( (int)position.width - 80, 200 );
             EditorGUILayout.EndHorizontal();
 
+            //
+            ProcessEvents();
             frameRectSelection.SetSelection(selectedFrameInfos.ToArray());
             frameRectSelection.OnGUI();
 
@@ -158,6 +168,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
     public void Reset () {
         curSerializedObject = null;
+        curFrame = 0;
+        inDraggingNeedleState = false;
+        inDraggingFrameInfoState = false;
     }
 
     // ------------------------------------------------------------------ 
@@ -198,7 +211,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         for ( int i = 0; i < curEdit.frameInfos.Count; ++i ) {
             FrameInfo fi = curEdit.frameInfos[i];
-            float frameWidth = ((float)fi.frames/(float)totalFrames) * frameInfoViewRect.width;
+            float frameWidth = ((float)fi.frames/(float)totalFrames) * totalWidth;
             Rect frameRect = new Rect ( curX + timelineRect.x,
                                         frameInfoViewRect.y + timelineRect.y + 10.0f,
                                         frameWidth,
@@ -222,8 +235,16 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
     void ConfirmRectSelection_FrameInfo ( FrameInfo _activeObj, FrameInfo[] _selectedObjs ) {
         selectedFrameInfos.Clear();
-        foreach ( FrameInfo obj in _selectedObjs )
-            selectedFrameInfos.Add (obj);
+
+        // NOTE: use this way to make sure selectedFrameInfos is sorted by frame.
+        foreach ( FrameInfo info in curEdit.frameInfos ) {
+            foreach ( FrameInfo obj in _selectedObjs ) {
+                if ( info == obj ) {
+                    selectedFrameInfos.Add (obj);
+                    break;
+                }
+            }
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -584,7 +605,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         }
 
         // init total width and cell-count
-        float totalWidth = scale * curEdit.GetLength() * unitWidth;
+        totalWidth = scale * curEdit.GetLength() * unitWidth;
         if ( totalWidth > boxWidth/2.0f ) {
             offset = Mathf.Clamp( offset, boxWidth - totalWidth - boxWidth/2.0f, 0 );
         }
@@ -676,7 +697,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                         // draw lable
                         if ( lodWidthList[idx] >= widthToShowLabel ) {
                             GUI.Label ( new Rect( x + 4.0f, yStart - 22, 50, 20 ), 
-                                        ToString_Frames(i*curUnitSecond,curEdit.frameRate) );
+                                        ToString_FramesInSeconds(i*curUnitSecond,curEdit.frameRate) );
                         }
 
                         //
@@ -719,31 +740,38 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // draw frame infos
             float curX = offset;
             int totalFrames = curEdit.GetTotalFrames();
+
             for ( int i = 0; i < curEdit.frameInfos.Count; ++i ) {
                 FrameInfo fi = curEdit.frameInfos[i];
                 float frameWidth = ((float)fi.frames/(float)totalFrames) * totalWidth;
                 Rect frameRect = new Rect ( curX-1, yStart + eventViewHeight + 10.0f, frameWidth+1, (boxHeight - eventViewHeight) - 20.0f );
 
                 Color borderColor = Color.black;
-                if ( selectedFrameInfos.IndexOf(fi) != -1 )
-                    borderColor = Color.white;
+                Color solidColor = new Color( 1.0f, 0.0f, 0.85f, 0.2f );
+                if ( selectedFrameInfos.IndexOf(fi) != -1 ) {
+                    solidColor = new Color( 0.2f, 0.85f, 0.0f, 0.2f );
+                }
 
-                exEditorUtility.DrawRect ( frameRect, new Color( 1.0f, 0.0f, 0.85f, 0.2f ), borderColor );
-                // DISABLE { 
-                // if ( i == 0 ) {
-                //     exEditorUtility.DrawLine ( offset+1, yStart + eventViewHeight + 10.0f, 
-                //                                offset+1, yStart + boxHeight - 10.0f, 
-                //                                borderColor,
-                //                                1 );
-                // }
-                // } DISABLE end 
-
+                exEditorUtility.DrawRect ( frameRect, solidColor, borderColor );
                 DrawTextureInfo ( new Rect ( frameRect.x + 5.0f,
                                              frameRect.y + 5.0f,
                                              frameRect.width - 10.0f,
                                              frameRect.height - 10.0f ), 
                                   fi.textureInfo, 
                                   Color.white );
+                curX += frameWidth;
+            }
+
+            // draw selected frame infos
+            curX = offset;
+            for ( int i = 0; i < curEdit.frameInfos.Count; ++i ) {
+                FrameInfo fi = curEdit.frameInfos[i];
+                float frameWidth = ((float)fi.frames/(float)totalFrames) * totalWidth;
+                Rect frameRect = new Rect ( curX-1, yStart + eventViewHeight + 10.0f, frameWidth+1, (boxHeight - eventViewHeight) - 20.0f );
+
+                if ( selectedFrameInfos.IndexOf(fi) != -1 ) {
+                    exEditorUtility.DrawRectBorder ( frameRect, Color.white );
+                }
                 curX += frameWidth;
             }
 
@@ -819,6 +847,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     curEdit.AddFrame(info);
                 }
             }
+            EditorUtility.SetDirty(curEdit);
 
             Repaint();
             e.Use();
@@ -853,6 +882,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
             break;
         }
+
+        // process handles
+        FrameInfoHandle (_rect);
+        NeedleHandle (_rect);
     }
 
     // ------------------------------------------------------------------ 
@@ -862,7 +895,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
     /// get seconds in string from input seconds
     // ------------------------------------------------------------------ 
 
-    public string ToString_Frames ( float _seconds, float _sampleRate ) {
+    public string ToString_FramesInSeconds ( float _seconds, float _sampleRate ) {
         int sec1 = Mathf.FloorToInt(_seconds);
         int sec2 = Mathf.FloorToInt((_seconds - sec1) * _sampleRate % _sampleRate);
 
@@ -920,5 +953,177 @@ partial class exSpriteAnimationEditor : EditorWindow {
         // DEBUG { 
         // exEditorUtility.DrawRectBorder ( _rect, Color.white );
         // } DEBUG end 
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void FrameInfoHandle ( Rect _rect ) {
+        List<Rect> selectedFrameRects = new List<Rect>();
+
+        // draw selected frame infos
+        float curX = _rect.x + offset;
+        float yStart = _rect.y + 20.0f + 25.0f + 10.0f;
+        int totalFrames = curEdit.GetTotalFrames();
+        for ( int i = 0; i < curEdit.frameInfos.Count; ++i ) {
+            FrameInfo fi = curEdit.frameInfos[i];
+            float frameWidth = ((float)fi.frames/(float)totalFrames) * totalWidth;
+            Rect frameRect = new Rect ( curX-1, yStart, frameWidth+1, frameInfoViewRect.height - 20.0f );
+
+            if ( selectedFrameInfos.IndexOf(fi) != -1 ) {
+                selectedFrameRects.Add(frameRect);
+            }
+            curX += frameWidth;
+        }
+
+        //
+        Event e = Event.current;
+        switch ( e.type ) {
+        case EventType.Repaint:
+            if ( inDraggingFrameInfoState ) {
+                for ( int i = 0; i < selectedFrameRects.Count; ++i ) {
+                    Rect frameRect = selectedFrameRects[i];
+                    exEditorUtility.DrawRectBorder ( frameRect, Color.yellow );
+                }
+
+                float pos = Mathf.Clamp( e.mousePosition.x - _rect.x, 0.0f, totalWidth + offset );
+                int frame = Mathf.FloorToInt( (float)totalFrames * (pos - offset)/totalWidth );
+                float playOffset = (float)frame/(float)totalFrames * totalWidth;
+                float xPos = _rect.x + offset + playOffset;
+
+                exEditorUtility.DrawRect ( new Rect ( xPos-3.0f, _rect.y + 20.0f + 25.0f, 6.0f, frameInfoViewRect.height ), 
+                                           new Color( 0.0f, 0.2f, 1.0f, 0.8f ),
+                                           new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
+            }
+            break;
+
+        case EventType.MouseDown:
+            if ( e.button == 0 && selectedFrameRects.Count > 0 ) {
+                for ( int i = 0; i < selectedFrameRects.Count; ++i ) {
+                    Rect frameRect = selectedFrameRects[i];
+                    if ( frameRect.Contains(e.mousePosition) ) {
+                        inDraggingFrameInfoState = true;
+                        break;
+                    }
+                }
+
+                if ( inDraggingFrameInfoState ) {
+                    e.Use();
+                }
+            }
+            break;
+
+        case EventType.MouseUp:
+            if ( inDraggingFrameInfoState && e.button == 0 ) {
+                inDraggingFrameInfoState = false;
+
+                Repaint();
+                e.Use();
+            }
+            break;
+
+        case EventType.MouseDrag:
+            if ( inDraggingFrameInfoState ) {
+                Repaint();
+                e.Use();
+            }
+            break;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void NeedleHandle ( Rect _rect ) {
+        int totalFrames = curEdit.GetTotalFrames();
+        curFrame = Mathf.Clamp ( curFrame, 0, totalFrames );
+
+        float playOffset = (float)curFrame/(float)totalFrames * totalWidth;
+        float xPos = _rect.x + offset + playOffset;
+        float yMax = _rect.yMax - 20.0f;
+        Rect needleRect = new Rect ( xPos-3.0f, _rect.y - 20.0f, 6.0f, 30.0f );
+        Rect needleValidRect = new Rect ( _rect.x-3.0f, _rect.y - 20.0f, totalWidth + 6.0f, 40.0f );
+
+        Event e = Event.current;
+        switch ( e.type ) {
+        case EventType.Repaint:
+            if ( xPos >= _rect.x && xPos <= _rect.xMax ) {
+                Color lineColor = Color.red;
+                if ( inDraggingNeedleState ) {
+                    lineColor = Color.yellow;
+                }
+
+                exEditorUtility.DrawRect( needleRect,
+                                          new Color( 1.0f, 0.0f, 0.0f, 0.5f ),
+                                          lineColor );
+
+                exEditorUtility.DrawLine ( xPos, needleRect.yMax,
+                                           xPos, yMax,
+                                          lineColor,
+                                          1 );
+                // show label
+                GUI.Label ( new Rect( xPos - 15.0f, yMax, 30.0f, 20.0f ),
+                            ToString_FramesInSeconds( (float)curFrame/(float)curEdit.frameRate, curEdit.frameRate ) );
+            }
+            break;
+
+        case EventType.MouseDown:
+            if ( needleValidRect.Contains( e.mousePosition ) && e.button == 0 ) {
+                inDraggingNeedleState = true;
+                float pos = Mathf.Clamp( e.mousePosition.x - _rect.x, 0.0f, totalWidth + offset );
+                curFrame = Mathf.RoundToInt( (float)totalFrames * (pos - offset)/totalWidth );
+
+                Repaint();
+                e.Use();
+            }
+            break;
+
+        case EventType.MouseUp:
+            if ( inDraggingNeedleState && e.button == 0 ) {
+                inDraggingNeedleState = false;
+
+                Repaint();
+                e.Use();
+            }
+            break;
+
+        case EventType.MouseDrag:
+            if ( inDraggingNeedleState ) {
+                float pos = Mathf.Clamp( e.mousePosition.x - _rect.x, 0.0f, totalWidth + offset );
+                curFrame = Mathf.RoundToInt( (float)totalFrames * (pos - offset)/totalWidth );
+
+                Repaint();
+                e.Use();
+            }
+            break;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void ProcessEvents () {
+        Event e = Event.current;
+        switch ( e.type ) {
+        case EventType.KeyDown:
+            if ( e.keyCode == KeyCode.Backspace ||
+                 e.keyCode == KeyCode.Delete ) 
+            {
+                if ( selectedFrameInfos.Count > 0 ) {
+                    foreach ( FrameInfo frameInfo in selectedFrameInfos ) {
+                        curEdit.RemoveFrame(frameInfo);
+                    }
+                    selectedFrameInfos.Clear();
+                    EditorUtility.SetDirty(curEdit);
+
+                    Repaint();
+                    e.Use();
+                }
+            }
+            break;
+        }
     }
 }

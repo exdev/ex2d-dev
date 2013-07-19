@@ -154,6 +154,15 @@ public class exSpriteAnimationClip : ScriptableObject {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public void RemoveFrame ( FrameInfo _frameInfo ) {
+        frameInfos.Remove (_frameInfo);
+        // TODO: should move all events behind this frame
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void InsertFrameInfo ( int _idx, FrameInfo _frameInfo ) {
         frameInfos.Insert (_idx,_frameInfo);
         // TODO: should move all events behind this frame

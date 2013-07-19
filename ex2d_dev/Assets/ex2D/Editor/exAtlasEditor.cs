@@ -770,20 +770,21 @@ partial class exAtlasEditor : EditorWindow {
             if ( e.keyCode == KeyCode.Backspace ||
                  e.keyCode == KeyCode.Delete ) 
             {
-
-                AssetDatabase.StartAssetEditing();
-                    foreach ( exTextureInfo textureInfo in selectedTextureInfos ) {
-                        int i = curEdit.textureInfos.IndexOf(textureInfo);
-                        if ( i != -1 ) {
-                            curEdit.textureInfos.RemoveAt(i);
-                            curEdit.needRebuild = true;
-                            AssetDatabase.DeleteAsset( AssetDatabase.GetAssetPath(textureInfo) );
+                if ( selectedTextureInfos.Count > 0 ) {
+                    AssetDatabase.StartAssetEditing();
+                        foreach ( exTextureInfo textureInfo in selectedTextureInfos ) {
+                            int i = curEdit.textureInfos.IndexOf(textureInfo);
+                            if ( i != -1 ) {
+                                curEdit.textureInfos.RemoveAt(i);
+                                curEdit.needRebuild = true;
+                                AssetDatabase.DeleteAsset( AssetDatabase.GetAssetPath(textureInfo) );
+                            }
                         }
-                    }
-                AssetDatabase.StopAssetEditing();
-                selectedTextureInfos.Clear();
-                Repaint();
-                e.Use();
+                    AssetDatabase.StopAssetEditing();
+                    selectedTextureInfos.Clear();
+                    Repaint();
+                    e.Use();
+                }
             }
             break;
         }
