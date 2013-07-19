@@ -41,6 +41,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
     float previewSpeed = 1.0f;
     bool lockCurEdit = false; 
     int curFrame = 0;
+    int insertAt = -1;
 
     // 
     float scale_ = 1.0f; ///< the zoom value of the atlas
@@ -171,6 +172,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
         curFrame = 0;
         inDraggingNeedleState = false;
         inDraggingFrameInfoState = false;
+
+        selectedFrameInfos.Clear();
     }
 
     // ------------------------------------------------------------------ 
@@ -987,14 +990,14 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     exEditorUtility.DrawRectBorder ( frameRect, Color.yellow );
                 }
 
-                float pos = Mathf.Clamp( e.mousePosition.x - _rect.x, 0.0f, totalWidth + offset );
-                int frame = Mathf.FloorToInt( (float)totalFrames * (pos - offset)/totalWidth );
-                float playOffset = (float)frame/(float)totalFrames * totalWidth;
-                float xPos = _rect.x + offset + playOffset;
+                if ( insertAt != -1 ) {
+                    float playOffset = (float)insertAt/(float)totalFrames * totalWidth;
+                    float xPos = _rect.x + offset + playOffset;
 
-                exEditorUtility.DrawRect ( new Rect ( xPos-3.0f, _rect.y + 20.0f + 25.0f, 6.0f, frameInfoViewRect.height ), 
-                                           new Color( 0.0f, 0.2f, 1.0f, 0.8f ),
-                                           new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
+                    exEditorUtility.DrawRect ( new Rect ( xPos-3.0f, _rect.y + 20.0f + 25.0f, 6.0f, frameInfoViewRect.height ), 
+                                               new Color( 0.0f, 0.2f, 1.0f, 0.8f ),
+                                               new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
+                }
             }
             break;
 
@@ -1017,6 +1020,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         case EventType.MouseUp:
             if ( inDraggingFrameInfoState && e.button == 0 ) {
                 inDraggingFrameInfoState = false;
+                insertAt = -1;
 
                 Repaint();
                 e.Use();
@@ -1025,6 +1029,19 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         case EventType.MouseDrag:
             if ( inDraggingFrameInfoState ) {
+                float pos = Mathf.Clamp( e.mousePosition.x - _rect.x, 0.0f, totalWidth + offset );
+                int insertStart = Mathf.FloorToInt( (float)totalFrames * (pos - offset)/totalWidth );
+                if ( insertStart < curEdit.frameInfos.Count ) {
+                    for ( int i = insertStart; i >= 0; --i ) {
+                        FrameInfo fi = curEdit.frameInfos[i];
+                        if ( selectedFrameInfos.IndexOf(fi) == -1 ) {
+                            break;
+                        }
+                        insertStart = i;
+                    }
+                }
+                insertAt = insertStart;
+
                 Repaint();
                 e.Use();
             }
