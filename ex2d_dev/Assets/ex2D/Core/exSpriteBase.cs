@@ -160,6 +160,9 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             }
         }
     }
+    
+    /// 用于相同depth的sprite之间的排序
+    public int spriteIdInLayer = -1;
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -169,7 +172,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     [System.NonSerialized] public int indexCount = 6;
     
     // cached for geometry buffers
-    [System.NonSerialized] internal int spriteIndex = -1;
+    [System.NonSerialized] internal int spriteIndexInMesh = -1;
     [System.NonSerialized] internal int vertexBufferIndex = -1;
     [System.NonSerialized] internal int indexBufferIndex = -1;
 
@@ -256,19 +259,27 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     }
 
     // ------------------------------------------------------------------ 
-    /// Compare sprites by depth
-    /// 排序时，如果depth重复了，当两个sprite在同一个mesh时，将是稳定排序(按添加的先后次序比较)；
-    /// 如果不在同一个mesh，将是不稳定排序。
+    /// Compare sprites by depth and index
     // ------------------------------------------------------------------ 
     
     public int CompareTo(exSpriteBase _other) {
-        int depthCompare = depth_.CompareTo(_other.depth);
-        if (depthCompare != 0) {
-            return depthCompare;
+        if (depth_ < _other.depth)
+        {
+            return -1;
         }
-        else {
-            return spriteIndex.CompareTo(_other.spriteIndex);
+        if (depth_ > _other.depth)
+        {
+            return 1;
         }
+        if (spriteIdInLayer < _other.spriteIdInLayer)
+        {
+            return -1;
+        }
+        if (spriteIdInLayer > _other.spriteIdInLayer)
+        {
+            return 1;
+        }
+        return 0;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
