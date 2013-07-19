@@ -106,7 +106,7 @@ public class exLayer : MonoBehaviour
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    private List<exMesh> meshList = new List<exMesh>(); ///< 排在前面的mesh会被先渲染
+    [System.NonSerialized] private List<exMesh> meshList = new List<exMesh>(); ///< 排在前面的mesh会被先渲染
 
     [System.NonSerialized] private Transform cachedTransform_ = null;
     public Transform cachedTransform {
@@ -118,18 +118,22 @@ public class exLayer : MonoBehaviour
         }
     }
 
+    [System.NonSerialized] private int nextSpriteUniqueId = 0;
+
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
     void Awake () {
-        meshList.Clear();
+        exDebug.Assert(meshList != null && meshList.Count == 0);
+        //meshList.Clear();
     }
 
     void OnEnable () {
+        nextSpriteUniqueId = 0;
         exSpriteBase[] spriteList = GetComponentsInChildren<exSpriteBase>();
         foreach (exSpriteBase sprite in spriteList) {
-            Add(sprite);
+            Add(sprite, false);
         }
     }
 
@@ -197,48 +201,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void Add (exSpriteBase _sprite) {
-        exLayer oldLayer = _sprite.layer;
-        if (oldLayer == this) {
-            return;
-        }
-        if (oldLayer != null) {
-            oldLayer.Remove(_sprite);
-        }
-        Material mat = _sprite.material;
-        if (!mat) {
-            Debug.LogError("no material assigned in sprite", _sprite);
-            return;
-        }
-        _sprite.layer = this;
-        if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
-            _sprite.cachedTransform.parent = cachedTransform;
-        }
-
-        // Find available mesh
-        // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
-        exMesh sameDrawcallMesh = null;
-        int maxVertexCount = (layerType == exLayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : MAX_STATIC_VERTEX_COUNT;
-        maxVertexCount -= _sprite.vertexCount;
-        for (int i = meshList.Count - 1; i >= 0; --i) {
-            exMesh mesh = meshList[i];
-		    if (mesh != null && mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
-                //if (mesh.sortedSpriteList.Count > 0 && mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1].depth) {
-
-                //}
-                sameDrawcallMesh = meshList[i];
-                break;
-		    }
-        }
-        
-        if (sameDrawcallMesh == null) {
-            sameDrawcallMesh = exMesh.Create(this);
-            sameDrawcallMesh.material = mat;
-            if (layerType == exLayerType.Dynamic) {
-                sameDrawcallMesh.MarkDynamic();
-            }
-            meshList.Add(sameDrawcallMesh);
-        }
-        Add(sameDrawcallMesh, _sprite);
+        Add(_sprite, true);
     }
 
     // ------------------------------------------------------------------ 
@@ -246,14 +209,22 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void Remove (exSpriteBase _sprite) {
-        exMesh mesh = FindMesh(_sprite);
+        if (_sprite.layer != this) {
+            Debug.LogWarning("Sprite not in this layer.");
+            return;
+        }
+        exMesh mesh = GetMesh(_sprite);
         if (mesh != null) {
-            Remove(mesh, _sprite);
+            RemoveFromMesh(_sprite, mesh);
+            _sprite.layer = null;
         }
         else {
-            _sprite.indexBufferIndex = -1;  //if mesh has been destroyed, just reset sprite
+            _sprite.ResetLayerProperties();  //if mesh has been destroyed, just reset sprite
         }
-        _sprite.layer = null;
+        if (_sprite.spriteIdInLayer == nextSpriteUniqueId - 1) {
+            --nextSpriteUniqueId;
+        }
+        _sprite.spriteIdInLayer = 0;
     }
     
     // ------------------------------------------------------------------ 
@@ -263,7 +234,7 @@ public class exLayer : MonoBehaviour
 
     internal void ShowSprite (exSpriteBase _sprite) {
         if (!_sprite.isInIndexBuffer) {
-            exMesh mesh = FindMesh(_sprite);
+            exMesh mesh = GetMesh(_sprite);
             if (mesh != null) {
                 if (!_sprite.isInIndexBuffer) {
                     AddIndices(mesh, _sprite);
@@ -279,7 +250,7 @@ public class exLayer : MonoBehaviour
     
     internal void HideSprite (exSpriteBase _sprite) {
         if (_sprite.isInIndexBuffer) {
-            exMesh mesh = FindMesh(_sprite);
+            exMesh mesh = GetMesh(_sprite);
             if (mesh != null) {
                 RemoveIndices(mesh, _sprite);
                 mesh.updateFlags |= exUpdateFlags.Index;
@@ -332,18 +303,14 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private exMesh FindMesh (exSpriteBase _sprite) {
+    private exMesh GetMesh (exSpriteBase _sprite) {
         Material mat = _sprite.material;
         for (int i = 0; i < meshList.Count; ++i) {
             exMesh mesh = meshList[i];
 		    if (mesh != null && object.ReferenceEquals(mesh.material, mat)) {
-                bool containsSprite = (_sprite.spriteIndex >= 0 && _sprite.spriteIndex < mesh.spriteList.Count && 
-                                      ReferenceEquals(mesh.spriteList[_sprite.spriteIndex], _sprite));
-#if EX_DEBUG
+                bool containsSprite = (_sprite.spriteIndexInMesh >= 0 && _sprite.spriteIndexInMesh < mesh.spriteList.Count && 
+                                      ReferenceEquals(mesh.spriteList[_sprite.spriteIndexInMesh], _sprite));
                 exDebug.Assert(containsSprite == mesh.spriteList.Contains(_sprite), "wrong sprite.spriteIndex");
-                bool sameMaterial = (_sprite.material == mesh.material);
-                exDebug.Assert(!containsSprite || sameMaterial);
-#endif
                 if (containsSprite) {
                     return mesh;
                 }
@@ -351,19 +318,76 @@ public class exLayer : MonoBehaviour
         }
         return null;
     }
+    
+    // ------------------------------------------------------------------ 
+    /// \param _newSprite 如果为true，则将sprite渲染到其它相同depth的sprite上面
+    // ------------------------------------------------------------------ 
+    
+    private void Add (exSpriteBase _sprite, bool _newSprite) {
+        exLayer oldLayer = _sprite.layer;
+        if (oldLayer == this) {
+            return;
+        }
+        if (oldLayer != null) {
+            oldLayer.Remove(_sprite);
+        }
+        Material mat = _sprite.material;
+        if (mat == null) {
+            Debug.LogError("no material assigned in sprite", _sprite);
+            return;
+        }
+        _sprite.layer = this;
+        if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
+            _sprite.cachedTransform.parent = cachedTransform;
+        }
+        
+        if (_newSprite) {
+            _sprite.spriteIdInLayer = nextSpriteUniqueId;
+            ++nextSpriteUniqueId;
+        }
+        else {
+            nextSpriteUniqueId = Mathf.Max(_sprite.spriteIdInLayer + 1, nextSpriteUniqueId);
+        }
+
+        // Find available mesh
+        // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
+        exMesh sameDrawcallMesh = null;
+        int maxVertexCount = (layerType == exLayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : MAX_STATIC_VERTEX_COUNT;
+        maxVertexCount -= _sprite.vertexCount;
+        for (int i = meshList.Count - 1; i >= 0; --i) {
+            exMesh mesh = meshList[i];
+		    if (mesh != null && mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
+                //if (mesh.sortedSpriteList.Count > 0 && mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1].depth) {
+
+                //}
+                sameDrawcallMesh = meshList[i];
+                break;
+		    }
+        }
+        
+        if (sameDrawcallMesh == null) {
+            sameDrawcallMesh = exMesh.Create(this);
+            sameDrawcallMesh.material = mat;
+            if (layerType == exLayerType.Dynamic) {
+                sameDrawcallMesh.MarkDynamic();
+            }
+            meshList.Add(sameDrawcallMesh);
+        }
+        AddToMesh(_sprite, sameDrawcallMesh);
+    }
 
     // ------------------------------------------------------------------ 
     /// Add an exSpriteBase to the mesh. 
     // ------------------------------------------------------------------ 
 
-    private void Add (exMesh _mesh, exSpriteBase _sprite) {
+    private void AddToMesh (exSpriteBase _sprite, exMesh _mesh) {
         bool hasSprite = _mesh.spriteList.Contains(_sprite);
         if (hasSprite) {
             Debug.LogError("[Add|exLayer] can't add duplicated sprite");
             return;
         }
-
-        _sprite.spriteIndex = _mesh.spriteList.Count;
+        _sprite.updateFlags = exUpdateFlags.None;
+        _sprite.spriteIndexInMesh = _mesh.spriteList.Count;
         _mesh.spriteList.Add(_sprite);
 
         _sprite.FillBuffers(_mesh.vertices, _mesh.uvs, _mesh.colors32);
@@ -382,12 +406,12 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private void Remove (exMesh _mesh, exSpriteBase _sprite) {
-        _mesh.spriteList.RemoveAt(_sprite.spriteIndex);
-        for (int i = _sprite.spriteIndex; i < _mesh.spriteList.Count; ++i) {
+    private void RemoveFromMesh (exSpriteBase _sprite, exMesh _mesh) {
+        _mesh.spriteList.RemoveAt(_sprite.spriteIndexInMesh);
+        for (int i = _sprite.spriteIndexInMesh; i < _mesh.spriteList.Count; ++i) {
             exSpriteBase sprite = _mesh.spriteList[i];
             // update sprite and vertic index after removed sprite
-            sprite.spriteIndex = i;
+            sprite.spriteIndexInMesh = i;
             sprite.vertexBufferIndex -= _sprite.vertexCount;
             // update indices to make them match new vertic index
             if (sprite.isInIndexBuffer) {
@@ -404,8 +428,8 @@ public class exLayer : MonoBehaviour
         _mesh.uvs.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
 
 #if FORCE_UPDATE_VERTEX_INFO
-        bool removeBack = (_sprite.spriteIndex == _mesh.spriteList.Count);
-        if (!removeBack) {
+        bool removeLastSprite = (_sprite.spriteIndexInMesh == _mesh.spriteList.Count);
+        if (!removeLastSprite) {
             _mesh.updateFlags |= (exUpdateFlags.Color | exUpdateFlags.UV | exUpdateFlags.Normal);
         }
 #else
@@ -433,7 +457,7 @@ public class exLayer : MonoBehaviour
             int sortedSpriteIndex;
             if (_mesh.sortedSpriteList.Count > 0) {
                 sortedSpriteIndex = _mesh.sortedSpriteList.BinarySearch(_sprite);   // TODO: benchmark
-                exDebug.Assert(sortedSpriteIndex < 0);  //sprite实现的比较方法决定了这种情况下不可能找到等同的排序
+                exDebug.Assert(sortedSpriteIndex < 0, sortedSpriteIndex.ToString());  //sprite实现的比较方法决定了这种情况下不可能找到等同的排序
                 if (sortedSpriteIndex < 0) {
                     // 取反获得索引
                     sortedSpriteIndex = ~sortedSpriteIndex;

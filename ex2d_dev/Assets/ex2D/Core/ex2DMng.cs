@@ -85,6 +85,7 @@ public class ex2DMng : MonoBehaviour {
 
     private Camera cachedCamera;
     
+    // TODO: dont use static
     private static Dictionary<MaterialTableKey, Material> materialTable = new Dictionary<MaterialTableKey, Material>();
 
     ///////////////////////////////////////////////////////////////////////////////
