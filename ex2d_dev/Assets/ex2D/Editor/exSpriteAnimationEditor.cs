@@ -64,6 +64,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
     Rect eventInfoViewRect;
     Rect frameInfoViewRect;
     float totalWidth;
+    double lastTime = 0.0;
 
     // handles
     bool inDraggingNeedleState = false;
@@ -115,6 +116,28 @@ partial class exSpriteAnimationEditor : EditorWindow {
         if ( curEdit == null )
             return;
         Repaint();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void Update () {
+        if ( isPlaying ) {
+            float delta = (float)(EditorApplication.timeSinceStartup - lastTime);
+            // if ( playingSelects ) {
+            //     playingSeconds += _delta * curEdit.editorSpeed;
+            //     float wrapTime = (playingSeconds - playingStart) % (playingEnd - playingStart);
+            //     curSeconds = wrapTime + playingStart;
+            // }
+            // else {
+            //     playingSeconds += _delta * previewSpeed;
+            //     curSeconds = curEdit.WrapSeconds(playingSeconds,curEdit.wrapMode);
+            // }
+
+            Repaint();
+        }
+        lastTime = EditorApplication.timeSinceStartup; 
     }
 
     // ------------------------------------------------------------------ 
@@ -303,22 +326,22 @@ partial class exSpriteAnimationEditor : EditorWindow {
                                            exEditorUtility.AnimationPlayTexture(),
                                            EditorStyles.toolbarButton );
             // TODO { 
-            // if ( isPlaying == false ) {
-            //     startPlaying = false;
-            //     playingSeconds = 0.0f;
-            // }
+            if ( isPlaying == false ) {
+                // startPlaying = false;
+                curFrame = 0;
+            }
             // else if ( startPlaying == false ) {
             //     startPlaying = true;
             //     curSeconds = 0.0f;
             //     playingSeconds = playingSelects ? playingStart : 0.0f;
             // }
 
-            // //
-            // if ( isPlaying &&
-            //      curEdit.wrapMode == WrapMode.Once &&
-            //      curSeconds >= curEdit.length ) {
-            //     isPlaying = false;
-            // }
+            //
+            if ( isPlaying &&
+                 curEdit.wrapMode == WrapMode.Once &&
+                 curFrame == curEdit.GetTotalFrames() ) {
+                isPlaying = false;
+            }
             // } TODO end 
 
             // ======================================================== 
