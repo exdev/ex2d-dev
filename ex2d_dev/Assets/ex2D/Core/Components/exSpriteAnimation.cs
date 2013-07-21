@@ -71,6 +71,10 @@ public class exSpriteAnimationState {
             frameTimes.Add(startFrame * unitSeconds);
         }
     }
+    
+    public int GetCurrentIndex() {
+        return frameTimes.BinarySearch(exMath.Wrap(time, length, wrapMode));
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -438,12 +442,10 @@ public class exSpriteAnimation : MonoBehaviour {
 
     void Step ( exSpriteAnimationState _animState ) {
         if ( _animState == null ) {
-            //curWrappedTime = 0.0f;
             curIndex = -1;
             return;
         }
-        float wrappedTime = exMeth.WrapSeconds(_animState.length, _animState.time, _animState.wrapMode);
-        curIndex = _animState.frameTimes.BinarySearch(wrappedTime);
+        curIndex = _animState.GetCurrentIndex();
         if ( curIndex < 0 ) {
             curIndex = ~curIndex;
         }

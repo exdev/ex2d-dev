@@ -141,11 +141,7 @@ public class exMesh : MonoBehaviour
         go.hideFlags = exReleaseFlags.hideAndDontSave | exReleaseFlags.notEditable;
         exMesh res = go.AddComponent<exMesh>();
         res.UpdateDebugName(_layer.name);
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            res.CreateMesh();
-        }
-#endif
+        res.CreateMesh();
         return res;
     }
 

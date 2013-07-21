@@ -97,7 +97,7 @@ public class exSprite : exSpriteBase {
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
 
-    private Material material_;
+    [System.NonSerialized] private Material material_;
     public override Material material {
         get {
             if (material_ != null) {

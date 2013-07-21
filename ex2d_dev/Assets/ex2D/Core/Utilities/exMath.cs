@@ -8,17 +8,17 @@
 using UnityEngine;
 using System.Collections;
 
-public static class exMeth {
-	
-	// ------------------------------------------------------------------ 
-	/// \param _length the length used for wrapping
-    /// \param _seconds the in seconds used for wrapping
+public static class exMath {
+    
+    // ------------------------------------------------------------------ 
+    /// \param _length the length used for wrapping
+    /// \param _value the in value to wrap
     /// \param _wrapMode the wrap mode used for wrapping
     /// wrap the seconds of the anim clip by the wrap mode
     // ------------------------------------------------------------------ 
 
-    public static float WrapSeconds ( float _length, float _seconds, WrapMode _wrapMode ) {
-        float t = Mathf.Abs(_seconds);
+    public static float Wrap ( float _value, float _length, WrapMode _wrapMode ) {
+        float t = Mathf.Abs(_value);
         if ( _wrapMode == WrapMode.Loop ) {
             t %= _length;
         }
