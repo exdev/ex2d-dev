@@ -442,8 +442,8 @@ public class exSpriteAnimation : MonoBehaviour {
             curIndex = -1;
             return;
         }
-        //curWrappedTime = _animState.clip.WrapSeconds(_animState.time, _animState.wrapMode);
-        curIndex = _animState.frameTimes.BinarySearch(_animState.time);
+        float wrappedTime = exMeth.WrapSeconds(_animState.length, _animState.time, _animState.wrapMode);
+        curIndex = _animState.frameTimes.BinarySearch(wrappedTime);
         if ( curIndex < 0 ) {
             curIndex = ~curIndex;
         }

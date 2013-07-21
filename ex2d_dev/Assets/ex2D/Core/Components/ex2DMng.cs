@@ -120,6 +120,12 @@ public class ex2DMng : MonoBehaviour {
             cachedCamera = camera;
         }
 #endif
+        for ( int i = 0; i < layerList.Count; ++i ) {
+            exLayer layer = layerList[i];
+            if ( layer != null ) {
+                layer.GenerateMeshes();
+            }
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -268,8 +274,8 @@ public class ex2DMng : MonoBehaviour {
         for (int i = 0; i < layerList.Count; ++i) {
             exLayer layer = layerList[i];
             if (layer != null) {
-                layer.enabled = false;
-                layer.enabled = true;
+                layer.DestroyMeshes();
+                layer.GenerateMeshes();
             }
         }
         ResortLayerDepth();
@@ -300,7 +306,7 @@ public class ex2DMng : MonoBehaviour {
             cachedCamera.orthographic = true;
         }
         if (cachedCamera.orthographicSize != Screen.height/2.0f) {
-			Debug.Log ("cachedCamera.orthographicSize " + cachedCamera.orthographicSize + "height " + Screen.height);
+            Debug.Log ("cachedCamera.orthographicSize " + cachedCamera.orthographicSize + "height " + Screen.height);
             cachedCamera.orthographicSize = Screen.height/2.0f;
         }
         cachedCamera.transform.rotation = Quaternion.identity;

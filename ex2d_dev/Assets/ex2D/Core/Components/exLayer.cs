@@ -128,38 +128,10 @@ public class exLayer : MonoBehaviour
         exDebug.Assert(meshList != null && meshList.Count == 0);
         //meshList.Clear();
     }
-
-    void OnEnable () {
-        nextSpriteUniqueId = 0;
-        exSpriteBase[] spriteList = GetComponentsInChildren<exSpriteBase>();
-        foreach (exSpriteBase sprite in spriteList) {
-            Add(sprite, false);
-        }
-    }
-
-    void OnDisable () {
-        //exSpriteBase[] spriteList = GetComponentsInChildren<exSpriteBase>();
-        //foreach (exSpriteBase sprite in spriteList) {
-        //    // reset sprite
-        //    sprite.indexBufferIndex = -1;
-        //    sprite.layer = null;
-        //}
-        for (int i = meshList.Count - 1; i >= 0; --i) {
-            exMesh mesh = meshList[i];
-            if (mesh != null) {
-                for (int s = 0; s < mesh.spriteList.Count; ++s) {
-            	    exSpriteBase sprite = mesh.spriteList[s];
-                    exDebug.Assert(sprite != null);
-                    if (sprite != null) {
-                        sprite.ResetLayerProperties();
-                    }
-                }
-                mesh.Clear();
-                mesh.gameObject.DestroyImmediate(); //dont save GO will auto destroy
-            }
-        }
-		meshList.Clear();
-    }
+	
+	void OnDisable () {
+		DestroyMeshes();
+	}
 
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
@@ -294,7 +266,47 @@ public class exLayer : MonoBehaviour
         }
         return z;
     }
+        
+    // ------------------------------------------------------------------ 
+    /// Desc:
+    // ------------------------------------------------------------------ 
+        
+    public void GenerateMeshes () {
+        nextSpriteUniqueId = 0;
+        exSpriteBase[] spriteList = GetComponentsInChildren<exSpriteBase>();
+        foreach (exSpriteBase sprite in spriteList) {
+            Add(sprite, false);
+        }
+    }
 
+    // ------------------------------------------------------------------ 
+    /// Desc:
+    // ------------------------------------------------------------------ 
+        
+    public void DestroyMeshes () {
+        //exSpriteBase[] spriteList = GetComponentsInChildren<exSpriteBase>();
+        //foreach (exSpriteBase sprite in spriteList) {
+        //    // reset sprite
+        //    sprite.indexBufferIndex = -1;
+        //    sprite.layer = null;
+        //}
+        for (int i = meshList.Count - 1; i >= 0; --i) {
+            exMesh mesh = meshList[i];
+            if (mesh != null) {
+                for (int s = 0; s < mesh.spriteList.Count; ++s) {
+                    exSpriteBase sprite = mesh.spriteList[s];
+                    exDebug.Assert(sprite != null);
+                    if (sprite != null) {
+                        sprite.ResetLayerProperties();
+                    }
+                }
+                mesh.Clear();
+                mesh.gameObject.DestroyImmediate(); //dont save GO will auto destroy
+            }
+        }
+        meshList.Clear();
+    }
+    
     ///////////////////////////////////////////////////////////////////////////////
     // Internal Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -307,18 +319,18 @@ public class exLayer : MonoBehaviour
         Material mat = _sprite.material;
         for (int i = 0; i < meshList.Count; ++i) {
             exMesh mesh = meshList[i];
-		    if (mesh != null && object.ReferenceEquals(mesh.material, mat)) {
+                    if (mesh != null && object.ReferenceEquals(mesh.material, mat)) {
                 bool containsSprite = (_sprite.spriteIndexInMesh >= 0 && _sprite.spriteIndexInMesh < mesh.spriteList.Count && 
                                       ReferenceEquals(mesh.spriteList[_sprite.spriteIndexInMesh], _sprite));
                 exDebug.Assert(containsSprite == mesh.spriteList.Contains(_sprite), "wrong sprite.spriteIndex");
                 if (containsSprite) {
                     return mesh;
                 }
-		    }
+                    }
         }
         return null;
     }
-    
+
     // ------------------------------------------------------------------ 
     /// \param _newSprite 如果为true，则将sprite渲染到其它相同depth的sprite上面
     // ------------------------------------------------------------------ 
@@ -340,7 +352,22 @@ public class exLayer : MonoBehaviour
         if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
             _sprite.cachedTransform.parent = cachedTransform;
         }
-        
+                
+#if UNITY_EDITOR
+        // Check duplicated
+        for (int i = meshList.Count - 1; i >= 0; --i) {
+            exMesh mesh = meshList[i];
+            if (mesh != null && mesh.material == mat ) {        // TODO: check depth
+                for (int j = 0; j < mesh.spriteList.Count; ++j) {
+                    if (_sprite.spriteIdInLayer == mesh.spriteList[j].spriteIdInLayer) {
+                        _sprite.spriteIdInLayer = -1;        //duplicated
+                        break;
+                    }
+                }
+            }
+        }
+#endif
+
         if (_newSprite || _sprite.spriteIdInLayer == -1) {
             _sprite.spriteIdInLayer = nextSpriteUniqueId;
             ++nextSpriteUniqueId;
@@ -356,13 +383,13 @@ public class exLayer : MonoBehaviour
         maxVertexCount -= _sprite.vertexCount;
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
-		    if (mesh != null && mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
+            if (mesh != null && mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
                 //if (mesh.sortedSpriteList.Count > 0 && mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1].depth) {
 
                 //}
                 sameDrawcallMesh = meshList[i];
                 break;
-		    }
+            }
         }
         
         if (sameDrawcallMesh == null) {
@@ -542,8 +569,10 @@ public class exLayer : MonoBehaviour
 
     [System.Diagnostics.Conditional("UNITY_EDITOR")]
     private void UpdateNowInEditMode () {
+#if UNITY_EDITOR
         if (UnityEditor.EditorApplication.isPlaying == false) {
             UpdateSprites();
         }
+#endif
     }
 }

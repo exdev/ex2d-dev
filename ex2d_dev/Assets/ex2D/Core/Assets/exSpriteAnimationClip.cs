@@ -193,30 +193,6 @@ public class exSpriteAnimationClip : ScriptableObject {
     // }
 
     // // ------------------------------------------------------------------ 
-    // /// \param _seconds the in seconds used for wrapping
-    // /// \param _wrapMode the wrap mode used for wrapping
-    // /// wrap the seconds of the anim clip by the wrap mode
-    // // ------------------------------------------------------------------ 
-
-    // public float WrapSeconds ( float _seconds, WrapMode _wrapMode ) {
-    //     float t = Mathf.Abs(_seconds);
-    //     if ( _wrapMode == WrapMode.Loop ) {
-    //         t %= length;
-    //     }
-    //     else if ( _wrapMode == WrapMode.PingPong ) {
-    //         int cnt = (int)(t/length);
-    //         t %= length;
-    //         if ( cnt % 2 == 1 ) {
-    //             t = length - t;
-    //         }
-    //     }
-    //     else {
-    //         t = Mathf.Clamp( t, 0.0f, length );
-    //     }
-    //     return t;
-    // }
-
-    // // ------------------------------------------------------------------ 
     // /// \param _time the time of the current animation
     // /// Get the event index play forward by time 
     // // ------------------------------------------------------------------ 
