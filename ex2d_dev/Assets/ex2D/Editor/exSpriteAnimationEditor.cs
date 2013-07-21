@@ -26,6 +26,8 @@ using EventInfo = exSpriteAnimationClip.EventInfo;
 
 partial class exSpriteAnimationEditor : EditorWindow {
 
+	static int exFrameInfoViewHash = "exFrameInfoView".GetHashCode();
+
     ///////////////////////////////////////////////////////////////////////////////
     // properties
     ///////////////////////////////////////////////////////////////////////////////
@@ -35,7 +37,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
     Vector2 scrollPos = Vector2.zero;
     exRectSelection<FrameInfo> frameRectSelection = null;
-    List<FrameInfo> selectedFrameInfos = new List<FrameInfo>();
+    List<FrameInfo> selectedFrameInfos = new List<FrameInfo>(); // NOTE: selected frame info is sorted by animation frame list
 
     bool isPlaying = false; 
     float previewSpeed = 1.0f;
@@ -966,9 +968,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void FrameInfoHandle ( Rect _rect ) {
-        List<Rect> selectedFrameRects = new List<Rect>();
 
         // draw selected frame infos
+        List<Rect> selectedFrameRects = new List<Rect>();
         float curX = _rect.x + offset;
         float yStart = _rect.y + 20.0f + 25.0f + 10.0f;
         int totalFrames = curEdit.GetTotalFrames();
@@ -984,8 +986,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
         }
 
         //
+        int controlID = GUIUtility.GetControlID(exFrameInfoViewHash, FocusType.Passive);
         Event e = Event.current;
-        switch ( e.type ) {
+
+        switch ( e.GetTypeForControl(controlID) ) {
         case EventType.Repaint:
             if ( inDraggingFrameInfoState ) {
                 for ( int i = 0; i < selectedFrameRects.Count; ++i ) {
@@ -1006,6 +1010,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         case EventType.MouseDown:
             if ( e.button == 0 && selectedFrameRects.Count > 0 ) {
+                GUIUtility.hotControl = controlID;
+                GUIUtility.keyboardControl = controlID;
+
                 for ( int i = 0; i < selectedFrameRects.Count; ++i ) {
                     Rect frameRect = selectedFrameRects[i];
                     if ( frameRect.Contains(e.mousePosition) ) {
@@ -1022,8 +1029,28 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         case EventType.MouseUp:
             if ( inDraggingFrameInfoState && e.button == 0 ) {
+                GUIUtility.hotControl = 0;
+
+                FrameInfo insertFrame = null; // this means insert behind the end
+                if ( insertAt < curEdit.frameInfos.Count ) {
+                    insertFrame = curEdit.frameInfos[insertAt];
+                }
+                foreach ( FrameInfo fi in selectedFrameInfos ) {
+                    curEdit.frameInfos.Remove(fi);
+                }
+
+                //
+                int idx = curEdit.frameInfos.Count;
+                if ( insertFrame != null )
+                    idx = curEdit.frameInfos.IndexOf(insertFrame);
+                foreach ( FrameInfo fi in selectedFrameInfos ) {
+                    curEdit.InsertFrameInfo( idx, fi );
+                    ++idx;
+                }
+
                 inDraggingFrameInfoState = false;
                 insertAt = -1;
+                EditorUtility.SetDirty(curEdit);
 
                 Repaint();
                 e.Use();
