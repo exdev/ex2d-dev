@@ -969,7 +969,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
     public void FrameInfoHandle ( Rect _rect ) {
 
-        // draw selected frame infos
+        // get selected frameinfo rects
         List<Rect> selectedFrameRects = new List<Rect>();
         float curX = _rect.x + offset;
         float yStart = _rect.y + 20.0f + 25.0f + 10.0f;
@@ -1031,21 +1031,23 @@ partial class exSpriteAnimationEditor : EditorWindow {
             if ( inDraggingFrameInfoState && e.button == 0 ) {
                 GUIUtility.hotControl = 0;
 
-                FrameInfo insertFrame = null; // this means insert behind the end
-                if ( insertAt < curEdit.frameInfos.Count ) {
-                    insertFrame = curEdit.frameInfos[insertAt];
-                }
-                foreach ( FrameInfo fi in selectedFrameInfos ) {
-                    curEdit.frameInfos.Remove(fi);
-                }
+                if ( insertAt != -1 ) {
+                    //
+                    int insertStart = 0;
+                    for ( int i = 0; i < insertAt; ++i ) {
+                        if ( selectedFrameInfos.IndexOf( curEdit.frameInfos[i] ) == -1 ) {
+                            ++insertStart;
+                        }
+                    }
+                    foreach ( FrameInfo fi in selectedFrameInfos ) {
+                        curEdit.frameInfos.Remove(fi);
+                    }
 
-                //
-                int idx = curEdit.frameInfos.Count;
-                if ( insertFrame != null )
-                    idx = curEdit.frameInfos.IndexOf(insertFrame);
-                foreach ( FrameInfo fi in selectedFrameInfos ) {
-                    curEdit.InsertFrameInfo( idx, fi );
-                    ++idx;
+                    //
+                    foreach ( FrameInfo fi in selectedFrameInfos ) {
+                        curEdit.InsertFrameInfo( insertStart, fi );
+                        ++insertStart;
+                    }
                 }
 
                 inDraggingFrameInfoState = false;
@@ -1070,7 +1072,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                         insertStart = i;
                     }
                 }
-                insertAt = insertStart;
+                insertAt = Mathf.Min ( insertStart, curEdit.frameInfos.Count );
 
                 Repaint();
                 e.Use();
