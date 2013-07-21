@@ -916,6 +916,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawTextureInfo ( Rect _rect, exTextureInfo _textureInfo, Color _color ) {
+        if ( _textureInfo == null )
+            return;
+
         float scale = 1.0f;
         float width = _textureInfo.width;
         float height = _textureInfo.height;
@@ -1041,6 +1044,16 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     }
                 }
                 insertAt = insertStart;
+
+                Repaint();
+                e.Use();
+            }
+            break;
+
+        case EventType.KeyDown:
+            if ( inDraggingFrameInfoState && e.keyCode == KeyCode.Escape ) {
+                inDraggingFrameInfoState = false;
+                insertAt = -1;
 
                 Repaint();
                 e.Use();

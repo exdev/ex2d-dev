@@ -94,9 +94,9 @@ public static class exEditorUtility {
     }
 
     public static Texture2D HelpTexture () { return FindBuiltinTexture( ref textureHelp, "_help" ); }
-    public static Texture2D AnimationPlayTexture () { return FindBuiltinTexture( ref textureAnimationPlay, "d_animation.play" ); }
-    public static Texture2D AnimationNextTexture () { return FindBuiltinTexture( ref textureAnimationNext, "d_animation.nextkey" ); }
-    public static Texture2D AnimationPrevTexture () { return FindBuiltinTexture( ref textureAnimationPrev, "d_animation.prevkey" ); }
+    public static Texture2D AnimationPlayTexture () { return FindBuiltinTexture( ref textureAnimationPlay, "Animation.Play" ); }
+    public static Texture2D AnimationNextTexture () { return FindBuiltinTexture( ref textureAnimationNext, "Animation.NextKey" ); }
+    public static Texture2D AnimationPrevTexture () { return FindBuiltinTexture( ref textureAnimationPrev, "Animation.PrevKey" ); }
 
     // ------------------------------------------------------------------ 
     // Desc: 
