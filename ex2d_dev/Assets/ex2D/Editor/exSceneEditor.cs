@@ -98,7 +98,6 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void OnEnable () {
-
         // camera
         if (editCamera == null) {
             GameObject camGO 
@@ -157,7 +156,7 @@ class exSceneEditor : EditorWindow {
         if ( ex2DMng.instance == null )
             return;
 
-        if ( curSerializedObject == null )
+        if ( curSerializedObject == null || curSerializedObject.targetObject == null )
             curSerializedObject = new SerializedObject(ex2DMng.instance);
 
         //
