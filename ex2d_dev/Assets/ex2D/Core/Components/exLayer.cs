@@ -124,11 +124,6 @@ public class exLayer : MonoBehaviour
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
-    void Awake () {
-        exDebug.Assert(meshList != null && meshList.Count == 0);
-        //meshList.Clear();
-    }
-	
 	void OnDisable () {
 		DestroyMeshes();
 	}
