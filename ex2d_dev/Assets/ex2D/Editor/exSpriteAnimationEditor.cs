@@ -975,7 +975,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                                            new Rect( 0.0f, 0.0f, _rect.width/checker.width, _rect.height/checker.height) );
 
             // draw preview texture
-            curFrame = System.Math.Min ( curFrame, totalFrames-1 );
+            curFrame = System.Math.Min ( curFrame, totalFrames );
             int idx = GetFrameInfoIndexByFrame(curFrame);
             if ( idx != -1 ) {
                 FrameInfo fi = curEdit.frameInfos[idx];
