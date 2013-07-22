@@ -27,6 +27,7 @@ using EventInfo = exSpriteAnimationClip.EventInfo;
 partial class exSpriteAnimationEditor : EditorWindow {
 
 	static int exFrameInfoViewHash = "exFrameInfoView".GetHashCode();
+	static int exNeedleHandleHash = "exNeedleHandle".GetHashCode();
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -35,17 +36,16 @@ partial class exSpriteAnimationEditor : EditorWindow {
     exSpriteAnimationClip curEdit = null;
     SerializedObject curSerializedObject = null;
 
+    //
     Vector2 scrollPos = Vector2.zero;
     exRectSelection<FrameInfo> frameRectSelection = null;
     List<FrameInfo> selectedFrameInfos = new List<FrameInfo>(); // NOTE: selected frame info is sorted by animation frame list
 
+    //
     bool isPlaying = false; 
     float previewSpeed = 1.0f;
     bool lockCurEdit = false; 
-    int curFrame = 0;
-    int insertAt = -1;
-
-    // 
+    float offset = 0.0f;
     float scale_ = 1.0f; ///< the zoom value of the atlas
     float scale {
         get { return scale_; }
@@ -57,23 +57,27 @@ partial class exSpriteAnimationEditor : EditorWindow {
             }
         }
     }
-    float offset = 0.0f;
+    int previewSize = 256;
+
+    //
+    float playingSeconds = 0.0f;
+    int curFrame = 0;
+    int insertAt = -1;
+    double lastTime = 0.0;
+
+    //
+    int totalFrames;
+    float totalSeconds;
+    float totalWidth;
 
     //
     Rect timelineRect;
     Rect eventInfoViewRect;
     Rect frameInfoViewRect;
-    float totalWidth;
-    double lastTime = 0.0;
 
     // handles
     bool inDraggingNeedleState = false;
     bool inDraggingFrameInfoState = false;
-
-    // preview 
-    int previewSize = 256;
-
-    //
     List<Object> draggingObjects = new List<Object>();
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -125,15 +129,20 @@ partial class exSpriteAnimationEditor : EditorWindow {
     void Update () {
         if ( isPlaying ) {
             float delta = (float)(EditorApplication.timeSinceStartup - lastTime);
-            // if ( playingSelects ) {
-            //     playingSeconds += _delta * curEdit.editorSpeed;
-            //     float wrapTime = (playingSeconds - playingStart) % (playingEnd - playingStart);
-            //     curSeconds = wrapTime + playingStart;
-            // }
-            // else {
-            //     playingSeconds += _delta * previewSpeed;
-            //     curSeconds = curEdit.WrapSeconds(playingSeconds,curEdit.wrapMode);
-            // }
+            playingSeconds += delta * previewSpeed;
+            float curSeconds = exMath.Wrap( playingSeconds, 
+                                            totalSeconds, 
+                                            curEdit.wrapMode );
+            curFrame = Mathf.FloorToInt(curSeconds * curEdit.frameRate);
+
+            //
+            if ( curEdit.wrapMode == WrapMode.Once &&
+                 curFrame == totalFrames ) 
+            {
+                isPlaying = false;
+                curFrame = 0;
+                playingSeconds = 0.0f;
+            }
 
             Repaint();
         }
@@ -157,6 +166,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         //
         curSerializedObject.Update ();
+
+        // initalize common data
+        totalFrames = curEdit.GetTotalFrames();
+        totalSeconds = curEdit.GetLength();
 
         // toolbar
         Toolbar ();
@@ -231,6 +244,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
     public void Reset () {
         curSerializedObject = null;
         curFrame = 0;
+        isPlaying = false;
+        playingSeconds = 0.0f;
         inDraggingNeedleState = false;
         inDraggingFrameInfoState = false;
 
@@ -271,7 +286,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
         List<FrameInfo> objects = new List<FrameInfo>();
 
         float curX = frameInfoViewRect.x;
-        int totalFrames = curEdit.GetTotalFrames();
 
         for ( int i = 0; i < curEdit.frameInfos.Count; ++i ) {
             FrameInfo fi = curEdit.frameInfos[i];
@@ -322,27 +336,17 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // Play 
             // ======================================================== 
 
+            EditorGUI.BeginChangeCheck();
             isPlaying = GUILayout.Toggle ( isPlaying, 
                                            exEditorUtility.AnimationPlayTexture(),
                                            EditorStyles.toolbarButton );
-            // TODO { 
-            if ( isPlaying == false ) {
-                // startPlaying = false;
-                curFrame = 0;
-            }
-            // else if ( startPlaying == false ) {
-            //     startPlaying = true;
-            //     curSeconds = 0.0f;
-            //     playingSeconds = playingSelects ? playingStart : 0.0f;
-            // }
-
             //
-            if ( isPlaying &&
-                 curEdit.wrapMode == WrapMode.Once &&
-                 curFrame == curEdit.GetTotalFrames() ) {
-                isPlaying = false;
+            if ( EditorGUI.EndChangeCheck() ) {
+                if ( isPlaying == false ) {
+                    curFrame = 0;
+                    playingSeconds = 0.0f;
+                }
             }
-            // } TODO end 
 
             // ======================================================== 
             // prev frame 
@@ -385,8 +389,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // ======================================================== 
 
             GUILayout.Space(5);
-            EditorGUILayout.SelectableLabel( curEdit.GetTotalFrames() + " frames | " + 
-                                             curEdit.GetLength().ToString("f3") + " secs",
+            EditorGUILayout.SelectableLabel( totalFrames + " frames | " + 
+                                             totalSeconds.ToString("f3") + " secs",
                                              new GUILayoutOption [] {
                                                 GUILayout.Width(150), 
                                                 GUILayout.Height(18)
@@ -397,13 +401,12 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // ======================================================== 
 
             GUILayout.Space(10);
-            GUILayout.Label( "Preview Speed" );
-            previewSpeed = EditorGUILayout.FloatField( GUIContent.none,
+            previewSpeed = EditorGUILayout.FloatField( new GUIContent("Preview Speed"),
                                                        previewSpeed,
                                                        EditorStyles.toolbarTextField,
                                                        new GUILayoutOption [] {
                                                            GUILayout.ExpandWidth(false),
-                                                           GUILayout.Width(80),
+                                                           GUILayout.Width(200),
                                                        } );
 
             // ======================================================== 
@@ -411,7 +414,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // ======================================================== 
 
             GUILayout.Space(5);
-            EditorGUILayout.SelectableLabel( (curEdit.GetLength() / previewSpeed).ToString("f3") + " secs", 
+            EditorGUILayout.SelectableLabel( (totalSeconds / previewSpeed).ToString("f3") + " secs", 
                                              new GUILayoutOption [] {
                                                 GUILayout.Width(80),
                                                 GUILayout.Height(18)
@@ -425,7 +428,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // ======================================================== 
 
             if ( GUILayout.Button( "Reset", EditorStyles.toolbarButton ) ) {
-                // TODO: reset the offset
+                offset = 0.0f;
             }
 
             // ======================================================== 
@@ -510,15 +513,14 @@ partial class exSpriteAnimationEditor : EditorWindow {
             GUILayout.Space(10);
 
             // length
-            float length = curEdit.GetLength();
-            float curLength = length/curEdit.speed;
+            float curLength = totalSeconds/curEdit.speed;
             float newLength = EditorGUILayout.FloatField( "Length", 
                                                           curLength, 
                                                           new GUILayoutOption [] {
                                                             GUILayout.MaxWidth(250)
                                                           } );
             if ( curLength != newLength ) {
-                curEdit.speed = length/newLength;
+                curEdit.speed = totalSeconds/newLength;
                 EditorUtility.SetDirty(curEdit);
             }
             GUILayout.Label( "secs" );
@@ -669,7 +671,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         }
 
         // init total width and cell-count
-        totalWidth = scale * curEdit.GetLength() * unitWidth;
+        totalWidth = scale * totalSeconds * unitWidth;
         if ( totalWidth > boxWidth/2.0f ) {
             offset = Mathf.Clamp( offset, boxWidth - totalWidth - boxWidth/2.0f, 0 );
         }
@@ -803,8 +805,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
             // draw frame infos
             float curX = offset;
-            int totalFrames = curEdit.GetTotalFrames();
-
             for ( int i = 0; i < curEdit.frameInfos.Count; ++i ) {
                 FrameInfo fi = curEdit.frameInfos[i];
                 float frameWidth = ((float)fi.frames/(float)totalFrames) * totalWidth;
@@ -1070,7 +1070,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
         List<Rect> selectedFrameRects = new List<Rect>();
         float curX = _rect.x + offset;
         float yStart = _rect.y + 20.0f + 25.0f + 10.0f;
-        int totalFrames = curEdit.GetTotalFrames();
         for ( int i = 0; i < curEdit.frameInfos.Count; ++i ) {
             FrameInfo fi = curEdit.frameInfos[i];
             float frameWidth = ((float)fi.frames/(float)totalFrames) * totalWidth;
@@ -1095,7 +1094,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 }
 
                 if ( insertAt != -1 ) {
-                    float playOffset = (float)insertAt/(float)totalFrames * totalWidth;
+                    int frames = GetFrames(0,insertAt);
+                    float playOffset = (float)frames/(float)totalFrames * totalWidth;
                     float xPos = _rect.x + offset + playOffset;
 
                     exEditorUtility.DrawRect ( new Rect ( xPos-3.0f, _rect.y + 20.0f + 25.0f, 6.0f, frameInfoViewRect.height ), 
@@ -1160,16 +1160,22 @@ partial class exSpriteAnimationEditor : EditorWindow {
             if ( inDraggingFrameInfoState ) {
                 float pos = Mathf.Clamp( e.mousePosition.x - _rect.x, 0.0f, totalWidth + offset );
                 int insertStart = Mathf.FloorToInt( (float)totalFrames * (pos - offset)/totalWidth );
-                if ( insertStart < curEdit.frameInfos.Count ) {
+                if ( insertStart < totalFrames ) {
                     for ( int i = insertStart; i >= 0; --i ) {
-                        FrameInfo fi = curEdit.frameInfos[i];
+                        int frameIdx = GetFrameInfoIndexByFrame(i);
+                        FrameInfo fi = curEdit.frameInfos[frameIdx];
                         if ( selectedFrameInfos.IndexOf(fi) == -1 ) {
                             break;
                         }
                         insertStart = i;
                     }
+
+                    insertAt = GetFrameInfoIndexByFrame(insertStart);
                 }
-                insertAt = Mathf.Min ( insertStart, curEdit.frameInfos.Count );
+                else {
+                    insertAt = insertStart;
+                }
+                insertAt = Mathf.Min ( insertAt, curEdit.frameInfos.Count );
 
                 Repaint();
                 e.Use();
@@ -1193,7 +1199,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void NeedleHandle ( Rect _rect ) {
-        int totalFrames = curEdit.GetTotalFrames();
         curFrame = Mathf.Clamp ( curFrame, 0, totalFrames );
 
         float playOffset = (float)curFrame/(float)totalFrames * totalWidth;
@@ -1202,8 +1207,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
         Rect needleRect = new Rect ( xPos-3.0f, _rect.y - 20.0f, 6.0f, 30.0f );
         Rect needleValidRect = new Rect ( _rect.x-3.0f, _rect.y - 20.0f, totalWidth + 6.0f, 40.0f );
 
+        int controlID = GUIUtility.GetControlID(exNeedleHandleHash, FocusType.Passive);
         Event e = Event.current;
-        switch ( e.type ) {
+
+        switch ( e.GetTypeForControl(controlID) ) {
         case EventType.Repaint:
             if ( xPos >= _rect.x && xPos <= _rect.xMax ) {
                 Color lineColor = Color.red;
@@ -1227,6 +1234,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         case EventType.MouseDown:
             if ( needleValidRect.Contains( e.mousePosition ) && e.button == 0 ) {
+                GUIUtility.hotControl = controlID;
+                GUIUtility.keyboardControl = controlID;
+
                 inDraggingNeedleState = true;
                 float pos = Mathf.Clamp( e.mousePosition.x - _rect.x, 0.0f, totalWidth + offset );
                 curFrame = Mathf.RoundToInt( (float)totalFrames * (pos - offset)/totalWidth );
@@ -1238,6 +1248,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         case EventType.MouseUp:
             if ( inDraggingNeedleState && e.button == 0 ) {
+                GUIUtility.hotControl = 0;
                 inDraggingNeedleState = false;
 
                 Repaint();
@@ -1281,5 +1292,33 @@ partial class exSpriteAnimationEditor : EditorWindow {
             }
             break;
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    int GetFrameInfoIndexByFrame ( int _frame ) {
+        int tmp = 0;
+        for ( int i = 0; i < curEdit.frameInfos.Count; ++i ) {
+            FrameInfo fi = curEdit.frameInfos[i];
+            tmp += fi.frames;
+            if ( _frame < tmp )
+                return i;
+        }
+        return curEdit.frameInfos.Count-1; 
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    int GetFrames ( int _start, int _end ) {
+        int tmp = 0;
+        for ( int i = _start; i < _end; ++i ) {
+            FrameInfo fi = curEdit.frameInfos[i];
+            tmp += fi.frames;
+        }
+        return tmp;
     }
 }
