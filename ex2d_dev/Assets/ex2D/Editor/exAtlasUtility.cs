@@ -153,6 +153,7 @@ public static class exAtlasUtility {
         }
 
         //
+        bool noToAll = false;
         for ( int i = 0; i < _objects.Length; ++i ) {
             Object o = _objects[i];
             _progress( 0.2f + (float)i/(float)_objects.Length * 0.8f, "Add texture " + o.name );
@@ -172,22 +173,41 @@ public static class exAtlasUtility {
                 }
 
                 //
-                exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate( path, rawTexture.name );
-                textureInfo.rawAtlasGUID = exEditorUtility.AssetToGUID(_atlas);
-                textureInfo.rawTextureGUID = exEditorUtility.AssetToGUID(rawTexture);
-                textureInfo.name = rawTexture.name;
-                textureInfo.texture = _atlas.texture;
-                textureInfo.rawWidth = rawTexture.width;
-                textureInfo.rawHeight = rawTexture.height;
-                textureInfo.x = 0;
-                textureInfo.y = 0;
-                textureInfo.trim_x = (int)trimRect.x;
-                textureInfo.trim_y = (int)trimRect.y;
-                textureInfo.width = (int)trimRect.width;
-                textureInfo.height = (int)trimRect.height;
-                textureInfo.trim = _atlas.trimElements;
+                exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate( path, rawTexture.name + ".asset" );
+                int result = -1;
+                if ( noToAll == false 
+                  && string.IsNullOrEmpty(textureInfo.rawTextureGUID) == false 
+                  && textureInfo.rawTextureGUID != exEditorUtility.AssetToGUID(rawTexture) ) 
+                {
+                    result = EditorUtility.DisplayDialogComplex( "Texture Info " + textureInfo.name + " already exists, it is bind to texture " + AssetDatabase.GUIDToAssetPath(textureInfo.rawTextureGUID),
+                                                                 "Do you want to bind it with new texture " + AssetDatabase.GetAssetPath(rawTexture),
+                                                                 "No",          // 0 
+                                                                 "Yes",         // 1
+                                                                 "No to all"    // 2
+                                                                 );
+                    if ( result == 2 )
+                        noToAll = true;
+                }
 
-                _atlas.textureInfos.Add(textureInfo);
+                if ( noToAll == false && result == 1 ) {
+                    textureInfo.rawAtlasGUID = exEditorUtility.AssetToGUID(_atlas);
+                    textureInfo.rawTextureGUID = exEditorUtility.AssetToGUID(rawTexture);
+                    textureInfo.name = rawTexture.name;
+                    textureInfo.texture = _atlas.texture;
+                    textureInfo.rawWidth = rawTexture.width;
+                    textureInfo.rawHeight = rawTexture.height;
+                    textureInfo.x = 0;
+                    textureInfo.y = 0;
+                    textureInfo.trim_x = (int)trimRect.x;
+                    textureInfo.trim_y = (int)trimRect.y;
+                    textureInfo.width = (int)trimRect.width;
+                    textureInfo.height = (int)trimRect.height;
+                    textureInfo.trim = _atlas.trimElements;
+                    EditorUtility.SetDirty(textureInfo);
+                }
+
+                if ( _atlas.textureInfos.IndexOf(textureInfo) == -1 )
+                    _atlas.textureInfos.Add(textureInfo);
             }
         }
 
