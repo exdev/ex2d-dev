@@ -27,7 +27,7 @@ public class exSprite : exSpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
     
     // ------------------------------------------------------------------ 
-    /// The texture info used in this sprite
+    /// The texture info used in this sprite. If it's null, sprite will become invisible.
     // ------------------------------------------------------------------ 
 
     [SerializeField]
@@ -38,21 +38,35 @@ public class exSprite : exSpriteBase {
             if (ReferenceEquals(textureInfo_, value)) {
                 return;
             }
-            if (textureInfo_ == null || ReferenceEquals(textureInfo_.texture, value.texture) == false) {
-                // material changed, update layer to make mesh change
-                if (layer_ != null) {
-                    exLayer myLayer = layer_;
-                    myLayer.Remove(this);
-                    myLayer.Add(this);
+            if (value != null) {
+                if (customSize_ == false && (value.width != width_ || value.height != height_)) {
+                    width_ = value.width;
+                    height_ = value.height;
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+                updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
+
+                if (textureInfo_ == null || ReferenceEquals(textureInfo_.texture, value.texture) == false) {
+                    textureInfo_ = value;
+                    UpdateMaterial();
+                    return;
+                }
+                else if (textureInfo_ == null && isOnEnabled_ && layer_ != null) {
+                    // become visible
+                    layer_.ShowSprite(this);
                 }
             }
-            if (customSize_ == false && (value.width != width_ || value.height != height_)) {
-                width_ = value.width;
-                height_ = value.height;
-                updateFlags |= exUpdateFlags.Vertex;
+            else if (textureInfo_ != null && isOnEnabled_ && layer_ != null) {
+                // become invisible
+                layer_.HideSprite(this);
             }
-            updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
             textureInfo_ = value;
+
+#if UNITY_EDITOR
+            if (layer_ != null) {
+                layer_.UpdateNowInEditMode();
+            }
+#endif
         }
     }
     
@@ -111,7 +125,7 @@ public class exSprite : exSpriteBase {
             }
             return material_;
         }
-        // TODO: if material changed, update sprite's exMesh
+        // TODO: if shader changed, update layer
     }
 
     public override bool customSize {
@@ -157,9 +171,19 @@ public class exSprite : exSpriteBase {
             base.height = value;
         }
     }
+    
+    public override bool visible {
+        get {
+            return isOnEnabled_ && textureInfo_ != null;
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
-    // functions
+    // Overridable functions
+    ///////////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Other functions
     ///////////////////////////////////////////////////////////////////////////////
 
 #region Functions used to update geometry buffer
@@ -182,7 +206,13 @@ public class exSprite : exSpriteBase {
             TestIndices(_indices);
         }
         if ((updateFlags & exUpdateFlags.UV) != 0) {
-            Vector2 texelSize = textureInfo.texture.texelSize;
+            Vector2 texelSize;
+            if (textureInfo.texture != null) {
+                texelSize = textureInfo.texture.texelSize;
+            }
+            else {
+                texelSize = new Vector2(1.0f / textureInfo.rawWidth, 1.0f / textureInfo.rawHeight);
+            }
             Vector2 start = new Vector2((float)textureInfo.x * texelSize.x, 
                                          (float)textureInfo.y * texelSize.y);
             Vector2 end = new Vector2((float)(textureInfo.x + textureInfo.width) * texelSize.x, 
@@ -393,5 +423,21 @@ public class exSprite : exSpriteBase {
         _vertices[_startIndex + 3] = v3;
         
         // TODO: pixel-perfect
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    void UpdateMaterial (/*Shader _newShader, Texture2D _newTexture*/) {
+        if (layer_ != null) {
+            exLayer myLayer = layer_;
+            myLayer.Remove(this);
+            material_ = null;   // set dirty, make material update.
+            myLayer.Add(this);
+        }
+        else {
+            material_ = null;   // set dirty, make material update.
+        }
     }
 }

@@ -147,9 +147,8 @@ public class exLayer : MonoBehaviour
                 exUpdateFlags meshUpdateFlags = exUpdateFlags.None;
                 for (int i = 0; i < mesh.spriteList.Count; ++i) {
                     exSpriteBase sprite = mesh.spriteList[i];
-                    exDebug.Assert(sprite.isOnEnabled == sprite.isInIndexBuffer);
-                
-                    if (sprite.isOnEnabled) {
+                    exDebug.Assert(sprite.isInIndexBuffer == sprite.visible);
+                    if (sprite.isInIndexBuffer) {
                         sprite.UpdateTransform();
                         exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
                         meshUpdateFlags |= spriteUpdateFlags;
@@ -301,6 +300,20 @@ public class exLayer : MonoBehaviour
         }
         meshList.Clear();
     }
+
+    // ------------------------------------------------------------------ 
+    /// To update scene view in edit mode immediately
+    /// 所有方法调用，及用作调用参数的表达式都不会被编译进*非*EX_DEBUG的版本
+    // ------------------------------------------------------------------ 
+
+    [System.Diagnostics.Conditional("UNITY_EDITOR")]
+    public void UpdateNowInEditMode () {
+#if UNITY_EDITOR
+        if (UnityEditor.EditorApplication.isPlaying == false) {
+            UpdateSprites();
+        }
+#endif
+    }
     
     ///////////////////////////////////////////////////////////////////////////////
     // Internal Functions
@@ -413,8 +426,7 @@ public class exLayer : MonoBehaviour
         _mesh.spriteList.Add(_sprite);
 
         _sprite.FillBuffers(_mesh.vertices, _mesh.uvs, _mesh.colors32);
-        bool show = _sprite.isOnEnabled;
-        if (show) {
+        if (_sprite.visible) {
             AddIndices(_mesh, _sprite);
         }
         
@@ -555,19 +567,5 @@ public class exLayer : MonoBehaviour
             }
             _sprite.indexBufferIndex = -1;
         }
-    }
-
-    // ------------------------------------------------------------------ 
-    /// To update scene view in edit mode immediately
-    /// 所有方法调用，及用作调用参数的表达式都不会被编译进*非*EX_DEBUG的版本
-    // ------------------------------------------------------------------ 
-
-    [System.Diagnostics.Conditional("UNITY_EDITOR")]
-    private void UpdateNowInEditMode () {
-#if UNITY_EDITOR
-        if (UnityEditor.EditorApplication.isPlaying == false) {
-            UpdateSprites();
-        }
-#endif
     }
 }

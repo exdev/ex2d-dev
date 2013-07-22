@@ -73,7 +73,11 @@ public class exSpriteAnimationState {
     }
     
     public int GetCurrentIndex() {
-        return frameTimes.BinarySearch(exMath.Wrap(time, length, wrapMode));
+        int index = frameTimes.BinarySearch(exMath.Wrap(time, length, wrapMode));
+        if (index < 0) {
+            index = ~index;
+        }
+        return index;
     }
 }
 
@@ -163,39 +167,8 @@ public class exSpriteAnimation : MonoBehaviour {
 	
 	void Update () {
         if (curAnimation != null) {
-            // advance the time and check if we trigger any animation events
             float delta = Time.deltaTime * curAnimation.speed;
-            //float curTime = curAnimation.time;
-
-            // advance the time
-            curAnimation.time += delta;
-            Step(curAnimation);
-
-            // save the last state
-            //exSpriteAnimState lastAnimation = curAnimation;
-
-            //int newIdx = curAnimation.clip.TriggerEvents( this, 
-            //                                              lastAnimation,
-            //                                              lastEventInfoIndex,
-            //                                              curTime,
-            //                                              delta,
-            //                                              curAnimation.wrapMode );
-
-            // set sprite to current time
-            exSpriteAnimationClip.FrameInfo fi = GetCurFrameInfo();
-            if (fi != null)
-                sprite.textureInfo = fi.textureInfo;
-
-            // check if stop
-            if (curAnimation.wrapMode == WrapMode.Once ||
-                curAnimation.wrapMode == WrapMode.Default)
-            {
-                if ((curAnimation.speed > 0.0f && curAnimation.time >= curAnimation.length) ||
-                    (curAnimation.speed < 0.0f && curAnimation.time <= 0.0f))
-                {
-                    Stop();
-                }
-            }
+            Step(delta);
         }
 	}
 
@@ -219,11 +192,11 @@ public class exSpriteAnimation : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void Play (string _name, int _frame) {
-        curAnimation = GetAnimation(_name);
-        if (curAnimation != null) {
-            float unitSeconds = 1.0f / curAnimation.clip.frameRate;
+        exSpriteAnimationState anim = GetAnimation(_name);
+        if (anim != null) {
+            float unitSeconds = 1.0f / anim.clip.frameRate;
             float time = _frame * unitSeconds;
-            Play(curAnimation, time);
+            Play(anim, time);
         }
     }
 
@@ -312,7 +285,8 @@ public class exSpriteAnimation : MonoBehaviour {
 
     public exSpriteAnimationClip.FrameInfo GetCurFrameInfo () {
         if (curAnimation != null) {
-            if (curIndex < curAnimation.clip.frameInfos.Count)
+            exDebug.Assert(0 <= curIndex && curIndex < curAnimation.clip.frameInfos.Count);
+            if (0 <= curIndex && curIndex < curAnimation.clip.frameInfos.Count)
                 return curAnimation.clip.frameInfos[curIndex];
         }
         return null;
@@ -388,6 +362,26 @@ public class exSpriteAnimation : MonoBehaviour {
         nameToState.Remove(_animClip.name);
     }
     
+    // ------------------------------------------------------------------ 
+    /// \param _animState the animation state to sample
+    /// Samples animations at the current state.
+    /// This is useful when you explicitly want to set up some animation state, and sample it once.
+    // ------------------------------------------------------------------ 
+
+    public void Sample (exSpriteAnimationState _animState) {
+        curAnimation = _animState;
+        Sample();
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// advance the time and check if we trigger any animation events
+    // ------------------------------------------------------------------ 
+
+    public void Step (exSpriteAnimationState _animState, float _deltaTime) {
+        curAnimation = _animState;
+        Step(_deltaTime);
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Internal Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -427,27 +421,58 @@ public class exSpriteAnimation : MonoBehaviour {
         curAnimation = _animState;
         if (curAnimation != null) {
             curAnimation.time = _time;
-            Step(curAnimation);
-            exTextureInfo ti = curAnimation.clip.frameInfos[curIndex].textureInfo;
-            if (ti != null) {
-                sprite.textureInfo = ti;
-            }
+            Sample();
             enabled = true;
         }
     }
 
     // ------------------------------------------------------------------ 
-    // Desc: 
+    // Do step
     // ------------------------------------------------------------------ 
 
-    void Step ( exSpriteAnimationState _animState ) {
-        if ( _animState == null ) {
-            curIndex = -1;
-            return;
+    void Step (float _deltaTime) {
+        if (curAnimation != null) {
+            curAnimation.time += _deltaTime;
+
+            Sample();
+
+            // save the last state
+            //exSpriteAnimState lastAnimation = curAnimation;
+
+            //int newIdx = curAnimation.clip.TriggerEvents( this, 
+            //                                              lastAnimation,
+            //                                              lastEventInfoIndex,
+            //                                              curTime,
+            //                                              delta,
+            //                                              curAnimation.wrapMode );
+
+            // check if stop
+            if (curAnimation.wrapMode == WrapMode.Once ||
+                curAnimation.wrapMode == WrapMode.Default)
+            {
+                if ((curAnimation.speed > 0.0f && curAnimation.time >= curAnimation.length) ||
+                    (curAnimation.speed < 0.0f && curAnimation.time <= 0.0f))
+                {
+                    Stop();
+                }
+            }
         }
-        curIndex = _animState.GetCurrentIndex();
-        if ( curIndex < 0 ) {
-            curIndex = ~curIndex;
+        else {
+            curIndex = -1;
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Do sample
+    // ------------------------------------------------------------------ 
+
+    void Sample () {
+        if (curAnimation != null) {
+            curIndex = curAnimation.GetCurrentIndex();
+            sprite.textureInfo = curAnimation.clip.frameInfos[curIndex].textureInfo;
+        }
+        else {
+            curIndex = -1;
         }
     }
 }

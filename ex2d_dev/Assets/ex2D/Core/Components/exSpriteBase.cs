@@ -175,6 +175,9 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     [System.NonSerialized] internal int spriteIndexInMesh = -1;
     [System.NonSerialized] internal int vertexBufferIndex = -1;
     [System.NonSerialized] internal int indexBufferIndex = -1;
+    
+    /// If OnEnable, isOnEnabled_ is true. If OnDisable, isOnEnabled_ is false.
+    [System.NonSerialized] protected bool isOnEnabled_;
 
     // ------------------------------------------------------------------ 
     /// The current updateFlags
@@ -182,7 +185,11 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
 
     [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
 
-    [System.NonSerialized] private Transform cachedTransform_ = null;
+    ///////////////////////////////////////////////////////////////////////////////
+    // non-serialized properties
+    ///////////////////////////////////////////////////////////////////////////////
+    
+    [System.NonSerialized] private Transform cachedTransform_ = null;    
     public Transform cachedTransform {
         get {
             if (ReferenceEquals(cachedTransform_, null)) {
@@ -191,10 +198,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             return cachedTransform_;
         }
     }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // non-serialized properties
-    ///////////////////////////////////////////////////////////////////////////////
 
     [System.NonSerialized]
     protected exLayer layer_ = null;
@@ -208,10 +211,9 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     }
 
     public abstract Material material { get; }
-    
-    /// Is component enabled and gameobject activeInHierarchy? If false, the sprite is hidden.
-    private bool isOnEnabled_;
-    public bool isOnEnabled {
+
+    /// 当前sprite是否可见？只返回sprite自身属性，不一定真的显示在任一camera中。
+    public virtual bool visible {
         get {
             return isOnEnabled_;
         }
@@ -238,7 +240,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
 
     void OnEnable () {
         isOnEnabled_ = true;
-        if (layer_ != null) {
+        if (layer_ != null && visible) {
             layer_.ShowSprite(this);
         }
     }
@@ -254,8 +256,8 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         if (layer_ != null) {
             layer_.Remove(this);
         }
-        exDebug.Assert(isOnEnabled == isInIndexBuffer, 
-                       "a sprite's logic visibility should equals to it's triangle visibility", this);
+        exDebug.Assert(visible == false);
+        exDebug.Assert(isInIndexBuffer == false);
     }
 
     // ------------------------------------------------------------------ 
@@ -348,17 +350,19 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // ------------------------------------------------------------------ 
 
     public void GetBuffers (List<Vector3> _vertices, List<Vector2> _uvs) {
-        exUpdateFlags originalFlags = updateFlags;
         _vertices.Clear();
         _uvs.Clear();
-        List<Color32> colors = new List<Color32>(vertexCount);
+        if (visible) {
+            exUpdateFlags originalFlags = updateFlags;
+            List<Color32> colors = new List<Color32>(vertexCount);
 
-        int originalVertexBufferIndex = vertexBufferIndex;
-        FillBuffers(_vertices, _uvs, colors);
-        UpdateBuffers(_vertices, _uvs, colors);
-        vertexBufferIndex = originalVertexBufferIndex;
+            int originalVertexBufferIndex = vertexBufferIndex;
+            FillBuffers(_vertices, _uvs, colors);
+            UpdateBuffers(_vertices, _uvs, colors);
+            vertexBufferIndex = originalVertexBufferIndex;
 
-        updateFlags = originalFlags;
+            updateFlags = originalFlags;
+        }
     }
 
 #endif

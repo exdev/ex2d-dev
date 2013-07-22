@@ -676,7 +676,9 @@ class exSceneEditor : EditorWindow {
 
             // draw culled sprite nodes
             for ( int i = 0; i < spriteNodes.Count; ++i ) {
-                DrawNode ( spriteNodes[i] );
+                if (spriteNodes[i].visible) {
+                    DrawNode ( spriteNodes[i] );
+                }
             }
 
             // draw selected objects

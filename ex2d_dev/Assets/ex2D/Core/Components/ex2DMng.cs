@@ -330,7 +330,6 @@ public class ex2DMng : MonoBehaviour {
             cachedCamera.orthographic = true;
         }
         if (cachedCamera.orthographicSize != Screen.height/2.0f) {
-            Debug.Log ("cachedCamera.orthographicSize " + cachedCamera.orthographicSize + "height " + Screen.height);
             cachedCamera.orthographicSize = Screen.height/2.0f;
         }
         cachedCamera.transform.rotation = Quaternion.identity;
