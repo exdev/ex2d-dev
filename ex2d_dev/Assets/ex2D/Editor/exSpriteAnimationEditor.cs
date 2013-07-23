@@ -1058,14 +1058,15 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void FrameInfoHandle ( Rect _rect ) {
+        GUI.BeginGroup(_rect);
 
         // get selected frameinfo rects
         List<Rect> selectedFrameRects = new List<Rect>();
         List<Rect> resizeFrameRects = new List<Rect>();
         List<List<int>> resizeFrameIdxList = new List<List<int>>();
 
-        float curX = _rect.x + offset;
-        float yStart = _rect.y + 20.0f + 25.0f + 10.0f;
+        float curX = offset;
+        float yStart = 20.0f + 25.0f + 10.0f;
         int lastSelectFrameIdx = -1;
         List<int> curResizeFrames = new List<int>();
 
@@ -1121,9 +1122,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 if ( insertAt != -1 ) {
                     int frames = GetFrames(0,insertAt);
                     float playOffset = (float)frames/(float)totalFrames * totalWidth;
-                    float xPos = _rect.x + offset + playOffset;
+                    float xPos = offset + playOffset;
 
-                    exEditorUtility.DrawRect ( new Rect ( xPos-3.0f, _rect.y + 20.0f + 25.0f, 6.0f, frameInfoViewRect.height ), 
+                    exEditorUtility.DrawRect ( new Rect ( xPos-3.0f, 20.0f + 25.0f, 6.0f, frameInfoViewRect.height ), 
                                                new Color( 0.0f, 0.2f, 1.0f, 0.8f ),
                                                new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
                 }
@@ -1147,7 +1148,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     int frameIdx = resizeFrameIdxList[resizeIdx][0];
                     int frames = GetFrames(0,frameIdx);
                     float playOffset = (float)frames/(float)totalFrames * totalWidth;
-                    float xPos = _rect.x + offset + playOffset;
+                    float xPos = offset + playOffset;
 
                     exEditorUtility.DrawRect ( new Rect( xPos, yStart,
                                                          e.mousePosition.x - xPos,
@@ -1247,7 +1248,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         case EventType.MouseDrag:
             if ( inDraggingFrameInfoState ) {
-                float pos = Mathf.Clamp( e.mousePosition.x - _rect.x, 0.0f, totalWidth + offset );
+                float pos = Mathf.Clamp( e.mousePosition.x, 0.0f, totalWidth + offset );
                 int insertStart = Mathf.FloorToInt( (float)totalFrames * (pos - offset)/totalWidth );
                 if ( insertStart < totalFrames ) {
                     for ( int i = insertStart; i >= 0; --i ) {
@@ -1327,6 +1328,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
             }
             break;
         }
+
+        GUI.EndGroup();
     }
 
     // ------------------------------------------------------------------ 
