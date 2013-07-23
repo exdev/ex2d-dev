@@ -26,6 +26,7 @@ using EventInfo = exSpriteAnimationClip.EventInfo;
 
 partial class exSpriteAnimationEditor : EditorWindow {
 
+	static int exEventInfoViewHash = "exEventInfoView".GetHashCode();
 	static int exFrameInfoViewHash = "exFrameInfoView".GetHashCode();
 	static int exNeedleHandleHash = "exNeedleHandle".GetHashCode();
 
@@ -948,6 +949,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         }
 
         // process handles
+        EventInfoHandle (_rect);
         FrameInfoHandle (_rect);
         NeedleHandle (_rect);
     }
@@ -1137,6 +1139,37 @@ partial class exSpriteAnimationEditor : EditorWindow {
         // DEBUG { 
         // exEditorUtility.DrawRectBorder ( _rect, Color.white );
         // } DEBUG end 
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void EventInfoHandle ( Rect _rect ) {
+        GUI.BeginGroup(_rect);
+
+        //
+        int controlID = GUIUtility.GetControlID(exEventInfoViewHash, FocusType.Passive);
+        Event e = Event.current;
+
+        switch ( e.GetTypeForControl(controlID) ) {
+        case EventType.Repaint:
+            break;
+
+        case EventType.MouseDown:
+            if ( eventInfoViewRect.Contains(e.mousePosition) 
+              && e.button == 0 
+              && e.clickCount == 2 ) 
+            {
+                Debug.Log("yes");
+
+                Repaint();
+                e.Use();
+            }
+            break;
+        }
+
+        GUI.EndGroup();
     }
 
     // ------------------------------------------------------------------ 
