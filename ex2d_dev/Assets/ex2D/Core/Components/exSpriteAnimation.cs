@@ -1,4 +1,4 @@
-// ======================================================================================
+﻿// ======================================================================================
 // File         : exSpriteAnimation.cs
 // Author       : Jare
 // Last Change  : 07/16/2013 | 22:50:36
@@ -156,16 +156,19 @@ public class exSpriteAnimation : MonoBehaviour {
     
 	void Awake () {
         Init();
-
-        if (playAutomatically && defaultAnimation != null) {
-            Play(defaultAnimation.name, 0);
-        }
-        else {
-            enabled = false;
+        if (enabled) {  // 和Unity自带的Animation保持一致，未激活时不播放
+            if (playAutomatically && defaultAnimation != null) {
+                Play(defaultAnimation.name, 0);
+            }
+            else {
+                enabled = false;
+            }
         }
 	}
 	
-	void Update () {
+    // Unity自带的Animation在Update和LateUpdate之间执行。
+    // 这里我们采用LateUpdate，用户如果有需要在帧切换之后执行的操作，可使用事件或自行修改优先级。
+	void LateUpdate () {
         if (curAnimation != null) {
             float delta = Time.deltaTime * curAnimation.speed;
             Step(delta);
