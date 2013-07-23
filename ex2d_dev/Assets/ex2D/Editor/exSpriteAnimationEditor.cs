@@ -66,6 +66,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
     double lastTime = 0.0;
 
     //
+    int eachFrames = 1;
     int totalFrames;
     float totalSeconds;
     float totalWidth;
@@ -223,6 +224,12 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 //
                 Layout_PreviewField ( previewSize, previewSize );
             GUILayout.EndVertical();
+
+            GUILayout.Space(30);
+
+            // frame info edit field or event info edit field
+            FrameInfoEditField();
+
             GUILayout.EndHorizontal();
 
             //
@@ -246,6 +253,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
     public void Reset () {
         curSerializedObject = null;
+        eachFrames = 1;
         curFrame = 0;
         isPlaying = false;
         playingSeconds = 0.0f;
@@ -981,6 +989,84 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
             break;
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void FrameInfoEditField () {
+        GUILayout.BeginVertical();
+
+        GUIStyle style = new GUIStyle();
+        style.fontStyle = FontStyle.Bold;
+        style.normal.textColor = Color.yellow;
+        GUILayout.Label( "FrameInfo Inspector", style );
+
+        EditorGUILayout.Space();
+
+        // total frames
+        EditorGUILayout.LabelField( "Total Frames", totalFrames.ToString() );
+
+        // each frames
+        GUILayout.BeginHorizontal();
+        GUI.enabled = selectedFrameInfos.Count > 0;
+        eachFrames = EditorGUILayout.IntField( "Each Frames", eachFrames, GUILayout.Width(200) );
+        eachFrames = System.Math.Max ( eachFrames, 1 );
+        if ( GUILayout.Button("Apply", new GUILayoutOption[] { GUILayout.Width(80) }) ) 
+        {
+            foreach ( FrameInfo fi in selectedFrameInfos ) {
+                fi.frames = eachFrames;
+            }
+        }
+        GUI.enabled = true;
+        GUILayout.EndHorizontal();
+
+        EditorGUILayout.Space();
+
+        // ======================================================== 
+        // frame info each 
+        // ======================================================== 
+
+        for ( int i = 0; i < curEdit.frameInfos.Count; ++i ) {
+            FrameInfo fi = curEdit.frameInfos[i];
+
+            GUILayout.BeginHorizontal();
+                Color old = GUI.color;
+                if ( selectedFrameInfos.IndexOf(fi) != -1 )
+                    GUI.contentColor = Color.yellow;
+
+                // texture info
+                EditorGUI.BeginChangeCheck();
+                exTextureInfo newTextureInfo = EditorGUILayout.ObjectField( "Frame ["+i+"]"
+                                                                            , fi.textureInfo
+                                                                            , typeof(exTextureInfo)
+                                                                            , false 
+                                                                            , new GUILayoutOption[] {
+                                                                                GUILayout.Width(400)
+                                                                            } ) as exTextureInfo;
+                if ( EditorGUI.EndChangeCheck() ) {
+                    fi.textureInfo = newTextureInfo;
+                    EditorUtility.SetDirty(curEdit);
+                }
+
+                // frames
+                EditorGUI.BeginChangeCheck();
+                int newFrame = EditorGUILayout.IntField( "Frames", 
+                                                         fi.frames, 
+                                                         new GUILayoutOption[] {
+                                                            GUILayout.Width(200)
+                                                         } );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    fi.frames = System.Math.Max( newFrame, 1 );
+                    EditorUtility.SetDirty(curEdit);
+                }
+
+                GUI.contentColor = old;
+            GUILayout.EndHorizontal();
+        }
+
+        GUILayout.EndVertical();
     }
 
     // ------------------------------------------------------------------ 
