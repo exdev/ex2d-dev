@@ -81,6 +81,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
     bool inResizeFrameInfoState = false;
     List<Object> draggingObjects = new List<Object>();
     int resizeIdx = -1;
+    List<int> oldResizeFrames = new List<int>();
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -1061,14 +1062,14 @@ partial class exSpriteAnimationEditor : EditorWindow {
         // get selected frameinfo rects
         List<Rect> selectedFrameRects = new List<Rect>();
         List<Rect> resizeFrameRects = new List<Rect>();
-        List<List<int>> resizeFrameList = new List<List<int>>();
+        List<List<int>> resizeFrameIdxList = new List<List<int>>();
 
         float curX = _rect.x + offset;
         float yStart = _rect.y + 20.0f + 25.0f + 10.0f;
         int lastSelectFrameIdx = -1;
         List<int> curResizeFrames = new List<int>();
 
-        // intialize selectedFrameRects, resizeFrameRects and resizeFrameList
+        // intialize selectedFrameRects, resizeFrameRects and resizeFrameIdxList
         for ( int i = 0; i < curEdit.frameInfos.Count; ++i ) {
             FrameInfo fi = curEdit.frameInfos[i];
             float frameWidth = ((float)fi.frames/(float)totalFrames) * totalWidth;
@@ -1099,7 +1100,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 foreach ( int idx in curResizeFrames ) {
                     copy.Add(idx);
                 }
-                resizeFrameList.Add(copy);
+                resizeFrameIdxList.Add(copy);
                 curResizeFrames.Clear();
             }
 
@@ -1135,11 +1136,30 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 for ( int i = 0; i < resizeFrameRects.Count; ++i ) {
                     Color borderColor = Color.white;
                     if ( resizeIdx == i ) {
-                        borderColor = Color.yellow;
+                        continue;
                     }
                     exEditorUtility.DrawRect ( resizeFrameRects[i], 
                                                new Color( 1.0f, 0.0f, 0.0f, 1.0f ),
                                                borderColor );
+                }
+
+                if ( inResizeFrameInfoState ) {
+                    int frameIdx = resizeFrameIdxList[resizeIdx][0];
+                    int frames = GetFrames(0,frameIdx);
+                    float playOffset = (float)frames/(float)totalFrames * totalWidth;
+                    float xPos = _rect.x + offset + playOffset;
+
+                    exEditorUtility.DrawRect ( new Rect( xPos, yStart,
+                                                         e.mousePosition.x - xPos,
+                                                         frameInfoViewRect.height-20.0f ), 
+                                               new Color( 1.0f, 1.0f, 0.0f, 0.2f ),
+                                               Color.yellow );
+
+                    Rect resizeFrameRect = resizeFrameRects[resizeIdx];
+                    resizeFrameRect.x = e.mousePosition.x-3.0f;
+                    exEditorUtility.DrawRect ( resizeFrameRect, 
+                                               new Color( 1.0f, 0.0f, 0.0f, 1.0f ),
+                                               Color.yellow );
                 }
             }
             break;
@@ -1153,18 +1173,25 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 GUIUtility.hotControl = controlID;
                 GUIUtility.keyboardControl = controlID;
 
-                for ( int i = 0; i < selectedFrameRects.Count; ++i ) {
-                    if ( selectedFrameRects[i].Contains(e.mousePosition) ) {
-                        inDraggingFrameInfoState = true;
+                for ( int i = 0; i < resizeFrameRects.Count; ++i ) {
+                    if ( resizeFrameRects[i].Contains(e.mousePosition) ) {
+                        oldResizeFrames.Clear();
+                        inResizeFrameInfoState = true;
+                        resizeIdx = i;
+                        foreach ( int idx in resizeFrameIdxList[resizeIdx] ) {
+                            oldResizeFrames.Add(curEdit.frameInfos[idx].frames);
+                        }
+
                         break;
                     }
                 }
 
-                for ( int i = 0; i < resizeFrameRects.Count; ++i ) {
-                    if ( resizeFrameRects[i].Contains(e.mousePosition) ) {
-                        inResizeFrameInfoState = true;
-                        resizeIdx = i;
-                        break;
+                if ( inResizeFrameInfoState == false ) {
+                    for ( int i = 0; i < selectedFrameRects.Count; ++i ) {
+                        if ( selectedFrameRects[i].Contains(e.mousePosition) ) {
+                            inDraggingFrameInfoState = true;
+                            break;
+                        }
                     }
                 }
 
@@ -1243,13 +1270,32 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 e.Use();
             }
             else if ( inResizeFrameInfoState ) {
-                // TODO { 
-                if ( Mathf.Abs(e.delta.x) > 2.0f ) {
-                    foreach ( int idx in resizeFrameList[resizeIdx] ) {
-                        curEdit.frameInfos[idx].frames += (int)Mathf.Sign(e.delta.x);
+                float unitFrameWidth = totalWidth/(float)totalFrames;
+                Rect resizeFrameRect = resizeFrameRects[resizeIdx];
+                float minX = resizeFrameRect.center.x;
+                float maxX = resizeFrameRect.center.x;
+                
+                foreach ( int idx in resizeFrameIdxList[resizeIdx] ) {
+                    if ( curEdit.frameInfos[idx].frames > 1 )
+                        minX -= unitFrameWidth;
+                } 
+
+                foreach ( int idx in resizeFrameIdxList[resizeIdx] ) {
+                    maxX += unitFrameWidth;
+                }
+
+                //
+                if ( e.mousePosition.x >= maxX ) {
+                    foreach ( int idx in resizeFrameIdxList[resizeIdx] ) {
+                        curEdit.frameInfos[idx].frames += 1;
                     }
                 }
-                // } TODO end 
+                else if ( e.mousePosition.x <= minX ) {
+                    foreach ( int idx in resizeFrameIdxList[resizeIdx] ) {
+                        if ( curEdit.frameInfos[idx].frames > 1 )
+                            curEdit.frameInfos[idx].frames -= 1;
+                    }
+                }
 
                 Repaint();
                 e.Use();
@@ -1266,10 +1312,14 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     e.Use();
                 }
                 else if ( inResizeFrameInfoState ) {
+                    // recover to original size
+                    for ( int i = 0; i < resizeFrameIdxList[resizeIdx].Count; ++i ) {
+                        int idx = resizeFrameIdxList[resizeIdx][i];
+                        curEdit.frameInfos[idx].frames = oldResizeFrames[i];
+                    } 
+
                     inResizeFrameInfoState = false;
                     resizeIdx = -1;
-
-                    // TODO: recover to original size
 
                     Repaint();
                     e.Use();
