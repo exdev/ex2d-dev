@@ -60,7 +60,7 @@ public class exSpriteAnimationState {
         name = _name;
         wrapMode = _animClip.wrapMode;
         stopAction = _animClip.stopAction;
-        length = _animClip.GetLength(); // TODO: use getter
+        length = _animClip.GetLength();
         speed = _animClip.speed;
 
         frameTimes = new List<float> (_animClip.frameInfos.Count);
@@ -439,12 +439,12 @@ public class exSpriteAnimation : MonoBehaviour {
             // save the last state
             //exSpriteAnimState lastAnimation = curAnimation;
 
-            //int newIdx = curAnimation.clip.TriggerEvents( this, 
-            //                                              lastAnimation,
-            //                                              lastEventInfoIndex,
-            //                                              curTime,
-            //                                              delta,
-            //                                              curAnimation.wrapMode );
+            int newIdx = curAnimation.clip.TriggerEvents( this, 
+                                                          lastAnimation,
+                                                          lastEventInfoIndex,
+                                                          curTime,
+                                                          delta,
+                                                          curAnimation.wrapMode );
 
             // check if stop
             if (curAnimation.wrapMode == WrapMode.Once ||
