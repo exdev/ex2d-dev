@@ -98,14 +98,14 @@ public static class exDebug {
     public static BuildTargetGroup ToBuildTargetGroup (this BuildTarget buildTarget) {
         switch (buildTarget) {
         case BuildTarget.StandaloneOSXUniversal:
-        case BuildTarget.StandaloneOSXPPC:
+        // case BuildTarget.StandaloneOSXPPC:
         case BuildTarget.StandaloneOSXIntel:
         case BuildTarget.StandaloneWindows:
         case BuildTarget.StandaloneLinux:
         case BuildTarget.StandaloneWindows64:
-        case BuildTarget.MetroPlayerX86:
-        case BuildTarget.MetroPlayerX64:
-        case BuildTarget.MetroPlayerARM:
+        // case BuildTarget.MetroPlayerX86:
+        // case BuildTarget.MetroPlayerX64:
+        // case BuildTarget.MetroPlayerARM:
         case BuildTarget.StandaloneLinux64:
         case BuildTarget.StandaloneLinuxUniversal:
             return BuildTargetGroup.Standalone;
