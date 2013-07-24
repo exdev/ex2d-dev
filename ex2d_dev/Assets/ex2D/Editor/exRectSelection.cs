@@ -32,6 +32,7 @@ public class exRectSelection<T> {
     System.Func<Vector2,T> cb_PickObject;
     System.Func<Rect,T[]> cb_PickRectObjects;
     System.Action<T,T[]> cb_ConfirmSelection;
+    System.Func<Vector2,Vector2,Rect> cb_UpdateRect;
 
     bool isRectSelecting = false;
     Vector2 selectStartPoint;
@@ -51,11 +52,16 @@ public class exRectSelection<T> {
 
     public exRectSelection ( System.Func<Vector2,T> _pickObjectCallback,
                              System.Func<Rect,T[]> _pickRectObjectsCallback,
-                             System.Action<T,T[]> _confirmSelectionCallback ) 
+                             System.Action<T,T[]> _confirmSelectionCallback,
+                             System.Func<Vector2,Vector2,Rect> _updateRectCallback = null ) 
     {
         cb_PickObject = _pickObjectCallback;
         cb_PickRectObjects = _pickRectObjectsCallback;
         cb_ConfirmSelection = _confirmSelectionCallback;
+
+        cb_UpdateRect = _updateRectCallback;
+        if ( cb_UpdateRect == null )
+            cb_UpdateRect = FromToRect;
     }
 
     // ------------------------------------------------------------------ 
@@ -79,7 +85,7 @@ public class exRectSelection<T> {
         case EventType.Repaint:
             // draw select rect 
             if ( isRectSelecting ) {
-                Rect selectRect = FromToRect( selectStartPoint, e.mousePosition );
+                Rect selectRect = cb_UpdateRect( selectStartPoint, e.mousePosition );
                 exEditorUtility.DrawRect( selectRect, new Color( 0.0f, 0.5f, 1.0f, 0.2f ), new Color( 0.0f, 0.5f, 1.0f, 1.0f ) );
                 // DISABLE { 
                 // GUIStyle selectionRectStyle = "SelectionRect";
@@ -129,7 +135,7 @@ public class exRectSelection<T> {
                 }
 
                 if ( isRectSelecting ) {
-                    Rect selectRect = FromToRect( selectStartPoint, e.mousePosition );
+                    Rect selectRect = cb_UpdateRect( selectStartPoint, e.mousePosition );
                     T[] array = cb_PickRectObjects ( selectRect );
                     // currentSelection = array;
                     bool flag = false;
@@ -364,4 +370,10 @@ public class exRectSelection<T> {
     bool IsActiveSelection ( T _obj ) {
         return ReferenceEquals ( activeObj, _obj );
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public bool IsInRectSelecting () { return isRectSelecting; }
 }

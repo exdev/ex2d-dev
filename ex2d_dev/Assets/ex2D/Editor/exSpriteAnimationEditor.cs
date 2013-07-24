@@ -40,7 +40,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
     //
     Vector2 scrollPos = Vector2.zero;
     exRectSelection<FrameInfo> frameRectSelection = null;
+    exRectSelection<EventInfo> eventRectSelection = null;
     List<FrameInfo> selectedFrameInfos = new List<FrameInfo>(); // NOTE: selected frame info is sorted by animation frame list
+    List<EventInfo> selectedEventInfos = new List<EventInfo>();
+    bool activeEventSelection = false;
 
     //
     bool isPlaying = false; 
@@ -101,6 +104,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
         frameRectSelection = new exRectSelection<FrameInfo>( PickObject_FrameInfo,
                                                              PickRectObjects_FrameInfo,
                                                              ConfirmRectSelection_FrameInfo );
+        eventRectSelection = new exRectSelection<EventInfo>( PickObject_EventInfo,
+                                                             PickRectObjects_EventInfo,
+                                                             ConfirmRectSelection_EventInfo,
+                                                             UpdateRect_EventInfo );
     }
 
     // ------------------------------------------------------------------ 
@@ -264,6 +271,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         resizeIdx = -1;
 
         selectedFrameInfos.Clear();
+        selectedEventInfos.Clear();
     }
 
     // ------------------------------------------------------------------ 
@@ -337,6 +345,74 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 }
             }
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    EventInfo PickObject_EventInfo ( Vector2 _position ) {
+        EventInfo[] objs = PickRectObjects_EventInfo( new Rect(_position.x-1,_position.y-1,2,2) );
+        if ( objs.Length > 0 )
+            return objs[0];
+        return null;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    EventInfo[] PickRectObjects_EventInfo ( Rect _rect ) {
+        List<EventInfo> objects = new List<EventInfo>();
+
+        float markerWidth = exEditorUtility.EventMarkerTexture().width; 
+        float markerHeight = exEditorUtility.EventMarkerTexture().height + 2.0f; 
+
+        for ( int i = 0; i < curEdit.eventInfos.Count; ++i ) {
+            EventInfo ei = curEdit.eventInfos[i];
+
+            float x = ((float)ei.frame/(float)totalFrames) * totalWidth;
+            Rect eventRect = new Rect ( x + eventInfoViewRect.x + timelineRect.x - markerWidth*0.5f,
+                                        eventInfoViewRect.y + timelineRect.y,
+                                        markerWidth,
+                                        markerHeight );
+
+            if ( exGeometryUtility.RectRect_Contains( _rect, eventRect ) != 0 ||
+                 exGeometryUtility.RectRect_Intersect( _rect, eventRect ) )
+            {
+                objects.Add(ei);
+            }
+        }
+
+        return objects.ToArray();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void ConfirmRectSelection_EventInfo ( EventInfo _activeObj, EventInfo[] _selectedObjs ) {
+        selectedEventInfos.Clear();
+
+        // NOTE: use this way to make sure selectedEventInfos is sorted by frame.
+        foreach ( EventInfo obj in _selectedObjs ) {
+            selectedEventInfos.Add (obj);
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    Rect UpdateRect_EventInfo ( Vector2 _start, Vector2 _end ) {
+        Rect result = new Rect(_start.x, _start.y, _end.x - _start.x, _end.y - _start.y);
+        if (( result.width < 0f )) {
+            result.x += result.width;
+            result.width = -result.width;
+        }
+        result.y = timelineRect.y + eventInfoViewRect.y;
+        result.height = eventInfoViewRect.height;
+        return result;
     }
 
     // ------------------------------------------------------------------ 
@@ -1120,12 +1196,18 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
     public void EventInfoHandle ( Rect _rect ) {
         // GUI.BeginGroup(_rect);
+        Rect myEventInfoViewRect = new Rect( _rect.x + eventInfoViewRect.x, 
+                                             _rect.y + eventInfoViewRect.y,
+                                             eventInfoViewRect.width,
+                                             eventInfoViewRect.height );
 
         List<Rect> eventInfoRects = new List<Rect>();
+        List<int> selectedIdxList = new List<int>();
+
         float curX = _rect.x + offset;
         float yStart = _rect.y + eventInfoViewRect.y;
         float markerWidth = exEditorUtility.EventMarkerTexture().width; 
-        float markerHeight = exEditorUtility.EventMarkerTexture().height; 
+        float markerHeight = exEditorUtility.EventMarkerTexture().height + 2.0f; 
 
         for ( int i = 0; i < curEdit.eventInfos.Count; ++i ) {
             EventInfo ei = curEdit.eventInfos[i];
@@ -1133,6 +1215,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
             Rect eventRect = new Rect ( curX + x - markerWidth*0.5f, yStart, markerWidth, markerHeight );
             eventInfoRects.Add(eventRect);
+
+            if ( selectedEventInfos.IndexOf(ei) != -1 ) {
+                selectedIdxList.Add(i);
+            }
         }
 
         //
@@ -1142,33 +1228,67 @@ partial class exSpriteAnimationEditor : EditorWindow {
         switch ( e.GetTypeForControl(controlID) ) {
         case EventType.Repaint:
 
+            Color old = GUI.color; 
+            // GUI.color = new Color(0.3f, 0.55f, 0.95f, 1f);
+            // GUI.color = new Color(0.9f, 0.9f, 0.9f, 1f);
+
             for ( int i = 0; i < eventInfoRects.Count; ++i ) {
                 Rect eventInfoRect = eventInfoRects[i];
-                if ( eventInfoRect.xMax <= _rect.xMin ||
-                     eventInfoRect.xMin >= _rect.xMax )
+                if ( eventInfoRect.center.x+0.2f < _rect.xMin ||
+                     eventInfoRect.center.x-0.2f > _rect.xMax )
                 {
                     continue;
                 }
 
+                if ( selectedIdxList.IndexOf(i) != -1 ) {
+                    GUI.color = new Color(0.3f, 0.55f, 0.95f, 1f);
+                }
+                else {
+                    GUI.color = new Color(0.9f, 0.9f, 0.9f, 1f);
+                }
                 GUI.DrawTexture ( eventInfoRect, exEditorUtility.EventMarkerTexture() ); 
             }
+
+            GUI.color = old;
 
             break;
 
         case EventType.MouseDown:
-            if ( eventInfoViewRect.Contains(e.mousePosition) 
-              && e.button == 0 
-              && e.clickCount == 2 ) 
-            {
-                Debug.Log("yes");
+            if ( activeEventSelection == false && myEventInfoViewRect.Contains(e.mousePosition) ) {
+                if ( e.button == 0 && e.clickCount == 2 ) {
+                    float xPos = e.mousePosition.x - _rect.x - offset;
+                    int frame = Mathf.RoundToInt( (float)totalFrames * xPos/totalWidth );
+                    curEdit.AddEmptyEvent(frame);
 
-                Repaint();
-                e.Use();
-            }
+                    Repaint();
+                    e.Use();
+                }
+                else if ( e.button == 0 ) {
+                    activeEventSelection = true;
+                    GUIUtility.hotControl = controlID;
+                    GUIUtility.keyboardControl = controlID;
+                }
+            } 
             break;
         }
 
         // GUI.EndGroup();
+
+        if ( activeEventSelection ) {
+            // TODO { 
+            // switch ( e.GetTypeForControl(controlID) ) {
+            // case EventType.MouseUp:
+            //     if ( activeEventSelection ) {
+            //         activeEventSelection = false;
+            //         // GUIUtility.hotControl = 0;
+            //     }
+            //     break;
+            // }
+            // } TODO end 
+
+            eventRectSelection.SetSelection(selectedEventInfos.ToArray());
+            eventRectSelection.OnGUI();
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -1366,8 +1486,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         case EventType.MouseDrag:
             if ( inDraggingFrameInfoState ) {
-                float pos = Mathf.Clamp( e.mousePosition.x, 0.0f, totalWidth + offset );
-                int insertStart = Mathf.FloorToInt( (float)totalFrames * (pos - offset)/totalWidth );
+                float pos = Mathf.Clamp( e.mousePosition.x, 0.0f, totalWidth + offset ) - offset;
+                int insertStart = Mathf.FloorToInt( (float)totalFrames * pos/totalWidth );
                 if ( insertStart < totalFrames ) {
                     for ( int i = insertStart; i >= 0; --i ) {
                         int frameIdx = GetFrameInfoIndexByFrame(i);
@@ -1491,8 +1611,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 GUIUtility.keyboardControl = controlID;
 
                 inDraggingNeedleState = true;
-                float pos = Mathf.Clamp( e.mousePosition.x - _rect.x, 0.0f, totalWidth + offset );
-                curFrame = Mathf.RoundToInt( (float)totalFrames * (pos - offset)/totalWidth );
+                float pos = Mathf.Clamp( e.mousePosition.x - _rect.x, 0.0f, totalWidth + offset ) - offset;
+                curFrame = Mathf.RoundToInt( (float)totalFrames * pos/totalWidth );
 
                 Repaint();
                 e.Use();
@@ -1511,8 +1631,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         case EventType.MouseDrag:
             if ( inDraggingNeedleState ) {
-                float pos = Mathf.Clamp( e.mousePosition.x - _rect.x, 0.0f, totalWidth + offset );
-                curFrame = Mathf.RoundToInt( (float)totalFrames * (pos - offset)/totalWidth );
+                float pos = Mathf.Clamp( e.mousePosition.x - _rect.x, 0.0f, totalWidth + offset ) - offset;
+                curFrame = Mathf.RoundToInt( (float)totalFrames * pos/totalWidth );
 
                 Repaint();
                 e.Use();
@@ -1556,6 +1676,17 @@ partial class exSpriteAnimationEditor : EditorWindow {
                         curEdit.RemoveFrame(frameInfo);
                     }
                     selectedFrameInfos.Clear();
+                    EditorUtility.SetDirty(curEdit);
+
+                    Repaint();
+                    e.Use();
+                }
+
+                if ( selectedEventInfos.Count > 0 ) {
+                    foreach ( EventInfo eventInfo in selectedEventInfos ) {
+                        curEdit.RemoveEvent(eventInfo);
+                    }
+                    selectedEventInfos.Clear();
                     EditorUtility.SetDirty(curEdit);
 
                     Repaint();

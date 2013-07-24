@@ -212,6 +212,21 @@ public class exSpriteAnimationClip : ScriptableObject {
         eventInfos.Remove( _eventInfo );
     }
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void SortEvents () {
+        eventInfos.Sort ( delegate ( EventInfo _x, EventInfo _y ) {
+                            if ( _x.frame > _y.frame )
+                                return 1;
+                            else if ( _x.frame == _y.frame )
+                                return 0;
+                            else
+                                return -1;
+                          } );
+    }
+
     // // ------------------------------------------------------------------ 
     // /// \param _spAnim send message to target _spAnim.gameObject
     // /// \param _lastAnim last animation state
