@@ -63,18 +63,18 @@ public class exSpriteAnimationState {
     public exSpriteAnimationState (string _name, exSpriteAnimationClip _animClip) {
         name = _name;
         clip = _animClip;
+        length = totalFrames / clip.frameRate;
         wrapMode = clip.wrapMode;
         stopAction = clip.stopAction;
         speed = clip.speed;
 
         float unitSeconds = 1.0f / clip.frameRate;
         frameInfoFrames = new int[clip.frameInfos.Count];
-        for (int i = 0, frame = 0; i < clip.frameInfos.Count; ++i) {
-            frame += clip.frameInfos[i].frames;
-            frameInfoFrames[i] = frame;
+        totalFrames = 0;
+        for (int i = 0; i < clip.frameInfos.Count; ++i) {
+            totalFrames += clip.frameInfos[i].frames;
+            frameInfoFrames[i] = totalFrames;
         }
-        totalFrames = clip.totalFrames;
-        length = totalFrames / clip.frameRate;
         //frameInfoTimes = new float[clip.frameInfos.Count];
         //totalFrames = 0;
         //for (int i = 0; i < clip.frameInfos.Count; ++i) {
@@ -499,12 +499,12 @@ public class exSpriteAnimation : MonoBehaviour {
 
             curAnimation.time += _deltaTime;
             Sample();
-
             if (eventStartIndex <= curAnimation.frame) {
-                curAnimation.clip.TriggerEvents(this, eventStartIndex, curAnimation.frame, curAnimation.wrapMode);
+                curAnimation.clip.TriggerEvents(this, eventStartIndex, curAnimation.frame, curAnimation.wrapMode, curAnimation.totalFrames);
                 lastFrameIndex = curAnimation.frame;
             }
-
+            //Debug.Log("curAnimation.frame: " + curAnimation.frame + " " + Time.frameCount);
+            
             // check if stop
             if (curAnimation.wrapMode == WrapMode.Once ||
                 curAnimation.wrapMode == WrapMode.Default)
@@ -512,6 +512,7 @@ public class exSpriteAnimation : MonoBehaviour {
                 if ((curAnimation.speed > 0.0f && curAnimation.frame >= curAnimation.totalFrames) ||
                     (curAnimation.speed < 0.0f && curAnimation.frame < 0))
                 {
+                    Debug.Log("stop");
                     Stop();
                     return;
                 }

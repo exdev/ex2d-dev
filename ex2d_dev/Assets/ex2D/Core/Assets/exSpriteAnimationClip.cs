@@ -170,24 +170,6 @@ public class exSpriteAnimationClip : ScriptableObject {
         }
     }
 
-    // ------------------------------------------------------------------ 
-    [System.NonSerialized]
-    private int totalFrames_ = -1;
-    /// cached total frame count
-    // ------------------------------------------------------------------ 
-
-    public int totalFrames {
-        get {
-            if (totalFrames_ == -1) {
-                totalFrames_ = 0;
-                for (int i = 0; i < frameInfos.Count; ++i) {
-                    totalFrames_ += frameInfos[i].frames;
-                }
-            }
-            return totalFrames_;
-        }
-    }
-
     public List<FrameInfo> frameInfos = new List<FrameInfo>(); ///< the list of frame info 
     public List<EventInfo> eventInfos = new List<EventInfo>(); ///< the list of event info
     public float speed = 1.0f; ///< the default speed of the animation clip
@@ -195,13 +177,25 @@ public class exSpriteAnimationClip : ScriptableObject {
     ///////////////////////////////////////////////////////////////////////////////
     // functions
     ///////////////////////////////////////////////////////////////////////////////
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    public int GetTotalFrames () {
+        int frames = 0;
+        for ( int i = 0; i < frameInfos.Count; ++i ) {
+            frames += frameInfos[i].frames;
+        }
+        return frames;
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
     public float GetLength () {
-        return (float)totalFrames / frameRate_;
+        return (float)GetTotalFrames() / frameRate_;
     }
 
     // ------------------------------------------------------------------ 
@@ -297,59 +291,66 @@ public class exSpriteAnimationClip : ScriptableObject {
     /// \param _target send message to target
     /// \param _start the start frame index
     /// \param _end the end frame index
-    /// \param _wrapMode  the wrap mode
+    /// \param _wrapMode the wrap mode
+    /// \param _totalFrame total frame count cached by caller
     /// Trigger events locate between the start and end frame
     // ------------------------------------------------------------------ 
 
-    public void TriggerEvents (Component _target, int _start, float _end, WrapMode _wrapMode) {
+    public void TriggerEvents (Component _target, int _start, float _end, WrapMode _wrapMode, int _totalFrame = -1) {
+        exDebug.Assert(_totalFrame == -1 || _totalFrame == GetTotalFrames());
+        
         if (eventInfos.Count == 0)
             return;
-
         //get frame count
-        if (totalFrames_ == -1) {
-            totalFrames_ = totalFrames;
+        if (_totalFrame == -1) {
+            _totalFrame = GetTotalFrames();
         }
 
-        //
+        //check end frame
         bool lastFrameIsEnd;
         if (_start > 0) {
-            if (totalFrames_ == 0) {
+            if (_totalFrame == 0) {
                 lastFrameIsEnd = false;
             }
             else {
-                int lastFrameWrappedIndex = exMath.Wrap(_start - 1, totalFrames_ - 1, _wrapMode);
-                lastFrameIsEnd = (lastFrameWrappedIndex == totalFrames_ - 1);
+                int lastFrameWrappedIndex = exMath.Wrap(_start - 1, _totalFrame - 1, _wrapMode);
+                lastFrameIsEnd = (lastFrameWrappedIndex == _totalFrame - 1);
             }
         }
         else {
             lastFrameIsEnd = false;
         }
+        
         //Debug.Log(string.Format("[TriggerEvents|exSpriteAnimationClip] lastFrameIsEnd: {0}", lastFrameIsEnd));
         for (int i = _start; i <= _end; ++i) {
             EventInfo eventInfo;
-            if (lastFrameIsEnd) {
-                // TODO: check wrap dir
-                eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, totalFrames_);    // TODO: search same frame event
+            if (lastFrameIsEnd == false) {
+                int wrappedIndex;
+                if (_totalFrame == 0) {
+                    wrappedIndex = 0;
+                }
+                else {
+                    wrappedIndex =  exMath.Wrap(i, _totalFrame - 1, _wrapMode);
+                }
+                eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, wrappedIndex);
                 if (eventInfo != null) {
                     eventInfo.Trigger(_target);
                 }
-                eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, totalFrames_ - 1);
-                if (eventInfo != null) {
-                    eventInfo.Trigger(_target);
-                }
-            }
-            int wrappedIndex;
-            if (totalFrames_ == 0) {
-                wrappedIndex = 0;
+                lastFrameIsEnd = (wrappedIndex == _totalFrame - 1);
             }
             else {
-                wrappedIndex =  exMath.Wrap(i, totalFrames_ - 1, _wrapMode);
+                lastFrameIsEnd = false;
+                eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, _totalFrame);    // TODO: search same frame event
+                if (eventInfo != null) {
+                    eventInfo.Trigger(_target);
+                }
+                if (_wrapMode == WrapMode.PingPong) {
+                    eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, _totalFrame - 1);
+                    if (eventInfo != null) {
+                        eventInfo.Trigger(_target);
+                    }
+                }
             }
-            eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, wrappedIndex);
-            if (eventInfo != null) {
-                eventInfo.Trigger(_target);
-            }
-            lastFrameIsEnd = (wrappedIndex == totalFrames_ - 1);
         }
     }
 }
