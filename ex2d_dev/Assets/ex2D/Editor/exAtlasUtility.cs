@@ -173,8 +173,8 @@ public static class exAtlasUtility {
                 }
 
                 //
-                exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate( path, rawTexture.name + ".asset" );
-                int result = -1;
+                exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate( path, rawTexture.name );
+                int result = 1;
                 if ( noToAll == false 
                   && string.IsNullOrEmpty(textureInfo.rawTextureGUID) == false 
                   && textureInfo.rawTextureGUID != exEditorUtility.AssetToGUID(rawTexture) ) 
