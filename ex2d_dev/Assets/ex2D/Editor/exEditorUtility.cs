@@ -36,6 +36,8 @@ public static class exEditorUtility {
     static Texture2D textureAnimationPlay;
     static Texture2D textureAnimationNext;
     static Texture2D textureAnimationPrev;
+    static Texture2D textureAddEvent;
+    static Texture2D textureEventMarker;
 
     static GUIStyle styleRectBorder = null;
 
@@ -97,6 +99,8 @@ public static class exEditorUtility {
     public static Texture2D AnimationPlayTexture () { return FindBuiltinTexture( ref textureAnimationPlay, "Animation.Play" ); }
     public static Texture2D AnimationNextTexture () { return FindBuiltinTexture( ref textureAnimationNext, "Animation.NextKey" ); }
     public static Texture2D AnimationPrevTexture () { return FindBuiltinTexture( ref textureAnimationPrev, "Animation.PrevKey" ); }
+    public static Texture2D AddEventTexture () { return FindBuiltinTexture( ref textureAddEvent, "Animation.AddEvent" ); }
+    public static Texture2D EventMarkerTexture () { return FindBuiltinTexture( ref textureEventMarker, "Animation.EventMarker" ); }
 
     // ------------------------------------------------------------------ 
     // Desc: 

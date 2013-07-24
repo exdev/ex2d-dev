@@ -65,11 +65,30 @@ public static class exGenericAssetUtility<T> where T : ScriptableObject {
     public static void CreateInCurrentDirectory ( string _assetName ) {
         // get current selected directory
         string assetPath = "Assets";
+        Object selectFolder = null;
+
+        //
         if ( Selection.activeObject ) {
+            selectFolder = Selection.activeObject;
+        }
+        // else if ( Selection.objects.Length > 0 ) {
+        //     foreach ( Object obj in Selection.objects ) {
+        //         if ( exEditorUtility.IsDirectory(obj) ) {
+        //             selectFolder = obj;
+        //             break;
+        //         }
+        //     }
+        // }
+
+        //
+        if ( selectFolder != null ) {
             assetPath = AssetDatabase.GetAssetPath(Selection.activeObject);
             if ( Path.GetExtension(assetPath) != "" ) {
                 assetPath = Path.GetDirectoryName(assetPath);
             }
+        }
+        else {
+            Debug.LogWarning("please select a folder");
         }
 
         //
