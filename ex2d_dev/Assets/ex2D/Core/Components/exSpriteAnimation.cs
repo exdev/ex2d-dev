@@ -68,13 +68,13 @@ public class exSpriteAnimationState {
         stopAction = clip.stopAction;
         speed = clip.speed;
 
-        float unitSeconds = 1.0f / clip.frameRate;
         frameInfoFrames = new int[clip.frameInfos.Count];
         totalFrames = 0;
         for (int i = 0; i < clip.frameInfos.Count; ++i) {
             totalFrames += clip.frameInfos[i].frames;
             frameInfoFrames[i] = totalFrames;
         }
+        //float unitSeconds = 1.0f / clip.frameRate;
         //frameInfoTimes = new float[clip.frameInfos.Count];
         //totalFrames = 0;
         //for (int i = 0; i < clip.frameInfos.Count; ++i) {
@@ -512,7 +512,7 @@ public class exSpriteAnimation : MonoBehaviour {
                 if ((curAnimation.speed > 0.0f && curAnimation.frame >= curAnimation.totalFrames) ||
                     (curAnimation.speed < 0.0f && curAnimation.frame < 0))
                 {
-                    Debug.Log("stop");
+                    //Debug.Log("stop");
                     Stop();
                     return;
                 }

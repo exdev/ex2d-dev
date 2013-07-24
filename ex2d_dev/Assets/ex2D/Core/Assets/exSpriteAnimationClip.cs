@@ -5,6 +5,8 @@
 // Description  : 
 // ======================================================================================
 
+//#define DUPLICATE_WHEN_PINGPONE
+
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
@@ -306,36 +308,40 @@ public class exSpriteAnimationClip : ScriptableObject {
             _totalFrame = GetTotalFrames();
         }
 
+#if DUPLICATE_WHEN_PINGPONE
         //check end frame
         bool lastFrameIsEnd;
         if (_start > 0) {
-            if (_totalFrame == 0) {
-                lastFrameIsEnd = false;
-            }
-            else {
+            if (_totalFrame != 0) {
                 int lastFrameWrappedIndex = exMath.Wrap(_start - 1, _totalFrame - 1, _wrapMode);
                 lastFrameIsEnd = (lastFrameWrappedIndex == _totalFrame - 1);
+            }
+            else {
+                lastFrameIsEnd = false;
             }
         }
         else {
             lastFrameIsEnd = false;
         }
-        
+#endif
         //Debug.Log(string.Format("[TriggerEvents|exSpriteAnimationClip] lastFrameIsEnd: {0}", lastFrameIsEnd));
         for (int i = _start; i <= _end; ++i) {
             EventInfo eventInfo;
+#if DUPLICATE_WHEN_PINGPONE
             if (lastFrameIsEnd == false) {
+#endif
                 int wrappedIndex;
-                if (_totalFrame == 0) {
-                    wrappedIndex = 0;
+                if (_totalFrame != 0) {
+                    wrappedIndex = exMath.Wrap(i, _totalFrame - 1, _wrapMode);
                 }
                 else {
-                    wrappedIndex =  exMath.Wrap(i, _totalFrame - 1, _wrapMode);
+                    wrappedIndex = 0;
                 }
                 eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, wrappedIndex);
                 if (eventInfo != null) {
                     eventInfo.Trigger(_target);
                 }
+#if DUPLICATE_WHEN_PINGPONE
                 lastFrameIsEnd = (wrappedIndex == _totalFrame - 1);
             }
             else {
@@ -351,6 +357,7 @@ public class exSpriteAnimationClip : ScriptableObject {
                     }
                 }
             }
+#endif
         }
     }
 }
