@@ -29,16 +29,21 @@ using System.Collections.Generic;
 [System.Serializable]
 public class exSpriteAnimationState {
 
-    [System.NonSerialized] public exSpriteAnimationClip clip; ///< the referenced sprite animation clip
+    [System.NonSerialized] public exSpriteAnimationClip clip; ///< the referenced sprite sprite animation clip
     [System.NonSerialized] public string name; ///< the name of the sprite animation state
     [System.NonSerialized] public WrapMode wrapMode; ///< the wrap mode
     [System.NonSerialized] public exSpriteAnimationClip.StopAction stopAction; ///< the stop action
     [System.NonSerialized] public float length; ///< the length of the sprite animation in seconds with speed = 1.0f
-
+    [System.NonSerialized] public int totalFrames; ///< the total frame count of the sprite animation clip
     [System.NonSerialized] public float speed = 1.0f; ///< the speed to play the sprite animation clip
     [System.NonSerialized] public float time = 0.0f; ///< the current time in seoncds
-    // [System.NonSerialized] public float normalizedTime = 0.0f;
-    [System.NonSerialized] public List<float> frameTimes; ///< the list of the start time in seconds of each frame in the exSpriteAnimClip
+    
+    /// The current index of frame. The value can be larger than totalFrames.
+    /// If the frame is larger than totalFrames it will be wrapped according to wrapMode. 
+    [System.NonSerialized] public int frame = -1;
+
+    //[System.NonSerialized] private float[] frameInfoTimes; ///< the array of the end time in seconds of each frame info in the sprite animation clip
+    [System.NonSerialized] private int[] frameInfoFrames; ///< the array of the end frame of each frame info in the sprite animation clip
 
     // ------------------------------------------------------------------ 
     /// \param _animClip the referenced animation clip
@@ -56,29 +61,70 @@ public class exSpriteAnimationState {
     // ------------------------------------------------------------------ 
 
     public exSpriteAnimationState (string _name, exSpriteAnimationClip _animClip) {
-        clip = _animClip;
         name = _name;
-        wrapMode = _animClip.wrapMode;
-        stopAction = _animClip.stopAction;
-        length = _animClip.GetLength();
-        speed = _animClip.speed;
+        clip = _animClip;
+        wrapMode = clip.wrapMode;
+        stopAction = clip.stopAction;
+        speed = clip.speed;
 
-        frameTimes = new List<float> (_animClip.frameInfos.Count);
-        float unitSeconds = 1.0f / _animClip.frameRate;
-        int startFrame = 0;
-        for (int i = 0; i < _animClip.frameInfos.Count; ++i) {
-            startFrame += _animClip.frameInfos[i].frames;
-            frameTimes.Add(startFrame * unitSeconds);
+        float unitSeconds = 1.0f / clip.frameRate;
+        frameInfoFrames = new int[clip.frameInfos.Count];
+        for (int i = 0, frame = 0; i < clip.frameInfos.Count; ++i) {
+            frame += clip.frameInfos[i].frames;
+            frameInfoFrames[i] = frame;
         }
+        totalFrames = clip.totalFrames;
+        length = totalFrames / clip.frameRate;
+        //frameInfoTimes = new float[clip.frameInfos.Count];
+        //totalFrames = 0;
+        //for (int i = 0; i < clip.frameInfos.Count; ++i) {
+        //    totalFrames += clip.frameInfos[i].frames;
+        //    frameInfoTimes[i] = totalFrames * unitSeconds;
+        //}
+        //if (frameInfoTimes.Length > 0) {
+        //    length = frameInfoTimes[frameInfoTimes.Length - 1];
+        //}
+        //else {
+        //    length = 0.0f;
+        //}
     }
     
+    // ------------------------------------------------------------------ 
+    /// \return Get current frame info index.
+    // ------------------------------------------------------------------ 
+
     public int GetCurrentIndex() {
-        int index = frameTimes.BinarySearch(exMath.Wrap(time, length, wrapMode));
-        if (index < 0) {
-            index = ~index;
+        if (totalFrames > 1) {
+            frame = (int) (time * clip.frameRate);
+            int wrappedIndex = exMath.Wrap(frame, totalFrames - 1, wrapMode);
+            int frameInfoIndex = System.Array.BinarySearch(frameInfoFrames, wrappedIndex + 1);
+            if (frameInfoIndex < 0) {
+                frameInfoIndex = ~frameInfoIndex;
+                exDebug.Assert(frameInfoIndex < frameInfoFrames.Length);
+            }
+            return frameInfoIndex;
         }
-        return index;
+        else if (totalFrames == 1) {
+            return 0;
+        }
+        else {
+            return -1;
+        }
     }
+
+    //public int GetCurrentIndex() {
+    //    if (frameTimes.Length > 0) {
+    //        int index = System.Array.BinarySearch(frameTimes, exMath.Wrap(time, length, wrapMode));
+    //        if (index < 0) {
+    //            index = ~index;
+    //            exDebug.Assert(index < frameTimes.Length);
+    //        }
+    //        return index;
+    //    }
+    //    else {
+    //        return -1;
+    //    }
+    //}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -122,7 +168,7 @@ public class exSpriteAnimation : MonoBehaviour {
     private exSpriteAnimationState curAnimation;
     private exSprite sprite;
     private exTextureInfo defaultTextureInfo;
-    private int lastEventInfoIndex = -1;
+    private int lastFrameIndex = -1;
     
     //private float curWrappedTime = 0.0f;
     private int curIndex = -1;
@@ -288,8 +334,8 @@ public class exSpriteAnimation : MonoBehaviour {
 
     public exSpriteAnimationClip.FrameInfo GetCurFrameInfo () {
         if (curAnimation != null) {
-            exDebug.Assert(0 <= curIndex && curIndex < curAnimation.clip.frameInfos.Count);
-            if (0 <= curIndex && curIndex < curAnimation.clip.frameInfos.Count)
+            exDebug.Assert(curIndex < curAnimation.clip.frameInfos.Count);
+            if (curIndex < curAnimation.clip.frameInfos.Count)
                 return curAnimation.clip.frameInfos[curIndex];
         }
         return null;
@@ -372,8 +418,13 @@ public class exSpriteAnimation : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void Sample (exSpriteAnimationState _animState) {
-        curAnimation = _animState;
-        Sample();
+        if (_animState != null) {
+            if (curAnimation != _animState) {
+                curAnimation = _animState;
+                lastFrameIndex = -1;
+            }
+            Sample();
+        }
     }
     
     // ------------------------------------------------------------------ 
@@ -381,8 +432,13 @@ public class exSpriteAnimation : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void Step (exSpriteAnimationState _animState, float _deltaTime) {
-        curAnimation = _animState;
-        Step(_deltaTime);
+        if (_animState != null) {
+            if (curAnimation != _animState) {
+                curAnimation = _animState;
+                lastFrameIndex = -1;
+            }
+            Step(_deltaTime);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -407,6 +463,7 @@ public class exSpriteAnimation : MonoBehaviour {
                     nameToState[state.name] = state;
                     if (ReferenceEquals(defaultAnimation, clip)) {
                         curAnimation = state;
+                        lastFrameIndex = -1;
                     }
                 }
             }
@@ -435,28 +492,28 @@ public class exSpriteAnimation : MonoBehaviour {
 
     void Step (float _deltaTime) {
         if (curAnimation != null) {
-            curAnimation.time += _deltaTime;
+            int eventStartIndex = curAnimation.frame;
+            if (lastFrameIndex == eventStartIndex) {
+                ++eventStartIndex;
+            }
 
+            curAnimation.time += _deltaTime;
             Sample();
 
-            // save the last state
-            //exSpriteAnimState lastAnimation = curAnimation;
-
-            int newIdx = curAnimation.clip.TriggerEvents( this, 
-                                                          lastAnimation,
-                                                          lastEventInfoIndex,
-                                                          curTime,
-                                                          delta,
-                                                          curAnimation.wrapMode );
+            if (eventStartIndex <= curAnimation.frame) {
+                curAnimation.clip.TriggerEvents(this, eventStartIndex, curAnimation.frame, curAnimation.wrapMode);
+                lastFrameIndex = curAnimation.frame;
+            }
 
             // check if stop
             if (curAnimation.wrapMode == WrapMode.Once ||
                 curAnimation.wrapMode == WrapMode.Default)
             {
-                if ((curAnimation.speed > 0.0f && curAnimation.time >= curAnimation.length) ||
-                    (curAnimation.speed < 0.0f && curAnimation.time <= 0.0f))
+                if ((curAnimation.speed > 0.0f && curAnimation.frame >= curAnimation.totalFrames) ||
+                    (curAnimation.speed < 0.0f && curAnimation.frame < 0))
                 {
                     Stop();
+                    return;
                 }
             }
         }
@@ -472,7 +529,9 @@ public class exSpriteAnimation : MonoBehaviour {
     void Sample () {
         if (curAnimation != null) {
             curIndex = curAnimation.GetCurrentIndex();
-            sprite.textureInfo = curAnimation.clip.frameInfos[curIndex].textureInfo;
+            if (curIndex >= 0) {  // TODO: index changed ?
+                sprite.textureInfo = curAnimation.clip.frameInfos[curIndex].textureInfo;
+            }
         }
         else {
             curIndex = -1;

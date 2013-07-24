@@ -9,7 +9,7 @@ using UnityEngine;
 using System.Collections;
 
 public static class exMath {
-    
+
     // ------------------------------------------------------------------ 
     /// \param _length the length used for wrapping
     /// \param _value the in value to wrap
@@ -30,8 +30,45 @@ public static class exMath {
             }
         }
         else {
-            t = Mathf.Clamp( t, 0.0f, _length );
+            t = Mathf.Clamp( t, 0, _length );
         }
         return t;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// \param _maxValue the max value used for wrapping
+    /// \param _value the in value to wrap
+    /// \param _wrapMode the wrap mode used for wrapping
+    /// wrap the seconds of the anim clip by the wrap mode
+    // ------------------------------------------------------------------ 
+
+    public static int Wrap ( int _value, int _maxValue, WrapMode _wrapMode ) {
+        if (_maxValue == 0) {
+            return 0;
+        }
+        if (_value < 0) {
+            _value = -_value;
+        }
+        if ( _wrapMode == WrapMode.Loop ) {
+            return _value % (_maxValue + 1);
+        }
+        else if ( _wrapMode == WrapMode.PingPong ) {
+            int cnt = _value / _maxValue;
+            _value %= (_maxValue);
+            if ( cnt % 2 == 1 ) {
+                return _maxValue - _value;
+            }
+        }
+        else {
+            if (_value < 0)
+            {
+                return 0;
+            }
+            if (_value > _maxValue)
+            {
+                return _maxValue;
+            }
+        }
+        return _value;
     }
 }

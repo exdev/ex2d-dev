@@ -173,7 +173,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         curSerializedObject.Update ();
 
         // initalize common data
-        totalFrames = curEdit.GetTotalFrames();
+        totalFrames = curEdit.totalFrames;
         totalSeconds = curEdit.GetLength();
 
         // toolbar
