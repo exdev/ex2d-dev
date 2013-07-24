@@ -21,17 +21,6 @@ using System.Collections.Generic;
 
 public class exSpriteAnimationClip : ScriptableObject {
 
-    public class EventInfoComparer: IComparer<EventInfo> {
-        public int Compare( EventInfo _x, EventInfo _y ) {
-            if ( _x.frame > _y.frame )
-                return 1;
-            else if ( _x.frame == _y.frame )
-                return 0;
-            else
-                return -1;
-        }
-    }
-
     // ------------------------------------------------------------------ 
     /// The action type used when animation stpped
     // ------------------------------------------------------------------ 
@@ -168,61 +157,60 @@ public class exSpriteAnimationClip : ScriptableObject {
         // TODO: should move all events behind this frame
     }
 
-    // // ------------------------------------------------------------------ 
-    // /// \param _e the event information wants to add
-    // /// add an event information
-    // // ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
 
-    // public void AddEvent ( EventInfo _e ) {
-    //     //
-    //     int index = eventInfos.BinarySearch( _e, eventInfoComparer );
-    //     if ( index < 0 ) {
-    //         index = ~index;
-    //     }
+    public void AddEmptyEvent ( int _frame ) {
+        EventInfo ei = new EventInfo();
+        ei.frame = _frame;
+        AddEvent(ei);
+    }
 
-    //     eventInfos.Insert( index, _e );
-    // }
+    // ------------------------------------------------------------------ 
+    /// \param _e the event information wants to add
+    /// add an event information
+    // ------------------------------------------------------------------ 
 
-    // // ------------------------------------------------------------------ 
-    // /// \param _e the event information wants to remove
-    // /// remove an event information
-    // // ------------------------------------------------------------------ 
+    public void AddEvent ( EventInfo _eventInfo ) {
+        if ( eventInfos.Count == 0 ) {
+            eventInfos.Insert( 0, _eventInfo );
+        }
+        else if ( eventInfos.Count == 1 ) {
+            if ( _eventInfo.frame >= eventInfos[0].frame )
+                eventInfos.Insert( 1, _eventInfo );
+            else
+                eventInfos.Insert( 0, _eventInfo );
+        }
+        else {
+            bool inserted = false;
+            EventInfo lastEventInfo = eventInfos[0];
 
-    // public void RemoveEvent ( EventInfo _e ) {
-    //     eventInfos.Remove( _e );
-    // }
+            for ( int i = 1; i < eventInfos.Count; ++i ) {
+                EventInfo ei = eventInfos[i];
+                if ( _eventInfo.frame >= lastEventInfo.frame && _eventInfo.frame < ei.frame ) {
+                    eventInfos.Insert( i, _eventInfo );
+                    inserted = true;
+                    break;
+                }
 
-    // // ------------------------------------------------------------------ 
-    // /// \param _time the time of the current animation
-    // /// Get the event index play forward by time 
-    // // ------------------------------------------------------------------ 
+                lastEventInfo = ei; 
+            }
 
-    // public int GetForwardEventIndex ( float _time ) {
-    //     for ( int i = eventInfos.Count-1; i >= 0; --i ) {
-    //         EventInfo ei = eventInfos[i];
+            if ( inserted == false ) {
+                eventInfos.Insert( eventInfos.Count, _eventInfo );
+            }
+        }
+    }
 
-    //         if ( _time > ei.frame ) {
-    //             return i;
-    //         }
-    //     }
-    //     return -1;
-    // }
+    // ------------------------------------------------------------------ 
+    /// \param _e the event information wants to remove
+    /// remove an event information
+    // ------------------------------------------------------------------ 
 
-    // // ------------------------------------------------------------------ 
-    // /// \param _time the time of the current animation
-    // /// Get the event index play backward by time 
-    // // ------------------------------------------------------------------ 
-
-    // public int GetBackwardEventIndex ( float _time ) {
-    //     for ( int i = 0; i < eventInfos.Count; ++i ) {
-    //         EventInfo ei = eventInfos[i];
-
-    //         if ( _time < ei.frame ) {
-    //             return i;
-    //         }
-    //     }
-    //     return eventInfos.Count;
-    // }
+    public void RemoveEvent ( EventInfo _eventInfo ) {
+        eventInfos.Remove( _eventInfo );
+    }
 
     // // ------------------------------------------------------------------ 
     // /// \param _spAnim send message to target _spAnim.gameObject

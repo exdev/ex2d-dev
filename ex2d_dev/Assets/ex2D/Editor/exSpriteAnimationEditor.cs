@@ -367,17 +367,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // ======================================================== 
 
             if ( GUILayout.Button ( exEditorUtility.AnimationPrevTexture(), EditorStyles.toolbarButton ) ) {
-                // TODO { 
-                // FrameInfo fi = curEdit.GetFrameInfoBySeconds ( curSeconds, WrapMode.Once );
-                // int i = curEdit.frameInfos.IndexOf(fi) - 1;
-                // if ( i >= 0  ) {
-                //     curSeconds = 0.0f;
-                //     for ( int j = 0; j < i; ++j ) {
-                //         curSeconds += curEdit.frameInfos[j].length; 
-                //     } 
-                //     curSeconds += 0.1f/totalWidth * curEdit.length;
-                // }
-                // } TODO end 
+                curFrame = System.Math.Max ( curFrame - 1, 0 );
             }
 
             // ======================================================== 
@@ -385,24 +375,25 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // ======================================================== 
 
             if ( GUILayout.Button ( exEditorUtility.AnimationNextTexture(), EditorStyles.toolbarButton ) ) {
-                // TODO { 
-                // FrameInfo fi = curEdit.GetFrameInfoBySeconds ( curSeconds, WrapMode.Once );
-                // int i = curEdit.frameInfos.IndexOf(fi) + 1;
-                // if ( i < curEdit.frameInfos.Count ) {
-                //     curSeconds = 0.0f;
-                //     for ( int j = 0; j < i; ++j ) {
-                //         curSeconds += curEdit.frameInfos[j].length; 
-                //     } 
-                //     curSeconds += 0.1f/totalWidth * curEdit.length;
-                // }
-                // } TODO end 
+                curFrame = System.Math.Min ( curFrame + 1, totalFrames );
+            }
+
+            GUILayout.Space(30);
+
+            // ======================================================== 
+            // add event 
+            // ======================================================== 
+
+            if ( GUILayout.Button ( exEditorUtility.AddEventTexture(), EditorStyles.toolbarButton ) ) {
+                curEdit.AddEmptyEvent( curFrame );
+                EditorUtility.SetDirty(curEdit);
             }
 
             // ======================================================== 
             // Frames & Seconds
             // ======================================================== 
 
-            GUILayout.Space(5);
+            GUILayout.Space(30);
             EditorGUILayout.SelectableLabel( totalFrames + " frames | " + 
                                              totalSeconds.ToString("f3") + " secs",
                                              new GUILayoutOption [] {
@@ -927,24 +918,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
         switch ( e.type ) {
         case EventType.Repaint:
             exEditorUtility.DrawRectBorder ( new Rect( _rect.x-1, _rect.y + topHeight - 1, boxWidth+2, boxHeight+2 ), Color.black );
-
-            // show preview textures
-            if ( DragAndDrop.visualMode == DragAndDropVisualMode.Copy ) {
-                foreach ( Object o in draggingObjects ) {
-                    exTextureInfo textureInfo = o as exTextureInfo;
-                    if ( textureInfo ) {
-                        float size = 100.0f;
-                        DrawTextureInfo ( new Rect ( e.mousePosition.x - size * 0.5f, 
-                                                     e.mousePosition.y + 30.0f,
-                                                     size, 
-                                                     size ),
-                                          textureInfo,
-                                          new Color( 1.0f, 1.0f, 1.0f, 0.7f )
-                                        );
-                    }
-                }
-            }
-
             break;
         }
 
@@ -1146,7 +1119,21 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void EventInfoHandle ( Rect _rect ) {
-        GUI.BeginGroup(_rect);
+        // GUI.BeginGroup(_rect);
+
+        List<Rect> eventInfoRects = new List<Rect>();
+        float curX = _rect.x + offset;
+        float yStart = _rect.y + eventInfoViewRect.y;
+        float markerWidth = exEditorUtility.EventMarkerTexture().width; 
+        float markerHeight = exEditorUtility.EventMarkerTexture().height; 
+
+        for ( int i = 0; i < curEdit.eventInfos.Count; ++i ) {
+            EventInfo ei = curEdit.eventInfos[i];
+            float x = ((float)ei.frame/(float)totalFrames) * totalWidth;
+
+            Rect eventRect = new Rect ( curX + x - markerWidth*0.5f, yStart, markerWidth, markerHeight );
+            eventInfoRects.Add(eventRect);
+        }
 
         //
         int controlID = GUIUtility.GetControlID(exEventInfoViewHash, FocusType.Passive);
@@ -1154,6 +1141,18 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         switch ( e.GetTypeForControl(controlID) ) {
         case EventType.Repaint:
+
+            for ( int i = 0; i < eventInfoRects.Count; ++i ) {
+                Rect eventInfoRect = eventInfoRects[i];
+                if ( eventInfoRect.xMax <= _rect.xMin ||
+                     eventInfoRect.xMin >= _rect.xMax )
+                {
+                    continue;
+                }
+
+                GUI.DrawTexture ( eventInfoRect, exEditorUtility.EventMarkerTexture() ); 
+            }
+
             break;
 
         case EventType.MouseDown:
@@ -1169,7 +1168,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             break;
         }
 
-        GUI.EndGroup();
+        // GUI.EndGroup();
     }
 
     // ------------------------------------------------------------------ 
@@ -1399,10 +1398,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     if ( curEdit.frameInfos[idx].frames > 1 )
                         minX -= unitFrameWidth;
                 } 
-
-                foreach ( int idx in resizeFrameIdxList[resizeIdx] ) {
-                    maxX += unitFrameWidth;
-                }
+                maxX = maxX + unitFrameWidth * resizeFrameIdxList[resizeIdx].Count;
 
                 //
                 if ( e.mousePosition.x >= maxX ) {
@@ -1532,6 +1528,25 @@ partial class exSpriteAnimationEditor : EditorWindow {
     void ProcessEvents () {
         Event e = Event.current;
         switch ( e.type ) {
+        case EventType.Repaint:
+            // show preview textures
+            if ( DragAndDrop.visualMode == DragAndDropVisualMode.Copy ) {
+                foreach ( Object o in draggingObjects ) {
+                    exTextureInfo textureInfo = o as exTextureInfo;
+                    if ( textureInfo ) {
+                        float size = 100.0f;
+                        DrawTextureInfo ( new Rect ( e.mousePosition.x - size * 0.5f, 
+                                                     e.mousePosition.y + 30.0f,
+                                                     size, 
+                                                     size ),
+                                          textureInfo,
+                                          new Color( 1.0f, 1.0f, 1.0f, 0.7f )
+                                        );
+                    }
+                }
+            }
+            break;
+
         case EventType.KeyDown:
             if ( e.keyCode == KeyCode.Backspace ||
                  e.keyCode == KeyCode.Delete ) 
