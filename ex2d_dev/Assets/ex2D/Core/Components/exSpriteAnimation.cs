@@ -519,22 +519,32 @@ public class exSpriteAnimation : MonoBehaviour {
 
             curAnimation.time += _deltaTime;
             Sample();
+
+            // check if stop
+            bool stop = false;
+            if (curAnimation.wrapMode == WrapMode.Once ||
+                curAnimation.wrapMode == WrapMode.Default ||
+                curAnimation.wrapMode == WrapMode.ClampForever)
+            {
+                if (curAnimation.speed > 0.0f && curAnimation.frame >= curAnimation.totalFrames) {
+                    stop = true;
+                    curAnimation.frame = curAnimation.totalFrames;
+                }
+                else if (curAnimation.speed < 0.0f && curAnimation.frame < 0) {
+                    stop = true;
+                    curAnimation.frame = 0;
+                }
+            }
+
+            // trigger events
             if (eventStartIndex <= curAnimation.frame) {
                 curAnimation.clip.TriggerEvents(this, eventStartIndex, curAnimation.frame, curAnimation.wrapMode, curAnimation.totalFrames);
                 lastFrameIndex = curAnimation.frame;
             }
             
-            // check if stop
-            if (curAnimation.wrapMode == WrapMode.Once ||
-                curAnimation.wrapMode == WrapMode.Default ||
-                curAnimation.wrapMode == WrapMode.ClampForever)
-            {
-                if ((curAnimation.speed > 0.0f && curAnimation.frame >= curAnimation.totalFrames) ||
-                    (curAnimation.speed < 0.0f && curAnimation.frame < 0))
-                {
-                    Stop();
-                    return;
-                }
+            // do stop
+            if (stop) {
+                Stop();
             }
         }
         else {

@@ -53,13 +53,13 @@ public static class exMath {
         if (_value < 0) {
             _value = -_value;
         }
-        if ( _wrapMode == WrapMode.Loop ) {
+        if (_wrapMode == WrapMode.Loop) {
             return _value % (_maxValue + 1);
         }
-        else if ( _wrapMode == WrapMode.PingPong ) {
+        else if (_wrapMode == WrapMode.PingPong) {
             int cnt = _value / _maxValue;
-            _value %= (_maxValue);
-            if ( cnt % 2 == 1 ) {
+            _value %= _maxValue;
+            if (cnt % 2 == 1) {
                 return _maxValue - _value;
             }
         }

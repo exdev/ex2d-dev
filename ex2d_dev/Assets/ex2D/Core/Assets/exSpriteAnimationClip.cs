@@ -59,18 +59,12 @@ public class exSpriteAnimationClip : ScriptableObject {
         public class SearchComparer : IComparer<EventInfo> {
             private static SearchComparer instance_;
             private static int frame;
-            public static EventInfo BinarySearch (List<EventInfo> _list, int _frame) {
+            public static int BinarySearch (List<EventInfo> _list, int _frame) {
                 frame = _frame;
                 if (instance_ == null) {
                     instance_ = new SearchComparer();
                 }
-                int index = _list.BinarySearch(null, instance_);
-                if (index >= 0) {
-                    return _list[index];
-                }
-                else {
-                    return null;
-                }
+                return _list.BinarySearch(null, instance_);
             }
             public int Compare (EventInfo _x, EventInfo _y) {
                 if (_x == null && _y == null) {
@@ -306,7 +300,7 @@ public class exSpriteAnimationClip : ScriptableObject {
     }
 
     // ------------------------------------------------------------------ 
-    /// \param _target send message to target
+    /// \param _target send event messages to the target
     /// \param _start the unwrapped start frame index
     /// \param _end the unwrapped end frame index
     /// \param _wrapMode the wrap mode
@@ -326,61 +320,101 @@ public class exSpriteAnimationClip : ScriptableObject {
         }
 
         for (int i = _start; i <= _end; ++i) {
+            if (_totalFrame == 0) {
+                TriggerEvents(_target, 0, false);
+                continue;
+            }
             int wrappedIndex;
-            if (_totalFrame != 0) {
-                if (wrapMode == WrapMode.PingPong) {
+            bool reversed = false;
+            if (wrapMode == WrapMode.PingPong) {
 #if DUPLICATE_WHEN_PINGPONE
-                    wrappedIndex = exMath.Wrap(i, _totalFrame, _wrapMode);
-#else
-                    wrappedIndex = exMath.Wrap(i, _totalFrame - 1, _wrapMode);
-#endif
+                //wrappedIndex = exMath.Wrap(i, _totalFrame, _wrapMode);
+                int cnt = i / _totalFrame;
+                wrappedIndex = i % _totalFrame;
+                reversed = (cnt % 2 == 1);
+                if (reversed) {
+                    wrappedIndex = _totalFrame - wrappedIndex;
                 }
-                else if (wrapMode == WrapMode.Loop) {
-                    wrappedIndex = exMath.Wrap(i, _totalFrame - 1, _wrapMode);
-                    bool skippedFinalEvent = (i > 0 && wrappedIndex == 0);
-                    if (skippedFinalEvent) {
-                        EventInfo finalEvent = EventInfo.SearchComparer.BinarySearch(eventInfos, _totalFrame);    // TODO: search same frame event
-                        if (finalEvent != null) {
-                            finalEvent.Trigger(_target);
-                        }
+#else
+                int cnt = (i - 1) / (_totalFrame - 1);
+                wrappedIndex = (i - 1) % (_totalFrame - 1) + 1;
+                bool skippedEndsEvent = (i > 1 && wrappedIndex == 1);
+                reversed = (cnt % 2 == 1);
+                if (reversed) {
+                    if (skippedEndsEvent) {
+                        TriggerEvents(_target, _totalFrame, true);
                     }
+                    wrappedIndex = _totalFrame - wrappedIndex;
                 }
                 else {
-                    exDebug.Assert(i <= _totalFrame);
-                    wrappedIndex = i;
+                    if (skippedEndsEvent) {
+                        TriggerEvents(_target, 0, false);
+                    }
+                }
+#endif
+            }
+            else if (wrapMode == WrapMode.Loop) {
+                wrappedIndex = exMath.Wrap(i, _totalFrame - 1, _wrapMode);
+                bool skippedFinalEvent = (i > 0 && wrappedIndex == 0);
+                if (skippedFinalEvent) {
+                    TriggerEvents(_target, _totalFrame, false);
                 }
             }
             else {
-                wrappedIndex = 0;
+                exDebug.Assert(i <= _totalFrame);
+                wrappedIndex = i;
             }
-            EventInfo eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, wrappedIndex);
-            if (eventInfo != null) {
-                eventInfo.Trigger(_target);
-            }
+            TriggerEvents(_target, wrappedIndex, reversed);
         }
     }
 
-//    // ------------------------------------------------------------------ 
-//    // Desc: 
-//    // ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    /// \param _target send event messages to the target
+    /// \param _wrappedFrame the wrapped frame to trigger
+    /// \param _reversed reversed trigger order between same frame events
+    /// Trigger all events at the frame
+    // ------------------------------------------------------------------ 
 
-//    bool SkippedFinalEvent (int _frame, int _totalFrame, WrapMode _wrapMode) {
-//        if (_frame > 0 && _totalFrame > 0) {
-//            bool hasSkippedFinalEvent = (wrapMode == WrapMode.Loop);
-//            if (hasSkippedFinalEvent) {
-//                int lastFrameWrappedIndex = exMath.Wrap(_frame - 1, _totalFrame - 1, _wrapMode);
-//                return (lastFrameWrappedIndex == _totalFrame - 1);
-//            }
-//#if DUPLICATE_WHEN_PINGPONE
-//            else if (wrapMode == WrapMode.PingPong) {
-//                int wrappedIndex = exMath.Wrap(_frame, _totalFrame - 1, _wrapMode);
-//                if (wrappedIndex == _totalFrame - 1) {
-//                    int lastFrameWrappedIndex = exMath.Wrap(_frame - 1, _totalFrame - 1, _wrapMode);
-//                    return (lastFrameWrappedIndex == _totalFrame - 1);
-//                }
-//            }
-//#endif
-//        }
-//        return false;
-//    }
+    private void TriggerEvents (Component _target, int _wrappedIndex, bool _reversed) {
+        //Debug.Log(string.Format("[TriggerEvents|exSpriteAnimationClip] _wrappedIndex: {0} " + _reversed, _wrappedIndex));
+        if (eventInfos.Count == 0) {
+            return;
+        }
+        if (_reversed) {
+            int searchStart = EventInfo.SearchComparer.BinarySearch(eventInfos, _wrappedIndex + 1);
+            if (searchStart < 0) {
+                searchStart = ~searchStart;
+                if (searchStart >= eventInfos.Count) {
+                    searchStart = eventInfos.Count - 1;
+                }
+            }
+            for (int i = searchStart; i >= 0; --i) {
+                EventInfo eventInfo = eventInfos[i];
+                if (eventInfo.frame == _wrappedIndex) {
+                    eventInfo.Trigger(_target);
+                }
+                else if (eventInfo.frame < _wrappedIndex) {
+                    break;
+                }
+            }
+        }
+        else {
+            int searchStart = EventInfo.SearchComparer.BinarySearch(eventInfos, _wrappedIndex - 1);
+            if (searchStart < 0) {
+                searchStart = ~searchStart;
+                if (searchStart >= eventInfos.Count) {
+                    return;
+                }
+            }
+            for (int i = searchStart; i < eventInfos.Count; ++i) {
+                EventInfo eventInfo = eventInfos[i];
+                if (eventInfo.frame == _wrappedIndex) {
+                    eventInfo.Trigger(_target);
+                }
+                else if (eventInfo.frame > _wrappedIndex) {
+                    break;
+                }
+            }
+        }
+    }
 }
