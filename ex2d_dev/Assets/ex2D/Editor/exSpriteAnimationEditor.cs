@@ -237,7 +237,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
             GUILayout.Space(30);
 
             // frame info edit field or event info edit field
-            FrameInfoEditField();
+            if ( selectedEventInfos.Count == 0 )
+                FrameInfoEditField();
+            else
+                EventInfoEditField();
 
             GUILayout.EndHorizontal();
 
@@ -1057,7 +1060,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         GUIStyle style = new GUIStyle();
         style.fontStyle = FontStyle.Bold;
         style.normal.textColor = Color.yellow;
-        GUILayout.Label( "FrameInfo Inspector", style );
+        GUILayout.Label( "FrameInfo List", style );
 
         EditorGUILayout.Space();
 
@@ -1122,6 +1125,107 @@ partial class exSpriteAnimationEditor : EditorWindow {
             GUILayout.EndHorizontal();
         }
 
+        GUILayout.EndVertical();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void EventInfoEditField () {
+        GUILayout.BeginVertical();
+
+        GUIStyle style = new GUIStyle();
+        style.fontStyle = FontStyle.Bold;
+        style.normal.textColor = new Color(0.3f, 0.55f, 0.95f, 1f);
+        GUILayout.Label( "EventInfo List", style );
+
+        EditorGUILayout.Space();
+
+        for ( int i = 0; i < curEdit.eventInfos.Count; ++i ) {
+            EventInfo ei = curEdit.eventInfos[i];
+
+            GUILayout.BeginHorizontal();
+                // lable
+                GUILayout.Label( "Event ["+i+"]", new GUILayoutOption[] { GUILayout.Width(100) } );
+
+                // Frame
+                EditorGUI.BeginChangeCheck();
+                int newFrame = EditorGUILayout.IntField( GUIContent.none, 
+                                                         ei.frame, 
+                                                         new GUILayoutOption[] {
+                                                            GUILayout.Width(80)
+                                                         } );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    ei.frame = System.Math.Min( System.Math.Max( newFrame, 0 ), totalFrames );
+                    EditorUtility.SetDirty(curEdit);
+                }
+
+                GUILayout.Space(30);
+
+                // Method Name
+                GUILayout.Label( "Method", new GUILayoutOption[] { GUILayout.Width(50) } );
+                EditorGUI.BeginChangeCheck();
+                string newMethodName = EditorGUILayout.TextField ( GUIContent.none, ei.methodName, GUILayout.Width(200) );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    ei.methodName = newMethodName;
+                    EditorUtility.SetDirty(curEdit);
+                }
+
+
+                // param type
+                EditorGUI.BeginChangeCheck();
+                EventInfo.ParamType newParamType = (EventInfo.ParamType)EditorGUILayout.EnumPopup ( GUIContent.none, 
+                                                                                                    ei.paramType,
+                                                                                                    GUILayout.Width(60) );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    ei.paramType = newParamType;
+                    EditorUtility.SetDirty(curEdit);
+                }
+
+                // parameter
+                EditorGUI.BeginChangeCheck();
+                switch ( ei.paramType ) {
+                case EventInfo.ParamType.None: 
+                    GUILayout.Label( "none", new GUILayoutOption[] { GUILayout.Width(100) } );
+                    break;
+                case EventInfo.ParamType.String: 
+                    ei.stringParam = EditorGUILayout.TextField ( GUIContent.none, ei.stringParam, GUILayout.Width(100) );
+                    break;
+                case EventInfo.ParamType.Float: 
+                    ei.floatParam = EditorGUILayout.FloatField ( GUIContent.none, ei.floatParam, GUILayout.Width(100) );
+                    break;
+                case EventInfo.ParamType.Int: 
+                    ei.intParam = EditorGUILayout.IntField ( GUIContent.none, ei.intParam, GUILayout.Width(100)  );
+                    break;
+                case EventInfo.ParamType.Bool: 
+                    ei.boolParam = EditorGUILayout.Toggle ( GUIContent.none, ei.boolParam, GUILayout.Width(100)  );
+                    break;
+                case EventInfo.ParamType.Object: 
+                    ei.objectParam = EditorGUILayout.ObjectField ( GUIContent.none
+                                                                   , ei.objectParam
+                                                                   , typeof(Object)
+                                                                   , true
+                                                                   , GUILayout.Width(100) 
+                                                                 );
+                    break;
+                }
+                if ( EditorGUI.EndChangeCheck() ) {
+                    EditorUtility.SetDirty(curEdit);
+                }
+
+                // Send Message Options
+                EditorGUI.BeginChangeCheck();
+                SendMessageOptions newMsgOptions = (SendMessageOptions)EditorGUILayout.EnumPopup ( GUIContent.none, 
+                                                                                                   ei.msgOptions,
+                                                                                                   GUILayout.Width(100) );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    ei.msgOptions = newMsgOptions;
+                    EditorUtility.SetDirty(curEdit);
+                }
+
+            GUILayout.EndHorizontal();
+        }
         GUILayout.EndVertical();
     }
 

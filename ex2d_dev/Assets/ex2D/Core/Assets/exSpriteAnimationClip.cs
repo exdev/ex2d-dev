@@ -101,17 +101,17 @@ public class exSpriteAnimationClip : ScriptableObject {
         // ------------------------------------------------------------------ 
 
         public enum ParamType {
-            NONE,   ///< none
-            STRING, ///< string
-            FLOAT,  ///< float
-            INT,    ///< int
-            BOOL,   ///< bool
-            OBJECT  ///< object
+            None,   ///< none
+            String, ///< string
+            Float,  ///< float
+            Int,    ///< int
+            Bool,   ///< bool
+            Object  ///< object
         }
 
         public int frame = 0; ///< the frame trigger the event
         public string methodName = ""; ///< the name of method to invoke 
-        public ParamType paramType = ParamType.NONE; ///< the first parameter type 
+        public ParamType paramType = ParamType.None; ///< the first parameter type 
         public string stringParam = ""; ///< the value of the string parameter
         public float floatParam = 0.0f; ///< the value of the float parameter
         public int intParam = -1; ///< the value of the int parameter
@@ -134,22 +134,22 @@ public class exSpriteAnimationClip : ScriptableObject {
             if (methodName == "")
                 return;
             switch (paramType) {
-            case ParamType.NONE:
+            case ParamType.None:
                 _target.SendMessage(methodName, msgOptions);
                 break;
-            case ParamType.STRING:
+            case ParamType.String:
                 _target.SendMessage(methodName, stringParam, msgOptions);
                 break;
-            case ParamType.FLOAT:
+            case ParamType.Float:
                 _target.SendMessage(methodName, floatParam, msgOptions);
                 break;
-            case ParamType.INT:
+            case ParamType.Int:
                 _target.SendMessage(methodName, intParam, msgOptions);
                 break;
-            case ParamType.BOOL:
+            case ParamType.Bool:
                 _target.SendMessage(methodName, boolParam, msgOptions);
                 break;
-            case ParamType.OBJECT:
+            case ParamType.Object:
                 _target.SendMessage(methodName, objectParam, msgOptions);
                 break;
             }
