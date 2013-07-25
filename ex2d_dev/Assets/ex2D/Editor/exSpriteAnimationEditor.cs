@@ -88,6 +88,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
     bool inResizeFrameInfoState = false;
     int resizeIdx = -1;
     List<int> oldResizeFrames = new List<int>();
+    List<int> oldSelectedEventFrames = new List<int>();
+    int draggingEventInfoOldFrame = 0;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -405,6 +407,18 @@ partial class exSpriteAnimationEditor : EditorWindow {
         // NOTE: use this way to make sure selectedEventInfos is sorted by frame.
         foreach ( EventInfo obj in _selectedObjs ) {
             selectedEventInfos.Add (obj);
+        }
+        selectedEventInfos.Sort ( delegate ( EventInfo _x, EventInfo _y ) {
+                                    if ( _x.frame > _y.frame )
+                                        return 1;
+                                    else if ( _x.frame == _y.frame )
+                                        return 0;
+                                    else
+                                        return -1;
+                                  } );
+        oldSelectedEventFrames.Clear();
+        foreach ( EventInfo ei in selectedEventInfos ) {
+            oldSelectedEventFrames.Add(ei.frame);
         }
     }
 
@@ -1091,9 +1105,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
             FrameInfo fi = curEdit.frameInfos[i];
 
             GUILayout.BeginHorizontal();
-                Color old = GUI.color;
+                Color old = GUI.backgroundColor;
                 if ( selectedFrameInfos.IndexOf(fi) != -1 )
-                    GUI.contentColor = Color.yellow;
+                    GUI.backgroundColor = Color.yellow;
 
                 // texture info
                 EditorGUI.BeginChangeCheck();
@@ -1121,7 +1135,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     EditorUtility.SetDirty(curEdit);
                 }
 
-                GUI.contentColor = old;
+                GUI.backgroundColor = old;
             GUILayout.EndHorizontal();
         }
 
@@ -1146,6 +1160,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
             EventInfo ei = curEdit.eventInfos[i];
 
             GUILayout.BeginHorizontal();
+                Color old = GUI.backgroundColor;
+                if ( selectedEventInfos.IndexOf(ei) != -1 )
+                    GUI.backgroundColor = Color.yellow;
+
                 // lable
                 GUILayout.Label( "Event ["+i+"]", new GUILayoutOption[] { GUILayout.Width(100) } );
 
@@ -1224,6 +1242,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     EditorUtility.SetDirty(curEdit);
                 }
 
+                GUI.backgroundColor = old;
             GUILayout.EndHorizontal();
         }
         GUILayout.EndVertical();
@@ -1378,10 +1397,13 @@ partial class exSpriteAnimationEditor : EditorWindow {
                          selectedEventInfos.Count > 0 ) 
                     {
                         for ( int i = 0; i < eventInfoRects.Count; ++i ) {
+                            Rect eventRect = eventInfoRects[i];
+                            eventRect.width = eventRect.width + eventRect.width * 0.5f;
                             if ( selectedIdxList.IndexOf(i) != -1 &&
-                                 eventInfoRects[i].Contains(e.mousePosition) ) 
+                                 eventRect.Contains(e.mousePosition) ) 
                             {
                                 inDraggingEventInfoState = true;
+                                draggingEventInfoOldFrame = curEdit.eventInfos[i].frame;
                                 break;
                             }
                         }
@@ -1407,7 +1429,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 GUIUtility.hotControl = 0;
                 inDraggingEventInfoState = false;
 
-                // TODO: EditorUtility.SetDirty(curEdit); 
+                curEdit.SortEvents();
+                EditorUtility.SetDirty(curEdit); 
 
                 Repaint();
                 e.Use();
@@ -1416,6 +1439,16 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         case EventType.MouseDrag:
             if ( inDraggingEventInfoState ) {
+                float pos = e.mousePosition.x - _rect.x - offset;
+                int frame = Mathf.RoundToInt( (float)totalFrames * pos/totalWidth );
+                int deltaFrame = frame - draggingEventInfoOldFrame;
+
+                for ( int i = 0; i < selectedEventInfos.Count; ++i ) {
+                    EventInfo ei = selectedEventInfos[i];
+
+                    ei.frame = oldSelectedEventFrames[i] + deltaFrame;
+                    ei.frame = System.Math.Min( System.Math.Max( ei.frame, 0 ), totalFrames );
+                }
 
                 Repaint();
                 e.Use();
