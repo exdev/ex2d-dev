@@ -117,35 +117,6 @@ public class exSpriteAnimationClip : ScriptableObject {
         }
         public Object objectParam = null; ///< the value of the object parameter
         public SendMessageOptions msgOptions = SendMessageOptions.RequireReceiver; ///< the SendMessage option
-
-        // ------------------------------------------------------------------ 
-        /// Calls the method named methodName on every Component target game object.
-        // ------------------------------------------------------------------ 
-
-        public void Trigger (Component _target) {
-            if (methodName == "")
-                return;
-            switch (paramType) {
-            case ParamType.None:
-                _target.SendMessage(methodName, msgOptions);
-                break;
-            case ParamType.String:
-                _target.SendMessage(methodName, stringParam, msgOptions);
-                break;
-            case ParamType.Float:
-                _target.SendMessage(methodName, floatParam, msgOptions);
-                break;
-            case ParamType.Int:
-                _target.SendMessage(methodName, intParam, msgOptions);
-                break;
-            case ParamType.Bool:
-                _target.SendMessage(methodName, boolParam, msgOptions);
-                break;
-            case ParamType.Object:
-                _target.SendMessage(methodName, objectParam, msgOptions);
-                break;
-            }
-        }
     }
 
     public WrapMode wrapMode = WrapMode.Once; ///< default wrap mode

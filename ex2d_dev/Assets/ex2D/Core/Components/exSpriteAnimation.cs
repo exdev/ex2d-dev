@@ -214,7 +214,7 @@ public class exSpriteAnimationState {
             for (int i = searchStart; i >= 0; --i) {
                 exSpriteAnimationClip.EventInfo eventInfo = clip.eventInfos[i];
                 if (eventInfo.frame == _wrappedIndex) {
-                    eventInfo.Trigger(_target);
+                    Trigger(_target, eventInfo);
                 }
                 else if (eventInfo.frame < _wrappedIndex) {
                     break;
@@ -232,12 +232,41 @@ public class exSpriteAnimationState {
             for (int i = searchStart; i < clip.eventInfos.Count; ++i) {
                 exSpriteAnimationClip.EventInfo eventInfo = clip.eventInfos[i];
                 if (eventInfo.frame == _wrappedIndex) {
-                    eventInfo.Trigger(_target);
+                    Trigger(_target, eventInfo);
                 }
                 else if (eventInfo.frame > _wrappedIndex) {
                     break;
                 }
             }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Calls the method named methodName on every Component target game object.
+    // ------------------------------------------------------------------ 
+
+    public void Trigger (Component _target, exSpriteAnimationClip.EventInfo _event) {
+        if (_event.methodName == "")
+            return;
+        switch (_event.paramType) {
+        case exSpriteAnimationClip.EventInfo.ParamType.None:
+            _target.SendMessage(_event.methodName, _event.msgOptions);
+            break;
+        case exSpriteAnimationClip.EventInfo.ParamType.String:
+            _target.SendMessage(_event.methodName, _event.stringParam, _event.msgOptions);
+            break;
+        case exSpriteAnimationClip.EventInfo.ParamType.Float:
+            _target.SendMessage(_event.methodName, _event.floatParam, _event.msgOptions);
+            break;
+        case exSpriteAnimationClip.EventInfo.ParamType.Int:
+            _target.SendMessage(_event.methodName, _event.intParam, _event.msgOptions);
+            break;
+        case exSpriteAnimationClip.EventInfo.ParamType.Bool:
+            _target.SendMessage(_event.methodName, _event.boolParam, _event.msgOptions);
+            break;
+        case exSpriteAnimationClip.EventInfo.ParamType.Object:
+            _target.SendMessage(_event.methodName, _event.objectParam, _event.msgOptions);
+            break;
         }
     }
 }
