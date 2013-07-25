@@ -179,6 +179,7 @@ public class exLayer : MonoBehaviour
             Debug.LogWarning("Sprite not in this layer.");
             return;
         }
+        // TODO: check child sprites
         exMesh mesh = GetMesh(_sprite);
         if (mesh != null) {
             RemoveFromMesh(_sprite, mesh);
@@ -357,9 +358,6 @@ public class exLayer : MonoBehaviour
             return;
         }
         _sprite.layer = this;
-        if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
-            _sprite.cachedTransform.parent = cachedTransform;
-        }
                 
 #if UNITY_EDITOR
         // Check duplicated
@@ -409,6 +407,11 @@ public class exLayer : MonoBehaviour
             meshList.Add(sameDrawcallMesh);
         }
         AddToMesh(_sprite, sameDrawcallMesh);
+        
+        if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
+            _sprite.cachedTransform.parent = cachedTransform;
+            // TODO: check child sprite
+        }
     }
 
     // ------------------------------------------------------------------ 

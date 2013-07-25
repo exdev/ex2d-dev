@@ -259,7 +259,20 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         exDebug.Assert(visible == false);
         exDebug.Assert(isInIndexBuffer == false);
     }
-
+    
+    void LateUpdate () {
+        if (ReferenceEquals(layer_, null)) {
+            // check whether this sprite becomes any layer's child
+            Transform parentTransform = cachedTransform.parent;
+            if (parentTransform != null) {
+                exLayer parentLayer = parentTransform.GetComponent<exLayer>();
+                if (parentLayer != null) {
+                    parentLayer.Add(this);
+                }
+            }
+        }
+    }
+    
     // ------------------------------------------------------------------ 
     /// Compare sprites by depth and index
     // ------------------------------------------------------------------ 
@@ -387,9 +400,25 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     
     public void UpdateTransform () {
         if (cachedTransform.hasChanged) {
-            updateFlags |= exUpdateFlags.Vertex;
             cachedTransform.hasChanged = false;
-            // TODO: 根据parent更换layer
+            Transform parentTransform = cachedTransform.parent;
+            if (parentTransform != null) {
+                exLayer parentLayer = parentTransform.GetComponent<exLayer>();
+                if (parentLayer != null) {
+                    if (layer_ != parentLayer) {
+                        // parent changed
+                        SetLayer(parentLayer);
+                        return;
+                    }
+                }
+                else {
+                    // TODO: 如果首个父物体不是sprite而是Layer
+                }
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+            else if (layer_ != null){
+                layer_.Remove(this);
+            }
         }
     }
 }
