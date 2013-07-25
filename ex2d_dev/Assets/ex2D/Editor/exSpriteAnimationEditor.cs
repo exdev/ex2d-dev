@@ -1267,8 +1267,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 }
                 else if ( e.button == 0 ) {
                     activeEventSelection = true;
-                    GUIUtility.hotControl = controlID;
-                    GUIUtility.keyboardControl = controlID;
                 }
             } 
             break;
@@ -1277,19 +1275,14 @@ partial class exSpriteAnimationEditor : EditorWindow {
         // GUI.EndGroup();
 
         if ( activeEventSelection ) {
-            // TODO { 
-            switch ( e.GetTypeForControl(controlID) ) {
-            case EventType.MouseUp:
-                if ( activeEventSelection ) {
-                    activeEventSelection = false;
-                    // GUIUtility.hotControl = 0;
-                }
-                break;
-            }
-            // } TODO end 
-
             eventRectSelection.SetSelection(selectedEventInfos.ToArray());
             eventRectSelection.OnGUI();
+
+            if ( GUIUtility.hotControl == 0 ) {
+                if ( activeEventSelection ) {
+                    activeEventSelection = false;
+                }
+            }
         }
     }
 
