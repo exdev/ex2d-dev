@@ -291,8 +291,8 @@ public class exSpriteAnimationClip : ScriptableObject {
 
     // ------------------------------------------------------------------ 
     /// \param _target send message to target
-    /// \param _start the start frame index
-    /// \param _end the end frame index
+    /// \param _start the unwrapped start frame index
+    /// \param _end the unwrapped end frame index
     /// \param _wrapMode the wrap mode
     /// \param _totalFrame total frame count cached by caller
     /// Trigger events locate between the start and end frame
@@ -303,61 +303,57 @@ public class exSpriteAnimationClip : ScriptableObject {
         
         if (eventInfos.Count == 0)
             return;
+
         //get frame count
         if (_totalFrame == -1) {
             _totalFrame = GetTotalFrames();
         }
 
+        bool triggerFinalEvent = false;
 #if DUPLICATE_WHEN_PINGPONE
-        //check end frame
-        bool lastFrameIsEnd;
-        if (_start > 0) {
-            if (_totalFrame != 0) {
+        bool hasSkippedFinalEvent = (wrapMode == WrapMode.Loop || wrapMode == WrapMode.PingPong);
+#else
+        bool hasSkippedFinalEvent = (wrapMode == WrapMode.Loop);
+#endif
+        if (hasSkippedFinalEvent) {
+            if (_start > 0 && _totalFrame != 0) {
                 int lastFrameWrappedIndex = exMath.Wrap(_start - 1, _totalFrame - 1, _wrapMode);
-                lastFrameIsEnd = (lastFrameWrappedIndex == _totalFrame - 1);
-            }
-            else {
-                lastFrameIsEnd = false;
+                triggerFinalEvent = (lastFrameWrappedIndex == _totalFrame - 1);
             }
         }
-        else {
-            lastFrameIsEnd = false;
-        }
-#endif
-        //Debug.Log(string.Format("[TriggerEvents|exSpriteAnimationClip] lastFrameIsEnd: {0}", lastFrameIsEnd));
+
         for (int i = _start; i <= _end; ++i) {
-            EventInfo eventInfo;
-#if DUPLICATE_WHEN_PINGPONE
-            if (lastFrameIsEnd == false) {
-#endif
-                int wrappedIndex;
-                if (_totalFrame != 0) {
+            if (triggerFinalEvent) {
+                triggerFinalEvent = false;
+                EventInfo finalEvent = EventInfo.SearchComparer.BinarySearch(eventInfos, _totalFrame);    // TODO: search same frame event
+                if (finalEvent != null) {
+                    finalEvent.Trigger(_target);
+                }
+                //if (_wrapMode == WrapMode.PingPong) {
+                //    eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, _totalFrame - 1);
+                //    if (eventInfo != null) {
+                //        eventInfo.Trigger(_target);
+                //    }
+                //}
+            }
+            int wrappedIndex;
+            if (_totalFrame != 0) {
+                if (wrapMode == WrapMode.Loop || wrapMode == WrapMode.PingPong) {
                     wrappedIndex = exMath.Wrap(i, _totalFrame - 1, _wrapMode);
                 }
                 else {
-                    wrappedIndex = 0;
+                    exDebug.Assert(i <= _totalFrame);
+                    wrappedIndex = i;
                 }
-                eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, wrappedIndex);
-                if (eventInfo != null) {
-                    eventInfo.Trigger(_target);
-                }
-#if DUPLICATE_WHEN_PINGPONE
-                lastFrameIsEnd = (wrappedIndex == _totalFrame - 1);
             }
             else {
-                lastFrameIsEnd = false;
-                eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, _totalFrame);    // TODO: search same frame event
-                if (eventInfo != null) {
-                    eventInfo.Trigger(_target);
-                }
-                if (_wrapMode == WrapMode.PingPong) {
-                    eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, _totalFrame - 1);
-                    if (eventInfo != null) {
-                        eventInfo.Trigger(_target);
-                    }
-                }
+                wrappedIndex = 0;
             }
-#endif
+            EventInfo eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, wrappedIndex);
+            if (eventInfo != null) {
+                eventInfo.Trigger(_target);
+            }
+            triggerFinalEvent = hasSkippedFinalEvent && (wrappedIndex == _totalFrame - 1);
         }
     }
 }
