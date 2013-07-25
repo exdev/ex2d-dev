@@ -131,20 +131,115 @@ public class exSpriteAnimationState {
             return -1;
         }
     }
+    
+    // ------------------------------------------------------------------ 
+    /// \param _target send event messages to the target
+    /// \param _start the unwrapped start frame index
+    /// \param _end the unwrapped end frame index
+    /// Trigger events locate between the start and end frame
+    // ------------------------------------------------------------------ 
 
-    //public int GetCurrentIndex() {
-    //    if (frameTimes.Length > 0) {
-    //        int index = System.Array.BinarySearch(frameTimes, exMath.Wrap(time, length, wrapMode));
-    //        if (index < 0) {
-    //            index = ~index;
-    //            exDebug.Assert(index < frameTimes.Length);
-    //        }
-    //        return index;
-    //    }
-    //    else {
-    //        return -1;
-    //    }
-    //}
+    public void TriggerEvents (Component _target, int _start, float _end) {
+        if (clip.eventInfos.Count == 0)
+            return;
+        for (int i = _start; i <= _end; ++i) {
+            if (totalFrames == 0) {
+                TriggerEvents(_target, 0, false);
+                continue;
+            }
+            int wrappedIndex;
+            bool reversed = false;
+            if (wrapMode == WrapMode.PingPong) {
+#if DUPLICATE_WHEN_PINGPONE
+                //wrappedIndex = exMath.Wrap(i, totalFrame, wrapMode);
+                int cnt = i / totalFrames;
+                wrappedIndex = i % totalFrames;
+                reversed = (cnt % 2 == 1);
+                if (reversed) {
+                    wrappedIndex = totalFrames - wrappedIndex;
+                }
+#else
+                int cnt = (i - 1) / (totalFrames - 1);
+                wrappedIndex = (i - 1) % (totalFrames - 1) + 1;
+                bool skippedEndsEvent = (i > 1 && wrappedIndex == 1);
+                reversed = (cnt % 2 == 1);
+                if (reversed) {
+                    if (skippedEndsEvent) {
+                        TriggerEvents(_target, totalFrames, true);
+                    }
+                    wrappedIndex = totalFrames - wrappedIndex;
+                }
+                else {
+                    if (skippedEndsEvent) {
+                        TriggerEvents(_target, 0, false);
+                    }
+                }
+#endif
+            }
+            else if (wrapMode == WrapMode.Loop) {
+                wrappedIndex = exMath.Wrap(i, totalFrames - 1, wrapMode);
+                bool skippedFinalEvent = (i > 0 && wrappedIndex == 0);
+                if (skippedFinalEvent) {
+                    TriggerEvents(_target, totalFrames, false);
+                }
+            }
+            else {
+                exDebug.Assert(i <= totalFrames);
+                wrappedIndex = i;
+            }
+            TriggerEvents(_target, wrappedIndex, reversed);
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// \param _target send event messages to the target
+    /// \param _wrappedFrame the wrapped frame to trigger
+    /// \param _reversed reversed trigger order between same frame events
+    /// Trigger all events at the frame
+    // ------------------------------------------------------------------ 
+
+    private void TriggerEvents (Component _target, int _wrappedIndex, bool _reversed) {
+        //Debug.Log(string.Format("[TriggerEvents|exSpriteAnimationClip] _wrappedIndex: {0} " + _reversed, _wrappedIndex));
+        if (clip.eventInfos.Count == 0) {
+            return;
+        }
+        if (_reversed) {
+            int searchStart = exSpriteAnimationClip.EventInfo.SearchComparer.BinarySearch(clip.eventInfos, _wrappedIndex + 1);
+            if (searchStart < 0) {
+                searchStart = ~searchStart;
+                if (searchStart >= clip.eventInfos.Count) {
+                    searchStart = clip.eventInfos.Count - 1;
+                }
+            }
+            for (int i = searchStart; i >= 0; --i) {
+                exSpriteAnimationClip.EventInfo eventInfo = clip.eventInfos[i];
+                if (eventInfo.frame == _wrappedIndex) {
+                    eventInfo.Trigger(_target);
+                }
+                else if (eventInfo.frame < _wrappedIndex) {
+                    break;
+                }
+            }
+        }
+        else {
+            int searchStart = exSpriteAnimationClip.EventInfo.SearchComparer.BinarySearch(clip.eventInfos, _wrappedIndex - 1);
+            if (searchStart < 0) {
+                searchStart = ~searchStart;
+                if (searchStart >= clip.eventInfos.Count) {
+                    return;
+                }
+            }
+            for (int i = searchStart; i < clip.eventInfos.Count; ++i) {
+                exSpriteAnimationClip.EventInfo eventInfo = clip.eventInfos[i];
+                if (eventInfo.frame == _wrappedIndex) {
+                    eventInfo.Trigger(_target);
+                }
+                else if (eventInfo.frame > _wrappedIndex) {
+                    break;
+                }
+            }
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -538,7 +633,7 @@ public class exSpriteAnimation : MonoBehaviour {
 
             // trigger events
             if (eventStartIndex <= curAnimation.frame) {
-                curAnimation.clip.TriggerEvents(this, eventStartIndex, curAnimation.frame, curAnimation.wrapMode, curAnimation.totalFrames);
+                curAnimation.TriggerEvents(this, eventStartIndex, curAnimation.frame);
                 lastFrameIndex = curAnimation.frame;
             }
             
