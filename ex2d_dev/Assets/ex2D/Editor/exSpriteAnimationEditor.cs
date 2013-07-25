@@ -81,10 +81,11 @@ partial class exSpriteAnimationEditor : EditorWindow {
     Rect frameInfoViewRect;
 
     // handles
-    bool inDraggingNeedleState = false;
-    bool inDraggingFrameInfoState = false;
-    bool inResizeFrameInfoState = false;
     List<Object> draggingObjects = new List<Object>();
+    bool inDraggingFrameInfoState = false;
+    bool inDraggingNeedleState = false;
+    bool inDraggingEventInfoState = false;
+    bool inResizeFrameInfoState = false;
     int resizeIdx = -1;
     List<int> oldResizeFrames = new List<int>();
 
@@ -265,7 +266,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
         curFrame = 0;
         isPlaying = false;
         playingSeconds = 0.0f;
+
         inDraggingNeedleState = false;
+        inDraggingEventInfoState = false;
         inDraggingFrameInfoState = false;
         inResizeFrameInfoState = false;
         resizeIdx = -1;
@@ -1231,9 +1234,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
         case EventType.Repaint:
 
             Color old = GUI.color; 
-            // GUI.color = new Color(0.3f, 0.55f, 0.95f, 1f);
-            // GUI.color = new Color(0.9f, 0.9f, 0.9f, 1f);
-
             for ( int i = 0; i < eventInfoRects.Count; ++i ) {
                 Rect eventInfoRect = eventInfoRects[i];
                 if ( eventInfoRect.center.x+0.2f < _rect.xMin ||
@@ -1243,14 +1243,16 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 }
 
                 if ( selectedIdxList.IndexOf(i) != -1 ) {
-                    GUI.color = new Color(0.3f, 0.55f, 0.95f, 1f);
+                    if ( inDraggingEventInfoState )
+                        GUI.color = new Color(1.0f, 0.95f, 0.3f, 1f);
+                    else
+                        GUI.color = new Color(0.3f, 0.55f, 0.95f, 1f);
                 }
                 else {
                     GUI.color = new Color(0.9f, 0.9f, 0.9f, 1f);
                 }
                 GUI.DrawTexture ( eventInfoRect, exEditorUtility.EventMarkerTexture() ); 
             }
-
             GUI.color = old;
 
             break;
@@ -1266,9 +1268,54 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     e.Use();
                 }
                 else if ( e.button == 0 ) {
-                    activeEventSelection = true;
+                    if ( EditorGUI.actionKey == false && 
+                         e.shift == false && 
+                         e.button == 0 && 
+                         selectedEventInfos.Count > 0 ) 
+                    {
+                        for ( int i = 0; i < eventInfoRects.Count; ++i ) {
+                            if ( selectedIdxList.IndexOf(i) != -1 &&
+                                 eventInfoRects[i].Contains(e.mousePosition) ) 
+                            {
+                                inDraggingEventInfoState = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    //
+                    if ( inDraggingEventInfoState ) {
+                        GUIUtility.hotControl = controlID;
+                        GUIUtility.keyboardControl = controlID;
+
+                        Repaint();
+                        e.Use();
+                    }
+                    else {
+                        activeEventSelection = true;
+                    }
                 }
             } 
+            break;
+
+        case EventType.MouseUp:
+            if ( e.button == 0 && inDraggingEventInfoState ) {
+                GUIUtility.hotControl = 0;
+                inDraggingEventInfoState = false;
+
+                // TODO: EditorUtility.SetDirty(curEdit); 
+
+                Repaint();
+                e.Use();
+            }
+            break;
+
+        case EventType.MouseDrag:
+            if ( inDraggingEventInfoState ) {
+
+                Repaint();
+                e.Use();
+            }
             break;
         }
 
@@ -1404,9 +1451,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
                  e.button == 0 && 
                  selectedFrameRects.Count > 0 ) 
             {
-                GUIUtility.hotControl = controlID;
-                GUIUtility.keyboardControl = controlID;
-
                 for ( int i = 0; i < resizeFrameRects.Count; ++i ) {
                     if ( resizeFrameRects[i].Contains(e.mousePosition) ) {
                         oldResizeFrames.Clear();
@@ -1430,6 +1474,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 }
 
                 if ( inDraggingFrameInfoState || inResizeFrameInfoState ) {
+                    GUIUtility.hotControl = controlID;
+                    GUIUtility.keyboardControl = controlID;
+
+                    Repaint();
                     e.Use();
                 }
             }
