@@ -5,6 +5,8 @@
 // Description  : 
 // ======================================================================================
 
+//#define DUPLICATE_WHEN_PINGPONE
+
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
@@ -41,7 +43,7 @@ public class exSpriteAnimationClip : ScriptableObject {
         public exTextureInfo textureInfo; ///< the texture info used in this frame
         public int frames = 1;     ///< frame count
 
-        public FrameInfo ( exTextureInfo _textureInfo, int _frames ) {
+        public FrameInfo (exTextureInfo _textureInfo, int _frames) {
             textureInfo = _textureInfo;
             frames = _frames;
         }
@@ -53,6 +55,45 @@ public class exSpriteAnimationClip : ScriptableObject {
 
     [System.Serializable]
     public class EventInfo {
+
+        public class SearchComparer : IComparer<EventInfo> {
+            private static SearchComparer instance_;
+            private static int frame;
+            public static EventInfo BinarySearch (List<EventInfo> _list, int _frame) {
+                frame = _frame;
+                if (instance_ == null) {
+                    instance_ = new SearchComparer();
+                }
+                int index = _list.BinarySearch(null, instance_);
+                if (index >= 0) {
+                    return _list[index];
+                }
+                else {
+                    return null;
+                }
+            }
+            public int Compare (EventInfo _x, EventInfo _y) {
+                if (_x == null && _y == null) {
+                    return 0;
+                }
+                if (_x != null) {
+                    if (_x.frame > frame)
+                        return 1;
+                    else if (_x.frame < frame)
+                        return -1;
+                    else
+                        return 0;
+                }
+                else {
+                    if (frame > _y.frame)
+                        return 1;
+                    else if (frame < _y.frame)
+                        return -1;
+                    else
+                        return 0;
+                }
+            }
+        }
 
         // ------------------------------------------------------------------ 
         /// the type of the parameter
@@ -73,9 +114,45 @@ public class exSpriteAnimationClip : ScriptableObject {
         public string stringParam = ""; ///< the value of the string parameter
         public float floatParam = 0.0f; ///< the value of the float parameter
         public int intParam = -1; ///< the value of the int parameter
-        public bool boolParam = false; ///< the value of the boolean parameter
+        public bool boolParam { ///< the value of the boolean parameter
+            get {
+                return intParam != 0;
+            }
+            set {
+                intParam = value ? 1 : 0;
+            }
+        }
         public Object objectParam = null; ///< the value of the object parameter
         public SendMessageOptions msgOptions = SendMessageOptions.RequireReceiver; ///< the SendMessage option
+
+        // ------------------------------------------------------------------ 
+        /// Calls the method named methodName on every Component target game object.
+        // ------------------------------------------------------------------ 
+
+        public void Trigger (Component _target) {
+            if (methodName == "")
+                return;
+            switch (paramType) {
+            case ParamType.NONE:
+                _target.SendMessage(methodName, msgOptions);
+                break;
+            case ParamType.STRING:
+                _target.SendMessage(methodName, stringParam, msgOptions);
+                break;
+            case ParamType.FLOAT:
+                _target.SendMessage(methodName, floatParam, msgOptions);
+                break;
+            case ParamType.INT:
+                _target.SendMessage(methodName, intParam, msgOptions);
+                break;
+            case ParamType.BOOL:
+                _target.SendMessage(methodName, boolParam, msgOptions);
+                break;
+            case ParamType.OBJECT:
+                _target.SendMessage(methodName, objectParam, msgOptions);
+                break;
+            }
+        }
     }
 
     public WrapMode wrapMode = WrapMode.Once; ///< default wrap mode
@@ -227,201 +304,72 @@ public class exSpriteAnimationClip : ScriptableObject {
                           } );
     }
 
-    // // ------------------------------------------------------------------ 
-    // /// \param _spAnim send message to target _spAnim.gameObject
-    // /// \param _lastAnim last animation state
-    // /// \param _lastIndex last triggered event info index (-1 means from start)
-    // /// \param _start the start time in seconds 
-    // /// \param _delta the delta time in seconds
-    // /// \param _wrapMode  the wrap mode
-    // /// \return return the last triggered event index
-    // /// Trigger events locate between the start and start+_delta time span
-    // // ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    /// \param _target send message to target
+    /// \param _start the unwrapped start frame index
+    /// \param _end the unwrapped end frame index
+    /// \param _wrapMode the wrap mode
+    /// \param _totalFrame total frame count cached by caller
+    /// Trigger events locate between the start and end frame
+    // ------------------------------------------------------------------ 
 
-    // public int TriggerEvents ( exSpriteAnimation _spAnim, 
-    //                            exSpriteAnimState _lastAnim,
-    //                            int _lastIndex,
-    //                            float _start, 
-    //                            float _delta, 
-    //                            WrapMode _wrapMode ) 
-    // {
-    //     if ( eventInfos.Count == 0 )
-    //         return -1;
-    //     if ( _delta == 0.0f )
-    //         return -1;
 
-    //     // WrapSeconds
-    //     float t = WrapSeconds(_start,_wrapMode); 
+    public void TriggerEvents (Component _target, int _start, float _end, WrapMode _wrapMode, int _totalFrame = -1) {
+        exDebug.Assert(_totalFrame == -1 || _totalFrame == GetTotalFrames());
+        
+        if (eventInfos.Count == 0)
+            return;
 
-    //     // if we are the just start playing
-    //     if ( _lastIndex == -1 ) {
-    //         return ForwardTriggerEvents ( _spAnim, _lastAnim, -1, t, t + _delta, true );
-    //     }
+        //get frame count
+        if (_totalFrame == -1) {
+            _totalFrame = GetTotalFrames();
+        }
 
-    //     //
-    //     if ( _wrapMode == WrapMode.PingPong ) {
-    //         int cnt = (int)(_start/length);
-    //         if ( cnt % 2 == 1 )
-    //             _delta = -_delta; 
-    //     }
+        bool triggerFinalEvent = false;
+#if DUPLICATE_WHEN_PINGPONE
+        bool hasSkippedFinalEvent = (wrapMode == WrapMode.Loop || wrapMode == WrapMode.PingPong);
+#else
+        bool hasSkippedFinalEvent = (wrapMode == WrapMode.Loop);
+#endif
+        if (hasSkippedFinalEvent) {
+            if (_start > 0 && _totalFrame != 0) {
+                int lastFrameWrappedIndex = exMath.Wrap(_start - 1, _totalFrame - 1, _wrapMode);
+                triggerFinalEvent = (lastFrameWrappedIndex == _totalFrame - 1);
+            }
+        }
 
-    //     // if we are play forward
-    //     if ( _delta > 0.0f ) {
-    //         if ( t + _delta > length ) {
-    //             if ( _wrapMode == WrapMode.Loop ) {
-    //                 float rest = t + _delta - length;
-    //                 ForwardTriggerEvents ( _spAnim, _lastAnim, _lastIndex, t, length, false );
-    //                 exSpriteAnimState curAnim = _spAnim.GetCurrentAnimation();
-    //                 if ( curAnim == null || _lastAnim != curAnim )
-    //                     return -1;
-    //                 return ForwardTriggerEvents ( _spAnim, _lastAnim, -1, 0.0f, rest, true );
-    //             }
-    //             else if ( _wrapMode == WrapMode.PingPong ) {
-    //                 float rest = t + _delta - length;
-    //                 ForwardTriggerEvents ( _spAnim, _lastAnim, _lastIndex, t, length, false );
-    //                 exSpriteAnimState curAnim = _spAnim.GetCurrentAnimation();
-    //                 if ( curAnim == null || _lastAnim != curAnim )
-    //                     return -1;
-    //                 return BackwardTriggerEvents ( _spAnim, _lastAnim, eventInfos.Count, length, length - rest, false );
-    //             }
-    //             else {
-    //                 return ForwardTriggerEvents ( _spAnim, _lastAnim, _lastIndex, t, t + _delta, false );
-    //             }
-    //         }
-    //         else {
-    //             return ForwardTriggerEvents ( _spAnim, _lastAnim, _lastIndex, t, t + _delta, false );
-    //         }
-    //     }
-    //     else {
-    //         if ( t + _delta < 0.0f ) {
-    //             if ( _wrapMode == WrapMode.Loop ) {
-    //                 float rest = 0.0f - (t + _delta);
-    //                 BackwardTriggerEvents ( _spAnim, _lastAnim, _lastIndex, t, 0.0f, false );
-    //                 exSpriteAnimState curAnim = _spAnim.GetCurrentAnimation();
-    //                 if ( curAnim == null || _lastAnim != curAnim )
-    //                     return -1;
-    //                 return BackwardTriggerEvents ( _spAnim, _lastAnim, eventInfos.Count, length, length - rest, true );
-    //             }
-    //             else if ( _wrapMode == WrapMode.PingPong ) {
-    //                 float rest = 0.0f - (t + _delta);
-    //                 BackwardTriggerEvents ( _spAnim, _lastAnim, _lastIndex, t, 0.0f, false );
-    //                 exSpriteAnimState curAnim = _spAnim.GetCurrentAnimation();
-    //                 if ( curAnim == null || _lastAnim != curAnim )
-    //                     return -1;
-    //                 return ForwardTriggerEvents ( _spAnim, _lastAnim, -1, 0.0f, rest, false );
-    //             }
-    //             else {
-    //                 return BackwardTriggerEvents ( _spAnim, _lastAnim, _lastIndex, t, t + _delta, false );
-    //             }
-    //         }
-    //         else {
-    //             return BackwardTriggerEvents ( _spAnim, _lastAnim, _lastIndex, t, t + _delta, false );
-    //         }
-    //     }
-    // }
-
-    // // ------------------------------------------------------------------ 
-    // // Desc: 
-    // // ------------------------------------------------------------------ 
-
-    // int ForwardTriggerEvents ( exSpriteAnimation _spAnim, 
-    //                            exSpriteAnimState _lastAnim,
-    //                            int _index, 
-    //                            float _start, 
-    //                            float _end, 
-    //                            bool _includeStart ) 
-    // {
-    //     int idx = _index;
-    //     exSpriteAnimState curAnim = _spAnim.GetCurrentAnimation();
-    //     for ( int i = _index+1; i < eventInfos.Count; ++i ) {
-    //         EventInfo ei = eventInfos[i];
-
-    //         if ( ei.frame == _start && _includeStart == false ) {
-    //             idx = i;
-    //             continue;
-    //         }
-
-    //         if ( ei.frame <= _end ) {
-    //             Trigger ( _spAnim, ei );
-    //             if ( curAnim == null || _lastAnim != curAnim )
-    //                 return -1;
-    //             idx = i;
-    //         }
-    //         else {
-    //             break;
-    //         }
-    //     }
-    //     return idx;
-    // }
-
-    // // ------------------------------------------------------------------ 
-    // // Desc: 
-    // // ------------------------------------------------------------------ 
-
-    // int BackwardTriggerEvents ( exSpriteAnimation _spAnim, 
-    //                             exSpriteAnimState _lastAnim,
-    //                             int _index, 
-    //                             float _start, 
-    //                             float _end,
-    //                             bool _includeStart )
-    // {
-    //     int idx = _index;
-    //     exSpriteAnimState curAnim = _spAnim.GetCurrentAnimation();
-    //     for ( int i = _index-1; i >= 0; --i ) {
-    //         EventInfo ei = eventInfos[i];
-
-    //         if ( ei.frame == _start && _includeStart == false ) {
-    //             idx = i;
-    //             continue;
-    //         }
-
-    //         if ( ei.frame >= _end ) {
-    //             Trigger ( _spAnim, ei );
-    //             if ( curAnim == null || _lastAnim != curAnim )
-    //                 return -1;
-    //             idx = i;
-    //         }
-    //         else {
-    //             break;
-    //         }
-    //     }
-    //     return idx;
-    // }
-
-    // // ------------------------------------------------------------------ 
-    // // Desc: 
-    // // ------------------------------------------------------------------ 
-
-    // void Trigger ( exSpriteAnimation _spAnim, EventInfo _eventInfo ) {
-
-    //     if ( _eventInfo.methodName == "" )
-    //         return;
-
-    //     switch ( _eventInfo.paramType ) {
-    //     case EventInfo.ParamType.NONE:
-    //         _spAnim.SendMessage ( _eventInfo.methodName, _eventInfo.msgOptions );
-    //         break;
-
-    //     case EventInfo.ParamType.STRING:
-    //         _spAnim.SendMessage ( _eventInfo.methodName, _eventInfo.stringParam, _eventInfo.msgOptions );
-    //         break;
-
-    //     case EventInfo.ParamType.FLOAT:
-    //         _spAnim.SendMessage ( _eventInfo.methodName, _eventInfo.floatParam, _eventInfo.msgOptions );
-    //         break;
-
-    //     case EventInfo.ParamType.INT:
-    //         _spAnim.SendMessage ( _eventInfo.methodName, _eventInfo.intParam, _eventInfo.msgOptions );
-    //         break;
-
-    //     case EventInfo.ParamType.BOOL:
-    //         _spAnim.SendMessage ( _eventInfo.methodName, _eventInfo.boolParam, _eventInfo.msgOptions );
-    //         break;
-
-    //     case EventInfo.ParamType.OBJECT:
-    //         _spAnim.SendMessage ( _eventInfo.methodName, _eventInfo.objectParam, _eventInfo.msgOptions );
-    //         break;
-    //     }
-    // }
+        for (int i = _start; i <= _end; ++i) {
+            if (triggerFinalEvent) {
+                triggerFinalEvent = false;
+                EventInfo finalEvent = EventInfo.SearchComparer.BinarySearch(eventInfos, _totalFrame);    // TODO: search same frame event
+                if (finalEvent != null) {
+                    finalEvent.Trigger(_target);
+                }
+                //if (_wrapMode == WrapMode.PingPong) {
+                //    eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, _totalFrame - 1);
+                //    if (eventInfo != null) {
+                //        eventInfo.Trigger(_target);
+                //    }
+                //}
+            }
+            int wrappedIndex;
+            if (_totalFrame != 0) {
+                if (wrapMode == WrapMode.Loop || wrapMode == WrapMode.PingPong) {
+                    wrappedIndex = exMath.Wrap(i, _totalFrame - 1, _wrapMode);
+                }
+                else {
+                    exDebug.Assert(i <= _totalFrame);
+                    wrappedIndex = i;
+                }
+            }
+            else {
+                wrappedIndex = 0;
+            }
+            EventInfo eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, wrappedIndex);
+            if (eventInfo != null) {
+                eventInfo.Trigger(_target);
+            }
+            triggerFinalEvent = hasSkippedFinalEvent && (wrappedIndex == _totalFrame - 1);
+        }
+    }
 }
-

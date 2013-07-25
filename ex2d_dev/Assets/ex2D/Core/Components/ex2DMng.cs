@@ -150,6 +150,7 @@ public class ex2DMng : MonoBehaviour {
                 layer.GenerateMeshes();
             }
         }
+        ResortLayerDepth();
     }
 
     // ------------------------------------------------------------------ 
