@@ -5,8 +5,6 @@
 // Description  : 
 // ======================================================================================
 
-#define DUPLICATE_WHEN_PINGPONE
-
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
@@ -119,35 +117,6 @@ public class exSpriteAnimationClip : ScriptableObject {
         }
         public Object objectParam = null; ///< the value of the object parameter
         public SendMessageOptions msgOptions = SendMessageOptions.RequireReceiver; ///< the SendMessage option
-
-        // ------------------------------------------------------------------ 
-        /// Calls the method named methodName on every Component target game object.
-        // ------------------------------------------------------------------ 
-
-        public void Trigger (Component _target) {
-            if (methodName == "")
-                return;
-            switch (paramType) {
-            case ParamType.None:
-                _target.SendMessage(methodName, msgOptions);
-                break;
-            case ParamType.String:
-                _target.SendMessage(methodName, stringParam, msgOptions);
-                break;
-            case ParamType.Float:
-                _target.SendMessage(methodName, floatParam, msgOptions);
-                break;
-            case ParamType.Int:
-                _target.SendMessage(methodName, intParam, msgOptions);
-                break;
-            case ParamType.Bool:
-                _target.SendMessage(methodName, boolParam, msgOptions);
-                break;
-            case ParamType.Object:
-                _target.SendMessage(methodName, objectParam, msgOptions);
-                break;
-            }
-        }
     }
 
     public WrapMode wrapMode = WrapMode.Once; ///< default wrap mode
@@ -297,124 +266,5 @@ public class exSpriteAnimationClip : ScriptableObject {
                             else
                                 return -1;
                           } );
-    }
-
-    // ------------------------------------------------------------------ 
-    /// \param _target send event messages to the target
-    /// \param _start the unwrapped start frame index
-    /// \param _end the unwrapped end frame index
-    /// \param _wrapMode the wrap mode
-    /// \param _totalFrame total frame count cached by caller
-    /// Trigger events locate between the start and end frame
-    // ------------------------------------------------------------------ 
-
-    public void TriggerEvents (Component _target, int _start, float _end, WrapMode _wrapMode, int _totalFrame = -1) {
-        exDebug.Assert(_totalFrame == -1 || _totalFrame == GetTotalFrames());
-        
-        if (eventInfos.Count == 0)
-            return;
-
-        //get frame count
-        if (_totalFrame == -1) {
-            _totalFrame = GetTotalFrames();
-        }
-
-        for (int i = _start; i <= _end; ++i) {
-            if (_totalFrame == 0) {
-                TriggerEvents(_target, 0, false);
-                continue;
-            }
-            int wrappedIndex;
-            bool reversed = false;
-            if (wrapMode == WrapMode.PingPong) {
-#if DUPLICATE_WHEN_PINGPONE
-                //wrappedIndex = exMath.Wrap(i, _totalFrame, _wrapMode);
-                int cnt = i / _totalFrame;
-                wrappedIndex = i % _totalFrame;
-                reversed = (cnt % 2 == 1);
-                if (reversed) {
-                    wrappedIndex = _totalFrame - wrappedIndex;
-                }
-#else
-                int cnt = (i - 1) / (_totalFrame - 1);
-                wrappedIndex = (i - 1) % (_totalFrame - 1) + 1;
-                bool skippedEndsEvent = (i > 1 && wrappedIndex == 1);
-                reversed = (cnt % 2 == 1);
-                if (reversed) {
-                    if (skippedEndsEvent) {
-                        TriggerEvents(_target, _totalFrame, true);
-                    }
-                    wrappedIndex = _totalFrame - wrappedIndex;
-                }
-                else {
-                    if (skippedEndsEvent) {
-                        TriggerEvents(_target, 0, false);
-                    }
-                }
-#endif
-            }
-            else if (wrapMode == WrapMode.Loop) {
-                wrappedIndex = exMath.Wrap(i, _totalFrame - 1, _wrapMode);
-                bool skippedFinalEvent = (i > 0 && wrappedIndex == 0);
-                if (skippedFinalEvent) {
-                    TriggerEvents(_target, _totalFrame, false);
-                }
-            }
-            else {
-                exDebug.Assert(i <= _totalFrame);
-                wrappedIndex = i;
-            }
-            TriggerEvents(_target, wrappedIndex, reversed);
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    /// \param _target send event messages to the target
-    /// \param _wrappedFrame the wrapped frame to trigger
-    /// \param _reversed reversed trigger order between same frame events
-    /// Trigger all events at the frame
-    // ------------------------------------------------------------------ 
-
-    private void TriggerEvents (Component _target, int _wrappedIndex, bool _reversed) {
-        //Debug.Log(string.Format("[TriggerEvents|exSpriteAnimationClip] _wrappedIndex: {0} " + _reversed, _wrappedIndex));
-        if (eventInfos.Count == 0) {
-            return;
-        }
-        if (_reversed) {
-            int searchStart = EventInfo.SearchComparer.BinarySearch(eventInfos, _wrappedIndex + 1);
-            if (searchStart < 0) {
-                searchStart = ~searchStart;
-                if (searchStart >= eventInfos.Count) {
-                    searchStart = eventInfos.Count - 1;
-                }
-            }
-            for (int i = searchStart; i >= 0; --i) {
-                EventInfo eventInfo = eventInfos[i];
-                if (eventInfo.frame == _wrappedIndex) {
-                    eventInfo.Trigger(_target);
-                }
-                else if (eventInfo.frame < _wrappedIndex) {
-                    break;
-                }
-            }
-        }
-        else {
-            int searchStart = EventInfo.SearchComparer.BinarySearch(eventInfos, _wrappedIndex - 1);
-            if (searchStart < 0) {
-                searchStart = ~searchStart;
-                if (searchStart >= eventInfos.Count) {
-                    return;
-                }
-            }
-            for (int i = searchStart; i < eventInfos.Count; ++i) {
-                EventInfo eventInfo = eventInfos[i];
-                if (eventInfo.frame == _wrappedIndex) {
-                    eventInfo.Trigger(_target);
-                }
-                else if (eventInfo.frame > _wrappedIndex) {
-                    break;
-                }
-            }
-        }
     }
 }
