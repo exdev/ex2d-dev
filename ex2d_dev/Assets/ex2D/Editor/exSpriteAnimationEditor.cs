@@ -334,6 +334,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void ConfirmRectSelection_FrameInfo ( FrameInfo _activeObj, FrameInfo[] _selectedObjs ) {
+        selectedEventInfos.Clear();
         selectedFrameInfos.Clear();
 
         // NOTE: use this way to make sure selectedFrameInfos is sorted by frame.
@@ -393,6 +394,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
     void ConfirmRectSelection_EventInfo ( EventInfo _activeObj, EventInfo[] _selectedObjs ) {
         selectedEventInfos.Clear();
+        selectedFrameInfos.Clear();
 
         // NOTE: use this way to make sure selectedEventInfos is sorted by frame.
         foreach ( EventInfo obj in _selectedObjs ) {
@@ -1276,14 +1278,14 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         if ( activeEventSelection ) {
             // TODO { 
-            // switch ( e.GetTypeForControl(controlID) ) {
-            // case EventType.MouseUp:
-            //     if ( activeEventSelection ) {
-            //         activeEventSelection = false;
-            //         // GUIUtility.hotControl = 0;
-            //     }
-            //     break;
-            // }
+            switch ( e.GetTypeForControl(controlID) ) {
+            case EventType.MouseUp:
+                if ( activeEventSelection ) {
+                    activeEventSelection = false;
+                    // GUIUtility.hotControl = 0;
+                }
+                break;
+            }
             // } TODO end 
 
             eventRectSelection.SetSelection(selectedEventInfos.ToArray());
