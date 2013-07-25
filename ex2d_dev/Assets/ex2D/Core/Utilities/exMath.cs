@@ -5,8 +5,6 @@
 // Description  : 
 // ======================================================================================
 
-//#define DUPLICATE_WHEN_PINGPONE
-
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
@@ -59,13 +57,8 @@ public static class exMath {
             return _value % (_maxValue + 1);
         }
         else if ( _wrapMode == WrapMode.PingPong ) {
-#if DUPLICATE_WHEN_PINGPONE
-            int cnt = _value / (_maxValue + 1);
-            _value %= (_maxValue + 1);
-#else
             int cnt = _value / _maxValue;
             _value %= (_maxValue);
-#endif
             if ( cnt % 2 == 1 ) {
                 return _maxValue - _value;
             }

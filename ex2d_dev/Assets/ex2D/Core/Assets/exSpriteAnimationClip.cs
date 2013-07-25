@@ -1,11 +1,11 @@
-// ======================================================================================
+﻿// ======================================================================================
 // File         : exSpriteAnimationClip.cs
 // Author       : Wu Jie 
 // Last Change  : 07/17/2013 | 10:19:03 AM | Wednesday,July
 // Description  : 
 // ======================================================================================
 
-//#define DUPLICATE_WHEN_PINGPONE
+#define DUPLICATE_WHEN_PINGPONE
 
 ///////////////////////////////////////////////////////////////////////////////
 // usings
@@ -74,6 +74,7 @@ public class exSpriteAnimationClip : ScriptableObject {
             }
             public int Compare (EventInfo _x, EventInfo _y) {
                 if (_x == null && _y == null) {
+                    exDebug.Assert(false, "Failed to trigger current event because event list contains null event.", false);
                     return 0;
                 }
                 if (_x != null) {
@@ -313,7 +314,6 @@ public class exSpriteAnimationClip : ScriptableObject {
     /// Trigger events locate between the start and end frame
     // ------------------------------------------------------------------ 
 
-
     public void TriggerEvents (Component _target, int _start, float _end, WrapMode _wrapMode, int _totalFrame = -1) {
         exDebug.Assert(_totalFrame == -1 || _totalFrame == GetTotalFrames());
         
@@ -325,37 +325,25 @@ public class exSpriteAnimationClip : ScriptableObject {
             _totalFrame = GetTotalFrames();
         }
 
-        bool triggerFinalEvent = false;
-#if DUPLICATE_WHEN_PINGPONE
-        bool hasSkippedFinalEvent = (wrapMode == WrapMode.Loop || wrapMode == WrapMode.PingPong);
-#else
-        bool hasSkippedFinalEvent = (wrapMode == WrapMode.Loop);
-#endif
-        if (hasSkippedFinalEvent) {
-            if (_start > 0 && _totalFrame != 0) {
-                int lastFrameWrappedIndex = exMath.Wrap(_start - 1, _totalFrame - 1, _wrapMode);
-                triggerFinalEvent = (lastFrameWrappedIndex == _totalFrame - 1);
-            }
-        }
-
         for (int i = _start; i <= _end; ++i) {
-            if (triggerFinalEvent) {
-                triggerFinalEvent = false;
-                EventInfo finalEvent = EventInfo.SearchComparer.BinarySearch(eventInfos, _totalFrame);    // TODO: search same frame event
-                if (finalEvent != null) {
-                    finalEvent.Trigger(_target);
-                }
-                //if (_wrapMode == WrapMode.PingPong) {
-                //    eventInfo = EventInfo.SearchComparer.BinarySearch(eventInfos, _totalFrame - 1);
-                //    if (eventInfo != null) {
-                //        eventInfo.Trigger(_target);
-                //    }
-                //}
-            }
             int wrappedIndex;
             if (_totalFrame != 0) {
-                if (wrapMode == WrapMode.Loop || wrapMode == WrapMode.PingPong) {
+                if (wrapMode == WrapMode.PingPong) {
+#if DUPLICATE_WHEN_PINGPONE
+                    wrappedIndex = exMath.Wrap(i, _totalFrame, _wrapMode);
+#else
                     wrappedIndex = exMath.Wrap(i, _totalFrame - 1, _wrapMode);
+#endif
+                }
+                else if (wrapMode == WrapMode.Loop) {
+                    wrappedIndex = exMath.Wrap(i, _totalFrame - 1, _wrapMode);
+                    bool skippedFinalEvent = (i > 0 && wrappedIndex == 0);
+                    if (skippedFinalEvent) {
+                        EventInfo finalEvent = EventInfo.SearchComparer.BinarySearch(eventInfos, _totalFrame);    // TODO: search same frame event
+                        if (finalEvent != null) {
+                            finalEvent.Trigger(_target);
+                        }
+                    }
                 }
                 else {
                     exDebug.Assert(i <= _totalFrame);
@@ -369,7 +357,30 @@ public class exSpriteAnimationClip : ScriptableObject {
             if (eventInfo != null) {
                 eventInfo.Trigger(_target);
             }
-            triggerFinalEvent = hasSkippedFinalEvent && (wrappedIndex == _totalFrame - 1);
         }
     }
+
+//    // ------------------------------------------------------------------ 
+//    // Desc: 
+//    // ------------------------------------------------------------------ 
+
+//    bool SkippedFinalEvent (int _frame, int _totalFrame, WrapMode _wrapMode) {
+//        if (_frame > 0 && _totalFrame > 0) {
+//            bool hasSkippedFinalEvent = (wrapMode == WrapMode.Loop);
+//            if (hasSkippedFinalEvent) {
+//                int lastFrameWrappedIndex = exMath.Wrap(_frame - 1, _totalFrame - 1, _wrapMode);
+//                return (lastFrameWrappedIndex == _totalFrame - 1);
+//            }
+//#if DUPLICATE_WHEN_PINGPONE
+//            else if (wrapMode == WrapMode.PingPong) {
+//                int wrappedIndex = exMath.Wrap(_frame, _totalFrame - 1, _wrapMode);
+//                if (wrappedIndex == _totalFrame - 1) {
+//                    int lastFrameWrappedIndex = exMath.Wrap(_frame - 1, _totalFrame - 1, _wrapMode);
+//                    return (lastFrameWrappedIndex == _totalFrame - 1);
+//                }
+//            }
+//#endif
+//        }
+//        return false;
+//    }
 }
