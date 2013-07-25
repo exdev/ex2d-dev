@@ -5,6 +5,8 @@
 // Description  : The exSpriteAnimation component
 // ======================================================================================
 
+#define DUPLICATE_WHEN_PINGPONE
+
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
@@ -96,7 +98,25 @@ public class exSpriteAnimationState {
     public int GetCurrentIndex() {
         if (totalFrames > 1) {
             frame = (int) (time * clip.frameRate);
-            int wrappedIndex = exMath.Wrap(frame, totalFrames - 1, wrapMode);
+            if (frame < 0) {
+                frame = -frame;
+            }
+            int wrappedIndex;
+#if DUPLICATE_WHEN_PINGPONE
+            if (wrapMode != WrapMode.PingPong) {
+                wrappedIndex = exMath.Wrap(frame, totalFrames - 1, wrapMode);
+            }
+            else {
+                wrappedIndex = frame;
+                int cnt = wrappedIndex / totalFrames;
+                wrappedIndex %= totalFrames;
+                if ( cnt % 2 == 1 ) {
+                    wrappedIndex = totalFrames - 1 - wrappedIndex;
+                }
+            }
+#else
+            wrappedIndex = exMath.Wrap(frame, totalFrames - 1, wrapMode);
+#endif
             int frameInfoIndex = System.Array.BinarySearch(frameInfoFrames, wrappedIndex + 1);
             if (frameInfoIndex < 0) {
                 frameInfoIndex = ~frameInfoIndex;
@@ -503,16 +523,15 @@ public class exSpriteAnimation : MonoBehaviour {
                 curAnimation.clip.TriggerEvents(this, eventStartIndex, curAnimation.frame, curAnimation.wrapMode, curAnimation.totalFrames);
                 lastFrameIndex = curAnimation.frame;
             }
-            //Debug.Log("curAnimation.frame: " + curAnimation.frame + " " + Time.frameCount);
             
             // check if stop
             if (curAnimation.wrapMode == WrapMode.Once ||
-                curAnimation.wrapMode == WrapMode.Default)
+                curAnimation.wrapMode == WrapMode.Default ||
+                curAnimation.wrapMode == WrapMode.ClampForever)
             {
                 if ((curAnimation.speed > 0.0f && curAnimation.frame >= curAnimation.totalFrames) ||
                     (curAnimation.speed < 0.0f && curAnimation.frame < 0))
                 {
-                    //Debug.Log("stop");
                     Stop();
                     return;
                 }
