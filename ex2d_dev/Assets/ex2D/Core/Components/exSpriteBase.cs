@@ -280,7 +280,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
                 else {
                     exSpriteBase parentSprite = parentTransform.GetComponent<exSpriteBase>();
                     if (parentSprite != null) {
-                        SetLayer(parentSprite.layer_);
+                        //SetLayer(parentSprite.layer_); 父物体会负责同步子物体的layer
                         return;
                     }
                     else {
