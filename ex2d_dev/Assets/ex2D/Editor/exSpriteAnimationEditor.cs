@@ -91,6 +91,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
     List<int> oldSelectedEventFrames = new List<int>();
     int draggingEventInfoOldFrame = 0;
 
+    // 
+    int infoEditorIndex = 0;
+
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
     ///////////////////////////////////////////////////////////////////////////////
@@ -239,10 +242,22 @@ partial class exSpriteAnimationEditor : EditorWindow {
             GUILayout.Space(30);
 
             // frame info edit field or event info edit field
-            if ( selectedEventInfos.Count == 0 )
-                FrameInfoEditField();
-            else
-                EventInfoEditField();
+            GUILayout.BeginVertical();
+                if ( selectedFrameInfos.Count > 0 )
+                    infoEditorIndex = 0;
+                else if ( selectedEventInfos.Count > 0 )
+                    infoEditorIndex = 1;
+
+                string[] toolbarStrings = new string[] {"FrameInfo List", "EventInfo List"};
+                infoEditorIndex = GUILayout.Toolbar( infoEditorIndex, toolbarStrings, new GUILayoutOption[] { 
+                                                        GUILayout.Width(200),
+                                                     } );
+
+                if ( infoEditorIndex == 0 )
+                    FrameInfoEditField();
+                else
+                    EventInfoEditField();
+            GUILayout.EndVertical();
 
             GUILayout.EndHorizontal();
 
@@ -1071,11 +1086,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
     void FrameInfoEditField () {
         GUILayout.BeginVertical();
 
-        GUIStyle style = new GUIStyle();
-        style.fontStyle = FontStyle.Bold;
-        style.normal.textColor = Color.yellow;
-        GUILayout.Label( "FrameInfo List", style );
-
         EditorGUILayout.Space();
 
         // total frames
@@ -1148,11 +1158,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
     void EventInfoEditField () {
         GUILayout.BeginVertical();
-
-        GUIStyle style = new GUIStyle();
-        style.fontStyle = FontStyle.Bold;
-        style.normal.textColor = new Color(0.3f, 0.55f, 0.95f, 1f);
-        GUILayout.Label( "EventInfo List", style );
 
         EditorGUILayout.Space();
 
