@@ -259,20 +259,39 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         exDebug.Assert(visible == false);
         exDebug.Assert(isInIndexBuffer == false);
     }
+
+#if UNITY_EDITOR
     
+    // Allows drag & dropping of this sprite onto layer in the editor
     void LateUpdate () {
-        if (ReferenceEquals(layer_, null)) {
-            // check whether this sprite becomes any layer's child
+        if (UnityEditor.EditorApplication.isPlaying == false) {
+            // Run through the parents and see if this sprite attached to a layer
             Transform parentTransform = cachedTransform.parent;
-            if (parentTransform != null) {
-                exLayer parentLayer = parentTransform.GetComponent<exLayer>();
+			while (parentTransform != null) {
+				exLayer parentLayer = parentTransform.GetComponent<exLayer>();
                 if (parentLayer != null) {
-                    parentLayer.Add(this);
+                    // Checks to ensure that the sprite is still parented to the right layer
+                    SetLayer(parentLayer);
+                    return;
                 }
-            }
+                else {
+                    exSpriteBase parentSprite = parentTransform.GetComponent<exSpriteBase>();
+                    if (parentSprite != null) {
+                        SetLayer(parentSprite.layer_);
+                        return;
+                    }
+                    else {
+                        parentTransform = parentTransform.parent;
+                    }
+                }
+			}
+            // No parent
+            SetLayer(null);
         }
     }
-    
+
+#endif    
+
     // ------------------------------------------------------------------ 
     /// Compare sprites by depth and index
     // ------------------------------------------------------------------ 
@@ -315,7 +334,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // ------------------------------------------------------------------ 
     
     public void SetLayer (exLayer _layer = null) {
-        if (layer_ == _layer) {
+        if (ReferenceEquals(layer_, _layer)) {
             return;
         }
         //bool isInited = (cachedTransform != null);
@@ -401,24 +420,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     public void UpdateTransform () {
         if (cachedTransform.hasChanged) {
             cachedTransform.hasChanged = false;
-            Transform parentTransform = cachedTransform.parent;
-            if (parentTransform != null) {
-                exLayer parentLayer = parentTransform.GetComponent<exLayer>();
-                if (parentLayer != null) {
-                    if (layer_ != parentLayer) {
-                        // parent changed
-                        SetLayer(parentLayer);
-                        return;
-                    }
-                }
-                else {
-                    // TODO: 如果首个父物体不是sprite而是Layer
-                }
-                updateFlags |= exUpdateFlags.Vertex;
-            }
-            else if (layer_ != null){
-                layer_.Remove(this);
-            }
+            updateFlags |= exUpdateFlags.Vertex;
         }
     }
 }

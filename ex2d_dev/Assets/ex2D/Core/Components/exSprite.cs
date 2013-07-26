@@ -125,7 +125,6 @@ public class exSprite : exSpriteBase {
             }
             return material_;
         }
-        // TODO: if shader changed, update layer
     }
 
     public override bool customSize {
