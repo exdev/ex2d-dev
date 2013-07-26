@@ -48,6 +48,25 @@ public static class MenuItems {
         exGenericAssetUtility<exSpriteAnimationClip>.CreateInCurrentDirectory ("New SpriteAnimationClip");
     }
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("Assets/Create/ex2D/Bitmap Font", false, 1003)]
+    static void ex2D_CreateBitmapFont () {
+        // TODO { 
+        exBitmapFont bitmapFont = exGenericAssetUtility<exBitmapFont>.Create ( "Assets/", "new test" );
+        exTextureInfo textureInfo = null;
+        textureInfo = ScriptableObject.CreateInstance<exTextureInfo>();
+        textureInfo.name = "Hello World";
+
+        bitmapFont.textureInfos.Add(textureInfo);
+        AssetDatabase.AddObjectToAsset( textureInfo, bitmapFont );
+
+        AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(bitmapFont) );
+        // } TODO end 
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Window
     ///////////////////////////////////////////////////////////////////////////////
