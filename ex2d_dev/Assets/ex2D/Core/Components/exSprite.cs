@@ -247,11 +247,7 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     public override Rect GetAABoundingRect () {
-        List<Vector3> vertices = new List<Vector3>(vertexCount);    // TODO: use global static temp List instead
-        for (int i = 0; i < vertexCount; ++i) {
-            vertices.Add(new Vector3());
-        }
-        UpdateVertexBuffer(vertices, 0);
+        Vector3[] vertices = GetVertices();
         Rect boundingRect = new Rect();
         boundingRect.x = vertices[0].x;
         boundingRect.y = vertices[0].y;
@@ -278,9 +274,12 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     public override Vector3[] GetVertices () {
-        List<Vector3> vertices = new List<Vector3>(vertexCount);
+        List<Vector3> vertices = new List<Vector3>(vertexCount);    // TODO: use global static temp List instead
         for (int i = 0; i < vertexCount; ++i) {
             vertices.Add(new Vector3());
+        }
+        if (cachedTransform.hasChanged == false) {
+            cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
         }
         UpdateVertexBuffer(vertices, 0);
         return vertices.ToArray();
@@ -305,8 +304,8 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
     
     void UpdateVertexBuffer (List<Vector3> _vertices, int _startIndex) {
-        float anchorOffsetX = 0.0f;
-        float anchorOffsetY = 0.0f;
+        float anchorOffsetX;
+        float anchorOffsetY;
         float halfWidth = width * 0.5f;
         float halfHeight = height * 0.5f;
 
@@ -378,14 +377,13 @@ public class exSprite : exSpriteBase {
         anchorOffsetX += offset_.x;
         anchorOffsetY += offset_.y;
 
-        Matrix4x4 l2w = cachedTransform.localToWorldMatrix;   // TODO: 把l2w缓存起来速度更快，其它地方也用的到
-                                                              // TODO: cache vertices before transform
         //v1 v2
         //v0 v3
-        Vector3 v0 = l2w.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
-        Vector3 v1 = l2w.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
-        Vector3 v2 = l2w.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
-        Vector3 v3 = l2w.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
+        exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
+        Vector3 v0 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
+        Vector3 v1 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
+        Vector3 v2 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
+        Vector3 v3 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
 
         // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
         v0.z = 0;
@@ -396,7 +394,7 @@ public class exSprite : exSpriteBase {
         if (shear_.x != 0) {
             // 这里直接从matrix拿未计入rotation影响的scale，在已知matrix的情况下，速度比较快lossyScale了6倍。
             // 在有rotation时，shear本来就会有冲突，所以这里不需要lossyScale。
-            float worldScaleY = (new Vector3(l2w.m01, l2w.m11, l2w.m21)).magnitude;
+            float worldScaleY = (new Vector3(cachedWorldMatrix.m01, cachedWorldMatrix.m11, cachedWorldMatrix.m21)).magnitude;
             float offsetX = worldScaleY * shear_.x;
             float topOffset = offsetX * (halfHeight + anchorOffsetY);
             float botOffset = offsetX * (-halfHeight + anchorOffsetY);
@@ -406,7 +404,7 @@ public class exSprite : exSpriteBase {
             v3.x += botOffset;
         }
         if (shear_.y != 0) {
-            float worldScaleX = (new Vector3(l2w.m00, l2w.m10, l2w.m20)).magnitude;
+            float worldScaleX = (new Vector3(cachedWorldMatrix.m00, cachedWorldMatrix.m10, cachedWorldMatrix.m20)).magnitude;
             float offsetY = worldScaleX * shear_.y;
             float leftOffset = offsetY * (-halfWidth + anchorOffsetX);
             float rightOffset = offsetY * (halfWidth + anchorOffsetX);

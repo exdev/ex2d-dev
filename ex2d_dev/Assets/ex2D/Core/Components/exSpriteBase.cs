@@ -189,15 +189,18 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
     
-    [System.NonSerialized] private Transform cachedTransform_ = null;    
+    [System.NonSerialized] protected Transform cachedTransform_ = null;    
     public Transform cachedTransform {
         get {
             if (ReferenceEquals(cachedTransform_, null)) {
                 cachedTransform_ = transform;
+                cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
             }
             return cachedTransform_;
         }
     }
+
+    [System.NonSerialized] protected Matrix4x4 cachedWorldMatrix;
 
     [System.NonSerialized]
     protected exLayer layer_ = null;
@@ -390,6 +393,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
 
             int originalVertexBufferIndex = vertexBufferIndex;
             FillBuffers(_vertices, _uvs, colors);
+            UpdateTransform();
             UpdateBuffers(_vertices, _uvs, colors);
             vertexBufferIndex = originalVertexBufferIndex;
 
@@ -419,7 +423,8 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     
     public void UpdateTransform () {
         if (cachedTransform.hasChanged) {
-            cachedTransform.hasChanged = false;
+            cachedTransform_.hasChanged = false;
+            cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
             updateFlags |= exUpdateFlags.Vertex;
         }
     }
