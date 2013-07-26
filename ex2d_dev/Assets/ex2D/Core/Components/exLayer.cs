@@ -409,7 +409,7 @@ public class exLayer : MonoBehaviour
         AddToMesh(_sprite, sameDrawcallMesh);
         
         if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
-            _sprite.cachedTransform.parent = cachedTransform;
+            _sprite.cachedTransform.parent = cachedTransform_;
             // TODO: check child sprite
         }
     }
