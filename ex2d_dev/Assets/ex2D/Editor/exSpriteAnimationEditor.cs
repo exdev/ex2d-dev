@@ -499,6 +499,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
             if ( GUILayout.Button ( exEditorUtility.AddEventTexture(), EditorStyles.toolbarButton ) ) {
                 curEdit.AddEmptyEvent( curFrame );
+                curEdit.SortEvents();
                 EditorUtility.SetDirty(curEdit);
             }
 
@@ -1391,6 +1392,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     float xPos = e.mousePosition.x - _rect.x - offset;
                     int frame = Mathf.RoundToInt( (float)totalFrames * xPos/totalWidth );
                     curEdit.AddEmptyEvent(frame);
+                    curEdit.SortEvents();
 
                     Repaint();
                     e.Use();
