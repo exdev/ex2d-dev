@@ -682,10 +682,11 @@ public class exSpriteAnimation : MonoBehaviour {
 
     void Sample () {
         if (curAnimation != null) {
-            curIndex = curAnimation.GetCurrentIndex();
-            if (curIndex >= 0) {  // TODO: index changed ?
-                sprite.textureInfo = curAnimation.clip.frameInfos[curIndex].textureInfo;
+            int newIndex = curAnimation.GetCurrentIndex();
+            if (newIndex >= 0 && newIndex != curIndex) {
+                sprite.textureInfo = curAnimation.clip.frameInfos[newIndex].textureInfo;
             }
+            curIndex = newIndex;
         }
         else {
             curIndex = -1;
