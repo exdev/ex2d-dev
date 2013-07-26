@@ -257,14 +257,23 @@ public class exSpriteAnimationClip : ScriptableObject {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void SortEvents () {
-        eventInfos.Sort ( delegate ( EventInfo _x, EventInfo _y ) {
-                            if ( _x.frame > _y.frame )
-                                return 1;
-                            else if ( _x.frame == _y.frame )
-                                return 0;
-                            else
-                                return -1;
-                          } );
+#if UNITY_EDITOR
+    // NOTE: I only allow this used in editor, the stable sort is slow and cost heap alloc, it is used in editor to make sure move 
+    //       same frame event never flip which is caused if we use unstable-sort algorithm List.Sort
+    public void StableSortEvents () {
+        List<EventInfo> newList = new List<EventInfo>(); 
+        for ( int i = 0; i < eventInfos.Count; ++i ) {
+            EventInfo ei = eventInfos[i];
+            int insertPos = newList.Count;
+            for ( int j = 0; j < newList.Count; ++j ) {
+                if ( ei.frame < newList[j].frame ) {
+                    insertPos = j;
+                    break;
+                }
+            }
+            newList.Insert(insertPos,ei);
+        }
+        eventInfos = newList;
     }
+#endif
 }

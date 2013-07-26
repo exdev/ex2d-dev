@@ -90,6 +90,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
     List<int> oldResizeFrames = new List<int>();
     List<int> oldSelectedEventFrames = new List<int>();
     int draggingEventInfoOldFrame = 0;
+    List<Rect> eventInfoRects = new List<Rect>();
 
     // 
     int infoEditorIndex = 0;
@@ -295,6 +296,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         selectedFrameInfos.Clear();
         selectedEventInfos.Clear();
+        eventInfoRects.Clear();
     }
 
     // ------------------------------------------------------------------ 
@@ -389,22 +391,12 @@ partial class exSpriteAnimationEditor : EditorWindow {
     EventInfo[] PickRectObjects_EventInfo ( Rect _rect ) {
         List<EventInfo> objects = new List<EventInfo>();
 
-        float markerWidth = exEditorUtility.EventMarkerTexture().width; 
-        float markerHeight = exEditorUtility.EventMarkerTexture().height + 2.0f; 
-
-        for ( int i = 0; i < curEdit.eventInfos.Count; ++i ) {
-            EventInfo ei = curEdit.eventInfos[i];
-
-            float x = ((float)ei.frame/(float)totalFrames) * totalWidth;
-            Rect eventRect = new Rect ( x + eventInfoViewRect.x + timelineRect.x - markerWidth*0.5f,
-                                        eventInfoViewRect.y + timelineRect.y,
-                                        markerWidth,
-                                        markerHeight );
-
+        for ( int i = 0; i < eventInfoRects.Count; ++i ) {
+            Rect eventRect = eventInfoRects[i];
             if ( exGeometryUtility.RectRect_Contains( _rect, eventRect ) != 0 ||
                  exGeometryUtility.RectRect_Intersect( _rect, eventRect ) )
             {
-                objects.Add(ei);
+                objects.Add(curEdit.eventInfos[i]);
             }
         }
 
@@ -499,7 +491,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
             if ( GUILayout.Button ( exEditorUtility.AddEventTexture(), EditorStyles.toolbarButton ) ) {
                 curEdit.AddEmptyEvent( curFrame );
-                curEdit.SortEvents();
+                curEdit.StableSortEvents();
                 EditorUtility.SetDirty(curEdit);
             }
 
@@ -1330,29 +1322,69 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
     public void EventInfoHandle ( Rect _rect ) {
         // GUI.BeginGroup(_rect);
+        eventInfoRects.Clear();
         Rect myEventInfoViewRect = new Rect( _rect.x + eventInfoViewRect.x, 
                                              _rect.y + eventInfoViewRect.y,
                                              eventInfoViewRect.width,
                                              eventInfoViewRect.height );
 
-        List<Rect> eventInfoRects = new List<Rect>();
         List<int> selectedIdxList = new List<int>();
 
         float curX = _rect.x + offset;
         float yStart = _rect.y + eventInfoViewRect.y;
         float markerWidth = exEditorUtility.EventMarkerTexture().width; 
         float markerHeight = exEditorUtility.EventMarkerTexture().height + 2.0f; 
+        int lastFrame = -1;
+        int sameFrameCount = 0;
+        float unitFrameWidth = totalWidth/(float)totalFrames;
 
         for ( int i = 0; i < curEdit.eventInfos.Count; ++i ) {
             EventInfo ei = curEdit.eventInfos[i];
             float x = ((float)ei.frame/(float)totalFrames) * totalWidth;
 
-            Rect eventRect = new Rect ( curX + x - markerWidth*0.5f, yStart, markerWidth, markerHeight );
-            eventInfoRects.Add(eventRect);
-
             if ( selectedEventInfos.IndexOf(ei) != -1 ) {
                 selectedIdxList.Add(i);
             }
+
+            // process same frame event drawing
+            bool resetToZero = false;
+            if ( lastFrame == ei.frame ) {
+                ++sameFrameCount;
+            }
+            else {
+                resetToZero = true;
+            }
+            if ( resetToZero && sameFrameCount > 0 ) {
+                float delta = Mathf.Min ( unitFrameWidth/sameFrameCount, markerWidth );
+                float eventInfoOffset = delta;
+                for ( int j = eventInfoRects.Count-sameFrameCount; j < eventInfoRects.Count; ++j ) {
+                    eventInfoRects[j] = new Rect( eventInfoRects[j].x + eventInfoOffset,
+                                                  eventInfoRects[j].y,
+                                                  eventInfoRects[j].width,
+                                                  eventInfoRects[j].height );
+                    eventInfoOffset += delta;
+                }
+                sameFrameCount = 0;
+            }
+            lastFrame = ei.frame;
+
+            //
+            Rect eventRect = new Rect ( curX + x - markerWidth*0.5f, yStart, markerWidth, markerHeight );
+            eventInfoRects.Add(eventRect);
+        }
+
+        // process same frame event drawing ( after all )
+        if ( sameFrameCount > 0 ) {
+            float delta = Mathf.Min ( unitFrameWidth/sameFrameCount, markerWidth );
+            float eventInfoOffset = delta;
+            for ( int j = eventInfoRects.Count-sameFrameCount; j < eventInfoRects.Count; ++j ) {
+                eventInfoRects[j] = new Rect( eventInfoRects[j].x + eventInfoOffset,
+                                              eventInfoRects[j].y,
+                                              eventInfoRects[j].width,
+                                              eventInfoRects[j].height );
+                eventInfoOffset += delta;
+            }
+            sameFrameCount = 0;
         }
 
         //
@@ -1373,7 +1405,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
                 if ( selectedIdxList.IndexOf(i) != -1 ) {
                     if ( inDraggingEventInfoState )
-                        GUI.color = new Color(1.0f, 0.95f, 0.3f, 1f);
+                        GUI.color = Color.red;
                     else
                         GUI.color = new Color(0.3f, 0.55f, 0.95f, 1f);
                 }
@@ -1392,7 +1424,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     float xPos = e.mousePosition.x - _rect.x - offset;
                     int frame = Mathf.RoundToInt( (float)totalFrames * xPos/totalWidth );
                     curEdit.AddEmptyEvent(frame);
-                    curEdit.SortEvents();
+                    curEdit.StableSortEvents();
+                    EditorUtility.SetDirty (curEdit);
 
                     Repaint();
                     e.Use();
@@ -1436,8 +1469,12 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 GUIUtility.hotControl = 0;
                 inDraggingEventInfoState = false;
 
-                curEdit.SortEvents();
+                curEdit.StableSortEvents();
                 EditorUtility.SetDirty(curEdit); 
+
+                for ( int i = 0; i < selectedEventInfos.Count; ++i ) {
+                    oldSelectedEventFrames[i] = selectedEventInfos[i].frame;
+                }
 
                 Repaint();
                 e.Use();
@@ -1456,6 +1493,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     ei.frame = oldSelectedEventFrames[i] + deltaFrame;
                     ei.frame = System.Math.Min( System.Math.Max( ei.frame, 0 ), totalFrames );
                 }
+                curEdit.StableSortEvents();
 
                 Repaint();
                 e.Use();
