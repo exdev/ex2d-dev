@@ -347,6 +347,21 @@ public class exLayer : MonoBehaviour
         return null;
     }
     
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private exMesh CreateNewMesh (Material _mat) {
+        exMesh mesh = exMesh.Create(this);
+        mesh.material = _mat;
+        if (layerType == exLayerType.Dynamic) {
+            mesh.MarkDynamic();
+        }
+        meshList.Add(mesh);
+        ex2DMng.instance.ResortLayerDepth();
+        return mesh;
+    }
+    
 #if UNITY_EDITOR
 
     // ------------------------------------------------------------------ 
@@ -420,14 +435,8 @@ public class exLayer : MonoBehaviour
                     break;
                 }
             }
-            
             if (sameDrawcallMesh == null) {
-                sameDrawcallMesh = exMesh.Create(this);
-                sameDrawcallMesh.material = mat;
-                if (layerType == exLayerType.Dynamic) {
-                    sameDrawcallMesh.MarkDynamic();
-                }
-                meshList.Add(sameDrawcallMesh);
+                sameDrawcallMesh = CreateNewMesh(mat);
             }
             AddToMesh(sprite, sameDrawcallMesh);
         }
