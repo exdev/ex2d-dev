@@ -12,6 +12,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections;
+using System.IO;
 
 ///////////////////////////////////////////////////////////////////////////////
 // defines
@@ -54,15 +55,39 @@ public static class MenuItems {
 
     [MenuItem ("Assets/Create/ex2D/Bitmap Font", false, 1003)]
     static void ex2D_CreateBitmapFont () {
+        Object fontInfo = Selection.activeObject; // font info is a ".txt" or ".fnt" text file
+        string fontInfoPath = AssetDatabase.GetAssetPath(fontInfo);
+        bool isFontInfo = (Path.GetExtension(fontInfoPath) == ".txt" || 
+                           Path.GetExtension(fontInfoPath) == ".fnt");
+
+        // check if this is a font info
+        if ( isFontInfo == false ) {
+            Debug.LogError ( "The file you choose to parse is not a font-info file. Must be \".txt\", \".fnt\" file" );
+            return;
+        }
+
+        // check if the bitmapfont asset already exists
+        string dirPath = Path.GetDirectoryName(fontInfoPath);
+        string path = Path.Combine( dirPath, fontInfo.name + ".asset" );
+        FileInfo fileInfo = new FileInfo(path);
+        bool doCreate = false;
+        if ( fileInfo.Exists ) {
+            doCreate = EditorUtility.DisplayDialog( fontInfo.name + " already exists.",
+                                                    "Do you want to overwrite the old one?",
+                                                    "Yes", "No" );
+        }
+        if ( doCreate == false ) {
+            return;
+        }
+
         // TODO { 
-        exBitmapFont bitmapFont = exGenericAssetUtility<exBitmapFont>.Create ( "Assets/_test/", "New BitmapFont" );
-        exTextureInfo textureInfo = null;
-        textureInfo = ScriptableObject.CreateInstance<exTextureInfo>();
-        textureInfo.name = "Hello World";
-        AssetDatabase.AddObjectToAsset( textureInfo, bitmapFont );
+        exBitmapFont bitmapFont = exGenericAssetUtility<exBitmapFont>.Create ( dirPath, fontInfo.name );
+        // exTextureInfo textureInfo = null;
+        // textureInfo = ScriptableObject.CreateInstance<exTextureInfo>();
+        // textureInfo.name = "Hello World";
+        // AssetDatabase.AddObjectToAsset( textureInfo, bitmapFont );
 
         exBitmapFont.CharInfo charInfo = new exBitmapFont.CharInfo();
-        charInfo.textureInfo = textureInfo;
         bitmapFont.charInfos.Add(charInfo);
 
         AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(bitmapFont) );

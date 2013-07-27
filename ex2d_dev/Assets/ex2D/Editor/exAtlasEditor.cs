@@ -94,6 +94,18 @@ partial class exAtlasEditor : EditorWindow {
     void OnSelectionChange () {
         if ( lockCurEdit == false ) {
             exAtlas atlas = Selection.activeObject as exAtlas;
+            // DISABLE { 
+            // if ( atlas == null ) {
+            //     Object[] objs = AssetDatabase.LoadAllAssetsAtPath( AssetDatabase.GetAssetPath(Selection.activeObject) );
+            //     foreach ( Object obj in objs ) {
+            //         atlas = obj as exAtlas;
+            //         if ( atlas != null ) {
+            //             break;
+            //         }
+            //     }
+            // }
+            // } DISABLE end 
+
             if ( atlas != null && atlas != curEdit ) {
                 Edit (atlas);
                 return;
@@ -777,9 +789,11 @@ partial class exAtlasEditor : EditorWindow {
                             if ( i != -1 ) {
                                 curEdit.textureInfos.RemoveAt(i);
                                 curEdit.needRebuild = true;
-                                AssetDatabase.DeleteAsset( AssetDatabase.GetAssetPath(textureInfo) );
+                                // AssetDatabase.DeleteAsset( AssetDatabase.GetAssetPath(textureInfo) );
+                                Object.DestroyImmediate(textureInfo,true);
                             }
                         }
+                        AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(curEdit) );
                     AssetDatabase.StopAssetEditing();
                     selectedTextureInfos.Clear();
                     Repaint();
