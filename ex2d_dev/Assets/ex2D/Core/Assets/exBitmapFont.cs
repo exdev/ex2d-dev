@@ -30,9 +30,21 @@ public class exBitmapFont : ScriptableObject {
     public class CharInfo {
         public exTextureInfo textureInfo = null;
         public int id = -1;                ///< the character id 
-        public int xoffset = -1;           ///< the xoffset
-        public int yoffset = -1;           ///< the yoffset
-        public int xadvance = -1;          ///< the xadvance
+        public int xoffset {               ///< the xoffset
+            get {
+                return textureInfo.trim_x;
+            }
+        }
+        public int yoffset {               ///< the yoffset
+            get {
+                return textureInfo.trim_y;
+            }
+        }
+        public int xadvance {              ///< the xadvance
+            get {
+                return textureInfo.rawWidth - textureInfo.trim_x - textureInfo.width;
+            }
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
