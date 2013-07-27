@@ -173,7 +173,15 @@ public static class exAtlasUtility {
                 }
 
                 //
-                exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate( path, rawTexture.name );
+                // exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate( path, rawTexture.name );
+                exTextureInfo textureInfo = _atlas.GetTextureInfoByName (rawTexture.name);
+                if ( textureInfo == null ) {
+                    textureInfo = ScriptableObject.CreateInstance<exTextureInfo>();
+                    textureInfo.name = rawTexture.name;
+                    AssetDatabase.AddObjectToAsset( textureInfo, _atlas );
+                    AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(textureInfo) );
+                }
+
                 int result = 1;
                 if ( noToAll == false 
                   && string.IsNullOrEmpty(textureInfo.rawTextureGUID) == false 

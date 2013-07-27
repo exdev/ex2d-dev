@@ -28,22 +28,27 @@ public class exBitmapFont : ScriptableObject {
 
     [System.Serializable]
     public class CharInfo {
-        public exTextureInfo textureInfo = null;
         public int id = -1;                ///< the character id 
-        public int xoffset {               ///< the xoffset
-            get {
-                return textureInfo.trim_x;
-            }
-        }
-        public int yoffset {               ///< the yoffset
-            get {
-                return textureInfo.trim_y;
-            }
-        }
-        public int xadvance {              ///< the xadvance
-            get {
-                return textureInfo.rawWidth - textureInfo.trim_x - textureInfo.width;
-            }
+        public int x = -1;                 ///< the x pos
+        public int y = -1;                 ///< the y pos
+        public int width = -1;             ///< the width
+        public int height = -1;            ///< the height                          
+        public int xoffset = -1;           ///< the xoffset
+        public int yoffset = -1;           ///< the yoffset
+        public int xadvance = -1;          ///< the xadvance
+        public bool rotated = false;
+
+        public CharInfo () {}
+        public CharInfo ( CharInfo _c ) {
+            id = _c.id;
+            x = _c.x;
+            y = _c.y;
+            width = _c.width;
+            height = _c.height;
+            xoffset = _c.xoffset;
+            yoffset = _c.yoffset;
+            xadvance = _c.xadvance;
+            rotated = _c.rotated;
         }
     }
 

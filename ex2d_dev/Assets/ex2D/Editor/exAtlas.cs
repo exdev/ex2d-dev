@@ -139,6 +139,19 @@ public class exAtlas : ScriptableObject {
     // static
     ///////////////////////////////////////////////////////////////////////////////
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public exTextureInfo GetTextureInfoByName ( string _name ) {
+        for ( int i = 0; i < textureInfos.Count; ++i ) {
+            exTextureInfo textureInfo = textureInfos[i];
+            if ( textureInfo.name == _name )
+                return textureInfo;
+        }
+        return null;
+    }
+
     // a > b = 1, a < b = -1, a = b = 0
     // ------------------------------------------------------------------ 
     // Desc: 
