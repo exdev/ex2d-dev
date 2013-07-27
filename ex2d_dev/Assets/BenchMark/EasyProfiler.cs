@@ -40,4 +40,9 @@ public class EasyProfiler : MonoBehaviour {
         _testFunc();
         CpuProfilerEnd();
     }
+
+    [ContextMenu("Test")]
+    public void Test () {
+        StartCoroutine("Start");
+    }
 }
