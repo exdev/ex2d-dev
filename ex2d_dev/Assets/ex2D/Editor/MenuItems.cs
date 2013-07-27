@@ -55,13 +55,15 @@ public static class MenuItems {
     [MenuItem ("Assets/Create/ex2D/Bitmap Font", false, 1003)]
     static void ex2D_CreateBitmapFont () {
         // TODO { 
-        exBitmapFont bitmapFont = exGenericAssetUtility<exBitmapFont>.Create ( "Assets/", "new test" );
+        exBitmapFont bitmapFont = exGenericAssetUtility<exBitmapFont>.Create ( "Assets/_test/", "New BitmapFont" );
         exTextureInfo textureInfo = null;
         textureInfo = ScriptableObject.CreateInstance<exTextureInfo>();
         textureInfo.name = "Hello World";
-
-        bitmapFont.textureInfos.Add(textureInfo);
         AssetDatabase.AddObjectToAsset( textureInfo, bitmapFont );
+
+        exBitmapFont.CharInfo charInfo = new exBitmapFont.CharInfo();
+        charInfo.textureInfo = textureInfo;
+        bitmapFont.charInfos.Add(charInfo);
 
         AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(bitmapFont) );
         // } TODO end 

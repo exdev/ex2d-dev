@@ -19,5 +19,48 @@ using System.Collections.Generic;
 ///////////////////////////////////////////////////////////////////////////////
 
 public class exBitmapFont : ScriptableObject {
-    public List<exTextureInfo> textureInfos = new List<exTextureInfo>();
+
+    ///////////////////////////////////////////////////////////////////////////////
+    ///
+    /// A structure to descrip the character in the bitmap font 
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+
+    [System.Serializable]
+    public class CharInfo {
+        public exTextureInfo textureInfo = null;
+        public int id = -1;                ///< the character id 
+        public int xoffset = -1;           ///< the xoffset
+        public int yoffset = -1;           ///< the yoffset
+        public int xadvance = -1;          ///< the xadvance
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    ///
+    /// A structure to descrip the kerning between two character in the bitmap font 
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+
+    [System.Serializable]
+    public class KerningInfo {
+        public int first = -1;  ///< the id of first character 
+        public int second = -1; ///< the id of second character
+        public int amount = -1; ///< the amount of kerning
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // serialized fileds
+    ///////////////////////////////////////////////////////////////////////////////
+
+    public List<CharInfo> charInfos = new List<CharInfo>(); ///< the list of the character information
+    public List<KerningInfo> kernings = new List<KerningInfo>(); ///< the list of the kerning information 
+
+    public int lineHeight; ///< the space of the line
+    public int size;       ///< the size in pixel of the font 
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // internal fileds
+    ///////////////////////////////////////////////////////////////////////////////
+
+    protected Dictionary<int,CharInfo> idToCharInfo = null;
 }
