@@ -94,17 +94,18 @@ partial class exAtlasEditor : EditorWindow {
     void OnSelectionChange () {
         if ( lockCurEdit == false ) {
             exAtlas atlas = Selection.activeObject as exAtlas;
-            // DISABLE { 
-            // if ( atlas == null ) {
-            //     Object[] objs = AssetDatabase.LoadAllAssetsAtPath( AssetDatabase.GetAssetPath(Selection.activeObject) );
-            //     foreach ( Object obj in objs ) {
-            //         atlas = obj as exAtlas;
-            //         if ( atlas != null ) {
-            //             break;
-            //         }
-            //     }
-            // }
-            // } DISABLE end 
+            if ( atlas == null ) {
+                string path = AssetDatabase.GetAssetPath(Selection.activeObject);
+                if ( Path.GetExtension(path) == ".asset" ) {
+                    Object[] objs = AssetDatabase.LoadAllAssetsAtPath(path);
+                    foreach ( Object obj in objs ) {
+                        atlas = obj as exAtlas;
+                        if ( atlas != null ) {
+                            break;
+                        }
+                    }
+                }
+            }
 
             if ( atlas != null && atlas != curEdit ) {
                 Edit (atlas);
@@ -169,7 +170,6 @@ partial class exAtlasEditor : EditorWindow {
         //                                               GUILayout.Height(position.height-toolbarHeight) );
         // } DISABLE end 
         scrollPos = EditorGUILayout.BeginScrollView ( scrollPos );
-
             // atlas
             Object newAtlas = EditorGUILayout.ObjectField( "Atlas"
                                                            , curEdit
