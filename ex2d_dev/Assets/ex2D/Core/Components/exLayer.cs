@@ -175,23 +175,27 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void Remove (exSpriteBase _sprite) {
-        if (_sprite.layer != this) {
-            Debug.LogWarning("Sprite not in this layer.");
-            return;
+        exSpriteBase[] spritesToRemove = _sprite.GetComponentsInChildren<exSpriteBase>(true);
+        for (int i = 0; i < spritesToRemove.Length; ++i) {
+            exSpriteBase sprite = spritesToRemove[i];
+            if (sprite.layer != this) {
+                Debug.LogWarning("Sprite not in this layer.");
+                return;
+            }
+            exMesh mesh = GetMesh(sprite);
+            if (mesh != null) {
+                RemoveFromMesh(sprite, mesh);
+                sprite.layer = null;
+            }
+            else {
+                sprite.ResetLayerProperties();  //if mesh has been destroyed, just reset sprite
+            }
+            if (sprite.spriteIdInLayer == nextSpriteUniqueId - 1) {
+                --nextSpriteUniqueId;
+            }
+            sprite.spriteIdInLayer = 0;	
         }
-        // TODO: check child sprites
-        exMesh mesh = GetMesh(_sprite);
-        if (mesh != null) {
-            RemoveFromMesh(_sprite, mesh);
-            _sprite.layer = null;
-        }
-        else {
-            _sprite.ResetLayerProperties();  //if mesh has been destroyed, just reset sprite
-        }
-        if (_sprite.spriteIdInLayer == nextSpriteUniqueId - 1) {
-            --nextSpriteUniqueId;
-        }
-        _sprite.spriteIdInLayer = 0;
+        UpdateNowInEditMode();
     }
     
     // ------------------------------------------------------------------ 
@@ -412,6 +416,7 @@ public class exLayer : MonoBehaviour
             _sprite.cachedTransform.parent = cachedTransform_;
             // TODO: check child sprite
         }
+        UpdateNowInEditMode();
     }
 
     // ------------------------------------------------------------------ 
@@ -435,8 +440,6 @@ public class exLayer : MonoBehaviour
         
         exDebug.Assert(_mesh.vertices.Count == _mesh.uvs.Count, "uvs array needs to be the same size as the vertices array");
         exDebug.Assert(_mesh.vertices.Count == _mesh.colors32.Count, "colors32 array needs to be the same size as the vertices array");
-
-        UpdateNowInEditMode();
     }
     
     // ------------------------------------------------------------------ 
@@ -480,8 +483,6 @@ public class exLayer : MonoBehaviour
         exDebug.Assert(_sprite.indexBufferIndex == -1);
         exDebug.Assert(_mesh.vertices.Count == _mesh.uvs.Count, "uvs array needs to be the same size as the vertices array");
         exDebug.Assert(_mesh.vertices.Count == _mesh.colors32.Count, "colors32 array needs to be the same size as the vertices array");
-
-        UpdateNowInEditMode();
     }
     
     // ------------------------------------------------------------------ 
