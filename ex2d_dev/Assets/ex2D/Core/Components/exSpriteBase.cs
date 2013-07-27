@@ -270,8 +270,8 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         if (UnityEditor.EditorApplication.isPlaying == false) {
             // Run through the parents and see if this sprite attached to a layer
             Transform parentTransform = cachedTransform.parent;
-			while (parentTransform != null) {
-				exLayer parentLayer = parentTransform.GetComponent<exLayer>();
+            while (parentTransform != null) {
+                exLayer parentLayer = parentTransform.GetComponent<exLayer>();
                 if (parentLayer != null) {
                     // Checks to ensure that the sprite is still parented to the right layer
                     SetLayer(parentLayer);
@@ -280,14 +280,14 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
                 else {
                     exSpriteBase parentSprite = parentTransform.GetComponent<exSpriteBase>();
                     if (parentSprite != null) {
-                        //SetLayer(parentSprite.layer_); 父物体会负责同步子物体的layer
+                        SetLayer(parentSprite.layer_);
                         return;
                     }
                     else {
                         parentTransform = parentTransform.parent;
                     }
                 }
-			}
+            }
             // No parent
             SetLayer(null);
         }

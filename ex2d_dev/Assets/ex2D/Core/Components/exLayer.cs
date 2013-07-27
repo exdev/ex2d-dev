@@ -135,7 +135,8 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     /// Maintains meshes to render all sprites
     // ------------------------------------------------------------------ 
-
+ 
+    [ContextMenu("UpdateSprites")]
     public void UpdateSprites () {
         if (show_) {
             for (int m = meshList.Count - 1; m >= 0 ; --m) {
@@ -305,20 +306,22 @@ public class exLayer : MonoBehaviour
         }
         meshList.Clear();
     }
+    
+#if UNITY_EDITOR
 
     // ------------------------------------------------------------------ 
     /// To update scene view in edit mode immediately
-    /// 所有方法调用，及用作调用参数的表达式都不会被编译进*非*EX_DEBUG的版本
+    /// 所有方法调用，及用作调用参数的表达式都不会被编译进*非*UNITY_EDITOR的版本
     // ------------------------------------------------------------------ 
 
     [System.Diagnostics.Conditional("UNITY_EDITOR")]
     public void UpdateNowInEditMode () {
-#if UNITY_EDITOR
         if (UnityEditor.EditorApplication.isPlaying == false) {
             UpdateSprites();
         }
-#endif
     }
+
+#endif
     
     ///////////////////////////////////////////////////////////////////////////////
     // Internal Functions
@@ -343,7 +346,32 @@ public class exLayer : MonoBehaviour
         }
         return null;
     }
+    
+#if UNITY_EDITOR
 
+    // ------------------------------------------------------------------ 
+    /// To update scene view in edit mode immediately
+    /// 所有方法调用，及用作调用参数的表达式都不会被编译进*非*UNITY_EDITOR的版本
+    // ------------------------------------------------------------------ 
+
+    [System.Diagnostics.Conditional("UNITY_EDITOR")]
+    public void CheckDuplicated (exSpriteBase _sprite) {
+        Material mat = _sprite.material;
+        for (int i = meshList.Count - 1; i >= 0; --i) {
+            exMesh mesh = meshList[i];
+            if (mesh != null && mesh.material == mat ) {        // TODO: check depth
+                for (int j = 0; j < mesh.spriteList.Count; ++j) {
+                    if (_sprite.spriteIdInLayer == mesh.spriteList[j].spriteIdInLayer) {
+                        _sprite.spriteIdInLayer = -1;        //duplicated
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+#endif
+    
     // ------------------------------------------------------------------ 
     /// \param _newSprite 如果为true，则将sprite渲染到其它相同depth的sprite上面
     // ------------------------------------------------------------------ 
@@ -356,65 +384,55 @@ public class exLayer : MonoBehaviour
         if (oldLayer != null) {
             oldLayer.Remove(_sprite);
         }
-        Material mat = _sprite.material;
-        if (mat == null) {
-            Debug.LogError("no material assigned in sprite", _sprite);
-            return;
-        }
-        _sprite.layer = this;
-                
-#if UNITY_EDITOR
-        // Check duplicated
-        for (int i = meshList.Count - 1; i >= 0; --i) {
-            exMesh mesh = meshList[i];
-            if (mesh != null && mesh.material == mat ) {        // TODO: check depth
-                for (int j = 0; j < mesh.spriteList.Count; ++j) {
-                    if (_sprite.spriteIdInLayer == mesh.spriteList[j].spriteIdInLayer) {
-                        _sprite.spriteIdInLayer = -1;        //duplicated
-                        break;
-                    }
+        exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase>(true);
+        for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
+            exSpriteBase sprite = spritesToAdd[spriteIndex];
+            
+            Material mat = sprite.material;
+            if (mat == null) {
+                Debug.LogError("no material assigned in sprite", sprite);
+                return;
+            }
+            sprite.layer = this;
+                    
+            // Check sprite id
+            CheckDuplicated(sprite);
+            if (_newSprite || sprite.spriteIdInLayer == -1) {
+                sprite.spriteIdInLayer = nextSpriteUniqueId;
+                ++nextSpriteUniqueId;
+            }
+            else {
+                nextSpriteUniqueId = Mathf.Max(sprite.spriteIdInLayer + 1, nextSpriteUniqueId);
+            }
+    
+            // Find available mesh
+            // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
+            exMesh sameDrawcallMesh = null;
+            int maxVertexCount = (layerType == exLayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : MAX_STATIC_VERTEX_COUNT;
+            maxVertexCount -= sprite.vertexCount;
+            for (int i = meshList.Count - 1; i >= 0; --i) {
+                exMesh mesh = meshList[i];
+                if (mesh != null && mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
+                    //if (mesh.sortedSpriteList.Count > 0 && mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1].depth) {
+    
+                    //}
+                    sameDrawcallMesh = meshList[i];
+                    break;
                 }
             }
-        }
-#endif
-
-        if (_newSprite || _sprite.spriteIdInLayer == -1) {
-            _sprite.spriteIdInLayer = nextSpriteUniqueId;
-            ++nextSpriteUniqueId;
-        }
-        else {
-            nextSpriteUniqueId = Mathf.Max(_sprite.spriteIdInLayer + 1, nextSpriteUniqueId);
-        }
-
-        // Find available mesh
-        // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
-        exMesh sameDrawcallMesh = null;
-        int maxVertexCount = (layerType == exLayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : MAX_STATIC_VERTEX_COUNT;
-        maxVertexCount -= _sprite.vertexCount;
-        for (int i = meshList.Count - 1; i >= 0; --i) {
-            exMesh mesh = meshList[i];
-            if (mesh != null && mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
-                //if (mesh.sortedSpriteList.Count > 0 && mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1].depth) {
-
-                //}
-                sameDrawcallMesh = meshList[i];
-                break;
+            
+            if (sameDrawcallMesh == null) {
+                sameDrawcallMesh = exMesh.Create(this);
+                sameDrawcallMesh.material = mat;
+                if (layerType == exLayerType.Dynamic) {
+                    sameDrawcallMesh.MarkDynamic();
+                }
+                meshList.Add(sameDrawcallMesh);
             }
+            AddToMesh(sprite, sameDrawcallMesh);
         }
-        
-        if (sameDrawcallMesh == null) {
-            sameDrawcallMesh = exMesh.Create(this);
-            sameDrawcallMesh.material = mat;
-            if (layerType == exLayerType.Dynamic) {
-                sameDrawcallMesh.MarkDynamic();
-            }
-            meshList.Add(sameDrawcallMesh);
-        }
-        AddToMesh(_sprite, sameDrawcallMesh);
-        
         if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
             _sprite.cachedTransform.parent = cachedTransform_;
-            // TODO: check child sprite
         }
         UpdateNowInEditMode();
     }
