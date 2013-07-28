@@ -76,19 +76,6 @@ public class exSpriteAnimationState {
             totalFrames += clip.frameInfos[i].frames;
             frameInfoFrames[i] = totalFrames;
         }
-        //float unitSeconds = 1.0f / clip.frameRate;
-        //frameInfoTimes = new float[clip.frameInfos.Count];
-        //totalFrames = 0;
-        //for (int i = 0; i < clip.frameInfos.Count; ++i) {
-        //    totalFrames += clip.frameInfos[i].frames;
-        //    frameInfoTimes[i] = totalFrames * unitSeconds;
-        //}
-        //if (frameInfoTimes.Length > 0) {
-        //    length = frameInfoTimes[frameInfoTimes.Length - 1];
-        //}
-        //else {
-        //    length = 0.0f;
-        //}
     }
     
     // ------------------------------------------------------------------ 
@@ -117,7 +104,7 @@ public class exSpriteAnimationState {
 #else
             wrappedIndex = exMath.Wrap(frame, totalFrames - 1, wrapMode);
 #endif
-            int frameInfoIndex = System.Array.BinarySearch(frameInfoFrames, wrappedIndex + 1);
+            int frameInfoIndex = System.Array.BinarySearch(frameInfoFrames, wrappedIndex + 1);  //TODO: benchmark
             if (frameInfoIndex < 0) {
                 frameInfoIndex = ~frameInfoIndex;
                 exDebug.Assert(frameInfoIndex < frameInfoFrames.Length);
@@ -199,16 +186,19 @@ public class exSpriteAnimationState {
     // ------------------------------------------------------------------ 
 
     private void TriggerEvents (Component _target, int _wrappedIndex, bool _reversed) {
-        //Debug.Log(string.Format("[TriggerEvents|exSpriteAnimationClip] _wrappedIndex: {0} " + _reversed, _wrappedIndex));
         if (clip.eventInfos.Count == 0) {
             return;
         }
+        const int MIN_BINARY_SEARCH_COUNT = 30;
         if (_reversed) {
-            int searchStart = exSpriteAnimationClip.EventInfo.SearchComparer.BinarySearch(clip.eventInfos, _wrappedIndex + 1);
-            if (searchStart < 0) {
-                searchStart = ~searchStart;
-                if (searchStart >= clip.eventInfos.Count) {
-                    searchStart = clip.eventInfos.Count - 1;
+            int searchStart = clip.eventInfos.Count - 1;
+            if (clip.eventInfos.Count >= MIN_BINARY_SEARCH_COUNT) {
+                searchStart = exSpriteAnimationClip.EventInfo.SearchComparer.BinarySearch(clip.eventInfos, _wrappedIndex + 1);
+                if (searchStart < 0) {
+                    searchStart = ~searchStart;
+                    if (searchStart >= clip.eventInfos.Count) {
+                        searchStart = clip.eventInfos.Count - 1;
+                    }
                 }
             }
             for (int i = searchStart; i >= 0; --i) {
@@ -222,11 +212,11 @@ public class exSpriteAnimationState {
             }
         }
         else {
-            int searchStart = exSpriteAnimationClip.EventInfo.SearchComparer.BinarySearch(clip.eventInfos, _wrappedIndex - 1);
-            if (searchStart < 0) {
-                searchStart = ~searchStart;
-                if (searchStart >= clip.eventInfos.Count) {
-                    return;
+            int searchStart = 0;
+            if (clip.eventInfos.Count >= MIN_BINARY_SEARCH_COUNT) {
+                searchStart = exSpriteAnimationClip.EventInfo.SearchComparer.BinarySearch(clip.eventInfos, _wrappedIndex - 1);
+                if (searchStart < 0) {
+                    searchStart = ~searchStart;
                 }
             }
             for (int i = searchStart; i < clip.eventInfos.Count; ++i) {

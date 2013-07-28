@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 #pragma warning disable 0219
+#pragma warning disable 0162
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -88,4 +89,5 @@ public class TestBinarySearch : EasyProfiler {
     }
 }
 
+#pragma warning restore 0162
 #pragma warning restore 0219
