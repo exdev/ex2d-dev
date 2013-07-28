@@ -138,6 +138,7 @@ public static class exAtlasUtility {
         _progress( 0.1f, "Checking atlas directory" );
         if ( new DirectoryInfo(atlasAssetsDir).Exists == false ) {
             Directory.CreateDirectory (atlasAssetsDir);
+            AssetDatabase.ImportAsset (atlasAssetsDir);
         }
 
         // import textures used for atlas
@@ -264,6 +265,7 @@ public static class exAtlasUtility {
         _progress( 0.1f, "Checking atlas directory" );
         if ( new DirectoryInfo(atlasAssetsDir).Exists == false ) {
             Directory.CreateDirectory (atlasAssetsDir);
+            AssetDatabase.ImportAsset (atlasAssetsDir);
         }
 
         // texture info
@@ -331,6 +333,7 @@ public static class exAtlasUtility {
         _progress( 0.1f, "Checking atlas directory" );
         if ( new DirectoryInfo(atlasAssetsDir).Exists == false ) {
             Directory.CreateDirectory (atlasAssetsDir);
+            AssetDatabase.ImportAsset (atlasAssetsDir);
         }
 
         // destroy last built texture
