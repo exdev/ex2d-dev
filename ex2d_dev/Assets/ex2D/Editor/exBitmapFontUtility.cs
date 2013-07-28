@@ -123,7 +123,9 @@ public static class exBitmapFontUtility {
                 _bitmapFont.kernings.Add(kerningInfo);
             }
         }
+        reader.Close();
         _bitmapFont.rawFontGUID = exEditorUtility.AssetToGUID(_fontInfo);
+        EditorUtility.SetDirty(_bitmapFont);
 
         return true;
     }
