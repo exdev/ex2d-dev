@@ -69,6 +69,9 @@ public class exBitmapFont : ScriptableObject {
     // serialized fileds
     ///////////////////////////////////////////////////////////////////////////////
 
+    public string rawFontGUID = "";
+    public Texture2D texture; ///< the atlas or raw texture
+
     public List<CharInfo> charInfos = new List<CharInfo>(); ///< the list of the character information
     public List<KerningInfo> kernings = new List<KerningInfo>(); ///< the list of the kerning information 
 
@@ -80,4 +83,21 @@ public class exBitmapFont : ScriptableObject {
     ///////////////////////////////////////////////////////////////////////////////
 
     protected Dictionary<int,CharInfo> idToCharInfo = null;
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // functions
+    ///////////////////////////////////////////////////////////////////////////////
+
+    public void Reset () {
+        rawFontGUID = "";
+        texture = null;
+
+        charInfos.Clear();
+        kernings.Clear();
+
+        lineHeight = 0;
+        size = 0;
+
+        idToCharInfo = null;
+    }
 }

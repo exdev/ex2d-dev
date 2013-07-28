@@ -70,7 +70,7 @@ public static class MenuItems {
         string dirPath = Path.GetDirectoryName(fontInfoPath);
         string path = Path.Combine( dirPath, fontInfo.name + ".asset" );
         FileInfo fileInfo = new FileInfo(path);
-        bool doCreate = false;
+        bool doCreate = true;
         if ( fileInfo.Exists ) {
             doCreate = EditorUtility.DisplayDialog( fontInfo.name + " already exists.",
                                                     "Do you want to overwrite the old one?",
@@ -80,18 +80,16 @@ public static class MenuItems {
             return;
         }
 
-        // TODO { 
-        exBitmapFont bitmapFont = exGenericAssetUtility<exBitmapFont>.Create ( dirPath, fontInfo.name );
-        // exTextureInfo textureInfo = null;
-        // textureInfo = ScriptableObject.CreateInstance<exTextureInfo>();
-        // textureInfo.name = "Hello World";
-        // AssetDatabase.AddObjectToAsset( textureInfo, bitmapFont );
-
-        exBitmapFont.CharInfo charInfo = new exBitmapFont.CharInfo();
-        bitmapFont.charInfos.Add(charInfo);
+        // parse the bitmap font
+        exBitmapFont bitmapFont = exGenericAssetUtility<exBitmapFont>.LoadExistsOrCreate ( dirPath, fontInfo.name );
+        bool result = exBitmapFontUtility.Parse ( bitmapFont, fontInfo );
+        if ( result == false ) {
+            AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(bitmapFont));
+            return;
+        }
 
         AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(bitmapFont) );
-        // } TODO end 
+        Selection.activeObject = bitmapFont;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
