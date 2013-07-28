@@ -37,15 +37,17 @@ class ex2DPreferencesWindow : ScriptableWizard {
 
         EditorGUI.indentLevel++;
 
-        // ======================================================== 
-        // atlas build path
-        // ======================================================== 
+        // DISABLE { 
+        // // ======================================================== 
+        // // atlas build path
+        // // ======================================================== 
 
-        string newAtlasBuildPath = EditorGUILayout.TextField ( "Atlas Build Path", EditorPrefs.GetString( ex2DEditor.atlasBuildPathKey, ex2DEditor.atlasBuildPath ) );
-        if ( newAtlasBuildPath != ex2DEditor.atlasBuildPath ) {
-            ex2DEditor.atlasBuildPath = newAtlasBuildPath;
-            EditorPrefs.SetString( ex2DEditor.atlasBuildPathKey, ex2DEditor.atlasBuildPath );
-        }
+        // string newAtlasBuildPath = EditorGUILayout.TextField ( "Atlas Build Path", EditorPrefs.GetString( ex2DEditor.atlasBuildPathKey, ex2DEditor.atlasBuildPath ) );
+        // if ( newAtlasBuildPath != ex2DEditor.atlasBuildPath ) {
+        //     ex2DEditor.atlasBuildPath = newAtlasBuildPath;
+        //     EditorPrefs.SetString( ex2DEditor.atlasBuildPathKey, ex2DEditor.atlasBuildPath );
+        // }
+        // } DISABLE end 
 
         // ======================================================== 
         // EX_DEBUG macro

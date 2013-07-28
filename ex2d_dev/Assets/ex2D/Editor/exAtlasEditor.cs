@@ -94,18 +94,20 @@ partial class exAtlasEditor : EditorWindow {
     void OnSelectionChange () {
         if ( lockCurEdit == false ) {
             exAtlas atlas = Selection.activeObject as exAtlas;
-            if ( atlas == null ) {
-                string path = AssetDatabase.GetAssetPath(Selection.activeObject);
-                if ( Path.GetExtension(path) == ".asset" ) {
-                    Object[] objs = AssetDatabase.LoadAllAssetsAtPath(path);
-                    foreach ( Object obj in objs ) {
-                        atlas = obj as exAtlas;
-                        if ( atlas != null ) {
-                            break;
-                        }
-                    }
-                }
-            }
+            // DISABLE: AddObjectToAsset { 
+            // if ( atlas == null ) {
+            //     string path = AssetDatabase.GetAssetPath(Selection.activeObject);
+            //     if ( Path.GetExtension(path) == ".asset" ) {
+            //         Object[] objs = AssetDatabase.LoadAllAssetsAtPath(path);
+            //         foreach ( Object obj in objs ) {
+            //             atlas = obj as exAtlas;
+            //             if ( atlas != null ) {
+            //                 break;
+            //             }
+            //         }
+            //     }
+            // }
+            // } DISABLE end 
 
             if ( atlas != null && atlas != curEdit ) {
                 Edit (atlas);
@@ -317,6 +319,22 @@ partial class exAtlasEditor : EditorWindow {
                                                             } );
             if ( EditorGUI.EndChangeCheck() ) {
                 EditorUtility.SetDirty(curEdit);
+            }
+
+            // ======================================================== 
+            // Sync 
+            // ======================================================== 
+
+            EditorGUILayout.Space();
+            if ( GUILayout.Button( "Sync", EditorStyles.toolbarButton ) ) {
+                try {
+                    exAtlasUtility.Sync( curEdit, (_progress, _info) => {
+                                            EditorUtility.DisplayProgressBar( "Syncing Atlas...", _info, _progress );
+                                          } );
+                }
+                finally {
+                    EditorUtility.ClearProgressBar();    
+                }
             }
 
             // ======================================================== 
@@ -789,8 +807,8 @@ partial class exAtlasEditor : EditorWindow {
                             if ( i != -1 ) {
                                 curEdit.textureInfos.RemoveAt(i);
                                 curEdit.needRebuild = true;
-                                // AssetDatabase.DeleteAsset( AssetDatabase.GetAssetPath(textureInfo) );
-                                Object.DestroyImmediate(textureInfo,true);
+                                AssetDatabase.DeleteAsset( AssetDatabase.GetAssetPath(textureInfo) );
+                                // Object.DestroyImmediate(textureInfo,true); // DISABLE: AddObjectToAsset
                             }
                         }
                         AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(curEdit) );

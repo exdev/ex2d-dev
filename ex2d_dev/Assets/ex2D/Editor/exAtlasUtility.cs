@@ -132,14 +132,13 @@ public static class exAtlasUtility {
 
     public static void ImportObjects ( exAtlas _atlas, Object[] _objects, System.Action<float,string> _progress ) {
 
-        // DELME { 
+        string atlasAssetsDir = Path.Combine( Path.GetDirectoryName (AssetDatabase.GetAssetPath(_atlas)), _atlas.name  );
+
         // check if create atlas directory
-        // _progress( 0.1f, "Checking atlas directory" );
-        // string path = Path.Combine ( ex2DEditor.atlasBuildPath, _atlas.name ); 
-        // if ( new DirectoryInfo(path).Exists == false ) {
-        //     Directory.CreateDirectory (path);
-        // }
-        // } DELME end 
+        _progress( 0.1f, "Checking atlas directory" );
+        if ( new DirectoryInfo(atlasAssetsDir).Exists == false ) {
+            Directory.CreateDirectory (atlasAssetsDir);
+        }
 
         // import textures used for atlas
         _progress( 0.2f, "Setup texture for atlas" );
@@ -176,14 +175,16 @@ public static class exAtlasUtility {
                 }
 
                 //
-                // exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate( path, rawTexture.name );
-                exTextureInfo textureInfo = _atlas.GetTextureInfoByName (rawTexture.name);
-                if ( textureInfo == null ) {
-                    textureInfo = ScriptableObject.CreateInstance<exTextureInfo>();
-                    textureInfo.name = rawTexture.name;
-                    AssetDatabase.AddObjectToAsset( textureInfo, _atlas );
-                    AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(textureInfo) );
-                }
+                exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate( atlasAssetsDir, rawTexture.name );
+                // DISABLE: AddObjectToAsset { 
+                // exTextureInfo textureInfo = _atlas.GetTextureInfoByName (rawTexture.name);
+                // if ( textureInfo == null ) {
+                //     textureInfo = ScriptableObject.CreateInstance<exTextureInfo>();
+                //     textureInfo.name = rawTexture.name;
+                //     AssetDatabase.AddObjectToAsset( textureInfo, _atlas );
+                //     AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(textureInfo) );
+                // }
+                // } DISABLE end 
 
                 int result = 1;
                 if ( noToAll == false 
@@ -256,17 +257,81 @@ public static class exAtlasUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public static void Sync ( exAtlas _atlas, System.Action<float,string> _progress ) {
+        string atlasAssetsDir = Path.Combine( Path.GetDirectoryName (AssetDatabase.GetAssetPath(_atlas)), _atlas.name  );
+
+        // check if create atlas directory
+        _progress( 0.1f, "Checking atlas directory" );
+        if ( new DirectoryInfo(atlasAssetsDir).Exists == false ) {
+            Directory.CreateDirectory (atlasAssetsDir);
+        }
+
+        // texture info
+        _progress( 0.4f, "Syncing texture infos" );
+        AssetDatabase.StartAssetEditing();
+        for ( int i = 0; i < _atlas.textureInfos.Count; ++i ) {
+            exTextureInfo textureInfo = _atlas.textureInfos[i]; 
+            string textureInfoPath = AssetDatabase.GetAssetPath(textureInfo);
+            // string textureInfoDir = Path.GetDirectoryName (textureInfoPath);
+
+            string rawTexturePath = AssetDatabase.GUIDToAssetPath(textureInfo.rawTextureGUID);
+            string rawTextureName = Path.GetFileNameWithoutExtension(rawTexturePath);
+
+            string expectPath = Path.Combine( atlasAssetsDir, rawTextureName + ".asset" );
+            if ( textureInfoPath != expectPath ) {
+                bool doMove = true;
+                FileInfo fileInfo = new FileInfo(expectPath);
+                if ( fileInfo.Exists ) {
+                    doMove = EditorUtility.DisplayDialog( "Texture Info " + rawTextureName + " already exists",
+                                                          "Do you want to replace it with new texture infor?",
+                                                          "Yes",
+                                                          "No" );
+                }
+
+                if ( doMove )
+                    AssetDatabase.MoveAsset ( textureInfoPath, expectPath );
+            }
+        }
+        AssetDatabase.StopAssetEditing();
+
+        // atlas texture
+        _progress( 0.8f, "Syncing atlas texture" );
+        string atlasTexturePath = AssetDatabase.GetAssetPath(_atlas.texture);
+        string expectAtlasTexturePath = Path.Combine( atlasAssetsDir, _atlas.name + ".png" );
+        if ( _atlas.texture != null &&
+             atlasTexturePath != expectAtlasTexturePath )
+        {
+            bool doMove = true;
+            FileInfo fileInfo = new FileInfo(expectAtlasTexturePath);
+            if ( fileInfo.Exists ) {
+                doMove = EditorUtility.DisplayDialog( "Atlas Texture " + _atlas.name + " already exists",
+                                                      "Do you want to replace it with new atlas texture?",
+                                                      "Yes",
+                                                      "No" );
+            }
+
+            if ( doMove ) {
+                AssetDatabase.MoveAsset ( atlasTexturePath, expectAtlasTexturePath );
+                AssetDatabase.ImportAsset ( expectAtlasTexturePath );
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public static void Build ( exAtlas _atlas, System.Action<float,string> _progress ) {
         TextureImporter importSettings = null;
 
-        // DELME { 
+        string atlasAssetsDir = Path.Combine( Path.GetDirectoryName (AssetDatabase.GetAssetPath(_atlas)), _atlas.name  );
+        string atlasTexturePath = Path.Combine( atlasAssetsDir, _atlas.name + ".png" );
+
         // check if create atlas directory
-        // _progress( 0.1f, "Checking atlas directory" );
-        // string path = Path.Combine ( ex2DEditor.atlasBuildPath, _atlas.name ); 
-        // if ( new DirectoryInfo(path).Exists == false ) {
-        //     Directory.CreateDirectory (path);
-        // }
-        // } DELME end 
+        _progress( 0.1f, "Checking atlas directory" );
+        if ( new DirectoryInfo(atlasAssetsDir).Exists == false ) {
+            Directory.CreateDirectory (atlasAssetsDir);
+        }
 
         // destroy last built texture
         Texture2D atlasTexture = _atlas.texture; 
@@ -276,9 +341,6 @@ public static class exAtlasUtility {
 
         // check if create atlas texture
         _progress( 0.2f, "Checking atlas texture" );
-        string atlasAssetPath = AssetDatabase.GetAssetPath(_atlas);
-        string atlasTexturePath = Path.Combine( Path.GetDirectoryName(atlasAssetPath), 
-                                                Path.GetFileNameWithoutExtension(atlasAssetPath) + ".png" );
         atlasTexture = AssetDatabase.LoadAssetAtPath( atlasTexturePath, typeof(Texture2D) ) as Texture2D;
         if ( atlasTexture == null ||
              atlasTexture.width != _atlas.width ||
