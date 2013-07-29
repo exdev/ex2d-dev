@@ -66,6 +66,47 @@ public class exBitmapFont : ScriptableObject {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
+    ///
+    /// A structure to descrip the pair of char
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+
+    public struct KerningTableKey {
+        
+        // ------------------------------------------------------------------ 
+        /// In Xamarin.iOS, if KerningTableKey is a type as dictionary keys, we should manually implement its IEqualityComparer,
+        /// and provide an instance to the Dictionary<TKey, TValue>(IEqualityComparer<TKey>) constructor.
+        /// See http://docs.xamarin.com/guides/ios/advanced_topics/limitations for more info.
+        // ------------------------------------------------------------------ 
+        
+        public class Comparer : IEqualityComparer<KerningTableKey> {
+            static Comparer instance_;
+            public static Comparer instance {
+                get {
+                    if (instance_ == null) {
+                        instance_ = new Comparer();
+                    }
+                    return instance_;
+                }
+            }
+            public bool Equals (KerningTableKey _lhs, KerningTableKey _rhs) {
+                return _lhs.first == _rhs.first && _lhs.second == _rhs.second;
+            }
+            public int GetHashCode(KerningTableKey _obj) {
+                return (((int)_obj.first) << 16) ^ _obj.second;
+            }
+        }
+        
+        public char first;
+        public char second;
+
+        public KerningTableKey (char _first, char _second) {
+            first = _first;
+            second = _second;
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
     // serialized fileds
     ///////////////////////////////////////////////////////////////////////////////
 
@@ -83,6 +124,7 @@ public class exBitmapFont : ScriptableObject {
     ///////////////////////////////////////////////////////////////////////////////
 
     protected Dictionary<int,CharInfo> idToCharInfo = null;
+    protected Dictionary<int,int> kerningTable = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
@@ -99,5 +141,43 @@ public class exBitmapFont : ScriptableObject {
         size = 0;
 
         idToCharInfo = null;
+        kerningTable = null;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Rebuild the table to store key exBitmapFont.CharInfo.id to value exBitmapFont.CharInfo
+    // ------------------------------------------------------------------ 
+
+    public void RebuildIdToCharInfoTable () {
+        if ( idToCharInfo == null ) {
+            idToCharInfo = new Dictionary<int,CharInfo>();
+        }
+        idToCharInfo.Clear();
+        for ( int i = 0; i < charInfos.Count; ++i ) {
+            CharInfo c = charInfos[i];
+            idToCharInfo[c.id] = c;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// \param _id the look up key 
+    /// \return the expect character info
+    /// Get the character information by exBitmapFont.CharInfo.id
+    // ------------------------------------------------------------------ 
+
+    public CharInfo GetCharInfo ( int _id ) {
+        // create and build idToCharInfo table if null
+        if ( idToCharInfo == null ) {
+            idToCharInfo = new Dictionary<int,CharInfo>();
+            for ( int i = 0; i < charInfos.Count; ++i ) {
+                CharInfo c = charInfos[i];
+                idToCharInfo[c.id] = c;
+            }
+        }
+
+        //
+        if ( idToCharInfo.ContainsKey (_id) )
+            return idToCharInfo[_id];
+        return null;
     }
 }
