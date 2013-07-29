@@ -10,6 +10,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -60,8 +61,8 @@ public class exBitmapFont : ScriptableObject {
 
     [System.Serializable]
     public class KerningInfo {
-        public int first = -1;  ///< the id of first character 
-        public int second = -1; ///< the id of second character
+        public char first = '\x0';  ///< the first character 
+        public char second = '\x0'; ///< the second character
         public int amount = -1; ///< the amount of kerning
     }
 
@@ -71,7 +72,7 @@ public class exBitmapFont : ScriptableObject {
     ///
     ///////////////////////////////////////////////////////////////////////////////
 
-    public struct KerningTableKey {
+    public struct KerningTableKey { // TODO: benchmark with dict<int, dict<int, int>>
         
         // ------------------------------------------------------------------ 
         /// In Xamarin.iOS, if KerningTableKey is a type as dictionary keys, we should manually implement its IEqualityComparer,
@@ -93,7 +94,7 @@ public class exBitmapFont : ScriptableObject {
                 return _lhs.first == _rhs.first && _lhs.second == _rhs.second;
             }
             public int GetHashCode(KerningTableKey _obj) {
-                return (((int)_obj.first) << 16) ^ _obj.second;
+                return ((int)_obj.first << 16) ^ _obj.second;
             }
         }
         
@@ -111,12 +112,27 @@ public class exBitmapFont : ScriptableObject {
     ///////////////////////////////////////////////////////////////////////////////
 
     public string rawFontGUID = "";
+    /// <summary>
+    /// The texture.
+    /// </summary>
     public Texture2D texture; ///< the atlas or raw texture
 
+    /// <summary>
+    /// The char infos.
+    /// </summary>
     public List<CharInfo> charInfos = new List<CharInfo>(); ///< the list of the character information
+    /// <summary>
+    /// The kernings.
+    /// </summary>
     public List<KerningInfo> kernings = new List<KerningInfo>(); ///< the list of the kerning information 
 
+    /// <summary>
+    /// The height of the line.
+    /// </summary>
     public int lineHeight; ///< the space of the line
+    /// <summary>
+    /// The size.
+    /// </summary>
     public int size;       ///< the size in pixel of the font 
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -124,7 +140,7 @@ public class exBitmapFont : ScriptableObject {
     ///////////////////////////////////////////////////////////////////////////////
 
     protected Dictionary<int,CharInfo> idToCharInfo = null;
-    protected Dictionary<int,int> kerningTable = null;
+    protected Dictionary<KerningTableKey,int> kerningTable = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
@@ -150,7 +166,7 @@ public class exBitmapFont : ScriptableObject {
 
     public void RebuildIdToCharInfoTable () {
         if ( idToCharInfo == null ) {
-            idToCharInfo = new Dictionary<int,CharInfo>();
+            idToCharInfo = new Dictionary<int,CharInfo>(charInfos.Count);
         }
         idToCharInfo.Clear();
         for ( int i = 0; i < charInfos.Count; ++i ) {
@@ -168,16 +184,46 @@ public class exBitmapFont : ScriptableObject {
     public CharInfo GetCharInfo ( int _id ) {
         // create and build idToCharInfo table if null
         if ( idToCharInfo == null ) {
-            idToCharInfo = new Dictionary<int,CharInfo>();
-            for ( int i = 0; i < charInfos.Count; ++i ) {
-                CharInfo c = charInfos[i];
-                idToCharInfo[c.id] = c;
-            }
+            RebuildIdToCharInfoTable ();
         }
 
-        //
-        if ( idToCharInfo.ContainsKey (_id) )
-            return idToCharInfo[_id];
+        CharInfo charInfo;
+        if ( idToCharInfo.TryGetValue (_id, out charInfo) )
+            return charInfo;
         return null;
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// Rebuild the kerningTable to store key <first char, second char> to value kerning amount
+    // ------------------------------------------------------------------ 
+
+    public void RebuildKerningTable () {
+        if ( kerningTable == null ) {
+            kerningTable = new Dictionary<KerningTableKey,int> (kernings.Count, KerningTableKey.Comparer.instance);
+        }
+        kerningTable.Clear();
+        for ( int i = 0; i < kernings.Count; ++i ) {
+            KerningInfo k = kernings[i];
+            kerningTable[new KerningTableKey(k.first, k.second)] = k.amount;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// \param _first the first character
+    /// \param _second the second character
+    /// \return kerning amount between first and sceond character
+    /// Get the kerning amount between first and sceond character
+    // ------------------------------------------------------------------ 
+
+    public int GetKerning ( char _first, char _second ) {
+        if ( kerningTable == null ) {
+            RebuildKerningTable ();
+        }
+
+        int amount;
+        if ( kerningTable.TryGetValue (new KerningTableKey (_first, _second), out amount) ) {
+            return amount;
+        }
+        return 0;
     }
 }

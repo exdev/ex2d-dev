@@ -214,13 +214,13 @@ public class exSprite : exSpriteBase {
             }
             Vector2 start = new Vector2((float)textureInfo.x * texelSize.x, 
                                          (float)textureInfo.y * texelSize.y);
-            Vector2 end = new Vector2((float)(textureInfo.x + textureInfo.width) * texelSize.x, 
-                                       (float)(textureInfo.y + textureInfo.height) * texelSize.y);
+            Vector2 end = new Vector2((float)(textureInfo.x + textureInfo.rotatedWidth) * texelSize.x, 
+                                       (float)(textureInfo.y + textureInfo.rotatedHeight) * texelSize.y);
             if ( textureInfo.rotated ) {
-                _uvs[vertexBufferIndex + 0] = new Vector2(start.x, end.y);
-                _uvs[vertexBufferIndex + 1] = end;
-                _uvs[vertexBufferIndex + 2] = new Vector2(end.x, start.y);
-                _uvs[vertexBufferIndex + 3] = start;
+                _uvs[vertexBufferIndex + 0] = new Vector2(end.x, start.y);
+                _uvs[vertexBufferIndex + 1] = start;
+                _uvs[vertexBufferIndex + 2] = new Vector2(start.x, end.y);
+                _uvs[vertexBufferIndex + 3] = end;
             }
             else {
                 _uvs[vertexBufferIndex + 0] = start;
