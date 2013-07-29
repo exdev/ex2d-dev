@@ -150,8 +150,7 @@ public static class exAtlasUtility {
         int ret = string.Compare( _a.id, _b.id );
         return ret;
     }
-
-    public static int CompareByRotateSize ( Element _a, Element _b ) {
+    public static int CompareByRotateWidth ( Element _a, Element _b ) {
         int a_size = (int)_a.width;
         if ( (int)_a.height > (int)_a.width ) {
             a_size = (int)_a.height;
@@ -160,6 +159,23 @@ public static class exAtlasUtility {
         int b_size = (int)_b.width;
         if ( (int)_b.height > (int)_b.width ) {
             b_size = (int)_b.height;
+            _b.rotated = true;
+        }
+        int ret = a_size - b_size;
+        if ( ret == 0 ) {
+            ret = string.Compare( _a.id, _b.id );
+        }
+        return ret;
+    }
+    public static int CompareByRotateHeight ( Element _a, Element _b ) {
+        int a_size = (int)_a.height;
+        if ( (int)_a.width > (int)_a.height ) {
+            a_size = (int)_a.width;
+            _a.rotated = true;
+        }
+        int b_size = (int)_b.height;
+        if ( (int)_b.width > (int)_b.height ) {
+            b_size = (int)_b.width;
             _b.rotated = true;
         }
         int ret = a_size - b_size;
@@ -226,13 +242,13 @@ public static class exAtlasUtility {
         switch ( mySortBy ) {
         case exAtlas.SortBy.Width:
             if ( _allowRotate )
-                _elements.Sort( CompareByRotateSize );
+                _elements.Sort( CompareByRotateWidth );
             else
                 _elements.Sort( CompareByWidth );
             break;
         case exAtlas.SortBy.Height:
             if ( _allowRotate )
-                _elements.Sort( CompareByRotateSize );
+                _elements.Sort( CompareByRotateHeight );
             else
                 _elements.Sort( CompareByHeight );
             break;

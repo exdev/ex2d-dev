@@ -461,10 +461,7 @@ partial class exAtlasEditor : EditorWindow {
                 EditorGUI.indentLevel--;
 
                 // allow rotate
-                GUI.enabled = false; // TODO: have bug in view rect clipping, so temporary disable it
-                curEdit.allowRotate = false;
                 curEdit.allowRotate = EditorGUILayout.Toggle ( "Allow Rotate", curEdit.allowRotate );
-                GUI.enabled = true;
 
                 EditorGUILayout.BeginHorizontal();
                     GUILayout.FlexibleSpace();
