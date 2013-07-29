@@ -61,6 +61,9 @@ partial class exAtlasEditor : EditorWindow {
 
     exRectSelection<Object> rectSelection = null;
 
+    Material quadMaterial = null;
+    Mesh quadMesh = null;
+
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
     ///////////////////////////////////////////////////////////////////////////////
@@ -74,10 +77,24 @@ partial class exAtlasEditor : EditorWindow {
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
 
+        quadMaterial = new Material( Shader.Find("ex2D/Alpha Blended") );
+        quadMaterial.hideFlags = HideFlags.DontSave;
+        quadMesh = new Mesh();
+        quadMesh.hideFlags = HideFlags.DontSave;
+
         rectSelection = new exRectSelection<Object>( PickObject,
                                                      PickRectObjects,
                                                      ConfirmRectSelection );
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnDestroy () {
+        Object.DestroyImmediate(quadMaterial);
+        Object.DestroyImmediate(quadMesh);
+    } 
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -651,17 +668,6 @@ partial class exAtlasEditor : EditorWindow {
 
 
             // texture info list 
-            // Rect oldViewport = new Rect( 0, 0, Screen.width, Screen.height ); 
-            // Rect viewportRect = new Rect ( _rect.x,
-            //                                position.height - _rect.yMax,
-            //                                _rect.width, 
-            //                                _rect.height );
-            // GL.Viewport(viewportRect);
-            // GL.PushMatrix();
-            // GL.LoadPixelMatrix( 0.0f, 
-            //                     _rect.width, 
-            //                     _rect.height,
-            //                     0.0f );
             GUI.BeginGroup( atlasRect );
             foreach ( exTextureInfo textureInfo in curEdit.textureInfos ) {
                 if ( textureInfo == null )
@@ -670,8 +676,6 @@ partial class exAtlasEditor : EditorWindow {
                 DrawTextureInfo ( MapTextureInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), textureInfo ), textureInfo );
             }
             GUI.EndGroup();
-            // GL.PopMatrix();
-            // GL.Viewport(oldViewport);
 
             // border
             exEditorUtility.DrawRect( _rect,
@@ -773,11 +777,48 @@ partial class exAtlasEditor : EditorWindow {
 
         Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( _textureInfo.rawTextureGUID );
         if ( rawTexture ) {
-            GUI.DrawTextureWithTexCoords( _rect, rawTexture,
-                                          new Rect( (float)_textureInfo.trim_x/(float)rawTexture.width,
-                                                    (float)_textureInfo.trim_y/(float)rawTexture.height,
-                                                    (float)_textureInfo.width/(float)rawTexture.width,
-                                                    (float)_textureInfo.height/(float)rawTexture.height ) );
+            if ( _textureInfo.rotated ) {
+                float xStart = (float)_textureInfo.trim_x/(float)rawTexture.width;
+                float xEnd = xStart + (float)_textureInfo.width/(float)rawTexture.width;
+                float yStart = (float)_textureInfo.trim_y/(float)rawTexture.height;
+                float yEnd = yStart + (float)_textureInfo.height/(float)rawTexture.height;
+
+                quadMaterial.mainTexture = rawTexture;
+                quadMaterial.SetPass(0);
+
+                quadMesh.hideFlags = HideFlags.DontSave;
+                quadMesh.vertices = new Vector3[] {
+                    new Vector3 ( _rect.x, _rect.y, 0.0f ),
+                    new Vector3 ( _rect.x, _rect.y + _rect.height, 0.0f ),
+                    new Vector3 ( _rect.x + _rect.width, _rect.y + _rect.height, 0.0f ),
+                    new Vector3 ( _rect.x + _rect.width, _rect.y, 0.0f ),
+                };
+                quadMesh.uv = new Vector2[] {
+                    new Vector2 ( xEnd, yEnd ),
+                    new Vector2 ( xStart, yEnd ),
+                    new Vector2 ( xStart, yStart ),
+                    new Vector2 ( xEnd, yStart ),
+                };
+                quadMesh.colors32 = new Color32[] {
+                    new Color32 ( 255, 255, 255, 255 ),
+                    new Color32 ( 255, 255, 255, 255 ),
+                    new Color32 ( 255, 255, 255, 255 ),
+                    new Color32 ( 255, 255, 255, 255 ),
+                };
+                quadMesh.triangles = new int[] {
+                    0, 1, 2,
+                    0, 2, 3
+                };
+
+                Graphics.DrawMeshNow ( quadMesh, Vector3.zero, Quaternion.identity );
+            }
+            else {
+                GUI.DrawTextureWithTexCoords( _rect, rawTexture,
+                                              new Rect( (float)_textureInfo.trim_x/(float)rawTexture.width,
+                                                        (float)_textureInfo.trim_y/(float)rawTexture.height,
+                                                        (float)_textureInfo.width/(float)rawTexture.width,
+                                                        (float)_textureInfo.height/(float)rawTexture.height ) );
+            }
         }
 
         if ( selectedTextureInfos.IndexOf(_textureInfo) != -1 ) {

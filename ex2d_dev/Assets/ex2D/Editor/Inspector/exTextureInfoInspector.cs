@@ -124,8 +124,8 @@ class exTextureInfoInspector : Editor {
         _background.Draw(_rect, false, false, false, false);
 
         float ratio = Mathf.Min ( Mathf.Min(_rect.width / (float)textureInfo.width, _rect.height / (float)textureInfo.height), 1.0f );
-        float w = (float)textureInfo.width * ratio;
-        float h = (float)textureInfo.height * ratio;
+        float w = (float)textureInfo.rotatedWidth * ratio;
+        float h = (float)textureInfo.rotatedHeight * ratio;
         Rect rect = new Rect ( _rect.x + (_rect.width - w) * 0.5f, 
                                _rect.y + (_rect.height - h) * 0.5f, 
                                w, 
@@ -134,8 +134,8 @@ class exTextureInfoInspector : Editor {
 
         float uv_s  = (float)textureInfo.x / (float)textureInfo.texture.width;
         float uv_t  = (float)textureInfo.y / (float)textureInfo.texture.height;
-        float uv_w  = (float)textureInfo.width / (float)textureInfo.texture.width;
-        float uv_h  = (float)textureInfo.height / (float)textureInfo.texture.height;
+        float uv_w  = (float)textureInfo.rotatedWidth / (float)textureInfo.texture.width;
+        float uv_h  = (float)textureInfo.rotatedHeight / (float)textureInfo.texture.height;
 
         GUI.DrawTextureWithTexCoords( rect, 
                                       textureInfo.texture, 
