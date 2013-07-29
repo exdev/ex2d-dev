@@ -607,6 +607,13 @@ partial class exAtlasEditor : EditorWindow {
         if ( EditorGUI.EndChangeCheck() ) {
             EditorUtility.SetDirty(curEdit);
         }
+
+        EditorGUI.indentLevel++;
+        GUIStyle style = new GUIStyle();
+        style.normal.textColor = Color.yellow;
+        EditorGUILayout.LabelField( "Zoom in/out: Ctrl + MouseWheel", style );
+        EditorGUI.indentLevel--;
+
         EditorGUILayout.EndVertical();
     }
 
