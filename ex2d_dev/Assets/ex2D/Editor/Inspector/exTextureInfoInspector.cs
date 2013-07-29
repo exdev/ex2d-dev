@@ -72,14 +72,14 @@ class exTextureInfoInspector : Editor {
             GUILayout.FlexibleSpace();
 
                 // Select
-                if ( GUILayout.Button("Select...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
+                if ( GUILayout.Button("Select...", GUILayout.Width(60), GUILayout.Height(20) ) ) {
                     exTextureInfo textureInfo = target as exTextureInfo; 
                     Texture texture = exEditorUtility.LoadAssetFromGUID<Texture>( textureInfo.rawTextureGUID );
                     EditorGUIUtility.PingObject(texture);
                 }
 
                 // Edit
-                if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
+                if ( GUILayout.Button("Edit...", GUILayout.Width(60), GUILayout.Height(20) ) ) {
                     exAtlasEditor editor = EditorWindow.GetWindow<exAtlasEditor>();
                     exTextureInfo textureInfo = target as exTextureInfo; 
                     exAtlas atlas = exEditorUtility.LoadAssetFromGUID<exAtlas>( textureInfo.rawAtlasGUID );
