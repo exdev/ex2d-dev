@@ -456,7 +456,7 @@ partial class exAtlasEditor : EditorWindow {
                                                 GUILayout.Width(80)
                                             } ) ) {
                         curEdit.needRebuild = true;
-                        LayoutTextureInfos();
+                        LayoutAtlasElements();
                     }
                 EditorGUILayout.EndHorizontal();
 
@@ -888,25 +888,31 @@ partial class exAtlasEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void LayoutTextureInfos () {
+    void LayoutAtlasElements () {
         try {
             EditorUtility.DisplayProgressBar( "Layout Elements...", "Layout Elements...", 0.5f  );    
 
             // sort texture info
-            curEdit.SortTextureInfos();
+            List<exAtlasUtility.Element> elements = exAtlasUtility.GetElementList(curEdit);
+            exAtlasUtility.Sort( elements, 
+                                 curEdit.sortBy, 
+                                 curEdit.sortOrder, 
+                                 curEdit.algorithm,
+                                 curEdit.allowRotate );
 
             // pack texture
-            if ( curEdit.algorithm == exAtlas.Algorithm.Basic ) {
-                exAtlasUtility.BasicPack (curEdit);
+            exAtlasUtility.Pack ( elements, 
+                                  curEdit.algorithm,
+                                  curEdit.width,
+                                  curEdit.height,
+                                  curEdit.actualPadding );
+            
+            // apply back element to atlas texture info, char info or others
+            foreach ( exAtlasUtility.Element el in elements ) {
+                el.Apply();
             }
-            else if ( curEdit.algorithm == exAtlas.Algorithm.Tree ) {
-                exAtlasUtility.TreePack (curEdit);
-            }
-
-            //
-            foreach ( exTextureInfo info in curEdit.textureInfos ) {
-                EditorUtility.SetDirty(info);
-            }
+            curEdit.needRebuild = true;
+            EditorUtility.SetDirty(curEdit);
         }
         finally {
             EditorUtility.ClearProgressBar();
