@@ -23,50 +23,166 @@ using System.Collections.Generic;
 
 public static class exAtlasUtility {
 
-    class PackNode {
+    public class Element {
+        public string id = ""; // texture-info is its name, charinfo is its "bitmapfont.name@id"
+        public int x = 0;
+        public int y = 0;
+        public int width = 1;
+        public int height = 1;
+        public bool rotated = false;
+
+        // raw referenced
+        public exTextureInfo textureInfo = null; 
+        public exBitmapFont.CharInfo charInfo = null;
+
+        public int rotatedWidth {
+            get {
+                if ( rotated ) return height;
+                return width;
+            }
+        }
+
+        public int rotatedHeight {
+            get {
+                if ( rotated ) return width;
+                return height;
+            }
+        }
+
+        public void Apply () {
+            if ( textureInfo != null ) {
+                textureInfo.x = x;
+                textureInfo.y = y;
+                textureInfo.width = width;
+                textureInfo.height = height;
+                textureInfo.rotated = rotated;
+
+                EditorUtility.SetDirty(textureInfo);
+            }
+            else if ( charInfo != null ) {
+                charInfo.x = x;
+                charInfo.y = y;
+                charInfo.width = width;
+                charInfo.height = height;
+                charInfo.rotated = rotated;
+
+                // TODO: EditorUtility.SetDirty(el.charInfo.bitmapFont); ????
+            }
+            else {
+                Debug.LogWarning( "Can't find the raw reference of atlas element " + id );
+            }
+        }
+    }
+
+    public class PackNode {
         public Rect rect;
         public PackNode right = null;
         public PackNode bottom = null;
 
         public PackNode ( Rect _rect ) { rect = _rect; }
-        public Vector2? Insert ( exTextureInfo _info, int _padding ) {
+        public Vector2? Insert ( Element _el, int _padding ) {
             // when this node is already occupied (when it has children),
             // forward to child nodes recursively
             if (right != null) {
-                Vector2? pos = right.Insert(_info, _padding);
+                Vector2? pos = right.Insert(_el, _padding);
                 if (pos != null)
                     return pos;
-                return bottom.Insert(_info, _padding);
+                return bottom.Insert(_el, _padding);
             }
 
             // determine trimmed and padded sizes
-            float trimmedWidth = _info.width;
-            float trimmedHeight = _info.height;
-            float paddedWidth = trimmedWidth + _padding;
-            float paddedHeight = trimmedHeight + _padding;
+            float elWidth = _el.rotatedWidth;
+            float elHeight = _el.rotatedHeight;
+            float paddedWidth = elWidth + _padding;
+            float paddedHeight = elHeight + _padding;
 
             // trimmed element size must fit within current node rect
-            if (trimmedWidth > rect.width || trimmedHeight > rect.height)
+            if (elWidth > rect.width || elHeight > rect.height)
                 return null;
 
-            // create first child node in remaining space to the right, using trimmedHeight
+            // create first child node in remaining space to the right, using elHeight
             // so that only other elements with the same height or less can be added there
             // (we do not use paddedHeight, because the padding area is reserved and should
             // never be occupied)
             right = new PackNode( new Rect ( rect.x + paddedWidth, 
-                                         rect.y,
-                                         rect.width - paddedWidth, 
-                                         trimmedHeight ) );
+                                             rect.y,
+                                             rect.width - paddedWidth, 
+                                             elHeight ) );
 
             // create second child node in remaining space at the bottom, occupying the entire width
             bottom = new PackNode( new Rect ( rect.x,
-                                          rect.y + paddedHeight,
-                                          rect.width, 
-                                          rect.height - paddedHeight ) );
+                                              rect.y + paddedHeight,
+                                              rect.width, 
+                                              rect.height - paddedHeight ) );
 
             // return position where to put element
             return new Vector2( rect.x, rect.y );
         }
+    }
+
+    // a > b = 1, a < b = -1, a = b = 0
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static int CompareByWidth ( Element _a, Element _b ) {
+        int ret = (int)_a.width - (int)_b.width;
+        if ( ret == 0 ) {
+            ret = string.Compare( _a.id, _b.id );
+        }
+        return ret;
+    }
+    public static int CompareByHeight ( Element _a, Element _b ) {
+        int ret = (int)_a.height - (int)_b.height;
+        if ( ret == 0 ) {
+            ret = string.Compare( _a.id, _b.id );
+        }
+        return ret;
+    }
+    public static int CompareByArea ( Element _a, Element _b ) {
+        int ret = (int)_a.width * (int)_a.height - (int)_b.width * (int)_b.height;
+        if ( ret == 0 ) {
+            ret = string.Compare( _a.id, _b.id );
+        }
+        return ret;
+    }
+    public static int CompareByName ( Element _a, Element _b ) {
+        int ret = string.Compare( _a.id, _b.id );
+        return ret;
+    }
+    public static int CompareByRotateWidth ( Element _a, Element _b ) {
+        int a_size = (int)_a.width;
+        if ( (int)_a.height > (int)_a.width ) {
+            a_size = (int)_a.height;
+            _a.rotated = true;
+        }
+        int b_size = (int)_b.width;
+        if ( (int)_b.height > (int)_b.width ) {
+            b_size = (int)_b.height;
+            _b.rotated = true;
+        }
+        int ret = a_size - b_size;
+        if ( ret == 0 ) {
+            ret = string.Compare( _a.id, _b.id );
+        }
+        return ret;
+    }
+    public static int CompareByRotateHeight ( Element _a, Element _b ) {
+        int a_size = (int)_a.height;
+        if ( (int)_a.width > (int)_a.height ) {
+            a_size = (int)_a.width;
+            _a.rotated = true;
+        }
+        int b_size = (int)_b.height;
+        if ( (int)_b.width > (int)_b.height ) {
+            b_size = (int)_b.width;
+            _b.rotated = true;
+        }
+        int ret = a_size - b_size;
+        if ( ret == 0 ) {
+            ret = string.Compare( _a.id, _b.id );
+        }
+        return ret;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -77,20 +193,110 @@ public static class exAtlasUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void TreePack ( exAtlas _atlas ) {
+    public static List<Element> GetElementList ( exAtlas _atlas ) {
+        List<Element> elements = new List<Element>();
+        foreach ( exTextureInfo info in _atlas.textureInfos ) {
+            Element el = new Element();
+            el.x = 0;
+            el.y = 0;
+            el.rotated = false;
+            el.textureInfo = info;
+            el.id = info.name;
+            el.width = info.width;
+            el.height = info.height;
+            elements.Add(el);
+        }
+        return elements;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void Sort ( List<Element> _elements, 
+                              exAtlas.SortBy _sortBy, 
+                              exAtlas.SortOrder _sortOrder, 
+                              exAtlas.Algorithm _algorithm,
+                              bool _allowRotate ) {
+        //
+        exAtlas.SortBy mySortBy = _sortBy;
+        exAtlas.SortOrder mySortOrder = _sortOrder;
+        if ( mySortBy == exAtlas.SortBy.UseBest ) {
+            switch ( _algorithm ) {
+            case exAtlas.Algorithm.Basic:
+                mySortBy = exAtlas.SortBy.Height;
+                break;
+            case exAtlas.Algorithm.Tree:
+                mySortBy = exAtlas.SortBy.Height;
+                break;
+            default:
+                mySortBy = exAtlas.SortBy.Height;
+                break;
+            }
+        }
+        if ( mySortOrder == exAtlas.SortOrder.UseBest ) {
+            mySortOrder = exAtlas.SortOrder.Descending;
+        }
+
+        // sort by
+        switch ( mySortBy ) {
+        case exAtlas.SortBy.Width:
+            if ( _allowRotate )
+                _elements.Sort( CompareByRotateWidth );
+            else
+                _elements.Sort( CompareByWidth );
+            break;
+        case exAtlas.SortBy.Height:
+            if ( _allowRotate )
+                _elements.Sort( CompareByRotateHeight );
+            else
+                _elements.Sort( CompareByHeight );
+            break;
+        case exAtlas.SortBy.Area:
+            _elements.Sort( CompareByArea );
+            break;
+        case exAtlas.SortBy.Name:
+            _elements.Sort( CompareByName );
+            break;
+        }
+
+        // sort order
+        if ( mySortOrder == exAtlas.SortOrder.Descending ) {
+            _elements.Reverse();
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void Pack ( List<Element> _elements, exAtlas.Algorithm _algorithm, int _atlasWidth, int _atlasHeight, int _padding ) {
+        if ( _algorithm == exAtlas.Algorithm.Basic ) {
+            BasicPack ( _elements, _atlasWidth, _atlasHeight, _padding );
+        }
+        else if ( _algorithm == exAtlas.Algorithm.Tree ) {
+            TreePack ( _elements, _atlasWidth, _atlasHeight, _padding );
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void TreePack ( List<Element> _elements, int _atlasWidth, int _atlasHeight, int _padding ) {
         PackNode root = new PackNode( new Rect( 0,
                                                 0,
-                                                _atlas.width,
-                                                _atlas.height ) );
-        foreach ( exTextureInfo info in _atlas.textureInfos ) {
-            Vector2? pos = root.Insert (info, _atlas.actualPadding);
+                                                _atlasWidth,
+                                                _atlasHeight ) );
+        foreach ( Element el in _elements ) {
+            Vector2? pos = root.Insert (el, _padding);
             if (pos != null) {
-                info.x = (int)pos.Value.x;
-                info.y = (int)pos.Value.y;
+                el.x = (int)pos.Value.x;
+                el.y = (int)pos.Value.y;
             }
             else {
                 // log warning but continue processing other elements
-                Debug.LogWarning("Failed to layout texture info " + info.name);
+                Debug.LogWarning("Failed to layout atlas element " + el.id);
             }
         }
     }
@@ -99,28 +305,28 @@ public static class exAtlasUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void BasicPack ( exAtlas _atlas ) {
+    public static void BasicPack ( List<Element> _elements, int _atlasWidth, int _atlasHeight, int _padding ) {
         int curX = 0;
         int curY = 0;
         int maxY = 0; 
         int i = 0; 
 
-        foreach ( exTextureInfo info in _atlas.textureInfos ) {
-            if ( (curX + info.rotatedWidth) > _atlas.width ) {
+        foreach ( Element el in _elements ) {
+            if ( (curX + el.rotatedWidth) > _atlasWidth ) {
                 curX = 0;
-                curY = curY + maxY + _atlas.actualPadding;
+                curY = curY + maxY + _padding;
                 maxY = 0;
             }
-            if ( (curY + info.rotatedHeight) > _atlas.height ) {
-                Debug.LogWarning( "Failed to layout element " + info.name );
+            if ( (curY + el.rotatedHeight) > _atlasHeight ) {
+                Debug.LogWarning( "Failed to layout element " + el.id );
                 break;
             }
-            info.x = curX;
-            info.y = curY;
+            el.x = curX;
+            el.y = curY;
 
-            curX = curX + info.rotatedWidth + _atlas.actualPadding;
-            if (info.rotatedHeight > maxY) {
-                maxY = info.rotatedHeight;
+            curX = curX + el.rotatedWidth + _padding;
+            if (el.rotatedHeight > maxY) {
+                maxY = el.rotatedHeight;
             }
             ++i;
         }

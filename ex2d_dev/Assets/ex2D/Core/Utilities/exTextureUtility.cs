@@ -103,8 +103,11 @@ public static class exTextureUtility {
 
             for ( int j = 0; j < destHeight; ++j ) {
                 for ( int i = 0; i < destWidth; ++i ) {
-                    Color c = _src.GetPixel( xSrc + srcWidth - j, ySrc + _src.height + i );
-                    _dest.SetPixel( xDest + i, yDest + j, c ); 
+                    // Color c = _src.GetPixel( xSrc + srcWidth - j, ySrc + _src.height + i );
+                    // _dest.SetPixel( xDest + i, yDest + j, c ); 
+
+                    Color c = _src.GetPixel( xSrc + j, ySrc + _src.height + i );
+                    _dest.SetPixel( xDest + destWidth - i, yDest + j, c ); 
                 }
             }
         }
