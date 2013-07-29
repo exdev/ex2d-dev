@@ -28,11 +28,13 @@ public class TestBinarySearch : EasyProfiler {
         loopCount = 10000 * 10000;
         loopCount = 10000;
 
-        List<exSpriteAnimationClip.EventInfo> events = new List<exSpriteAnimationClip.EventInfo>(eventCount);
+        List<exSpriteAnimationClip.EventInfo> eventList = new List<exSpriteAnimationClip.EventInfo>(eventCount);
+        Dictionary<int, exSpriteAnimationClip.EventInfo> eventDict = new Dictionary<int, exSpriteAnimationClip.EventInfo>(eventCount);
         for (int i = 0; i < eventCount; i++) {
             var e = new exSpriteAnimationClip.EventInfo();
             e.frame = i;
-            events.Add(e);
+            eventList.Add(e);
+            eventDict.Add(i, e);
         }
 
         yield return new WaitForSeconds(1);
@@ -52,7 +54,7 @@ public class TestBinarySearch : EasyProfiler {
             () => {
                 for (int i = 0; i < loopCount; ++i) {
                     for (int j = 0; j < eventCount; j++) {
-                        exSpriteAnimationClip.EventInfo.SearchComparer.BinarySearch(events, j);
+                        exSpriteAnimationClip.EventInfo.SearchComparer.BinarySearch(eventList, j);
                     }
                 }
             }
@@ -65,7 +67,7 @@ public class TestBinarySearch : EasyProfiler {
                 for (int i = 0; i < loopCount; ++i) {
                     for (int j = 0; j < eventCount; j++) {
                         for (int t = 0; t < eventCount; t++) {
-                            if (events[t].frame == j) {
+                            if (eventList[t].frame == j) {
                                 break;
                             }
                         }
@@ -74,14 +76,26 @@ public class TestBinarySearch : EasyProfiler {
             }
         );
 
-        yield break;
         yield return new WaitForSeconds(1);
 
         CpuProfiler("FindIndex...", 
             () => {
                 for (int i = 0; i < loopCount; ++i) {
                     for (int j = 0; j < eventCount; j++) {
-                        events.FindIndex((x) => x.frame == j);
+                        eventList.FindIndex((x) => x.frame == j);
+                    }
+                }
+            }
+        );
+
+        yield return new WaitForSeconds(1);
+
+        CpuProfiler("Dict...", 
+            () => {
+                for (int i = 0; i < loopCount; ++i) {
+                    for (int j = 0; j < eventCount; j++) {
+                        exSpriteAnimationClip.EventInfo e;
+                        eventDict.TryGetValue(j, out e);
                     }
                 }
             }

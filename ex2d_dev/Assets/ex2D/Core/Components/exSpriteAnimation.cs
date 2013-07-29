@@ -44,8 +44,9 @@ public class exSpriteAnimationState {
     /// If the frame is larger than totalFrames it will be wrapped according to wrapMode. 
     [System.NonSerialized] public int frame = -1;
 
-    //[System.NonSerialized] private float[] frameInfoTimes; ///< the array of the end time in seconds of each frame info in the sprite animation clip
     [System.NonSerialized] private int[] frameInfoFrames; ///< the array of the end frame of each frame info in the sprite animation clip
+    [System.NonSerialized] private int cachedIndex = -1;    ///< cache result of GetCurrentIndex
+    [System.NonSerialized] private Dictionary<int, List<exSpriteAnimationClip.EventInfo>> frameToEventDict = null;
 
     // ------------------------------------------------------------------ 
     /// \param _animClip the referenced animation clip
@@ -65,16 +66,20 @@ public class exSpriteAnimationState {
     public exSpriteAnimationState (string _name, exSpriteAnimationClip _animClip) {
         name = _name;
         clip = _animClip;
-        length = totalFrames / clip.frameRate;
         wrapMode = clip.wrapMode;
         stopAction = clip.stopAction;
         speed = clip.speed;
-
-        frameInfoFrames = new int[clip.frameInfos.Count];
-        totalFrames = 0;
-        for (int i = 0; i < clip.frameInfos.Count; ++i) {
-            totalFrames += clip.frameInfos[i].frames;
-            frameInfoFrames[i] = totalFrames;
+        frameInfoFrames = clip.GetFrameInfoFrames();
+        if (frameInfoFrames.Length > 0) {
+            totalFrames = frameInfoFrames[frameInfoFrames.Length - 1];
+        }
+        else {
+            totalFrames = 0;
+        }
+        length = totalFrames / clip.frameRate;
+        const int MIN_HASH_COUNT = 9;
+        if (clip.eventInfos.Count >= MIN_HASH_COUNT) {
+            frameToEventDict = clip.GetFrameToEventDict();
         }
     }
     
@@ -84,10 +89,15 @@ public class exSpriteAnimationState {
 
     public int GetCurrentIndex() {
         if (totalFrames > 1) {
+            //int oldFrame = frame;
             frame = (int) (time * clip.frameRate);
             if (frame < 0) {
                 frame = -frame;
             }
+            //// use cache to optimize
+            //if (frame == oldFrame && cachedIndex != -1) {
+            //    return cachedIndex;
+            //}
             int wrappedIndex;
 #if DUPLICATE_WHEN_PINGPONE
             if (wrapMode != WrapMode.PingPong) {
@@ -104,11 +114,19 @@ public class exSpriteAnimationState {
 #else
             wrappedIndex = exMath.Wrap(frame, totalFrames - 1, wrapMode);
 #endif
-            int frameInfoIndex = System.Array.BinarySearch(frameInfoFrames, wrappedIndex + 1);  //TODO: benchmark
+            // try to use cached frame info index
+            if (cachedIndex - 1 >= 0 && 
+                wrappedIndex >= frameInfoFrames[cachedIndex - 1] &&
+                wrappedIndex < frameInfoFrames[cachedIndex]) {
+                return cachedIndex;
+            }
+            // search frame info
+            int frameInfoIndex = System.Array.BinarySearch(frameInfoFrames, wrappedIndex + 1);
             if (frameInfoIndex < 0) {
                 frameInfoIndex = ~frameInfoIndex;
                 exDebug.Assert(frameInfoIndex < frameInfoFrames.Length);
             }
+            cachedIndex = frameInfoIndex;
             return frameInfoIndex;
         }
         else if (totalFrames == 1) {
@@ -189,43 +207,24 @@ public class exSpriteAnimationState {
         if (clip.eventInfos.Count == 0) {
             return;
         }
-        const int MIN_BINARY_SEARCH_COUNT = 30;
+        List<exSpriteAnimationClip.EventInfo> eventInfoList;
+        if (frameToEventDict == null) {
+            eventInfoList = clip.eventInfos;
+        }
+        else if (frameToEventDict.TryGetValue(_wrappedIndex, out eventInfoList) == false) {
+            return;
+        }
         if (_reversed) {
-            int searchStart = clip.eventInfos.Count - 1;
-            if (clip.eventInfos.Count >= MIN_BINARY_SEARCH_COUNT) {
-                searchStart = exSpriteAnimationClip.EventInfo.SearchComparer.BinarySearch(clip.eventInfos, _wrappedIndex + 1);
-                if (searchStart < 0) {
-                    searchStart = ~searchStart;
-                    if (searchStart >= clip.eventInfos.Count) {
-                        searchStart = clip.eventInfos.Count - 1;
-                    }
-                }
-            }
-            for (int i = searchStart; i >= 0; --i) {
-                exSpriteAnimationClip.EventInfo eventInfo = clip.eventInfos[i];
-                if (eventInfo.frame == _wrappedIndex) {
-                    Trigger(_target, eventInfo);
-                }
-                else if (eventInfo.frame < _wrappedIndex) {
-                    break;
+            for (int i = eventInfoList.Count - 1; i >= 0; --i) {
+                if (eventInfoList[i].frame == _wrappedIndex) {
+                    Trigger(_target, eventInfoList[i]);
                 }
             }
         }
         else {
-            int searchStart = 0;
-            if (clip.eventInfos.Count >= MIN_BINARY_SEARCH_COUNT) {
-                searchStart = exSpriteAnimationClip.EventInfo.SearchComparer.BinarySearch(clip.eventInfos, _wrappedIndex - 1);
-                if (searchStart < 0) {
-                    searchStart = ~searchStart;
-                }
-            }
-            for (int i = searchStart; i < clip.eventInfos.Count; ++i) {
-                exSpriteAnimationClip.EventInfo eventInfo = clip.eventInfos[i];
-                if (eventInfo.frame == _wrappedIndex) {
-                    Trigger(_target, eventInfo);
-                }
-                else if (eventInfo.frame > _wrappedIndex) {
-                    break;
+            for (int i = 0; i < eventInfoList.Count; ++i) {
+                if (eventInfoList[i].frame == _wrappedIndex) {
+                    Trigger(_target, eventInfoList[i]);
                 }
             }
         }

@@ -138,6 +138,10 @@ public class exSpriteAnimationClip : ScriptableObject {
 
     public List<FrameInfo> frameInfos = new List<FrameInfo>(); ///< the list of frame info 
     public List<EventInfo> eventInfos = new List<EventInfo>(); ///< the list of event info
+
+    [System.NonSerialized] private int[] frameInfoFrames; ///< the array of the end frame of each frame info
+    [System.NonSerialized] private Dictionary<int, List<EventInfo>> frameToEventDict;
+
     public float speed = 1.0f; ///< the default speed of the animation clip
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -154,6 +158,22 @@ public class exSpriteAnimationClip : ScriptableObject {
             frames += frameInfos[i].frames;
         }
         return frames;
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public int[] GetFrameInfoFrames () {
+        if (frameInfoFrames == null) {
+            frameInfoFrames = new int[frameInfos.Count];
+            int totalFrames = 0;
+            for (int i = 0; i < frameInfos.Count; ++i) {
+                totalFrames += frameInfos[i].frames;
+                frameInfoFrames[i] = totalFrames;
+            }
+        }
+        return frameInfoFrames;
     }
 
     // ------------------------------------------------------------------ 
@@ -276,4 +296,31 @@ public class exSpriteAnimationClip : ScriptableObject {
         eventInfos = newList;
     }
 #endif
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public Dictionary<int, List<EventInfo>> GetFrameToEventDict () {
+        if (frameToEventDict == null) {
+            frameToEventDict = new Dictionary<int, List<EventInfo>>();
+            int sameEventFrame = -1;
+            List<EventInfo> sameFrameEventList = null;
+            for (int i = 0; i < eventInfos.Count; ++i) {
+                EventInfo e = eventInfos[i];
+                if (e.frame != sameEventFrame) {
+                    if (sameFrameEventList != null) {
+                        frameToEventDict.Add(sameEventFrame, sameFrameEventList);
+                    }
+                    sameFrameEventList = new List<EventInfo>();
+                    sameEventFrame = e.frame;
+                }
+                sameFrameEventList.Add(e);
+            }
+            if (sameFrameEventList != null) {
+                frameToEventDict.Add(sameEventFrame, sameFrameEventList);
+            }
+        }
+        return frameToEventDict;
+    }
 }
