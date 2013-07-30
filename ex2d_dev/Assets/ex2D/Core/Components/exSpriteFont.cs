@@ -4,7 +4,10 @@
 // Last Change  : 07/28/2013 | 22:13:41
 // Description  : 
 // ======================================================================================
-/*
+
+#define  ENABLE
+#if ENABLE
+
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
@@ -28,23 +31,24 @@ public class exSpriteFont : exSpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
-    [SerializeField] protected exBitmapFont fontInfo_;
+    [SerializeField] protected exBitmapFont font_;
     /// The referenced bitmap font asset
     // ------------------------------------------------------------------ 
 
-    public exBitmapFont fontInfo {
-        get { return fontInfo_; }
+    public exBitmapFont font {
+        get { return font_; }
         set {
-            if ( fontInfo_ != value ) {
-                fontInfo_ = value;
-                //updateFlags |= exUpdateFlags.Text;
+            if ( font_ != value ) {
+                font_ = value;
+                UpdateMaterial();
             }
         }
     }
     
     // ------------------------------------------------------------------ 
     [SerializeField] protected string text_ = "Hello World!"; 
-    /// The text to rendered
+    /// The text to rendered. 
+    /// \NOTE If you need to change the text frequently, you should use dynamic layer.
     // ------------------------------------------------------------------ 
 
     public string text {
@@ -52,7 +56,7 @@ public class exSpriteFont : exSpriteBase {
         set {
             if ( text_ != value ) {
                 text_ = value;
-                //updateFlags |= exUpdateFlags.Text;
+                updateFlags |= exUpdateFlags.All;
             }
         }
     }
@@ -67,7 +71,7 @@ public class exSpriteFont : exSpriteBase {
         set {
             if ( useMultiline_ != value ) {
                 useMultiline_ = value;
-                updateFlags |= exUpdateFlags.Vertex;
+                updateFlags |= exUpdateFlags.All;
             }
         }
     }
@@ -103,43 +107,29 @@ public class exSpriteFont : exSpriteBase {
         }
     }
 
-    //// ------------------------------------------------------------------ 
-    //[SerializeField] protected float tracking_ = 0.0f;
-    ///// A fixed width applied between two characters in the text. 
-    //// ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Vector2 spacing_;
+    /// spacing_.x : the fixed width applied between two characters in the text. 
+    /// spacing_.y : the fixed line space applied between two lines.
+    // ------------------------------------------------------------------ 
 
-    //public float tracking {
-    //    get { return tracking_; }
-    //    set {
-    //        if ( tracking_ != value ) {
-    //            tracking_ = value;
-    //            updateFlags |= exUpdateFlags.Vertex;
-    //        }
-    //    }
-    //}
-
-    //// ------------------------------------------------------------------ 
-    //[SerializeField] protected float lineSpacing_ = 0.0f;
-    ///// A fixed line space applied between two lines.
-    //// ------------------------------------------------------------------ 
-
-    //public float lineSpacing {
-    //    get { return lineSpacing_; }
-    //    set {
-    //        if ( lineSpacing_ != value ) {
-    //            lineSpacing_ = value;
-    //            updateFlags |= exUpdateFlags.Vertex;
-    //        }
-    //    }
-    //}
+    public Vector2 spacing {
+        get { return spacing_; }
+        set {
+            if ( spacing_ != value ) {
+                spacing_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
 
     // color option
 
     // ------------------------------------------------------------------ 
-    [SerializeField] protected Color topColor_ = Color.white;
+    [SerializeField] protected Color topColor_ = Color.white; // TODO: use gradient
     /// the color of the vertices at top 
     // ------------------------------------------------------------------ 
-
+    
     public Color topColor {
         get { return topColor_; }
         set {
@@ -266,10 +256,163 @@ public class exSpriteFont : exSpriteBase {
     //        }
     //    }
     //}
-  
+
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
+    
+    public override int vertexCount {
+        get { 
+            if (text_ != null) {
+                return text_.Length * exMesh.QUAD_VERTEX_COUNT;
+            }
+            else {
+                return 0;
+            }
+        }
+    }
+
+    public override int indexCount {
+        get { 
+            if (text_ != null) {
+                return text_.Length * exMesh.QUAD_INDEX_COUNT;
+            }
+            else {
+                return 0;
+            }
+        }
+    }
+
+    protected override Texture texture {
+        get {
+            if (font_ != null) {
+                return font_.texture;
+            }
+            else {
+                return null;
+            }
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // geometry buffers
+    ///////////////////////////////////////////////////////////////////////////////
+    
+    [System.NonSerialized] public List<Vector3> vertices = new List<Vector3>();  ///< 按文本顺序排列
+    [System.NonSerialized] public List<Vector2> uvs = new List<Vector2>();       ///< 按文本顺序排列
+    [System.NonSerialized] public List<Color32> colors32 = new List<Color32>();  ///< 按文本顺序排列
+
+    /// 不需要按顺序排列，面片数量和文本数量保持一致即可
+    [System.NonSerialized] public List<int> indices = new List<int>(); 
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Overridable functions
+    ///////////////////////////////////////////////////////////////////////////////
+
+#region Functions used to update geometry buffer
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    internal override exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
+        // TODO: if indices count changed, re add to layer
+        //// pre check fontInfo
+        //if ( fontInfo_ == null ) {
+        //    _mesh.Clear();
+        //    return;
+        //}
+        //if ((updateFlags & exUpdateFlags.Vertex) != 0) {
+        //    UpdateVertexBuffer(_vertices, vertexBufferIndex);
+        //}
+        //if ((updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+        //    _indices[indexBufferIndex]     = vertexBufferIndex;
+        //    _indices[indexBufferIndex + 1] = vertexBufferIndex + 1;
+        //    _indices[indexBufferIndex + 2] = vertexBufferIndex + 2;
+        //    _indices[indexBufferIndex + 3] = vertexBufferIndex + 2;
+        //    _indices[indexBufferIndex + 4] = vertexBufferIndex + 3;
+        //    _indices[indexBufferIndex + 5] = vertexBufferIndex;
+        //}
+        //if ((updateFlags & exUpdateFlags.UV) != 0) {
+        //    Vector2 texelSize;
+        //    if (textureInfo.texture != null) {
+        //        texelSize = textureInfo.texture.texelSize;
+        //    }
+        //    else {
+        //        texelSize = new Vector2(1.0f / textureInfo.rawWidth, 1.0f / textureInfo.rawHeight);
+        //    }
+        //    Vector2 start = new Vector2((float)textureInfo.x * texelSize.x, 
+        //                                 (float)textureInfo.y * texelSize.y);
+        //    Vector2 end = new Vector2((float)(textureInfo.x + textureInfo.rotatedWidth) * texelSize.x, 
+        //                               (float)(textureInfo.y + textureInfo.rotatedHeight) * texelSize.y);
+        //    if ( textureInfo.rotated ) {
+        //        _uvs[vertexBufferIndex + 0] = new Vector2(end.x, start.y);
+        //        _uvs[vertexBufferIndex + 1] = start;
+        //        _uvs[vertexBufferIndex + 2] = new Vector2(start.x, end.y);
+        //        _uvs[vertexBufferIndex + 3] = end;
+        //    }
+        //    else {
+        //        _uvs[vertexBufferIndex + 0] = start;
+        //        _uvs[vertexBufferIndex + 1] = new Vector2(start.x, end.y);
+        //        _uvs[vertexBufferIndex + 2] = end;
+        //        _uvs[vertexBufferIndex + 3] = new Vector2(end.x, start.y);
+        //    }
+        //}
+        //if ((updateFlags & exUpdateFlags.Color) != 0) {
+        //    _colors32[vertexBufferIndex + 0] = new Color32(255, 255, 255, 255);
+        //    _colors32[vertexBufferIndex + 1] = new Color32(255, 255, 255, 255);
+        //    _colors32[vertexBufferIndex + 2] = new Color32(255, 255, 255, 255);
+        //    _colors32[vertexBufferIndex + 3] = new Color32(255, 255, 255, 255);
+        //}
+        exUpdateFlags spriteUpdateFlags = updateFlags;
+        updateFlags = exUpdateFlags.None;
+        return spriteUpdateFlags;
+    }
+
+#endregion // Functions used to update geometry buffer
+    
+    // ------------------------------------------------------------------ 
+    /// Calculate the world AABB rect of the sprite
+    // ------------------------------------------------------------------ 
+
+    public override Rect GetAABoundingRect () {
+        Vector3[] vertices = GetVertices();
+        Rect boundingRect = new Rect();
+        boundingRect.x = vertices[0].x;
+        boundingRect.y = vertices[0].y;
+        for (int i = 1; i < vertexCount; ++i) {
+            Vector3 vertex = vertices[i];
+            if (vertex.x < boundingRect.xMin) {
+                boundingRect.xMin = vertex.x;
+            }
+            else if (vertex.x > boundingRect.xMax) {
+                boundingRect.xMax = vertex.x;
+            }
+            if (vertex.y < boundingRect.yMin) {
+                boundingRect.yMin = vertex.y;
+            }
+            else if (vertex.y > boundingRect.yMax) {
+                boundingRect.yMax = vertex.y;
+            }
+        }
+        return boundingRect;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public override Vector3[] GetVertices () {
+        List<Vector3> vertices = new List<Vector3>(vertexCount);    // TODO: use global static temp List instead
+        for (int i = 0; i < vertexCount; ++i) {
+            vertices.Add(new Vector3());
+        }
+        if (cachedTransform.hasChanged == false) {
+            cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
+        }
+        UpdateVertexBuffer(vertices, 0);
+        return vertices.ToArray();
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
@@ -510,11 +653,7 @@ public class exSpriteFont : exSpriteBase {
 
 //    public void UpdateMesh ( Mesh _mesh ) {
 
-//        // pre check fontInfo
-//        if ( fontInfo_ == null ) {
-//            _mesh.Clear();
-//            return;
-//        }
+
 
 //        // ======================================================== 
 //        // init value 
@@ -1057,5 +1196,80 @@ public class exSpriteFont : exSpriteBase {
 //            }
 //        }
 //    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    void UpdateVertexBuffer (List<Vector3> _vertices, int _startIndex) {
+        float anchorOffsetX;
+        float anchorOffsetY;
+        float halfWidth = width * 0.5f;     // TODO: caculate width and height
+        float halfHeight = height * 0.5f;
+
+        switch ( anchor_ ) {
+        case Anchor.TopLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = -halfHeight;  break;
+        case Anchor.TopCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = -halfHeight;  break;
+        case Anchor.TopRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = -halfHeight;  break;
+
+        case Anchor.MidLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = 0.0f;         break;
+        case Anchor.MidCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
+        case Anchor.MidRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = 0.0f;         break;
+
+        case Anchor.BotLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = halfHeight;   break;
+        case Anchor.BotCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = halfHeight;   break;
+        case Anchor.BotRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = halfHeight;   break;
+
+        default                 : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
+        }
+
+        anchorOffsetX += offset_.x;
+        anchorOffsetY += offset_.y;
+
+        //v1 v2
+        //v0 v3
+        exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
+        Vector3 v0 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
+        Vector3 v1 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
+        Vector3 v2 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
+        Vector3 v3 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
+
+        // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
+        v0.z = 0;
+        v1.z = 0;
+        v2.z = 0;
+        v3.z = 0;
+
+        if (shear_.x != 0) {
+            // 这里直接从matrix拿未计入rotation影响的scale，在已知matrix的情况下，速度比较快lossyScale了6倍。
+            // 在有rotation时，shear本来就会有冲突，所以这里不需要lossyScale。
+            float worldScaleY = (new Vector3(cachedWorldMatrix.m01, cachedWorldMatrix.m11, cachedWorldMatrix.m21)).magnitude;
+            float offsetX = worldScaleY * shear_.x;
+            float topOffset = offsetX * (halfHeight + anchorOffsetY);
+            float botOffset = offsetX * (-halfHeight + anchorOffsetY);
+            v0.x += botOffset;
+            v1.x += topOffset;
+            v2.x += topOffset;
+            v3.x += botOffset;
+        }
+        if (shear_.y != 0) {
+            float worldScaleX = (new Vector3(cachedWorldMatrix.m00, cachedWorldMatrix.m10, cachedWorldMatrix.m20)).magnitude;
+            float offsetY = worldScaleX * shear_.y;
+            float leftOffset = offsetY * (-halfWidth + anchorOffsetX);
+            float rightOffset = offsetY * (halfWidth + anchorOffsetX);
+            v0.y += leftOffset;
+            v1.y += leftOffset;
+            v2.y += rightOffset;
+            v3.y += rightOffset;
+        }
+
+        _vertices[_startIndex + 0] = v0;
+        _vertices[_startIndex + 1] = v1;
+        _vertices[_startIndex + 2] = v2;
+        _vertices[_startIndex + 3] = v3;
+        
+        // TODO: pixel-perfect
+    }
 }
-*/
+
+#endif
