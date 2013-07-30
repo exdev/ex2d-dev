@@ -248,6 +248,7 @@ class exSceneEditor : EditorWindow {
                         ex2DCamera = go.AddComponent<Camera>();
                     }
                     ex2DCamera.gameObject.AddComponent<ex2DMng>();
+                    ex2DMng.instance.CreateLayer();
                 }
             EditorGUILayout.EndHorizontal();
 

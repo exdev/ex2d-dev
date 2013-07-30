@@ -101,7 +101,7 @@ public static class exBitmapFontUtility {
             }
             else if ( words[0] == "char" ) {
                 exBitmapFont.CharInfo charInfo = new exBitmapFont.CharInfo(); 
-                charInfo.id = int.Parse ( ParseValue( words, "id" ) );
+                charInfo.symbol = (char)int.Parse ( ParseValue( words, "id" ) );
                 charInfo.x = int.Parse ( ParseValue( words, "x" ) );
                 charInfo.y = int.Parse ( ParseValue( words, "y" ) );
                 charInfo.width = int.Parse ( ParseValue( words, "width" ) );

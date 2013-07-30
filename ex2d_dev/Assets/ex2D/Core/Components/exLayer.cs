@@ -339,14 +339,14 @@ public class exLayer : MonoBehaviour
         Material mat = _sprite.material;
         for (int i = 0; i < meshList.Count; ++i) {
             exMesh mesh = meshList[i];
-                    if (mesh != null && object.ReferenceEquals(mesh.material, mat)) {
+            if (mesh != null && object.ReferenceEquals(mesh.material, mat)) {
                 bool containsSprite = (_sprite.spriteIndexInMesh >= 0 && _sprite.spriteIndexInMesh < mesh.spriteList.Count && 
                                       ReferenceEquals(mesh.spriteList[_sprite.spriteIndexInMesh], _sprite));
                 exDebug.Assert(containsSprite == mesh.spriteList.Contains(_sprite), "wrong sprite.spriteIndex");
                 if (containsSprite) {
                     return mesh;
                 }
-                    }
+            }
         }
         return null;
     }

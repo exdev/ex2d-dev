@@ -97,8 +97,18 @@ public static class exAtlasUtility {
             float paddedHeight = elHeight + _padding;
 
             // trimmed element size must fit within current node rect
-            if (elWidth > rect.width || elHeight > rect.height)
-                return null;
+            if (elWidth > rect.width || elHeight > rect.height) {
+                if (elHeight > rect.width || elWidth > rect.height) {
+                    return null;
+                }
+                else {
+                    _el.rotated = !_el.rotated;
+                    elWidth = _el.rotatedWidth;
+                    elHeight = _el.rotatedHeight;
+                    paddedWidth = elWidth + _padding;
+                    paddedHeight = elHeight + _padding;
+                }
+            }
 
             // create first child node in remaining space to the right, using elHeight
             // so that only other elements with the same height or less can be added there
@@ -227,7 +237,7 @@ public static class exAtlasUtility {
                 mySortBy = exAtlas.SortBy.Height;
                 break;
             case exAtlas.Algorithm.Tree:
-                mySortBy = exAtlas.SortBy.Height;
+                mySortBy = exAtlas.SortBy.Area;
                 break;
             default:
                 mySortBy = exAtlas.SortBy.Height;
@@ -486,6 +496,7 @@ public static class exAtlasUtility {
             string rawTextureName = Path.GetFileNameWithoutExtension(rawTexturePath);
 
             string expectPath = Path.Combine( atlasAssetsDir, rawTextureName + ".asset" );
+            expectPath = expectPath.Replace("\\", "/");
             if ( textureInfoPath != expectPath ) {
                 bool doMove = true;
                 FileInfo fileInfo = new FileInfo(expectPath);
@@ -496,8 +507,10 @@ public static class exAtlasUtility {
                                                           "No" );
                 }
 
-                if ( doMove )
+                if ( doMove ) {
+                    AssetDatabase.DeleteAsset ( expectPath );
                     AssetDatabase.MoveAsset ( textureInfoPath, expectPath );
+                }
             }
         }
         AssetDatabase.StopAssetEditing();

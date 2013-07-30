@@ -29,11 +29,11 @@ public class exBitmapFont : ScriptableObject {
 
     [System.Serializable]
     public class CharInfo {
-        public int id = -1;                ///< the character id 
+        public char symbol = '\x0';        ///< the character
         public int x = -1;                 ///< the x pos
         public int y = -1;                 ///< the y pos
         public int width = -1;             ///< the width
-        public int height = -1;            ///< the height                          
+        public int height = -1;            ///< the height
         public int xoffset = -1;           ///< the xoffset
         public int yoffset = -1;           ///< the yoffset
         public int xadvance = -1;          ///< the xadvance
@@ -41,7 +41,7 @@ public class exBitmapFont : ScriptableObject {
 
         public CharInfo () {}
         public CharInfo ( CharInfo _c ) {
-            id = _c.id;
+            symbol = _c.symbol;
             x = _c.x;
             y = _c.y;
             width = _c.width;
@@ -139,7 +139,7 @@ public class exBitmapFont : ScriptableObject {
     // internal fileds
     ///////////////////////////////////////////////////////////////////////////////
 
-    protected Dictionary<int,CharInfo> idToCharInfo = null;
+    protected Dictionary<char,CharInfo> charInfoTable = null;
     protected Dictionary<KerningTableKey,int> kerningTable = null;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -156,7 +156,7 @@ public class exBitmapFont : ScriptableObject {
         lineHeight = 0;
         size = 0;
 
-        idToCharInfo = null;
+        charInfoTable = null;
         kerningTable = null;
     }
 
@@ -164,14 +164,14 @@ public class exBitmapFont : ScriptableObject {
     /// Rebuild the table to store key exBitmapFont.CharInfo.id to value exBitmapFont.CharInfo
     // ------------------------------------------------------------------ 
 
-    public void RebuildIdToCharInfoTable () {
-        if ( idToCharInfo == null ) {
-            idToCharInfo = new Dictionary<int,CharInfo>(charInfos.Count);
+    public void RebuildCharInfoTable () {
+        if ( charInfoTable == null ) {
+            charInfoTable = new Dictionary<char,CharInfo>(charInfos.Count);
         }
-        idToCharInfo.Clear();
+        charInfoTable.Clear();
         for ( int i = 0; i < charInfos.Count; ++i ) {
             CharInfo c = charInfos[i];
-            idToCharInfo[c.id] = c;
+            charInfoTable[c.symbol] = c;
         }
     }
 
@@ -181,14 +181,14 @@ public class exBitmapFont : ScriptableObject {
     /// Get the character information by exBitmapFont.CharInfo.id
     // ------------------------------------------------------------------ 
 
-    public CharInfo GetCharInfo ( int _id ) {
+    public CharInfo GetCharInfo ( char _symbol ) {
         // create and build idToCharInfo table if null
-        if ( idToCharInfo == null ) {
-            RebuildIdToCharInfoTable ();
+        if ( charInfoTable == null ) {
+            RebuildCharInfoTable ();
         }
 
         CharInfo charInfo;
-        if ( idToCharInfo.TryGetValue (_id, out charInfo) )
+        if ( charInfoTable.TryGetValue (_symbol, out charInfo) )
             return charInfo;
         return null;
     }

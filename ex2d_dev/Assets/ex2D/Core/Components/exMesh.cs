@@ -24,7 +24,8 @@ public enum exUpdateFlags {
 	Vertex		= 2,  ///< update the vertices
 	UV	        = 4,  ///< update the uv coordination
 	Color	    = 8,  ///< update the vertex color
-	Normal	    = 16, ///< update the normal, not implemented yet
+    Normal      = 16, ///< update the normal, not implemented yet
+    Text	    = 32, ///< update the text, only used in sprite font
 
 	VertexAndIndex = (Index | Vertex),
 	AllExcludeIndex = (Vertex | UV | Color | Normal),

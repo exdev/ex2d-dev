@@ -1,4 +1,4 @@
-﻿// ======================================================================================
+// ======================================================================================
 // File         : exSpriteFont.cs
 // Author       : Jare
 // Last Change  : 07/28/2013 | 22:13:41
@@ -40,6 +40,7 @@ public class exSpriteFont : exSpriteBase {
         set {
             if ( font_ != value ) {
                 font_ = value;
+                updateFlags |= exUpdateFlags.Text;
                 UpdateMaterial();
             }
         }
@@ -55,8 +56,13 @@ public class exSpriteFont : exSpriteBase {
         get { return text_; }
         set {
             if ( text_ != value ) {
+                string oldText = text_;
                 text_ = value;
-                updateFlags |= exUpdateFlags.All;
+                // TODO: check multiline
+                if (oldText.Length != value.Length) {
+                    UpdateCapacity();   // TODO: 如果在一帧内反复修改文本，会造成多余的layer改动，考虑留到update时再处理
+                }
+                updateFlags |= exUpdateFlags.Text;
             }
         }
     }
@@ -71,7 +77,7 @@ public class exSpriteFont : exSpriteBase {
         set {
             if ( useMultiline_ != value ) {
                 useMultiline_ = value;
-                updateFlags |= exUpdateFlags.All;
+                updateFlags |= exUpdateFlags.Text;  // TODO: only need to update vertex ?
             }
         }
     }
@@ -260,26 +266,24 @@ public class exSpriteFont : exSpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
-    
+
+    // ------------------------------------------------------------------ 
+    /// 返回capacity的顶点数量，实际渲染的字符顶点数可能少于这个值。
+    // ------------------------------------------------------------------ 
+
     public override int vertexCount {
         get { 
-            if (text_ != null) {
-                return text_.Length * exMesh.QUAD_VERTEX_COUNT;
-            }
-            else {
-                return 0;
-            }
+            return vertexCountCapacity;
         }
     }
+    
+    // ------------------------------------------------------------------ 
+    /// 返回capacity的顶点索引数量，实际渲染的字符顶点索引数可能少于这个值。
+    // ------------------------------------------------------------------ 
 
     public override int indexCount {
         get { 
-            if (text_ != null) {
-                return text_.Length * exMesh.QUAD_INDEX_COUNT;
-            }
-            else {
-                return 0;
-            }
+            return indexCountCapacity;
         }
     }
 
@@ -293,21 +297,26 @@ public class exSpriteFont : exSpriteBase {
             }
         }
     }
+    
+    [System.NonSerialized] private int vertexCountCapacity = exMesh.QUAD_VERTEX_COUNT;
+    [System.NonSerialized] private int indexCountCapacity = exMesh.QUAD_INDEX_COUNT;
 
+    /*
     ///////////////////////////////////////////////////////////////////////////////
     // geometry buffers
     ///////////////////////////////////////////////////////////////////////////////
     
-    [System.NonSerialized] public List<Vector3> vertices = new List<Vector3>();  ///< 按文本顺序排列
-    [System.NonSerialized] public List<Vector2> uvs = new List<Vector2>();       ///< 按文本顺序排列
-    [System.NonSerialized] public List<Color32> colors32 = new List<Color32>();  ///< 按文本顺序排列
+    [System.NonSerialized] private List<Vector3> vertices = new List<Vector3>();  ///< 按文本顺序排列
+    [System.NonSerialized] private List<Vector2> uvs = new List<Vector2>();       ///< 按文本顺序排列
+    [System.NonSerialized] private List<Color32> colors32 = new List<Color32>();  ///< 按文本顺序排列
 
     /// 不需要按顺序排列，面片数量和文本数量保持一致即可
-    [System.NonSerialized] public List<int> indices = new List<int>(); 
+    [System.NonSerialized] private List<int> indices = new List<int>(); 
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable functions
     ///////////////////////////////////////////////////////////////////////////////
+    */
 
 #region Functions used to update geometry buffer
 
@@ -697,172 +706,7 @@ public class exSpriteFont : exSpriteBase {
 //        // Update Vertex, UV and Indices 
 //        // ======================================================== 
 
-//        if ( (updateFlags & UpdateFlags.Text) != 0 ) {
-//            updateFlags &= ~UpdateFlags.Vertex; // remove vertex update, if we have
-
-//            _mesh.Clear();
-
-//            float[] lineWidths;
-//            float[] kernings;
-//            float halfWidthScaled;
-//            float halfHeightScaled;
-//            float offsetX;
-//            float offsetY;
-//            CalculateSize ( out lineWidths,
-//                            out kernings, 
-//                            out halfWidthScaled,
-//                            out halfHeightScaled,
-//                            out offsetX,
-//                            out offsetY );
-
-//            //
-//            Vector3[] vertices  = new Vector3[vertexCount];
-//            Vector2[] uvs       = new Vector2[vertexCount];
-//            int[] indices       = new int[indexCount];
-//            Vector2 finalScale  = new Vector2 ( scale_.x * ppfScale_.x, scale_.y * ppfScale_.y );
-
-//            //
-//            int curLine = 0;
-//            float curX = 0.0f;
-//            if ( useMultiline_ ) {
-//                switch ( textAlign_ ) {
-//                case TextAlign.Left:
-//                    curX = 0.0f;
-//                    break;
-//                case TextAlign.Center:
-//                    curX = halfWidthScaled - lineWidths[curLine] * 0.5f * finalScale.x;
-//                    break;
-//                case TextAlign.Right:
-//                    curX = halfWidthScaled * 2.0f - lineWidths[curLine] * finalScale.x;
-//                    break;
-//                }
-//            }
-//            float curY = 0.0f;
-//            for ( int i = 0; i < text_.Length; ++i ) {
-//                int id = text_[i];
-
-//                // if next line
-//                if ( id == '\n' ) {
-//                    if ( useMultiline_ ) {
-//                        ++curLine;
-//                        switch ( textAlign_ ) {
-//                        case TextAlign.Left:
-//                            curX = 0.0f;
-//                            break;
-//                        case TextAlign.Center:
-//                            curX = halfWidthScaled - lineWidths[curLine] * 0.5f * finalScale.x;
-//                            break;
-//                        case TextAlign.Right:
-//                            curX = halfWidthScaled * 2.0f - lineWidths[curLine] * finalScale.x;
-//                            break;
-//                        }
-//                        curY = curY + (fontInfo_.lineHeight + lineSpacing_) * finalScale.y;
-//                    }
-//                    continue;
-//                }
-
-//                int vert_id = vertexStartAt + 4 * i;
-//                int idx_id = indexStartAt + 6 * i;
-//                // if we don't have the character, it will become space.
-//                exBitmapFont.CharInfo charInfo = fontInfo_.GetCharInfo(id);
-
-//                //
-//                if ( charInfo != null ) {
-//                    // build vertices & normals
-//                    for ( int r = 0; r < 2; ++r ) {
-//                        for ( int c = 0; c < 2; ++c ) {
-//                            int j = r * 2 + c;
-
-//                            // calculate the base pos
-//                            float x = curX - halfWidthScaled + c * charInfo.width * finalScale.x + charInfo.xoffset * finalScale.x;
-//                            float y = -curY + halfHeightScaled - r * charInfo.height * finalScale.y - charInfo.yoffset * finalScale.y;
-
-//                            // calculate the pos affect by anchor
-//                            x -= offsetX;
-//                            y += offsetY;
-
-//                            // calculate the shear
-//                            float old_x = x;
-//                            x += y * shear_.x;
-//                            y += old_x * shear_.y;
-
-//                            // build vertices and normals
-//                            vertices[vert_id+j] = new Vector3( x, y, 0.0f );
-//                            // normals[vert_id+j] = new Vector3( 0.0f, 0.0f, -1.0f );
-//                        }
-//                    }
-
-//                    // build uv
-//                    float textureWidth = fontInfo_.pageInfos[0].texture.width;
-//                    float textureHeight = fontInfo_.pageInfos[0].texture.height;
-//                    float charUVWidth = (float)charInfo.width/(float)textureWidth;
-//                    float charUVHeight = (float)charInfo.height/(float)textureHeight;
-
-//                    float xStart  = charInfo.uv0.x;
-//                    float yStart  = charInfo.uv0.y;
-//                    float xEnd    = xStart + charUVWidth; 
-//                    float yEnd    = yStart + charUVHeight; 
-
-//                    //
-//                    uvs[vert_id + 0] = new Vector2 ( xStart,  yEnd );
-//                    uvs[vert_id + 1] = new Vector2 ( xEnd,    yEnd );
-//                    uvs[vert_id + 2] = new Vector2 ( xStart,  yStart );
-//                    uvs[vert_id + 3] = new Vector2 ( xEnd,    yStart );
-
-//                    // build indices
-//                    indices[idx_id + 0] = vert_id + 0;
-//                    indices[idx_id + 1] = vert_id + 1;
-//                    indices[idx_id + 2] = vert_id + 2;
-//                    indices[idx_id + 3] = vert_id + 2;
-//                    indices[idx_id + 4] = vert_id + 1;
-//                    indices[idx_id + 5] = vert_id + 3;
-
-//                    //
-//                    curX = curX + (charInfo.xadvance + tracking_) * finalScale.x;
-//                    if ( useKerning_ ) {
-//                        if ( i < text_.Length - 1 ) {
-//                            curX += kernings[i] * finalScale.x;
-//                        }
-//                    }
-//                }
-//            }
-
-//            // update outline
-//            if ( useOutline_ ) {
-//                UpdateOutline ( outlineVertexStartAt, 
-//                                outlineIndexStartAt, 
-//                                vertexStartAt,
-//                                vertices, 
-//                                uvs, 
-//                                indices );
-//            }
-
-//            // update shadow
-//            if ( useShadow_ ) {
-//                UpdateShadow ( shadowVertexStartAt, 
-//                               shadowIndexStartAt, 
-//                               vertexStartAt, 
-//                               vertices, 
-//                               uvs, 
-//                               indices );
-//            }
-
-//            //
-//            _mesh.vertices = vertices;
-//            // _mesh.normals = normals;
-//            _mesh.uv = uvs;
-//            _mesh.triangles = indices; 
-//            _mesh.bounds = GetMeshBounds ( offsetX, offsetY, halfWidthScaled * 2.0f, halfHeightScaled * 2.0f );
-
-//            // update box-collider if we have
-//            UpdateBoundRect ( offsetX, offsetY, halfWidthScaled * 2.0f, halfHeightScaled * 2.0f );
-//            if ( collisionHelper ) 
-//                collisionHelper.UpdateCollider();
-
-//// #if UNITY_EDITOR
-////             _mesh.RecalculateBounds();
-//// #endif
-//        }
+//        
 
 //        // ======================================================== 
 //        // Update Vertex Only 
@@ -1200,12 +1044,145 @@ public class exSpriteFont : exSpriteBase {
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
-    
+    // TODO: 如果要避免总是更新同一个mesh的其他sprite，就要避免面数反复增减。这时可以采用的优化方式是将冗余的所有vertex的color设为透明
+
     void UpdateVertexBuffer (List<Vector3> _vertices, int _startIndex) {
-        float anchorOffsetX;
-        float anchorOffsetY;
-        float halfWidth = width * 0.5f;     // TODO: caculate width and height
-        float halfHeight = height * 0.5f;
+        if (font_ == null) {
+            return;
+        }
+        for (int i = 0; i < text_; ++i) {
+            exBitmapFont.CharInfo ci = font_.GetCharInfo(text_[i]);
+            if (ci == null) {
+                continue;
+            }
+
+        }
+            //            float halfWidthScaled;
+            //            float halfHeightScaled;
+            //            float offsetX;
+            //            float offsetY;
+            //            CalculateSize ( out lineWidths,
+            //                            out kernings, 
+            //                            out halfWidthScaled,
+            //                            out halfHeightScaled,
+            //                            out offsetX,
+            //                            out offsetY );
+
+            //            //
+            //            Vector3[] vertices  = new Vector3[vertexCount];
+            //            Vector2[] uvs       = new Vector2[vertexCount];
+            //            int[] indices       = new int[indexCount];
+            //            Vector2 finalScale  = new Vector2 ( scale_.x * ppfScale_.x, scale_.y * ppfScale_.y );
+
+            //            //
+            //            int curLine = 0;
+            //            float curX = 0.0f;
+            //            if ( useMultiline_ ) {
+            //                switch ( textAlign_ ) {
+            //                case TextAlign.Left:
+            //                    curX = 0.0f;
+            //                    break;
+            //                case TextAlign.Center:
+            //                    curX = halfWidthScaled - lineWidths[curLine] * 0.5f * finalScale.x;
+            //                    break;
+            //                case TextAlign.Right:
+            //                    curX = halfWidthScaled * 2.0f - lineWidths[curLine] * finalScale.x;
+            //                    break;
+            //                }
+            //            }
+            //            float curY = 0.0f;
+            //            for ( int i = 0; i < text_.Length; ++i ) {
+            //                int id = text_[i];
+
+            //                // if next line
+            //                if ( id == '\n' ) {
+            //                    if ( useMultiline_ ) {
+            //                        ++curLine;
+            //                        switch ( textAlign_ ) {
+            //                        case TextAlign.Left:
+            //                            curX = 0.0f;
+            //                            break;
+            //                        case TextAlign.Center:
+            //                            curX = halfWidthScaled - lineWidths[curLine] * 0.5f * finalScale.x;
+            //                            break;
+            //                        case TextAlign.Right:
+            //                            curX = halfWidthScaled * 2.0f - lineWidths[curLine] * finalScale.x;
+            //                            break;
+            //                        }
+            //                        curY = curY + (fontInfo_.lineHeight + lineSpacing_) * finalScale.y;
+            //                    }
+            //                    continue;
+            //                }
+
+            //                int vert_id = vertexStartAt + 4 * i;
+            //                int idx_id = indexStartAt + 6 * i;
+            //                // if we don't have the character, it will become space.
+            //                exBitmapFont.CharInfo charInfo = fontInfo_.GetCharInfo(id);
+
+            //                //
+            //                if ( charInfo != null ) {
+            //                    // build vertices & normals
+            //                    for ( int r = 0; r < 2; ++r ) {
+            //                        for ( int c = 0; c < 2; ++c ) {
+            //                            int j = r * 2 + c;
+
+            //                            // calculate the base pos
+            //                            float x = curX - halfWidthScaled + c * charInfo.width * finalScale.x + charInfo.xoffset * finalScale.x;
+            //                            float y = -curY + halfHeightScaled - r * charInfo.height * finalScale.y - charInfo.yoffset * finalScale.y;
+
+            //                            // calculate the pos affect by anchor
+            //                            x -= offsetX;
+            //                            y += offsetY;
+
+            //                            // calculate the shear
+            //                            float old_x = x;
+            //                            x += y * shear_.x;
+            //                            y += old_x * shear_.y;
+
+            //                            // build vertices and normals
+            //                            vertices[vert_id+j] = new Vector3( x, y, 0.0f );
+            //                            // normals[vert_id+j] = new Vector3( 0.0f, 0.0f, -1.0f );
+            //                        }
+            //                    }
+
+            //                    // build uv
+            //                    float textureWidth = fontInfo_.pageInfos[0].texture.width;
+            //                    float textureHeight = fontInfo_.pageInfos[0].texture.height;
+            //                    float charUVWidth = (float)charInfo.width/(float)textureWidth;
+            //                    float charUVHeight = (float)charInfo.height/(float)textureHeight;
+
+            //                    float xStart  = charInfo.uv0.x;
+            //                    float yStart  = charInfo.uv0.y;
+            //                    float xEnd    = xStart + charUVWidth; 
+            //                    float yEnd    = yStart + charUVHeight; 
+
+            //                    //
+            //                    uvs[vert_id + 0] = new Vector2 ( xStart,  yEnd );
+            //                    uvs[vert_id + 1] = new Vector2 ( xEnd,    yEnd );
+            //                    uvs[vert_id + 2] = new Vector2 ( xStart,  yStart );
+            //                    uvs[vert_id + 3] = new Vector2 ( xEnd,    yStart );
+
+            //                    // build indices
+            //                    indices[idx_id + 0] = vert_id + 0;
+            //                    indices[idx_id + 1] = vert_id + 1;
+            //                    indices[idx_id + 2] = vert_id + 2;
+            //                    indices[idx_id + 3] = vert_id + 2;
+            //                    indices[idx_id + 4] = vert_id + 1;
+            //                    indices[idx_id + 5] = vert_id + 3;
+
+            //                    //
+            //                    curX = curX + (charInfo.xadvance + tracking_) * finalScale.x;
+            //                    if ( useKerning_ ) {
+            //                        if ( i < text_.Length - 1 ) {
+            //                            curX += kernings[i] * finalScale.x;
+            //                        }
+            //                    }
+            //                }
+            //            }
+
+
+
+
 
         switch ( anchor_ ) {
         case Anchor.TopLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = -halfHeight;  break;
@@ -1269,6 +1246,37 @@ public class exSpriteFont : exSpriteBase {
         _vertices[_startIndex + 3] = v3;
         
         // TODO: pixel-perfect
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void UpdateCapacity () {
+        // TODO: check multiline
+        int textLength = text_.Length;
+        int oldTextCapaticy = vertexCountCapacity / exMesh.QUAD_VERTEX_COUNT;
+        int textCapaticy = oldTextCapaticy;
+        // append
+        while (textLength > textCapaticy) {
+            textCapaticy <<= 1;
+        }
+        // trim
+        while (textLength < textCapaticy / 2) {
+            textCapaticy >>= 1;
+        }
+        if (textCapaticy != oldTextCapaticy) {
+            if (layer_ != null) {
+                // remove from layer
+                exLayer myLayer = layer_;
+                myLayer.Remove(this);
+                // change capacity
+                vertexCountCapacity = textCapaticy * exMesh.QUAD_VERTEX_COUNT;
+                indexCountCapacity = textCapaticy * exMesh.QUAD_INDEX_COUNT;
+                // readd to layer
+                myLayer.Add(this);
+            }
+        }
     }
 }
 
