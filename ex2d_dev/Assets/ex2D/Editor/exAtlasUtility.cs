@@ -486,6 +486,7 @@ public static class exAtlasUtility {
             string rawTextureName = Path.GetFileNameWithoutExtension(rawTexturePath);
 
             string expectPath = Path.Combine( atlasAssetsDir, rawTextureName + ".asset" );
+            expectPath = expectPath.Replace("\\", "/");
             if ( textureInfoPath != expectPath ) {
                 bool doMove = true;
                 FileInfo fileInfo = new FileInfo(expectPath);
@@ -496,8 +497,10 @@ public static class exAtlasUtility {
                                                           "No" );
                 }
 
-                if ( doMove )
+                if ( doMove ) {
+                    AssetDatabase.DeleteAsset ( expectPath );
                     AssetDatabase.MoveAsset ( textureInfoPath, expectPath );
+                }
             }
         }
         AssetDatabase.StopAssetEditing();
