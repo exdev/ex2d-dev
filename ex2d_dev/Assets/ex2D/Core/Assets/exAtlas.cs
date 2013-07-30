@@ -29,9 +29,8 @@ public class exAtlas : ScriptableObject {
 
     public enum Algorithm {
         Basic, ///< basic algorithm, pack texture by the sort order
-        // Shelf, // TODO
         Tree,  ///< Pack the textures by binary space, find the most fitable texture in it
-        // MaxRect, // TODO
+        MaxRect,
     }
 
     // ------------------------------------------------------------------ 

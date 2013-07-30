@@ -950,7 +950,8 @@ partial class exAtlasEditor : EditorWindow {
                                   curEdit.algorithm,
                                   curEdit.width,
                                   curEdit.height,
-                                  curEdit.actualPadding );
+                                  curEdit.actualPadding,
+                                  curEdit.allowRotate );
             
             // apply back element to atlas texture info, char info or others
             foreach ( exAtlasUtility.Element el in elements ) {

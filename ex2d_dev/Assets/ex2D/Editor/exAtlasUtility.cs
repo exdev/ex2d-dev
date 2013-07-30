@@ -80,14 +80,14 @@ public static class exAtlasUtility {
         public PackNode bottom = null;
 
         public PackNode ( Rect _rect ) { rect = _rect; }
-        public Vector2? Insert ( Element _el, int _padding ) {
+        public Vector2? Insert ( Element _el, int _padding, bool _allowRotate ) {
             // when this node is already occupied (when it has children),
             // forward to child nodes recursively
             if (right != null) {
-                Vector2? pos = right.Insert(_el, _padding);
+                Vector2? pos = right.Insert(_el, _padding, _allowRotate);
                 if (pos != null)
                     return pos;
-                return bottom.Insert(_el, _padding);
+                return bottom.Insert(_el, _padding, _allowRotate);
             }
 
             // determine trimmed and padded sizes
@@ -97,8 +97,12 @@ public static class exAtlasUtility {
             float paddedHeight = elHeight + _padding;
 
             // trimmed element size must fit within current node rect
-            if (elWidth > rect.width || elHeight > rect.height) {
-                if (elHeight > rect.width || elWidth > rect.height) {
+            if ( elWidth > rect.width || elHeight > rect.height ) {
+
+                if ( _allowRotate == false )
+                    return null;
+
+                if ( elHeight > rect.width || elWidth > rect.height ) {
                     return null;
                 }
                 else {
@@ -239,6 +243,13 @@ public static class exAtlasUtility {
             case exAtlas.Algorithm.Tree:
                 mySortBy = exAtlas.SortBy.Area;
                 break;
+
+            // TODO { 
+            // case exAtlas.Algorithm.MaxRect:
+            //     mySortBy = exAtlas.SortBy.Area;
+            //     break;
+            // } TODO end 
+
             default:
                 mySortBy = exAtlas.SortBy.Height;
                 break;
@@ -256,15 +267,18 @@ public static class exAtlasUtility {
             else
                 _elements.Sort( CompareByWidth );
             break;
+
         case exAtlas.SortBy.Height:
             if ( _allowRotate )
                 _elements.Sort( CompareByRotateHeight );
             else
                 _elements.Sort( CompareByHeight );
             break;
+
         case exAtlas.SortBy.Area:
             _elements.Sort( CompareByArea );
             break;
+
         case exAtlas.SortBy.Name:
             _elements.Sort( CompareByName );
             break;
@@ -280,12 +294,101 @@ public static class exAtlasUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void Pack ( List<Element> _elements, exAtlas.Algorithm _algorithm, int _atlasWidth, int _atlasHeight, int _padding ) {
-        if ( _algorithm == exAtlas.Algorithm.Basic ) {
-            BasicPack ( _elements, _atlasWidth, _atlasHeight, _padding );
+    public static void Pack ( List<Element> _elements, 
+                              exAtlas.Algorithm _algorithm, 
+                              int _atlasWidth, 
+                              int _atlasHeight, 
+                              int _padding,
+                              bool _allowRotate ) {
+        switch ( _algorithm ) {
+        case exAtlas.Algorithm.Basic:
+            BasicPack ( _elements, _atlasWidth, _atlasHeight, _padding, _allowRotate );
+            break;
+
+        case exAtlas.Algorithm.Tree:
+            TreePack ( _elements, _atlasWidth, _atlasHeight, _padding, _allowRotate );
+            break;
+
+        case exAtlas.Algorithm.MaxRect:
+            MaxRectPack ( _elements, _atlasWidth, _atlasHeight, _padding, _allowRotate );
+            break;
+        } 
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    static Rect MaxRect_ScoreRect ( List<Rect> _freeRects, int _width, int _height, ref int _score1, ref int _score2 ) {
+        _score1 = int.MaxValue;
+        _score2 = int.MaxValue;
+        Rect newRect = new Rect( 0, 0, _width, _height );
+
+        //
+        for ( int i = 0; i < _freeRects.Count; ++i ) {
+            Rect freeRect = _freeRects[i];
+
+            //
+            if ( freeRect.width >= _width && freeRect.height >= _height ) {
+                int leftoverHoriz = System.Math.Abs((int)_freeRects[i].width - _width);
+                int leftoverVert = System.Math.Abs((int)_freeRects[i].height - _height);
+                int shortSideFit = System.Math.Min(leftoverHoriz, leftoverVert);
+                int longSideFit = System.Math.Max(leftoverHoriz, leftoverVert);
+
+                if ( shortSideFit < _score1 || (shortSideFit == _score1 && longSideFit < _score2) ) {
+                    newRect.x = _freeRects[i].x;
+                    newRect.y = _freeRects[i].y;
+                    newRect.width = _width;
+                    newRect.height = _height;
+                    _score1 = shortSideFit;
+                    _score2 = longSideFit;
+                }
+            }
+
+            // rotated
+            if ( freeRect.width >= _height && freeRect.height >= _width ) {
+                int leftoverHoriz = System.Math.Abs((int)_freeRects[i].width - _height);
+                int leftoverVert = System.Math.Abs((int)_freeRects[i].height - _width);
+                int shortSideFit = System.Math.Min(leftoverHoriz, leftoverVert);
+                int longSideFit = System.Math.Max(leftoverHoriz, leftoverVert);
+
+                if ( shortSideFit < _score1 || (shortSideFit == _score1 && longSideFit < _score2) ) {
+                    newRect.x = _freeRects[i].x;
+                    newRect.y = _freeRects[i].y;
+                    newRect.width = _height;
+                    newRect.height = _width;
+                    _score1 = shortSideFit;
+                    _score2 = longSideFit;
+                }
+            }
         }
-        else if ( _algorithm == exAtlas.Algorithm.Tree ) {
-            TreePack ( _elements, _atlasWidth, _atlasHeight, _padding );
+
+        //
+        if ( newRect.height == 0 ) {
+            _score1 = int.MaxValue;
+            _score2 = int.MaxValue;
+        }
+
+        return newRect;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    static void MaxRect_CleanUpFreeRects ( List<Rect> _freeRects ) {
+        for ( int i = 0; i < _freeRects.Count; ++i ) {
+            for ( int j = i+1; j < _freeRects.Count; ++j ) {
+                if ( exGeometryUtility.RectRect_Contains(_freeRects[i],_freeRects[j]) != 0 ) {
+                    _freeRects.RemoveAt(i);
+                    --i;
+                    break;
+                }
+                if ( exGeometryUtility.RectRect_Contains(_freeRects[j],_freeRects[i]) != 0 ) {
+                    _freeRects.RemoveAt(j);
+                    --j;
+                }
+            }
         }
     }
 
@@ -293,13 +396,131 @@ public static class exAtlasUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void TreePack ( List<Element> _elements, int _atlasWidth, int _atlasHeight, int _padding ) {
+    static void MaxRect_PlaceRect ( List<Rect> _freeRects, Rect _rect ) {
+        for ( int i = 0; i < _freeRects.Count; ++i ) {
+            if ( MaxRect_SplitFreeNode( _freeRects, _freeRects[i], _rect ) ) {
+                _freeRects.RemoveAt(i);
+                --i;
+            }
+        }
+
+        MaxRect_CleanUpFreeRects(_freeRects);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    static bool MaxRect_SplitFreeNode ( List<Rect> _freeRects, Rect _freeNode, Rect _usedNode ) {
+        // Test with SAT if the rectangles even intersect.
+        if ( _usedNode.x >= _freeNode.x + _freeNode.width || _usedNode.x + _usedNode.width <= _freeNode.x ||
+             _usedNode.y >= _freeNode.y + _freeNode.height || _usedNode.y + _usedNode.height <= _freeNode.y )
+            return false;
+
+        if ( _usedNode.x < _freeNode.x + _freeNode.width && _usedNode.x + _usedNode.width > _freeNode.x ) {
+            // New node at the top side of the used node.
+            if ( _usedNode.y > _freeNode.y && _usedNode.y < _freeNode.y + _freeNode.height ) {
+                Rect newNode = _freeNode;
+                newNode.height = _usedNode.y - newNode.y;
+                _freeRects.Add(newNode);
+            }
+
+            // New node at the bottom side of the used node.
+            if ( _usedNode.y + _usedNode.height < _freeNode.y + _freeNode.height ) {
+                Rect newNode = _freeNode;
+                newNode.y = _usedNode.y + _usedNode.height;
+                newNode.height = _freeNode.y + _freeNode.height - (_usedNode.y + _usedNode.height);
+                _freeRects.Add(newNode);
+            }
+        }
+
+        if ( _usedNode.y < _freeNode.y + _freeNode.height && _usedNode.y + _usedNode.height > _freeNode.y ) {
+            // New node at the left side of the used node.
+            if ( _usedNode.x > _freeNode.x && _usedNode.x < _freeNode.x + _freeNode.width ) {
+                Rect newNode = _freeNode;
+                newNode.width = _usedNode.x - newNode.x;
+                _freeRects.Add(newNode);
+            }
+
+            // New node at the right side of the used node.
+            if ( _usedNode.x + _usedNode.width < _freeNode.x + _freeNode.width ) {
+                Rect newNode = _freeNode;
+                newNode.x = _usedNode.x + _usedNode.width;
+                newNode.width = _freeNode.x + _freeNode.width - (_usedNode.x + _usedNode.width);
+                _freeRects.Add(newNode);
+            }
+        }
+
+        return true;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void MaxRectPack ( List<Element> _elements, 
+                                     int _atlasWidth, 
+                                     int _atlasHeight, 
+                                     int _padding,
+                                     bool _allowRotate ) {
+        List<Rect> freeRects = new List<Rect>();
+        freeRects.Add ( new Rect( 0, 0, _atlasWidth, _atlasHeight ) );
+
+        List<Element> processElements = _elements.GetRange(0,_elements.Count);
+        while ( processElements.Count > 0 ) {
+            int bestScore1 = int.MaxValue;
+            int bestScore2 = int.MaxValue;
+            int bestElementIdx = -1;
+            Rect bestRect = new Rect( 0, 0, 1, 1 );
+
+            for ( int i = 0; i < processElements.Count; ++i ) {
+                int score1 = int.MaxValue;
+                int score2 = int.MaxValue;
+                Rect newRect = MaxRect_ScoreRect ( freeRects, processElements[i].width, processElements[i].height, ref score1, ref score2 );
+
+                if ( score1 < bestScore1 || (score1 == bestScore1 && score2 < bestScore2) ) {
+                    bestScore1 = score1;
+                    bestScore2 = score2;
+                    bestRect = newRect;
+                    bestElementIdx = i;
+                }
+            }
+
+            if ( bestElementIdx == -1 ) {
+                Debug.LogWarning ( "Failed to layout atlas elements" );
+                return;
+            }
+            MaxRect_PlaceRect( freeRects, bestRect );
+
+            // apply the best-element
+            Element bestElement = processElements[bestElementIdx];
+            bestElement.x = (int)bestRect.x;
+            bestElement.y = (int)bestRect.y;
+            if ( bestElement.width != bestRect.width )
+                bestElement.rotated = true;
+            else
+                bestElement.rotated = false;
+
+            // remove the processed(inserted) element
+            processElements.RemoveAt( bestElementIdx );
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void TreePack ( List<Element> _elements, 
+                                  int _atlasWidth, 
+                                  int _atlasHeight, 
+                                  int _padding,
+                                  bool _allowRotate ) {
         PackNode root = new PackNode( new Rect( 0,
                                                 0,
                                                 _atlasWidth,
                                                 _atlasHeight ) );
         foreach ( Element el in _elements ) {
-            Vector2? pos = root.Insert (el, _padding);
+            Vector2? pos = root.Insert (el, _padding, _allowRotate);
             if (pos != null) {
                 el.x = (int)pos.Value.x;
                 el.y = (int)pos.Value.y;
@@ -315,7 +536,11 @@ public static class exAtlasUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void BasicPack ( List<Element> _elements, int _atlasWidth, int _atlasHeight, int _padding ) {
+    public static void BasicPack ( List<Element> _elements, 
+                                   int _atlasWidth, 
+                                   int _atlasHeight, 
+                                   int _padding,
+                                   bool _allowRotate ) {
         int curX = 0;
         int curY = 0;
         int maxY = 0; 
