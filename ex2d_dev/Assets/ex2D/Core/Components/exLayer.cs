@@ -50,7 +50,7 @@ public class exLayer : MonoBehaviour
     /// show/hide layer and all its sprites.
     // ------------------------------------------------------------------ 
     
-    [HideInInspector] [SerializeField] 
+    [SerializeField] 
     private bool show_ = true;
     public bool show {
         get {
@@ -102,6 +102,25 @@ public class exLayer : MonoBehaviour
         }
     }
     
+    // ------------------------------------------------------------------ 
+    /// the layer's alpha affects every sprites drawn by the layer.
+    // ------------------------------------------------------------------ 
+    
+    [SerializeField] 
+    private float alpha_ = 1.0f;
+    public float alpha {
+        get {
+            return alpha_;
+        }
+        set { 
+            if (alpha_ == value) {
+                return;
+            }
+            alpha_ = value;
+            alphaHasChanged = true;
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -119,6 +138,7 @@ public class exLayer : MonoBehaviour
     }
 
     [System.NonSerialized] private int nextSpriteUniqueId = 0;
+    [System.NonSerialized] private bool alphaHasChanged = false;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
@@ -153,6 +173,9 @@ public class exLayer : MonoBehaviour
                 for (int i = 0; i < mesh.spriteList.Count; ++i) {
                     exSpriteBase sprite = mesh.spriteList[i];
                     exDebug.Assert(sprite.isInIndexBuffer == sprite.visible);
+                    if (alphaHasChanged) {
+                        sprite.updateFlags |= exUpdateFlags.Color;
+                    }
                     if (sprite.isInIndexBuffer) {
                         sprite.UpdateTransform();
                         exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
@@ -162,6 +185,7 @@ public class exLayer : MonoBehaviour
                 // TODO: 如果需要排序，进行排序并且更新相关mesh的indices
                 mesh.Apply(meshUpdateFlags);
             }
+            alphaHasChanged = false;
         }
     }
 

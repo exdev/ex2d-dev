@@ -208,10 +208,11 @@ public class exSprite : exSpriteBase {
             }
         }
         if ((updateFlags & exUpdateFlags.Color) != 0) {
-            _colors32[vertexBufferIndex + 0] = new Color32(255, 255, 255, 255);
-            _colors32[vertexBufferIndex + 1] = new Color32(255, 255, 255, 255);
-            _colors32[vertexBufferIndex + 2] = new Color32(255, 255, 255, 255);
-            _colors32[vertexBufferIndex + 3] = new Color32(255, 255, 255, 255);
+            Color32 color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
+            _colors32[vertexBufferIndex + 0] = color32;
+            _colors32[vertexBufferIndex + 1] = color32;
+            _colors32[vertexBufferIndex + 2] = color32;
+            _colors32[vertexBufferIndex + 3] = color32;
         }
         exUpdateFlags spriteUpdateFlags = updateFlags;
         updateFlags = exUpdateFlags.None;

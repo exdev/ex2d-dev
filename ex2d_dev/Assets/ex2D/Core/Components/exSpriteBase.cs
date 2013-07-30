@@ -126,7 +126,22 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
                 exLayer originalLayer = layer_;
                 SetLayer(null);
                 SetLayer(originalLayer);
-                //updateFlags |= UpdateFlags.Index;
+                //updateFlags |= exUpdateFlags.Index;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Color color_ = new Color(1f, 1f, 1f, 1f);
+    /// the color of the sprite
+    // ------------------------------------------------------------------ 
+
+    public Color color {
+        get { return color_; }
+        set {
+            if ( color_ != value ) {
+                color_ = value;
+                updateFlags |= exUpdateFlags.Color;
             }
         }
     }
