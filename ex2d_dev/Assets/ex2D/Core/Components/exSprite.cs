@@ -86,44 +86,26 @@ public class exSprite : exSpriteBase {
         }
     }
 
-    // ------------------------------------------------------------------ 
-    /// The shader used to render this sprite
-    // ------------------------------------------------------------------ 
-
-    [SerializeField]
-    private Shader shader_ = null;
-    public Shader shader {
-        get { return shader_; }
-        set {
-            if (ReferenceEquals(shader_, value)) {
-                return;
-            }
-            shader_ = value;
-            if (layer_ != null) {
-                exLayer myLayer = layer_;
-                myLayer.Remove(this);
-                myLayer.Add(this);
-            }
-        }
-    }
-
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
 
-    [System.NonSerialized] private Material material_;
-    public override Material material {
+    public override int vertexCount {
+        get { return exMesh.QUAD_VERTEX_COUNT; }
+    }
+
+    public override int indexCount {
+        get { return exMesh.QUAD_INDEX_COUNT; }
+    }
+
+    protected override Texture texture {
         get {
-            if (material_ != null) {
-                return material_;
-            }
-            if (textureInfo != null) {
-                material_ = ex2DMng.GetMaterial(shader, textureInfo.texture);
+            if (textureInfo_ != null) {
+                return textureInfo_.texture;
             }
             else {
-                material_ = ex2DMng.GetMaterial(shader, null);
+                return null;
             }
-            return material_;
         }
     }
 
@@ -181,11 +163,7 @@ public class exSprite : exSpriteBase {
     // Overridable functions
     ///////////////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Other functions
-    ///////////////////////////////////////////////////////////////////////////////
-
-#region Functions used to update geometry buffer
+    #region Functions used to update geometry buffer
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -240,7 +218,7 @@ public class exSprite : exSpriteBase {
         return spriteUpdateFlags;
     }
 
-#endregion // Functions used to update geometry buffer
+    #endregion // Functions used to update geometry buffer
     
     // ------------------------------------------------------------------ 
     /// Calculate the world AABB rect of the sprite
@@ -284,6 +262,10 @@ public class exSprite : exSpriteBase {
         UpdateVertexBuffer(vertices, 0);
         return vertices.ToArray();
     }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Other functions
+    ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -420,21 +402,5 @@ public class exSprite : exSpriteBase {
         _vertices[_startIndex + 3] = v3;
         
         // TODO: pixel-perfect
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-    
-    void UpdateMaterial (/*Shader _newShader, Texture2D _newTexture*/) {
-        if (layer_ != null) {
-            exLayer myLayer = layer_;
-            myLayer.Remove(this);
-            material_ = null;   // set dirty, make material update.
-            myLayer.Add(this);
-        }
-        else {
-            material_ = null;   // set dirty, make material update.
-        }
     }
 }

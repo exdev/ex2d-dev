@@ -211,7 +211,7 @@ public class exBitmapFont : ScriptableObject {
     // ------------------------------------------------------------------ 
     /// \param _first the first character
     /// \param _second the second character
-    /// \return kerning amount between first and sceond character
+    /// \return the kerning amount
     /// Get the kerning amount between first and sceond character
     // ------------------------------------------------------------------ 
 

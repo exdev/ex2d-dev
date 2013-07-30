@@ -161,15 +161,28 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         }
     }
     
+    // ------------------------------------------------------------------ 
+    [SerializeField] private Shader shader_ = null;
+    /// The shader used to render this sprite
+    // ------------------------------------------------------------------ 
+
+    public Shader shader {
+        get { return shader_; }
+        set {
+            if (ReferenceEquals(shader_, value)) {
+                return;
+            }
+            shader_ = value;
+            UpdateMaterial();
+        }
+    }
+
     /// 用于相同depth的sprite之间的排序
-    public int spriteIdInLayer = -1;
+    [HideInInspector] public int spriteIdInLayer = -1;
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
-    
-    [System.NonSerialized] public int vertexCount = 4;
-    [System.NonSerialized] public int indexCount = 6;
     
     // cached for geometry buffers
     [System.NonSerialized] internal int spriteIndexInMesh = -1;
@@ -189,18 +202,8 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
     
-    [System.NonSerialized] protected Transform cachedTransform_ = null;    
-    public Transform cachedTransform {
-        get {
-            if (ReferenceEquals(cachedTransform_, null)) {
-                cachedTransform_ = transform;
-                cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
-            }
-            return cachedTransform_;
-        }
-    }
-
-    [System.NonSerialized] protected Matrix4x4 cachedWorldMatrix;
+    public abstract int vertexCount { get; }
+    public abstract int indexCount { get; }
 
     [System.NonSerialized]
     protected exLayer layer_ = null;
@@ -213,7 +216,18 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         }
     }
 
-    public abstract Material material { get; }
+    [System.NonSerialized] private Material material_;
+    public Material material {
+        get {
+            if (material_ != null) {
+                return material_;
+            }
+            material_ = ex2DMng.GetMaterial(shader_, texture);
+            return material_;
+        }
+    }
+
+    protected abstract Texture texture { get; }
 
     /// 当前sprite是否可见？只返回sprite自身属性，不一定真的显示在任一camera中。
     public virtual bool visible {
@@ -236,6 +250,19 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             }
         }
     }
+
+    [System.NonSerialized] protected Transform cachedTransform_ = null;    
+    public Transform cachedTransform {
+        get {
+            if (ReferenceEquals(cachedTransform_, null)) {
+                cachedTransform_ = transform;
+                cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
+            }
+            return cachedTransform_;
+        }
+    }
+
+    [System.NonSerialized] protected Matrix4x4 cachedWorldMatrix;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
@@ -366,7 +393,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             _uvs.Add(new Vector2());
         }
         
-        updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.Color | exUpdateFlags.UV | exUpdateFlags.Normal);
+        updateFlags |= exUpdateFlags.AllExcludeIndex;
     }
 
     // ------------------------------------------------------------------ 
@@ -426,6 +453,22 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             cachedTransform_.hasChanged = false;
             cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
             updateFlags |= exUpdateFlags.Vertex;
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    protected void UpdateMaterial () {
+        if (layer_ != null) {
+            exLayer myLayer = layer_;
+            myLayer.Remove(this);
+            material_ = null;   // set dirty, make material update.
+            myLayer.Add(this);
+        }
+        else {
+            material_ = null;   // set dirty, make material update.
         }
     }
 }
