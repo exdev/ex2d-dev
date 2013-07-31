@@ -1,4 +1,4 @@
-// ======================================================================================
+﻿// ======================================================================================
 // File         : exSpriteFont.cs
 // Author       : Jare
 // Last Change  : 07/28/2013 | 22:13:41
@@ -38,11 +38,40 @@ public class exSpriteFont : exSpriteBase {
     public exBitmapFont font {
         get { return font_; }
         set {
-            if ( font_ != value ) {
-                font_ = value;
-                updateFlags |= exUpdateFlags.Text;
-                UpdateMaterial();
+            if (ReferenceEquals(font_, value)) {
+                return;
             }
+            if (value != null) {
+                if (value.texture == null) {
+                    Debug.LogWarning("invalid font texture");
+                }
+                updateFlags |= exUpdateFlags.Text;
+
+                if (font_ == null || ReferenceEquals(font_.texture, value.texture) == false) {
+                    // texture changed
+                    font_ = value;
+                    UpdateMaterial();
+                    return;
+                }
+                else if (layer_ != null && isOnEnabled_ && visible == false){
+                    font_ = value;
+                    if (visible) {
+                        // become visible
+                        layer_.ShowSprite(this);
+                    }
+                }
+            }
+            else if (layer_ != null && visible) {
+                // become invisible
+                layer_.HideSprite(this);
+            }
+            font_ = value;
+
+#if UNITY_EDITOR
+            if (layer_ != null) {
+                layer_.UpdateNowInEditMode();
+            }
+#endif
         }
     }
     
@@ -298,8 +327,14 @@ public class exSpriteFont : exSpriteBase {
         }
     }
     
-    [System.NonSerialized] private int vertexCountCapacity = exMesh.QUAD_VERTEX_COUNT;
-    [System.NonSerialized] private int indexCountCapacity = exMesh.QUAD_INDEX_COUNT;
+    public override bool visible {
+        get {
+            return isOnEnabled_ && font_ != null && font_.texture != null && font_.charInfos.Count > 0;
+        }
+    }
+
+    [System.NonSerialized] private int vertexCountCapacity = 0;
+    [System.NonSerialized] private int indexCountCapacity = 0;
 
     /*
     ///////////////////////////////////////////////////////////////////////////////
@@ -325,54 +360,32 @@ public class exSpriteFont : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
-        // TODO: if indices count changed, re add to layer
-        //// pre check fontInfo
-        //if ( fontInfo_ == null ) {
-        //    _mesh.Clear();
-        //    return;
-        //}
-        //if ((updateFlags & exUpdateFlags.Vertex) != 0) {
-        //    UpdateVertexBuffer(_vertices, vertexBufferIndex);
-        //}
-        //if ((updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
-        //    _indices[indexBufferIndex]     = vertexBufferIndex;
-        //    _indices[indexBufferIndex + 1] = vertexBufferIndex + 1;
-        //    _indices[indexBufferIndex + 2] = vertexBufferIndex + 2;
-        //    _indices[indexBufferIndex + 3] = vertexBufferIndex + 2;
-        //    _indices[indexBufferIndex + 4] = vertexBufferIndex + 3;
-        //    _indices[indexBufferIndex + 5] = vertexBufferIndex;
-        //}
-        //if ((updateFlags & exUpdateFlags.UV) != 0) {
-        //    Vector2 texelSize;
-        //    if (textureInfo.texture != null) {
-        //        texelSize = textureInfo.texture.texelSize;
-        //    }
-        //    else {
-        //        texelSize = new Vector2(1.0f / textureInfo.rawWidth, 1.0f / textureInfo.rawHeight);
-        //    }
-        //    Vector2 start = new Vector2((float)textureInfo.x * texelSize.x, 
-        //                                 (float)textureInfo.y * texelSize.y);
-        //    Vector2 end = new Vector2((float)(textureInfo.x + textureInfo.rotatedWidth) * texelSize.x, 
-        //                               (float)(textureInfo.y + textureInfo.rotatedHeight) * texelSize.y);
-        //    if ( textureInfo.rotated ) {
-        //        _uvs[vertexBufferIndex + 0] = new Vector2(end.x, start.y);
-        //        _uvs[vertexBufferIndex + 1] = start;
-        //        _uvs[vertexBufferIndex + 2] = new Vector2(start.x, end.y);
-        //        _uvs[vertexBufferIndex + 3] = end;
-        //    }
-        //    else {
-        //        _uvs[vertexBufferIndex + 0] = start;
-        //        _uvs[vertexBufferIndex + 1] = new Vector2(start.x, end.y);
-        //        _uvs[vertexBufferIndex + 2] = end;
-        //        _uvs[vertexBufferIndex + 3] = new Vector2(end.x, start.y);
-        //    }
-        //}
-        //if ((updateFlags & exUpdateFlags.Color) != 0) {
-        //    _colors32[vertexBufferIndex + 0] = new Color32(255, 255, 255, 255);
-        //    _colors32[vertexBufferIndex + 1] = new Color32(255, 255, 255, 255);
-        //    _colors32[vertexBufferIndex + 2] = new Color32(255, 255, 255, 255);
-        //    _colors32[vertexBufferIndex + 3] = new Color32(255, 255, 255, 255);
-        //}
+        if ((updateFlags & exUpdateFlags.Text) != 0) {
+            BuildText(vertexBufferIndex, _vertices, _uvs);
+        }
+        else if ((updateFlags & exUpdateFlags.Vertex) != 0) {
+            BuildText(vertexBufferIndex, _vertices);
+        }
+        if ((updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+            int indexBufferEnd = indexBufferIndex + indexCountCapacity - 5;
+            for (int i = indexBufferIndex; i < indexBufferEnd; i += 6) {
+                _indices[i]     = vertexBufferIndex;
+                _indices[i + 1] = vertexBufferIndex + 1;
+                _indices[i + 2] = vertexBufferIndex + 2;
+                _indices[i + 3] = vertexBufferIndex + 2;
+                _indices[i + 4] = vertexBufferIndex + 3;
+                _indices[i + 5] = vertexBufferIndex;
+            }
+        }
+        if ((updateFlags & exUpdateFlags.Color) != 0) {
+            // 更新可见顶点的颜色值
+            int vertexBufferEnd = vertexBufferIndex + text_.Length * exMesh.QUAD_VERTEX_COUNT;
+            Color32 color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
+            for (int i = vertexBufferIndex; i < vertexBufferEnd; ++i) {
+                _colors32[vertexBufferIndex + 0] = color32;
+            }
+            // TODO: top color / bot color
+        }
         exUpdateFlags spriteUpdateFlags = updateFlags;
         updateFlags = exUpdateFlags.None;
         return spriteUpdateFlags;
@@ -381,37 +394,11 @@ public class exSpriteFont : exSpriteBase {
 #endregion // Functions used to update geometry buffer
     
     // ------------------------------------------------------------------ 
-    /// Calculate the world AABB rect of the sprite
-    // ------------------------------------------------------------------ 
-
-    public override Rect GetAABoundingRect () {
-        Vector3[] vertices = GetVertices();
-        Rect boundingRect = new Rect();
-        boundingRect.x = vertices[0].x;
-        boundingRect.y = vertices[0].y;
-        for (int i = 1; i < vertexCount; ++i) {
-            Vector3 vertex = vertices[i];
-            if (vertex.x < boundingRect.xMin) {
-                boundingRect.xMin = vertex.x;
-            }
-            else if (vertex.x > boundingRect.xMax) {
-                boundingRect.xMax = vertex.x;
-            }
-            if (vertex.y < boundingRect.yMin) {
-                boundingRect.yMin = vertex.y;
-            }
-            else if (vertex.y > boundingRect.yMax) {
-                boundingRect.yMax = vertex.y;
-            }
-        }
-        return boundingRect;
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
+    // Desc:
     // ------------------------------------------------------------------ 
 
     public override Vector3[] GetVertices () {
+        // TODO: only return the rotated bounding box of the sprite font
         List<Vector3> vertices = new List<Vector3>(vertexCount);    // TODO: use global static temp List instead
         for (int i = 0; i < vertexCount; ++i) {
             vertices.Add(new Vector3());
@@ -419,7 +406,7 @@ public class exSpriteFont : exSpriteBase {
         if (cachedTransform.hasChanged == false) {
             cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
         }
-        UpdateVertexBuffer(vertices, 0);
+        BuildText(0, vertices);
         return vertices.ToArray();
     }
 
@@ -1042,21 +1029,57 @@ public class exSpriteFont : exSpriteBase {
 //    }
 
     // ------------------------------------------------------------------ 
-    // Desc: 
+    // Desc:
     // ------------------------------------------------------------------ 
-    // TODO: 如果要避免总是更新同一个mesh的其他sprite，就要避免面数反复增减。这时可以采用的优化方式是将冗余的所有vertex的color设为透明
-
-    void UpdateVertexBuffer (List<Vector3> _vertices, int _startIndex) {
+    
+    void BuildText (int _startIndex, List<Vector3> _vertices, List<Vector2> _uvs = null) {
         if (font_ == null) {
+            int vertexBufferEnd = _startIndex + vertexCountCapacity;
+            for (int i = _startIndex; i < vertexBufferEnd; ++i) {
+                _vertices[i] = new Vector3();
+            }
             return;
         }
-        for (int i = 0; i < text_; ++i) {
-            exBitmapFont.CharInfo ci = font_.GetCharInfo(text_[i]);
-            if (ci == null) {
-                continue;
-            }
 
+        int curLine = 0;
+        float curX = 0.0f;
+        float curY = 0.0f;
+
+        for (int c = 0; c < text_.Length; ++c, _startIndex += 4) {
+            exBitmapFont.CharInfo ci = font_.GetCharInfo(text_[c]);
+            if (ci == null) {
+                // character is not present
+                _vertices[_startIndex + 0] = new Vector3();
+                _vertices[_startIndex + 1] = new Vector3();
+                _vertices[_startIndex + 2] = new Vector3();
+                _vertices[_startIndex + 3] = new Vector3();
+                continue;
+                //exDebug.Assert(font_.charInfos.Count > 0);
+                //if (font_.charInfos.Count > 0) {
+                //    ci = font_.charInfos[0];
+                //}
+            }
+            float halfWidth = ci.width * 0.5f;
+            float halfHeight = ci.height * 0.5f;
+            float anchorOffsetX = 0.0f;
+            float anchorOffsetY = 0.0f;
+            Vector3 v0 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
+            Vector3 v1 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
+            Vector3 v2 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
+            Vector3 v3 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
+            
+            // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
+            v0.z = 0;
+            v1.z = 0;
+            v2.z = 0;
+            v3.z = 0;
+
+            _vertices[_startIndex + 0] = v0;
+            _vertices[_startIndex + 1] = v1;
+            _vertices[_startIndex + 2] = v2;
+            _vertices[_startIndex + 3] = v3;
         }
+        // TODO: cache vertices, only transform them if text not changed.
             //            float halfWidthScaled;
             //            float halfHeightScaled;
             //            float offsetX;
@@ -1183,7 +1206,7 @@ public class exSpriteFont : exSpriteBase {
 
 
 
-
+/*
         switch ( anchor_ ) {
         case Anchor.TopLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = -halfHeight;  break;
         case Anchor.TopCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = -halfHeight;  break;
@@ -1202,20 +1225,6 @@ public class exSpriteFont : exSpriteBase {
 
         anchorOffsetX += offset_.x;
         anchorOffsetY += offset_.y;
-
-        //v1 v2
-        //v0 v3
-        exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
-        Vector3 v0 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
-        Vector3 v1 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
-        Vector3 v2 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
-        Vector3 v3 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
-
-        // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
-        v0.z = 0;
-        v1.z = 0;
-        v2.z = 0;
-        v3.z = 0;
 
         if (shear_.x != 0) {
             // 这里直接从matrix拿未计入rotation影响的scale，在已知matrix的情况下，速度比较快lossyScale了6倍。
@@ -1239,12 +1248,7 @@ public class exSpriteFont : exSpriteBase {
             v2.y += rightOffset;
             v3.y += rightOffset;
         }
-
-        _vertices[_startIndex + 0] = v0;
-        _vertices[_startIndex + 1] = v1;
-        _vertices[_startIndex + 2] = v2;
-        _vertices[_startIndex + 3] = v3;
-        
+        */
         // TODO: pixel-perfect
     }
 
@@ -1253,17 +1257,23 @@ public class exSpriteFont : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     void UpdateCapacity () {
-        // TODO: check multiline
-        int textLength = text_.Length;
         int oldTextCapaticy = vertexCountCapacity / exMesh.QUAD_VERTEX_COUNT;
-        int textCapaticy = oldTextCapaticy;
-        // append
-        while (textLength > textCapaticy) {
-            textCapaticy <<= 1;
+        int textCapaticy;
+        if (text_ != null) {
+            textCapaticy = oldTextCapaticy;
+            // TODO: check multiline
+            int textLength = text_.Length;
+            // append
+            while (textLength > textCapaticy) {
+                textCapaticy <<= 1;
+            }
+            // trim
+            while (textLength < textCapaticy / 2) {
+                textCapaticy >>= 1;
+            }
         }
-        // trim
-        while (textLength < textCapaticy / 2) {
-            textCapaticy >>= 1;
+        else {
+            textCapaticy = 0;
         }
         if (textCapaticy != oldTextCapaticy) {
             if (layer_ != null) {
@@ -1273,7 +1283,7 @@ public class exSpriteFont : exSpriteBase {
                 // change capacity
                 vertexCountCapacity = textCapaticy * exMesh.QUAD_VERTEX_COUNT;
                 indexCountCapacity = textCapaticy * exMesh.QUAD_INDEX_COUNT;
-                // readd to layer
+                // re-add to layer
                 myLayer.Add(this);
             }
         }

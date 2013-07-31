@@ -39,6 +39,9 @@ public class exSprite : exSpriteBase {
                 return;
             }
             if (value != null) {
+                if (value.texture == null) {
+                    Debug.LogWarning("invalid textureInfo");
+                }
                 if (customSize_ == false && (value.width != width_ || value.height != height_)) {
                     width_ = value.width;
                     height_ = value.height;
@@ -47,6 +50,7 @@ public class exSprite : exSpriteBase {
                 updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
 
                 if (textureInfo_ == null || ReferenceEquals(textureInfo_.texture, value.texture) == false) {
+                    // texture changed
                     textureInfo_ = value;
                     UpdateMaterial();
                     return;
@@ -220,33 +224,6 @@ public class exSprite : exSpriteBase {
     }
 
     #endregion // Functions used to update geometry buffer
-    
-    // ------------------------------------------------------------------ 
-    /// Calculate the world AABB rect of the sprite
-    // ------------------------------------------------------------------ 
-
-    public override Rect GetAABoundingRect () {
-        Vector3[] vertices = GetVertices();
-        Rect boundingRect = new Rect();
-        boundingRect.x = vertices[0].x;
-        boundingRect.y = vertices[0].y;
-        for (int i = 1; i < vertexCount; ++i) {
-            Vector3 vertex = vertices[i];
-            if (vertex.x < boundingRect.xMin) {
-                boundingRect.xMin = vertex.x;
-            }
-            else if (vertex.x > boundingRect.xMax) {
-                boundingRect.xMax = vertex.x;
-            }
-            if (vertex.y < boundingRect.yMin) {
-                boundingRect.yMin = vertex.y;
-            }
-            else if (vertex.y > boundingRect.yMax) {
-                boundingRect.yMax = vertex.y;
-            }
-        }
-        return boundingRect;
-    }
 
     // ------------------------------------------------------------------ 
     // Desc: 

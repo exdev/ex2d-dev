@@ -448,11 +448,14 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
 #endregion
 
     // ------------------------------------------------------------------ 
-    /// Calculate the bounding rect of the plane
+    /// Calculate the world AA bounding rect of the sprite
     // ------------------------------------------------------------------ 
 
-    public abstract Rect GetAABoundingRect ();
-
+    public Rect GetAABoundingRect () {
+        Vector3[] vertices = GetVertices();
+        return exGeometryUtility.GetAABoundingRect(vertices);
+    }
+    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
