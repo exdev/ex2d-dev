@@ -46,6 +46,8 @@ public class exMesh : MonoBehaviour
 {
     public const int QUAD_INDEX_COUNT = 6;
     public const int QUAD_VERTEX_COUNT = 4;
+    public const int MAX_VERTEX_COUNT = 65000;
+    public const int MAX_QUAD_COUNT = MAX_VERTEX_COUNT / QUAD_VERTEX_COUNT;
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized

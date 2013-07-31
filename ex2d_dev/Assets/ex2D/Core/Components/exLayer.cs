@@ -40,7 +40,6 @@ public enum exLayerType
 public class exLayer : MonoBehaviour
 {
     const int MAX_DYNAMIC_VERTEX_COUNT = 300;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
-    const int MAX_STATIC_VERTEX_COUNT = 65000;   ///< 超过这个数量的话，static layer将会自动进行拆分
     
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -427,6 +426,9 @@ public class exLayer : MonoBehaviour
         if (oldLayer != null) {
             oldLayer.Remove(_sprite);
         }
+
+        _sprite.OnPreAddToLayer();
+
         exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase>(true);
         for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
             exSpriteBase sprite = spritesToAdd[spriteIndex];
@@ -437,7 +439,7 @@ public class exLayer : MonoBehaviour
                 return;
             }
             sprite.layer = this;
-                    
+
             // Check sprite id
             CheckDuplicated(sprite);
             if (_newSprite || sprite.spriteIdInLayer == -1) {
@@ -451,7 +453,7 @@ public class exLayer : MonoBehaviour
             // Find available mesh
             // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
             exMesh sameDrawcallMesh = null;
-            int maxVertexCount = (layerType == exLayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : MAX_STATIC_VERTEX_COUNT;
+            int maxVertexCount = (layerType == exLayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : exMesh.MAX_VERTEX_COUNT;
             maxVertexCount -= sprite.vertexCount;
             for (int i = meshList.Count - 1; i >= 0; --i) {
                 exMesh mesh = meshList[i];

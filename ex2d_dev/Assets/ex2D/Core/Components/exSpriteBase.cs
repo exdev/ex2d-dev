@@ -18,15 +18,15 @@ using System.Collections.Generic;
 // ------------------------------------------------------------------ 
 
 public enum Anchor {
-    TopLeft = 0, ///< the top-left of the plane  
-    TopCenter,   ///< the top-center of the plane
-    TopRight,    ///< the top-right of the plane
-    MidLeft,     ///< the middle-left of the plane
-    MidCenter,   ///< the middle-center of the plane
-    MidRight,    ///< the middle-right of the plane
-    BotLeft,     ///< the bottom-left of the plane
-    BotCenter,   ///< the bottom-center of the plane
-    BotRight,    ///< the bottom-right of the plane
+    TopLeft = 0, ///< the top-left of the sprite  
+    TopCenter,   ///< the top-center of the sprite
+    TopRight,    ///< the top-right of the sprite
+    MidLeft,     ///< the middle-left of the sprite
+    MidCenter,   ///< the middle-center of the sprite
+    MidRight,    ///< the middle-right of the sprite
+    BotLeft,     ///< the bottom-left of the sprite
+    BotCenter,   ///< the bottom-center of the sprite
+    BotRight,    ///< the bottom-right of the sprite
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -148,7 +148,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected Vector2 offset_ = Vector2.zero;
-    /// the offset based on the anchor, the final position of the plane equals to offset + anchor
+    /// the offset based on the anchor, the final position of the sprite equals to offset + anchor
     // ------------------------------------------------------------------ 
 
     public Vector2 offset {
@@ -393,6 +393,12 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         //}
     }
     
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    public virtual void OnPreAddToLayer () { }
+
 #region Functions used to update geometry buffer.
 
     // ------------------------------------------------------------------ 
@@ -419,6 +425,12 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // ------------------------------------------------------------------ 
 
     internal abstract exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices = null);
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public abstract Vector3[] GetVertices ();
 
 #if UNITY_EDITOR
 
@@ -455,12 +467,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         Vector3[] vertices = GetVertices();
         return exGeometryUtility.GetAABoundingRect(vertices);
     }
-    
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public abstract Vector3[] GetVertices ();
     
     // ------------------------------------------------------------------ 
     // Desc: 

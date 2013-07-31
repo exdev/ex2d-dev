@@ -87,8 +87,12 @@ public class exSpriteFont : exSpriteBase {
             if ( text_ != value ) {
                 string oldText = text_;
                 text_ = value;
+                if (text_.Length >= exMesh.MAX_QUAD_COUNT) {
+                    text_ = text_.Substring (0, exMesh.MAX_QUAD_COUNT);
+                    Debug.LogError ("Too many character on one sprite: " + value.Length, this);
+                }
                 // TODO: check multiline
-                if (oldText.Length != value.Length) {
+                if (oldText.Length != text_.Length) {
                     UpdateCapacity();   // TODO: 如果在一帧内反复修改文本，会造成多余的layer改动，考虑留到update时再处理
                 }
                 updateFlags |= exUpdateFlags.Text;
@@ -301,7 +305,10 @@ public class exSpriteFont : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     public override int vertexCount {
-        get { 
+        get {
+            if (layer_ == null) {
+                UpdateCapacity ();
+            }
             return vertexCountCapacity;
         }
     }
@@ -347,11 +354,11 @@ public class exSpriteFont : exSpriteBase {
 
     /// 不需要按顺序排列，面片数量和文本数量保持一致即可
     [System.NonSerialized] private List<int> indices = new List<int>(); 
+    */
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable functions
     ///////////////////////////////////////////////////////////////////////////////
-    */
 
 #region Functions used to update geometry buffer
 
@@ -408,6 +415,17 @@ public class exSpriteFont : exSpriteBase {
         }
         BuildText(0, vertices);
         return vertices.ToArray();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    public override void OnPreAddToLayer () {
+        exDebug.Assert (layer_ == null);
+        if (layer_ == null) {
+            UpdateCapacity();
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -1045,39 +1063,66 @@ public class exSpriteFont : exSpriteBase {
         float curX = 0.0f;
         float curY = 0.0f;
 
+        Vector2 texelSize = new Vector2();
+        if (_uvs != null) {
+            if (font_.texture != null) {
+                texelSize = font_.texture.texelSize;
+            }
+            else {
+                texelSize = new Vector2(1.0f / font_.texture.width, 1.0f / font_.texture.height);
+            }
+        }
+
         for (int c = 0; c < text_.Length; ++c, _startIndex += 4) {
             exBitmapFont.CharInfo ci = font_.GetCharInfo(text_[c]);
             if (ci == null) {
                 // character is not present
+                Debug.LogWarning ("character is not present: " + text_[c], this);
                 _vertices[_startIndex + 0] = new Vector3();
                 _vertices[_startIndex + 1] = new Vector3();
                 _vertices[_startIndex + 2] = new Vector3();
                 _vertices[_startIndex + 3] = new Vector3();
                 continue;
-                //exDebug.Assert(font_.charInfos.Count > 0);
-                //if (font_.charInfos.Count > 0) {
-                //    ci = font_.charInfos[0];
-                //}
             }
+
+            //build vertex
             float halfWidth = ci.width * 0.5f;
             float halfHeight = ci.height * 0.5f;
             float anchorOffsetX = 0.0f;
             float anchorOffsetY = 0.0f;
+            exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
             Vector3 v0 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
             Vector3 v1 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
             Vector3 v2 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
             Vector3 v3 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
-            
             // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
             v0.z = 0;
             v1.z = 0;
             v2.z = 0;
             v3.z = 0;
-
             _vertices[_startIndex + 0] = v0;
             _vertices[_startIndex + 1] = v1;
             _vertices[_startIndex + 2] = v2;
             _vertices[_startIndex + 3] = v3;
+
+            if (_uvs != null) {
+                // build uv
+                Vector2 start = new Vector2(ci.x, ci.y);
+                Debug.Log (start);
+                Vector2 end = new Vector2(ci.x + ci.width * texelSize.x, ci.y + ci.height * texelSize.y);
+                if ( ci.rotated ) {
+                    _uvs[_startIndex + 0] = new Vector2(end.x, start.y);
+                    _uvs[_startIndex + 1] = start;
+                    _uvs[_startIndex + 2] = new Vector2(start.x, end.y);
+                    _uvs[_startIndex + 3] = end;
+                }
+                else {
+                    _uvs[_startIndex + 0] = start;
+                    _uvs[_startIndex + 1] = new Vector2(start.x, end.y);
+                    _uvs[_startIndex + 2] = end;
+                    _uvs[_startIndex + 3] = new Vector2(end.x, start.y);
+                }
+            }
         }
         // TODO: cache vertices, only transform them if text not changed.
             //            float halfWidthScaled;
@@ -1168,31 +1213,6 @@ public class exSpriteFont : exSpriteBase {
             //                        }
             //                    }
 
-            //                    // build uv
-            //                    float textureWidth = fontInfo_.pageInfos[0].texture.width;
-            //                    float textureHeight = fontInfo_.pageInfos[0].texture.height;
-            //                    float charUVWidth = (float)charInfo.width/(float)textureWidth;
-            //                    float charUVHeight = (float)charInfo.height/(float)textureHeight;
-
-            //                    float xStart  = charInfo.uv0.x;
-            //                    float yStart  = charInfo.uv0.y;
-            //                    float xEnd    = xStart + charUVWidth; 
-            //                    float yEnd    = yStart + charUVHeight; 
-
-            //                    //
-            //                    uvs[vert_id + 0] = new Vector2 ( xStart,  yEnd );
-            //                    uvs[vert_id + 1] = new Vector2 ( xEnd,    yEnd );
-            //                    uvs[vert_id + 2] = new Vector2 ( xStart,  yStart );
-            //                    uvs[vert_id + 3] = new Vector2 ( xEnd,    yStart );
-
-            //                    // build indices
-            //                    indices[idx_id + 0] = vert_id + 0;
-            //                    indices[idx_id + 1] = vert_id + 1;
-            //                    indices[idx_id + 2] = vert_id + 2;
-            //                    indices[idx_id + 3] = vert_id + 2;
-            //                    indices[idx_id + 4] = vert_id + 1;
-            //                    indices[idx_id + 5] = vert_id + 3;
-
             //                    //
             //                    curX = curX + (charInfo.xadvance + tracking_) * finalScale.x;
             //                    if ( useKerning_ ) {
@@ -1264,12 +1284,31 @@ public class exSpriteFont : exSpriteBase {
             // TODO: check multiline
             int textLength = text_.Length;
             // append
-            while (textLength > textCapaticy) {
-                textCapaticy <<= 1;
+            if (textLength > textCapaticy) {
+                if (layer_ != null && layer_.layerType == exLayerType.Dynamic) {
+                    textCapaticy = Mathf.Max (textCapaticy, 1);
+                    while (textLength > textCapaticy) {
+                        textCapaticy <<= 1;
+                    }
+                }
+                else {
+                    textCapaticy = textLength;
+                }
+                if (textCapaticy > exMesh.MAX_QUAD_COUNT) {
+                    exDebug.Assert (textLength <= exMesh.MAX_QUAD_COUNT);
+                    textCapaticy = exMesh.MAX_QUAD_COUNT;
+                }
             }
-            // trim
-            while (textLength < textCapaticy / 2) {
-                textCapaticy >>= 1;
+            else {
+                // trim
+                if (layer_ != null && layer_.layerType == exLayerType.Dynamic) {
+                    while (textLength < textCapaticy / 2) {
+                        textCapaticy >>= 1;
+                    }
+                } 
+                else {
+                    textCapaticy = textLength;
+                }
             }
         }
         else {
@@ -1285,6 +1324,10 @@ public class exSpriteFont : exSpriteBase {
                 indexCountCapacity = textCapaticy * exMesh.QUAD_INDEX_COUNT;
                 // re-add to layer
                 myLayer.Add(this);
+            }
+            else {
+                vertexCountCapacity = textCapaticy * exMesh.QUAD_VERTEX_COUNT;
+                indexCountCapacity = textCapaticy * exMesh.QUAD_INDEX_COUNT;
             }
         }
     }

@@ -29,8 +29,8 @@ public class exBitmapFont : ScriptableObject {
 
     [System.Serializable]
     public class CharInfo {
-        public char symbol = '\x0';        ///< the character
-        public int x = -1;                 ///< the x pos
+        public int id = -1;                ///< the char value
+        public int x = -1;                 ///< the x pos   // TODO: why not use float type
         public int y = -1;                 ///< the y pos
         public int width = -1;             ///< the width
         public int height = -1;            ///< the height
@@ -41,7 +41,7 @@ public class exBitmapFont : ScriptableObject {
 
         public CharInfo () {}
         public CharInfo ( CharInfo _c ) {
-            symbol = _c.symbol;
+            id = _c.id;
             x = _c.x;
             y = _c.y;
             width = _c.width;
@@ -139,7 +139,7 @@ public class exBitmapFont : ScriptableObject {
     // internal fileds
     ///////////////////////////////////////////////////////////////////////////////
 
-    protected Dictionary<char,CharInfo> charInfoTable = null;
+    protected Dictionary<int,CharInfo> charInfoTable = null;
     protected Dictionary<KerningTableKey,int> kerningTable = null;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -166,12 +166,12 @@ public class exBitmapFont : ScriptableObject {
 
     public void RebuildCharInfoTable () {
         if ( charInfoTable == null ) {
-            charInfoTable = new Dictionary<char,CharInfo>(charInfos.Count);
+            charInfoTable = new Dictionary<int,CharInfo>(charInfos.Count);
         }
         charInfoTable.Clear();
         for ( int i = 0; i < charInfos.Count; ++i ) {
             CharInfo c = charInfos[i];
-            charInfoTable[c.symbol] = c;
+            charInfoTable[c.id] = c;
         }
     }
 

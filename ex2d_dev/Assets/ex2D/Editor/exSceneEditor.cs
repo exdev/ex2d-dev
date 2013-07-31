@@ -1043,7 +1043,7 @@ class exSceneEditor : EditorWindow {
             return boundingRect;
         }
 
-        screenPos = SceneField_WorldToScreen ( _rect, sprite.transform.position );
+        screenPos = SceneField_WorldToScreen ( _rect, _node.transform.position );
         return new Rect (  screenPos.x * scale,
                            screenPos.y * scale,
                            1.0f * scale,
