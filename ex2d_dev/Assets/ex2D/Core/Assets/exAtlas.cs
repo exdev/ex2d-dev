@@ -94,7 +94,7 @@ public class exAtlas : ScriptableObject {
     public SortOrder sortOrder = SortOrder.UseBest; ///< the order to sort the textureInfos in atlas editor info
     public PaddingMode paddingMode = PaddingMode.Auto; ///< the padding mode used to determine the actualPadding value
     public int customPadding = 1; ///< the user-specified padding size between each element, used when paddingMode is Custom
-    public bool allowRotate = false; ///< if allow texture rotated, disabled in current version 
+    public bool allowRotate = true; ///< if allow texture rotated, disabled in current version 
 
     // element settings
     public Color elementBgColor = new Color( 1.0f, 1.0f, 1.0f, 0.0f ); ///< the background color of each element

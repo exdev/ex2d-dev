@@ -29,11 +29,15 @@ public static class exTextureUtility {
         Rect rect = new Rect( 0, 0, 0, 0 );
         Color32[] pixels = _tex.GetPixels32(0);
 
+        int xmin = _tex.width;
+        int xmax = 0;
+        int ymin = _tex.height;
+        int ymax = 0;
+
         for ( int x = 0; x < _tex.width; ++x ) {
             for ( int y = 0; y < _tex.height; ++y ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
-                    // rect.x = System.Math.Max(x-1,0);
-                    rect.x = x;
+                    xmin = x;
                     x = _tex.width;
                     break;
                 }
@@ -43,8 +47,7 @@ public static class exTextureUtility {
         for ( int x = _tex.width-1; x >= 0; --x ) {
             for ( int y = 0; y < _tex.height; ++y ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
-                    // rect.xMax = System.Math.Min(x+1,_tex.width-1);
-                    rect.xMax = x;
+                    xmax = x;
                     x = -1;
                     break;
                 }
@@ -54,8 +57,7 @@ public static class exTextureUtility {
         for ( int y = 0; y < _tex.height; ++y ) {
             for ( int x = 0; x < _tex.width; ++x ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
-                    // rect.y = System.Math.Max(y-1,0);
-                    rect.y = y;
+                    ymin = y;
                     y = _tex.height;
                     break;
                 }
@@ -65,19 +67,14 @@ public static class exTextureUtility {
         for ( int y = _tex.height-1; y >= 0; --y ) {
             for ( int x = 0; x < _tex.width; ++x ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
-                    // rect.yMax = System.Math.Min(y+1,_tex.height-1);
-                    rect.yMax = y;
+                    ymax = y;
                     y = -1;
                     break;
                 }
             }
         }
 
-        // int xmin = _tex.width;
-        // int xmax = 0;
-        // int ymin = _tex.height;
-        // int ymax = 0;
-
+        // DISABLE { 
         // for ( int y = 0, yw = _tex.height; y < yw; ++y ) {
         //     for ( int x = 0, xw = _tex.width; x < xw; ++x ) {
         //         Color32 c = pixels[y * xw + x];
@@ -90,11 +87,11 @@ public static class exTextureUtility {
         //         }
         //     }
         // }
+        // } DISABLE end 
 
-        // rect.xMin = xmin;
-        // rect.yMin = ymin;
-        // rect.xMax = xmax;
-        // rect.yMax = ymax;
+        int newWidth  = (xmax - xmin) + 1;
+        int newHeight = (ymax - ymin) + 1;
+        rect = new Rect( xmin, ymin, newWidth, newHeight );
 
         return rect;
     }
