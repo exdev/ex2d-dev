@@ -555,15 +555,13 @@ partial class exAtlasEditor : EditorWindow {
                 // trim elements 
                 // ======================================================== 
 
-                if ( curEdit.trimElements != EditorGUILayout.Toggle ( "Trimmed Elements", curEdit.trimElements ) ) {
-                    curEdit.trimElements = !curEdit.trimElements;
+                curEdit.trimElements = EditorGUILayout.Toggle ( "Trimmed Elements", curEdit.trimElements );
 
-                    // TODO
-                    // foreach ( exAtlas.Element el in curEdit.elements ) {
-                    //     curEdit.UpdateElement( el.texture, newTrimElements );
-                    // }
-                    curEdit.needRebuild = true;
-                }
+                // ======================================================== 
+                // trim threshold 
+                // ======================================================== 
+
+                curEdit.trimThreshold = EditorGUILayout.IntField ( "Trimmed Threshold", curEdit.trimThreshold );
 
                 // ======================================================== 
                 // readable

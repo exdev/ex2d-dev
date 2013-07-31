@@ -75,6 +75,13 @@ public class exAtlas : ScriptableObject {
     public bool useContourBleed = true; ///< extends the color of pixels at the edge of transparent pixels to prevent bilinear filtering artifacts
     public bool usePaddingBleed = true; ///< extends the color and alpha of pixels on border of each element into the surrounding padding area
     public bool trimElements = true; ///< trim all element when importing
+    [SerializeField] public int trimThreshold_ = 1; ///< 
+    public int trimThreshold {
+        get { return trimThreshold_; }
+        set {
+            trimThreshold_ = System.Math.Min ( System.Math.Max( value, 1 ), 255 );
+        }
+    }
     public bool readable = false; ///< enabled Read/Write option for atlas texture after build
 
     // canvas settings
@@ -82,7 +89,7 @@ public class exAtlas : ScriptableObject {
     public bool showCheckerboard = true; ///< if show the checkerboard
 
     // layout settings
-    public Algorithm algorithm = Algorithm.Tree; ///< the algorithm used for texture packer
+    public Algorithm algorithm = Algorithm.MaxRect; ///< the algorithm used for texture packer
     public SortBy sortBy = SortBy.UseBest; ///< the method to sort the textureInfos in atlas editor info
     public SortOrder sortOrder = SortOrder.UseBest; ///< the order to sort the textureInfos in atlas editor info
     public PaddingMode paddingMode = PaddingMode.Auto; ///< the padding mode used to determine the actualPadding value

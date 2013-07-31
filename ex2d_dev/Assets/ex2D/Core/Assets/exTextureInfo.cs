@@ -24,6 +24,7 @@ public class exTextureInfo : ScriptableObject {
 
     public bool rotated = false; ///< if rotate the texture in atlas 
     public bool trim = false;    ///< if trimmed the texture
+    public int trimThreshold = 1; ///< pixels with an alpha value below this value will be consider trimmed 
 
     // for texture offset
     public int trim_x = 0; ///< the trim offset x of the raw texture in Unity3D texture coordinate. (0,0) start from bottom-left, same as mesh.uv and Texture2D.SetPixel

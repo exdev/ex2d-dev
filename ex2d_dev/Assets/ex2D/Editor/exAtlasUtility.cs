@@ -319,7 +319,7 @@ public static class exAtlasUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    static Rect MaxRect_ScoreRect ( List<Rect> _freeRects, int _width, int _height, ref int _score1, ref int _score2 ) {
+    static Rect MaxRect_ScoreRect ( List<Rect> _freeRects, int _width, int _height, bool _allowRotate, ref int _score1, ref int _score2 ) {
         _score1 = int.MaxValue;
         _score2 = int.MaxValue;
         Rect newRect = new Rect( 0, 0, 1, 1 );
@@ -349,7 +349,7 @@ public static class exAtlasUtility {
             }
 
             // rotated
-            if ( freeRect.width >= _height && freeRect.height >= _width ) {
+            if ( _allowRotate && freeRect.width >= _height && freeRect.height >= _width ) {
                 int leftoverHoriz = System.Math.Abs((int)_freeRects[i].width - _height);
                 int leftoverVert = System.Math.Abs((int)_freeRects[i].height - _width);
                 int shortSideFit = System.Math.Min(leftoverHoriz, leftoverVert);
@@ -483,7 +483,11 @@ public static class exAtlasUtility {
             for ( int i = 0; i < processElements.Count; ++i ) {
                 int score1 = int.MaxValue;
                 int score2 = int.MaxValue;
-                Rect newRect = MaxRect_ScoreRect ( freeRects, processElements[i].width, processElements[i].height, ref score1, ref score2 );
+                Rect newRect = MaxRect_ScoreRect ( freeRects, 
+                                                   processElements[i].width + _padding, 
+                                                   processElements[i].height + _padding, 
+                                                   _allowRotate,
+                                                   ref score1, ref score2 );
 
                 if ( score1 < bestScore1 || (score1 == bestScore1 && score2 < bestScore2) ) {
                     bestScore1 = score1;
@@ -503,7 +507,7 @@ public static class exAtlasUtility {
             Element bestElement = processElements[bestElementIdx];
             bestElement.x = (int)bestRect.x;
             bestElement.y = (int)bestRect.y;
-            if ( bestElement.width != bestRect.width )
+            if ( bestElement.width + _padding != bestRect.width )
                 bestElement.rotated = true;
             else
                 bestElement.rotated = false;
@@ -620,7 +624,7 @@ public static class exAtlasUtility {
 
                 Rect trimRect = new Rect ( 0, 0, rawTexture.width, rawTexture.height );
                 if ( _atlas.trimElements ) {
-                    trimRect = exTextureUtility.GetTrimTextureRect(rawTexture);
+                    trimRect = exTextureUtility.GetTrimTextureRect(rawTexture,_atlas.trimThreshold);
                 }
 
                 //
@@ -664,6 +668,7 @@ public static class exAtlasUtility {
                     textureInfo.width = (int)trimRect.width;
                     textureInfo.height = (int)trimRect.height;
                     textureInfo.trim = _atlas.trimElements;
+                    textureInfo.trimThreshold = _atlas.trimThreshold;
                     EditorUtility.SetDirty(textureInfo);
                 }
 
