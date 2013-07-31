@@ -322,7 +322,8 @@ public static class exAtlasUtility {
     static Rect MaxRect_ScoreRect ( List<Rect> _freeRects, int _width, int _height, ref int _score1, ref int _score2 ) {
         _score1 = int.MaxValue;
         _score2 = int.MaxValue;
-        Rect newRect = new Rect( 0, 0, _width, _height );
+        Rect newRect = new Rect( 0, 0, 1, 1 );
+        bool found = false;
 
         //
         for ( int i = 0; i < _freeRects.Count; ++i ) {
@@ -342,6 +343,8 @@ public static class exAtlasUtility {
                     newRect.height = _height;
                     _score1 = shortSideFit;
                     _score2 = longSideFit;
+
+                    found = true;
                 }
             }
 
@@ -359,12 +362,14 @@ public static class exAtlasUtility {
                     newRect.height = _width;
                     _score1 = shortSideFit;
                     _score2 = longSideFit;
+
+                    found = true;
                 }
             }
         }
 
         //
-        if ( newRect.height == 0 ) {
+        if ( found == false ) {
             _score1 = int.MaxValue;
             _score2 = int.MaxValue;
         }
@@ -379,12 +384,12 @@ public static class exAtlasUtility {
     static void MaxRect_CleanUpFreeRects ( List<Rect> _freeRects ) {
         for ( int i = 0; i < _freeRects.Count; ++i ) {
             for ( int j = i+1; j < _freeRects.Count; ++j ) {
-                if ( exGeometryUtility.RectRect_Contains(_freeRects[i],_freeRects[j]) != 0 ) {
+                if ( exGeometryUtility.RectRect_Contains(_freeRects[i],_freeRects[j]) == -1 ) {
                     _freeRects.RemoveAt(i);
                     --i;
                     break;
                 }
-                if ( exGeometryUtility.RectRect_Contains(_freeRects[j],_freeRects[i]) != 0 ) {
+                if ( exGeometryUtility.RectRect_Contains(_freeRects[j],_freeRects[i]) == -1 ) {
                     _freeRects.RemoveAt(j);
                     --j;
                 }
@@ -418,6 +423,7 @@ public static class exAtlasUtility {
             return false;
 
         if ( _usedNode.x < _freeNode.x + _freeNode.width && _usedNode.x + _usedNode.width > _freeNode.x ) {
+
             // New node at the top side of the used node.
             if ( _usedNode.y > _freeNode.y && _usedNode.y < _freeNode.y + _freeNode.height ) {
                 Rect newNode = _freeNode;
@@ -435,6 +441,7 @@ public static class exAtlasUtility {
         }
 
         if ( _usedNode.y < _freeNode.y + _freeNode.height && _usedNode.y + _usedNode.height > _freeNode.y ) {
+
             // New node at the left side of the used node.
             if ( _usedNode.x > _freeNode.x && _usedNode.x < _freeNode.x + _freeNode.width ) {
                 Rect newNode = _freeNode;
