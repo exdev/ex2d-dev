@@ -389,7 +389,7 @@ public class exSpriteFont : exSpriteBase {
             int vertexBufferEnd = vertexBufferIndex + text_.Length * exMesh.QUAD_VERTEX_COUNT;
             Color32 color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
             for (int i = vertexBufferIndex; i < vertexBufferEnd; ++i) {
-                _colors32[vertexBufferIndex + 0] = color32;
+                _colors32[i] = color32;
             }
             // TODO: top color / bot color
         }
@@ -1107,9 +1107,9 @@ public class exSpriteFont : exSpriteBase {
 
             if (_uvs != null) {
                 // build uv
-                Vector2 start = new Vector2(ci.x, ci.y);
-                Debug.Log (start);
-                Vector2 end = new Vector2(ci.x + ci.width * texelSize.x, ci.y + ci.height * texelSize.y);
+                Vector2 start = new Vector2(ci.x * texelSize.x, 1 - ci.y * texelSize.y);
+                Vector2 end = new Vector2((ci.x + ci.width) * texelSize.x, 1 - (ci.y + ci.height) * texelSize.y);
+                Debug.Log ("start " + start.ToString("F6") + " end " + end.ToString("F6") + ci.rotated);
                 if ( ci.rotated ) {
                     _uvs[_startIndex + 0] = new Vector2(end.x, start.y);
                     _uvs[_startIndex + 1] = start;

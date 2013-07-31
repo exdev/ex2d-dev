@@ -212,6 +212,7 @@ public class exSprite : exSpriteBase {
             }
         }
         if ((updateFlags & exUpdateFlags.Color) != 0) {
+            exDebug.Assert(layer_ != null);
             Color32 color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
             _colors32[vertexBufferIndex + 0] = color32;
             _colors32[vertexBufferIndex + 1] = color32;

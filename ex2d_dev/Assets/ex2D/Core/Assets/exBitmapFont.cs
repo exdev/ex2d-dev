@@ -30,7 +30,7 @@ public class exBitmapFont : ScriptableObject {
     [System.Serializable]
     public class CharInfo {
         public int id = -1;                ///< the char value
-        public int x = -1;                 ///< the x pos   // TODO: why not use float type
+        public int x = -1;                 ///< the x pos   // TODO: why not use uv
         public int y = -1;                 ///< the y pos
         public int width = -1;             ///< the width
         public int height = -1;            ///< the height

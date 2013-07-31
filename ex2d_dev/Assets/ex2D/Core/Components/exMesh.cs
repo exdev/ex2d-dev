@@ -28,7 +28,7 @@ public enum exUpdateFlags {
     Text	    = 32, ///< update the text, only used in sprite font
 
 	VertexAndIndex = (Index | Vertex),
-	AllExcludeIndex = (Vertex | UV | Color | Normal),
+	AllExcludeIndex = (Vertex | UV | Color | Normal | Text),
 	All = (AllExcludeIndex | Index),
 };
 
@@ -234,25 +234,25 @@ public class exMesh : MonoBehaviour
         }
 
         string vertexInfo = "Vertex Buffer: ";
-        foreach (var v in vertices) {
-            vertexInfo += v;
-            vertexInfo += ", ";
-        }
-        Debug.Log(vertexInfo, this);
+        //foreach (var v in vertices) {
+        //    vertexInfo += v;
+        //    vertexInfo += ", ";
+        //}
+        //Debug.Log(vertexInfo, this);
         
         vertexInfo = "Mesh.vertices: ";
         foreach (var v in mesh.vertices) {
-            vertexInfo += v;
+            vertexInfo += v.ToString("F3");
             vertexInfo += ", ";
         }
         Debug.Log(vertexInfo, this);
 
         string indicesInfo = "Index Buffer: ";
-        foreach (var index in indices) {
-            indicesInfo += index;
-            indicesInfo += ",";
-        }
-        Debug.Log(indicesInfo, this);
+        //foreach (var index in indices) {
+        //    indicesInfo += index;
+        //    indicesInfo += ",";
+        //}
+        //Debug.Log(indicesInfo, this);
 
         indicesInfo = "Mesh.triangles: ";
         foreach (var index in mesh.triangles) {
@@ -262,15 +262,29 @@ public class exMesh : MonoBehaviour
         Debug.Log(indicesInfo, this);
 
         string uvInfo = "UV Buffer: ";
-        foreach (var uv in uvs) {
-            uvInfo += uv;
-            uvInfo += ",";
-        }
-        Debug.Log(uvInfo, this);
+        //foreach (var uv in uvs) {
+        //    uvInfo += uv;
+        //    uvInfo += ",";
+        //}
+        //Debug.Log(uvInfo, this);
         
         uvInfo = "Mesh.uvs: ";
         foreach (var uv in mesh.uv) {
-            uvInfo += uv;
+            uvInfo += uv.ToString("F4");
+            uvInfo += ",";
+        }
+        Debug.Log(uvInfo, this);
+
+        uvInfo = "Mesh.colors: ";
+        foreach (var c in mesh.colors) {
+            uvInfo += c;
+            uvInfo += ",";
+        }
+        Debug.Log(uvInfo, this);
+
+        uvInfo = "Mesh.normals: ";
+        foreach (var n in mesh.normals) {
+            uvInfo += n;
             uvInfo += ",";
         }
         Debug.Log(uvInfo, this);
