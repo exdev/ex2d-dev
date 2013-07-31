@@ -30,14 +30,14 @@ class exTextureInfoInspector : Editor {
 	public override void OnInspectorGUI () {
         // get old trim value
         serializedObject.Update ();
-        SerializedProperty prop = serializedObject.FindProperty("trim");
-        bool oldTrim = prop.boolValue;
+        SerializedProperty propTrim = serializedObject.FindProperty("trim");
+        bool oldTrim = propTrim.boolValue;
 
         EditorGUIUtility.LookLikeInspector();
         DrawDefaultInspector(); 
 
         // process trim property
-        if ( prop.boolValue != oldTrim ) {
+        if ( propTrim.boolValue != oldTrim ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
                 exTextureInfo textureInfo = obj as exTextureInfo;
                 if ( textureInfo == null ) {
@@ -49,8 +49,8 @@ class exTextureInfoInspector : Editor {
                     continue;
                 }
 
-                if ( prop.boolValue ) {
-                    Rect trimRect = exTextureUtility.GetTrimTextureRect(rawTexture);
+                if ( propTrim.boolValue ) {
+                    Rect trimRect = exTextureUtility.GetTrimTextureRect(rawTexture,textureInfo.trimThreshold);
                     textureInfo.trim_x = (int)trimRect.x;
                     textureInfo.trim_y = (int)trimRect.y;
                     textureInfo.width = (int)trimRect.width;

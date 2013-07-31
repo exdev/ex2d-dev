@@ -25,13 +25,14 @@ public static class exTextureUtility {
     /// get the trimmed texture rect 
     // ------------------------------------------------------------------ 
 
-    public static Rect GetTrimTextureRect ( Texture2D _tex ) {
+    public static Rect GetTrimTextureRect ( Texture2D _tex, int _trimThreshold = 1 ) {
         Rect rect = new Rect( 0, 0, 0, 0 );
         Color32[] pixels = _tex.GetPixels32(0);
 
         for ( int x = 0; x < _tex.width; ++x ) {
             for ( int y = 0; y < _tex.height; ++y ) {
-                if ( pixels[x+y*_tex.width].a != 0 ) {
+                if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
+                    // rect.x = System.Math.Max(x-1,0);
                     rect.x = x;
                     x = _tex.width;
                     break;
@@ -41,9 +42,10 @@ public static class exTextureUtility {
 
         for ( int x = _tex.width-1; x >= 0; --x ) {
             for ( int y = 0; y < _tex.height; ++y ) {
-                if ( pixels[x+y*_tex.width].a != 0 ) {
-                    rect.xMax = x+1;
-                    x = 0;
+                if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
+                    // rect.xMax = System.Math.Min(x+1,_tex.width-1);
+                    rect.xMax = x;
+                    x = -1;
                     break;
                 }
             }
@@ -51,7 +53,8 @@ public static class exTextureUtility {
 
         for ( int y = 0; y < _tex.height; ++y ) {
             for ( int x = 0; x < _tex.width; ++x ) {
-                if ( pixels[x+y*_tex.width].a != 0 ) {
+                if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
+                    // rect.y = System.Math.Max(y-1,0);
                     rect.y = y;
                     y = _tex.height;
                     break;
@@ -61,13 +64,37 @@ public static class exTextureUtility {
 
         for ( int y = _tex.height-1; y >= 0; --y ) {
             for ( int x = 0; x < _tex.width; ++x ) {
-                if ( pixels[x+y*_tex.width].a != 0 ) {
-                    rect.yMax = y+1;
-                    y = 0;
+                if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
+                    // rect.yMax = System.Math.Min(y+1,_tex.height-1);
+                    rect.yMax = y;
+                    y = -1;
                     break;
                 }
             }
         }
+
+        // int xmin = _tex.width;
+        // int xmax = 0;
+        // int ymin = _tex.height;
+        // int ymax = 0;
+
+        // for ( int y = 0, yw = _tex.height; y < yw; ++y ) {
+        //     for ( int x = 0, xw = _tex.width; x < xw; ++x ) {
+        //         Color32 c = pixels[y * xw + x];
+
+        //         if ( c.a >= _trimThreshold ) {
+        //             if (y < ymin) ymin = y;
+        //             if (y > ymax) ymax = y;
+        //             if (x < xmin) xmin = x;
+        //             if (x > xmax) xmax = x;
+        //         }
+        //     }
+        // }
+
+        // rect.xMin = xmin;
+        // rect.yMin = ymin;
+        // rect.xMax = xmax;
+        // rect.yMax = ymax;
 
         return rect;
     }

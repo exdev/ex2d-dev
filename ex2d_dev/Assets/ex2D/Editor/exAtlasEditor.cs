@@ -555,15 +555,13 @@ partial class exAtlasEditor : EditorWindow {
                 // trim elements 
                 // ======================================================== 
 
-                if ( curEdit.trimElements != EditorGUILayout.Toggle ( "Trimmed Elements", curEdit.trimElements ) ) {
-                    curEdit.trimElements = !curEdit.trimElements;
+                curEdit.trimElements = EditorGUILayout.Toggle ( "Trimmed Elements", curEdit.trimElements );
 
-                    // TODO
-                    // foreach ( exAtlas.Element el in curEdit.elements ) {
-                    //     curEdit.UpdateElement( el.texture, newTrimElements );
-                    // }
-                    curEdit.needRebuild = true;
-                }
+                // ======================================================== 
+                // trim threshold 
+                // ======================================================== 
+
+                curEdit.trimThreshold = EditorGUILayout.IntField ( "Trimmed Threshold", curEdit.trimThreshold );
 
                 // ======================================================== 
                 // readable
@@ -950,7 +948,8 @@ partial class exAtlasEditor : EditorWindow {
                                   curEdit.algorithm,
                                   curEdit.width,
                                   curEdit.height,
-                                  curEdit.actualPadding );
+                                  curEdit.actualPadding,
+                                  curEdit.allowRotate );
             
             // apply back element to atlas texture info, char info or others
             foreach ( exAtlasUtility.Element el in elements ) {
