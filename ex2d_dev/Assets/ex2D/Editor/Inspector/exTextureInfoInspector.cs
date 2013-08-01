@@ -23,6 +23,29 @@ using System.IO;
 [CustomEditor(typeof(exTextureInfo))]
 class exTextureInfoInspector : Editor {
 
+    Material quadMaterial = null;
+    Mesh quadMesh = null;
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnEnable () {
+        quadMaterial = new Material( Shader.Find("ex2D/Alpha Blended") );
+        quadMaterial.hideFlags = HideFlags.DontSave;
+        quadMesh = new Mesh();
+        quadMesh.hideFlags = HideFlags.DontSave;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnDestroy () {
+        Object.DestroyImmediate(quadMaterial);
+        Object.DestroyImmediate(quadMesh);
+    } 
+
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
@@ -124,22 +147,60 @@ class exTextureInfoInspector : Editor {
         _background.Draw(_rect, false, false, false, false);
 
         float ratio = Mathf.Min ( Mathf.Min(_rect.width / (float)textureInfo.width, _rect.height / (float)textureInfo.height), 1.0f );
-        float w = (float)textureInfo.rotatedWidth * ratio;
-        float h = (float)textureInfo.rotatedHeight * ratio;
+        float w = (float)textureInfo.width * ratio;
+        float h = (float)textureInfo.height * ratio;
         Rect rect = new Rect ( _rect.x + (_rect.width - w) * 0.5f, 
                                _rect.y + (_rect.height - h) * 0.5f, 
                                w, 
                                h );
+        rect = exGeometryUtility.Rect_FloorToInt(rect);
         // EditorGUI.DrawPreviewTexture(rect, textureInfo.texture);
 
-        float uv_s  = (float)textureInfo.x / (float)textureInfo.texture.width;
-        float uv_t  = (float)textureInfo.y / (float)textureInfo.texture.height;
-        float uv_w  = (float)textureInfo.rotatedWidth / (float)textureInfo.texture.width;
-        float uv_h  = (float)textureInfo.rotatedHeight / (float)textureInfo.texture.height;
+        if ( textureInfo.rotated ) {
+            float xStart = (float)textureInfo.x/(float)textureInfo.texture.width;
+            float xEnd = xStart + (float)textureInfo.rotatedWidth/(float)textureInfo.texture.width;
+            float yStart = (float)textureInfo.y/(float)textureInfo.texture.height;
+            float yEnd = yStart + (float)textureInfo.rotatedHeight/(float)textureInfo.texture.height;
 
-        GUI.DrawTextureWithTexCoords( rect, 
-                                      textureInfo.texture, 
-                                      new Rect( uv_s, uv_t, uv_w, uv_h ) );
+            quadMaterial.mainTexture = textureInfo.texture;
+            quadMaterial.SetPass(0);
+
+            quadMesh.hideFlags = HideFlags.DontSave;
+            quadMesh.vertices = new Vector3[] {
+                new Vector3 ( rect.x, rect.y, 0.0f ),
+                new Vector3 ( rect.x, rect.y + rect.height, 0.0f ),
+                new Vector3 ( rect.x + rect.width, rect.y + rect.height, 0.0f ),
+                new Vector3 ( rect.x + rect.width, rect.y, 0.0f ),
+            };
+            quadMesh.uv = new Vector2[] {
+                new Vector2 ( xStart, yStart ),
+                new Vector2 ( xEnd, yStart ),
+                new Vector2 ( xEnd, yEnd ),
+                new Vector2 ( xStart, yEnd ),
+            };
+            quadMesh.colors32 = new Color32[] {
+                new Color32 ( 255, 255, 255, 255 ),
+                new Color32 ( 255, 255, 255, 255 ),
+                new Color32 ( 255, 255, 255, 255 ),
+                new Color32 ( 255, 255, 255, 255 ),
+            };
+            quadMesh.triangles = new int[] {
+                0, 1, 2,
+                0, 2, 3
+            };
+
+            Graphics.DrawMeshNow ( quadMesh, Vector3.zero, Quaternion.identity );
+        }
+        else {
+            float uv_s  = (float)textureInfo.x / (float)textureInfo.texture.width;
+            float uv_t  = (float)textureInfo.y / (float)textureInfo.texture.height;
+            float uv_w  = (float)textureInfo.rotatedWidth / (float)textureInfo.texture.width;
+            float uv_h  = (float)textureInfo.rotatedHeight / (float)textureInfo.texture.height;
+
+            GUI.DrawTextureWithTexCoords( rect, 
+                                          textureInfo.texture, 
+                                          new Rect( uv_s, uv_t, uv_w, uv_h ) );
+        }
     }
 
     // ------------------------------------------------------------------ 

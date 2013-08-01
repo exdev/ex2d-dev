@@ -136,7 +136,6 @@ public static class exTextureUtility {
         }
     }
 
-
     // ------------------------------------------------------------------ 
     /// \param _tex the texture in which to apply contour bleed
     /// prevents edge artifacts due to bilinear filtering
