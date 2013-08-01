@@ -405,7 +405,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// Add sprite's geometry data to buffers
     // ------------------------------------------------------------------ 
 
-    internal void FillBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32) {
+    internal virtual void FillBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32) {
         vertexBufferIndex = _vertices.Count;
 
         for (int i = 0; i < vertexCount; ++i) {

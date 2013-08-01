@@ -100,20 +100,20 @@ public class exSpriteFont : exSpriteBase {
         }
     }
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected bool useMultiline_ = false;
-    /// If useMultiline is true, the exSpriteFont.text accept multiline string. 
-    // ------------------------------------------------------------------ 
+    //// ------------------------------------------------------------------ 
+    //[SerializeField] protected bool useMultiline_ = false;
+    ///// If useMultiline is true, the exSpriteFont.text accept multiline string. 
+    //// ------------------------------------------------------------------ 
 
-    public bool useMultiline {
-        get { return useMultiline_; }
-        set {
-            if ( useMultiline_ != value ) {
-                useMultiline_ = value;
-                updateFlags |= exUpdateFlags.Text;  // TODO: only need to update vertex ?
-            }
-        }
-    }
+    //public bool useMultiline {
+    //    get { return useMultiline_; }
+    //    set {
+    //        if ( useMultiline_ != value ) {
+    //            useMultiline_ = value;
+    //            updateFlags |= exUpdateFlags.Text;  // TODO: only need to update vertex ?
+    //        }
+    //    }
+    //}
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected TextAlignment textAlign_ = TextAlignment.Left;
@@ -196,105 +196,105 @@ public class exSpriteFont : exSpriteBase {
 
     // outline option
 
-    //// ------------------------------------------------------------------ 
-    //[SerializeField] protected bool useOutline_ = false;
-    ///// If useOutline is true, the component will render the text with outline
-    //// ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected bool useOutline_ = false;
+    /// If useOutline is true, the component will render the text with outline
+    // ------------------------------------------------------------------ 
 
-    //public bool useOutline {
-    //    get { return useOutline_; }
-    //    set {
-    //        if ( useOutline_ != value ) {
-    //            useOutline_ = value;
-    //            updateFlags |= exUpdateFlags.Text; 
-    //        }
-    //    }
-    //}
+    public bool useOutline {
+        get { return useOutline_; }
+        set {
+            if ( useOutline_ != value ) {
+                useOutline_ = value;
+                updateFlags |= exUpdateFlags.Text; 
+            }
+        }
+    }
 
-    //// ------------------------------------------------------------------ 
-    //[SerializeField] protected float outlineWidth_ = 1.0f;
-    ///// The width of the outline text
-    //// ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected float outlineWidth_ = 1.0f;
+    /// The width of the outline text
+    // ------------------------------------------------------------------ 
 
-    //public float outlineWidth {
-    //    get { return outlineWidth_; }
-    //    set {
-    //        if ( outlineWidth_ != value ) {
-    //            outlineWidth_ = value;
-    //            if ( useOutline_ ) {
-    //                updateFlags |= exUpdateFlags.Vertex;
-    //            }
-    //        }
-    //    }
-    //}
+    public float outlineWidth {
+        get { return outlineWidth_; }
+        set {
+            if ( outlineWidth_ != value ) {
+                outlineWidth_ = value;
+                if ( useOutline_ ) {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+        }
+    }
 
-    //// ------------------------------------------------------------------ 
-    //[SerializeField] protected Color outlineColor_ = Color.black;
-    ///// The color of the outline text
-    //// ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Color outlineColor_ = Color.black;
+    /// The color of the outline text
+    // ------------------------------------------------------------------ 
 
-    //public Color outlineColor {
-    //    get { return outlineColor_; }
-    //    set {
-    //        if ( outlineColor_ != value ) {
-    //            outlineColor_ = value;
-    //            if ( useOutline_ ) {
-    //                updateFlags |= exUpdateFlags.Color;
-    //            }
-    //        }
-    //    }
-    //}
+    public Color outlineColor {
+        get { return outlineColor_; }
+        set {
+            if ( outlineColor_ != value ) {
+                outlineColor_ = value;
+                if ( useOutline_ ) {
+                    updateFlags |= exUpdateFlags.Color;
+                }
+            }
+        }
+    }
 
     // shadow option
 
-    //// ------------------------------------------------------------------ 
-    //[SerializeField] protected bool useShadow_ = false;
-    ///// If useShadow is true, the component will render the text with shadow
-    //// ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected bool useShadow_ = false;
+    /// If useShadow is true, the component will render the text with shadow
+    // ------------------------------------------------------------------ 
 
-    //public bool useShadow {
-    //    get { return useShadow_; }
-    //    set {
-    //        if ( useShadow_ != value ) {
-    //            useShadow_ = value;
-    //            updateFlags |= exUpdateFlags.Text; 
-    //        }
-    //    }
-    //}
+    public bool useShadow {
+        get { return useShadow_; }
+        set {
+            if ( useShadow_ != value ) {
+                useShadow_ = value;
+                updateFlags |= exUpdateFlags.Text; 
+            }
+        }
+    }
 
-    //// ------------------------------------------------------------------ 
-    //[SerializeField] protected Vector2 shadowBias_ = new Vector2 ( 1.0f, -1.0f );
-    ///// The bias of the shadow text 
-    //// ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Vector2 shadowBias_ = new Vector2 ( 1.0f, -1.0f );
+    /// The bias of the shadow text 
+    // ------------------------------------------------------------------ 
 
-    //public Vector2 shadowBias {
-    //    get { return shadowBias_; }
-    //    set {
-    //        if ( shadowBias_ != value ) {
-    //            shadowBias_ = value;
-    //            if ( useShadow_ ) {
-    //                updateFlags |= exUpdateFlags.Vertex;
-    //            }
-    //        }
-    //    }
-    //}
+    public Vector2 shadowBias {
+        get { return shadowBias_; }
+        set {
+            if ( shadowBias_ != value ) {
+                shadowBias_ = value;
+                if ( useShadow_ ) {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+        }
+    }
 
-    //// ------------------------------------------------------------------ 
-    //[SerializeField] protected Color shadowColor_ = Color.black;
-    ///// The color of the shadow text 
-    //// ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Color shadowColor_ = Color.black;
+    /// The color of the shadow text 
+    // ------------------------------------------------------------------ 
 
-    //public Color shadowColor {
-    //    get { return shadowColor_; }
-    //    set {
-    //        if ( shadowColor_ != value ) {
-    //            shadowColor_ = value;
-    //            if ( useShadow_ ) {
-    //                updateFlags |= exUpdateFlags.Color;
-    //            }
-    //        }
-    //    }
-    //}
+    public Color shadowColor {
+        get { return shadowColor_; }
+        set {
+            if ( shadowColor_ != value ) {
+                shadowColor_ = value;
+                if ( useShadow_ ) {
+                    updateFlags |= exUpdateFlags.Color;
+                }
+            }
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -361,6 +361,17 @@ public class exSpriteFont : exSpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
 
 #region Functions used to update geometry buffer
+
+    // ------------------------------------------------------------------ 
+    /// Add sprite's geometry data to buffers
+    // ------------------------------------------------------------------ 
+
+    internal override void FillBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32) {
+        if (layer_ == null) {
+            UpdateCapacity();
+        }
+        base.FillBuffers(_vertices, _uvs, _colors32);
+    }
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -1059,7 +1070,7 @@ public class exSpriteFont : exSpriteBase {
             return;
         }
 
-        int curLine = 0;
+        int curLine = 0;    // used to get line width
         float curX = 0.0f;
         float curY = 0.0f;
 
@@ -1073,43 +1084,88 @@ public class exSpriteFont : exSpriteBase {
             }
         }
 
-        for (int c = 0; c < text_.Length; ++c, _startIndex += 4) {
-            exBitmapFont.CharInfo ci = font_.GetCharInfo(text_[c]);
+        for (int i = 0; i < text_.Length; ++i, _startIndex += 4) {
+            char c = text_[i];
+            exBitmapFont.CharInfo ci = font_.GetCharInfo(c);
             if (ci == null) {
                 // character is not present
-                Debug.LogWarning ("character is not present: " + text_[c], this);
+                Debug.LogWarning ("character is not present: " + c, this);
                 _vertices[_startIndex + 0] = new Vector3();
                 _vertices[_startIndex + 1] = new Vector3();
                 _vertices[_startIndex + 2] = new Vector3();
                 _vertices[_startIndex + 3] = new Vector3();
                 continue;
             }
-
+            // if new line
+            if (c == '\n' || curLine == 0) {
+                if (c == '\n') {
+                    ++curLine;
+                    curY = curY + font_.lineHeight + spacing_.y;
+                }
+                switch ( textAlign_ ) {
+                case TextAlignment.Left:
+                    curX = 0.0f;
+                    break;
+                case TextAlignment.Center:
+                    //curX = halfWidthScaled - lineWidths[curLine] * 0.5f * finalScale.x;
+                    break;
+                case TextAlignment.Right:
+                    //curX = halfWidthScaled * 2.0f - lineWidths[curLine] * finalScale.x;
+                    break;
+                }
+            }
             //build vertex
             float halfWidth = ci.width * 0.5f;
             float halfHeight = ci.height * 0.5f;
-            float anchorOffsetX = 0.0f;
-            float anchorOffsetY = 0.0f;
+            float anchorOffsetX = curX;
+            float anchorOffsetY = curY;
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
             Vector3 v0 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
             Vector3 v1 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
             Vector3 v2 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
             Vector3 v3 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
-            // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
             v0.z = 0;
             v1.z = 0;
             v2.z = 0;
             v3.z = 0;
+            // shear
+            if (shear_.x != 0) {
+                float worldScaleY = (new Vector3(cachedWorldMatrix.m01, cachedWorldMatrix.m11, cachedWorldMatrix.m21)).magnitude;
+                float offsetX = worldScaleY * shear_.x;
+                float topOffset = offsetX * (halfHeight + anchorOffsetY);
+                float botOffset = offsetX * (-halfHeight + anchorOffsetY);
+                v0.x += botOffset;
+                v1.x += topOffset;
+                v2.x += topOffset;
+                v3.x += botOffset;
+            }
+            if (shear_.y != 0) {
+                float worldScaleX = (new Vector3(cachedWorldMatrix.m00, cachedWorldMatrix.m10, cachedWorldMatrix.m20)).magnitude;
+                float offsetY = worldScaleX * shear_.y;
+                float leftOffset = offsetY * (-halfWidth + anchorOffsetX);
+                float rightOffset = offsetY * (halfWidth + anchorOffsetX);
+                v0.y += leftOffset;
+                v1.y += leftOffset;
+                v2.y += rightOffset;
+                v3.y += rightOffset;
+            }
+            //
             _vertices[_startIndex + 0] = v0;
             _vertices[_startIndex + 1] = v1;
             _vertices[_startIndex + 2] = v2;
             _vertices[_startIndex + 3] = v3;
 
+            curX = curX + (ci.xadvance + spacing_.x);
+
+            // kerning
+            if ( useKerning_ && i + 1 < text_.Length ) {
+                curX += font_.GetKerning(c, text_[i + 1]);
+            }
+
             if (_uvs != null) {
                 // build uv
-                Vector2 start = new Vector2(ci.x * texelSize.x, 1 - ci.y * texelSize.y);
-                Vector2 end = new Vector2((ci.x + ci.width) * texelSize.x, 1 - (ci.y + ci.height) * texelSize.y);
-                Debug.Log ("start " + start.ToString("F6") + " end " + end.ToString("F6") + ci.rotated);
+                Vector2 start = new Vector2(ci.x * texelSize.x, ci.y * texelSize.y);
+                Vector2 end = new Vector2((ci.x + ci.width) * texelSize.x, (ci.y + ci.height) * texelSize.y);
                 if ( ci.rotated ) {
                     _uvs[_startIndex + 0] = new Vector2(end.x, start.y);
                     _uvs[_startIndex + 1] = start;
@@ -1162,25 +1218,6 @@ public class exSpriteFont : exSpriteBase {
             //            for ( int i = 0; i < text_.Length; ++i ) {
             //                int id = text_[i];
 
-            //                // if next line
-            //                if ( id == '\n' ) {
-            //                    if ( useMultiline_ ) {
-            //                        ++curLine;
-            //                        switch ( textAlign_ ) {
-            //                        case TextAlign.Left:
-            //                            curX = 0.0f;
-            //                            break;
-            //                        case TextAlign.Center:
-            //                            curX = halfWidthScaled - lineWidths[curLine] * 0.5f * finalScale.x;
-            //                            break;
-            //                        case TextAlign.Right:
-            //                            curX = halfWidthScaled * 2.0f - lineWidths[curLine] * finalScale.x;
-            //                            break;
-            //                        }
-            //                        curY = curY + (fontInfo_.lineHeight + lineSpacing_) * finalScale.y;
-            //                    }
-            //                    continue;
-            //                }
 
             //                int vert_id = vertexStartAt + 4 * i;
             //                int idx_id = indexStartAt + 6 * i;
@@ -1245,29 +1282,6 @@ public class exSpriteFont : exSpriteBase {
 
         anchorOffsetX += offset_.x;
         anchorOffsetY += offset_.y;
-
-        if (shear_.x != 0) {
-            // 这里直接从matrix拿未计入rotation影响的scale，在已知matrix的情况下，速度比较快lossyScale了6倍。
-            // 在有rotation时，shear本来就会有冲突，所以这里不需要lossyScale。
-            float worldScaleY = (new Vector3(cachedWorldMatrix.m01, cachedWorldMatrix.m11, cachedWorldMatrix.m21)).magnitude;
-            float offsetX = worldScaleY * shear_.x;
-            float topOffset = offsetX * (halfHeight + anchorOffsetY);
-            float botOffset = offsetX * (-halfHeight + anchorOffsetY);
-            v0.x += botOffset;
-            v1.x += topOffset;
-            v2.x += topOffset;
-            v3.x += botOffset;
-        }
-        if (shear_.y != 0) {
-            float worldScaleX = (new Vector3(cachedWorldMatrix.m00, cachedWorldMatrix.m10, cachedWorldMatrix.m20)).magnitude;
-            float offsetY = worldScaleX * shear_.y;
-            float leftOffset = offsetY * (-halfWidth + anchorOffsetX);
-            float rightOffset = offsetY * (halfWidth + anchorOffsetX);
-            v0.y += leftOffset;
-            v1.y += leftOffset;
-            v2.y += rightOffset;
-            v3.y += rightOffset;
-        }
         */
         // TODO: pixel-perfect
     }
@@ -1277,6 +1291,7 @@ public class exSpriteFont : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     void UpdateCapacity () {
+        Debug.Log("[UpdateCapacity|exSpriteFont] ");
         int oldTextCapaticy = vertexCountCapacity / exMesh.QUAD_VERTEX_COUNT;
         int textCapaticy;
         if (text_ != null) {

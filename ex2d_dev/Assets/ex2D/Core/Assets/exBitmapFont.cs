@@ -198,6 +198,7 @@ public class exBitmapFont : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public void RebuildKerningTable () {
+        // 如果大部分字符的kerning数量都在10个以下，可以直接线性存到CharInfo里。
         if ( kerningTable == null ) {
             kerningTable = new Dictionary<KerningTableKey,int> (kernings.Count, KerningTableKey.Comparer.instance);
         }

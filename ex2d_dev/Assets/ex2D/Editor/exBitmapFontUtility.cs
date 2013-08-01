@@ -68,6 +68,7 @@ public static class exBitmapFontUtility {
 		string line;
         FileInfo fileInfo = new FileInfo(fontInfoPath);
 		StreamReader reader = fileInfo.OpenText();
+        int textureHeight = -1;
 		while ( (line = reader.ReadLine()) != null ) {
 
             string[] words = line.Split(' ');
@@ -95,17 +96,19 @@ public static class exBitmapFontUtility {
                     Debug.LogError("Parse Failed: The texture " + filename + " not found.");
                     return false;
                 }
+                textureHeight = texture.height;
 
                 // add page info 
                 _bitmapFont.texture = texture;
             }
             else if ( words[0] == "char" ) {
+                exDebug.Assert(textureHeight != -1);
                 exBitmapFont.CharInfo charInfo = new exBitmapFont.CharInfo(); 
                 charInfo.id = int.Parse ( ParseValue( words, "id" ) );
-                charInfo.x = int.Parse ( ParseValue( words, "x" ) );
-                charInfo.y = int.Parse ( ParseValue( words, "y" ) );
                 charInfo.width = int.Parse ( ParseValue( words, "width" ) );
                 charInfo.height = int.Parse ( ParseValue( words, "height" ) );
+                charInfo.x = int.Parse ( ParseValue( words, "x" ) );
+                charInfo.y = textureHeight - int.Parse ( ParseValue( words, "y" ) ) - charInfo.height;
                 charInfo.xoffset = int.Parse ( ParseValue( words, "xoffset" ) );
                 charInfo.yoffset = int.Parse ( ParseValue( words, "yoffset" ) );
                 charInfo.xadvance = int.Parse ( ParseValue( words, "xadvance" ) );
