@@ -378,6 +378,12 @@ public class exSpriteFont : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
+#if UNITY_EDITOR
+        if (vertexCountCapacity / exMesh.QUAD_VERTEX_COUNT < text_.Length) {
+            Debug.LogError("[UpdateBuffers|exSpriteFont] 顶点缓冲长度不够，是否绕开属性直接修改了text_?");
+            return updateFlags;
+        }
+#endif
         if ((updateFlags & exUpdateFlags.Text) != 0) {
             BuildText(vertexBufferIndex, _vertices, _uvs);
         }
@@ -385,14 +391,15 @@ public class exSpriteFont : exSpriteBase {
             BuildText(vertexBufferIndex, _vertices);
         }
         if ((updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+            // update index buffer
             int indexBufferEnd = indexBufferIndex + indexCountCapacity - 5;
-            for (int i = indexBufferIndex; i < indexBufferEnd; i += 6) {
-                _indices[i]     = vertexBufferIndex;
-                _indices[i + 1] = vertexBufferIndex + 1;
-                _indices[i + 2] = vertexBufferIndex + 2;
-                _indices[i + 3] = vertexBufferIndex + 2;
-                _indices[i + 4] = vertexBufferIndex + 3;
-                _indices[i + 5] = vertexBufferIndex;
+            for (int i = indexBufferIndex, v = vertexBufferIndex; i < indexBufferEnd; i += 6, v += 4) {
+                _indices[i]     = v;
+                _indices[i + 1] = v + 1;
+                _indices[i + 2] = v + 2;
+                _indices[i + 3] = v + 2;
+                _indices[i + 4] = v + 3;
+                _indices[i + 5] = v;
             }
         }
         if ((updateFlags & exUpdateFlags.Color) != 0) {
@@ -416,6 +423,12 @@ public class exSpriteFont : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     public override Vector3[] GetVertices () {
+#if UNITY_EDITOR
+        if (vertexCountCapacity / exMesh.QUAD_VERTEX_COUNT < text_.Length) {
+            Debug.LogError("[UpdateBuffers|exSpriteFont] 顶点缓冲长度不够，是否绕开属性直接修改了text_?");
+            return new Vector3[0];
+        }
+#endif
         // TODO: only return the rotated bounding box of the sprite font
         List<Vector3> vertices = new List<Vector3>(vertexCount);    // TODO: use global static temp List instead
         for (int i = 0; i < vertexCount; ++i) {
@@ -1097,7 +1110,7 @@ public class exSpriteFont : exSpriteBase {
                 continue;
             }
             // if new line
-            if (c == '\n' || curLine == 0) {
+            if (c == '\n' || i == 0) {
                 if (c == '\n') {
                     ++curLine;
                     curY = curY + font_.lineHeight + spacing_.y;
@@ -1155,7 +1168,7 @@ public class exSpriteFont : exSpriteBase {
             _vertices[_startIndex + 2] = v2;
             _vertices[_startIndex + 3] = v3;
 
-            curX = curX + (ci.xadvance + spacing_.x);
+            curX = curX + ci.xadvance + spacing_.x;
 
             // kerning
             if ( useKerning_ && i + 1 < text_.Length ) {

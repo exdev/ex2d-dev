@@ -1,4 +1,4 @@
-// ======================================================================================
+ï»¿// ======================================================================================
 // File         : exBitmapFont.cs
 // Author       : Wu Jie 
 // Last Change  : 07/26/2013 | 17:18:41 PM | Friday,July
@@ -112,27 +112,12 @@ public class exBitmapFont : ScriptableObject {
     ///////////////////////////////////////////////////////////////////////////////
 
     public string rawFontGUID = "";
-    /// <summary>
-    /// The texture.
-    /// </summary>
     public Texture2D texture; ///< the atlas or raw texture
 
-    /// <summary>
-    /// The char infos.
-    /// </summary>
     public List<CharInfo> charInfos = new List<CharInfo>(); ///< the list of the character information
-    /// <summary>
-    /// The kernings.
-    /// </summary>
     public List<KerningInfo> kernings = new List<KerningInfo>(); ///< the list of the kerning information 
 
-    /// <summary>
-    /// The height of the line.
-    /// </summary>
     public int lineHeight; ///< the space of the line
-    /// <summary>
-    /// The size.
-    /// </summary>
     public int size;       ///< the size in pixel of the font 
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -198,7 +183,7 @@ public class exBitmapFont : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public void RebuildKerningTable () {
-        // Èç¹û´ó²¿·Ö×Ö·ûµÄkerningÊýÁ¿¶¼ÔÚ10¸öÒÔÏÂ£¬¿ÉÒÔÖ±½ÓÏßÐÔ´æµ½CharInfoÀï¡£
+        // å¦‚æžœå¤§éƒ¨åˆ†å­—ç¬¦çš„kerningæ•°é‡éƒ½åœ¨10ä¸ªä»¥ä¸‹ï¼Œå¯ä»¥ç›´æŽ¥çº¿æ€§å­˜åˆ°CharInfoé‡Œã€‚
         if ( kerningTable == null ) {
             kerningTable = new Dictionary<KerningTableKey,int> (kernings.Count, KerningTableKey.Comparer.instance);
         }
