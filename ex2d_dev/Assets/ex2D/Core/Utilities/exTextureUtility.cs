@@ -29,11 +29,15 @@ public static class exTextureUtility {
         Rect rect = new Rect( 0, 0, 0, 0 );
         Color32[] pixels = _tex.GetPixels32(0);
 
+        int xmin = _tex.width;
+        int xmax = 0;
+        int ymin = _tex.height;
+        int ymax = 0;
+
         for ( int x = 0; x < _tex.width; ++x ) {
             for ( int y = 0; y < _tex.height; ++y ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
-                    // rect.x = System.Math.Max(x-1,0);
-                    rect.x = x;
+                    xmin = x;
                     x = _tex.width;
                     break;
                 }
@@ -43,8 +47,7 @@ public static class exTextureUtility {
         for ( int x = _tex.width-1; x >= 0; --x ) {
             for ( int y = 0; y < _tex.height; ++y ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
-                    // rect.xMax = System.Math.Min(x+1,_tex.width-1);
-                    rect.xMax = x;
+                    xmax = x;
                     x = -1;
                     break;
                 }
@@ -54,8 +57,7 @@ public static class exTextureUtility {
         for ( int y = 0; y < _tex.height; ++y ) {
             for ( int x = 0; x < _tex.width; ++x ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
-                    // rect.y = System.Math.Max(y-1,0);
-                    rect.y = y;
+                    ymin = y;
                     y = _tex.height;
                     break;
                 }
@@ -65,19 +67,14 @@ public static class exTextureUtility {
         for ( int y = _tex.height-1; y >= 0; --y ) {
             for ( int x = 0; x < _tex.width; ++x ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
-                    // rect.yMax = System.Math.Min(y+1,_tex.height-1);
-                    rect.yMax = y;
+                    ymax = y;
                     y = -1;
                     break;
                 }
             }
         }
 
-        // int xmin = _tex.width;
-        // int xmax = 0;
-        // int ymin = _tex.height;
-        // int ymax = 0;
-
+        // DISABLE { 
         // for ( int y = 0, yw = _tex.height; y < yw; ++y ) {
         //     for ( int x = 0, xw = _tex.width; x < xw; ++x ) {
         //         Color32 c = pixels[y * xw + x];
@@ -90,11 +87,11 @@ public static class exTextureUtility {
         //         }
         //     }
         // }
+        // } DISABLE end 
 
-        // rect.xMin = xmin;
-        // rect.yMin = ymin;
-        // rect.xMax = xmax;
-        // rect.yMax = ymax;
+        int newWidth  = (xmax - xmin) + 1;
+        int newHeight = (ymax - ymin) + 1;
+        rect = new Rect( xmin, ymin, newWidth, newHeight );
 
         return rect;
     }
@@ -110,36 +107,34 @@ public static class exTextureUtility {
 
     public static void Fill ( Texture2D _dest, 
                               Texture2D _src, 
-                              Vector2 _destPos, 
-                              Rect _srcRect, 
+                              int _destX,
+                              int _destY,
+                              int _srcX,
+                              int _srcY,
+                              int _srcWidth,
+                              int _srcHeight,
                               bool _rotated ) {
-        int xDest = (int)_destPos.x;
-        int yDest = (int)_destPos.y;
-        int xSrc = (int)_srcRect.x;
-        int ySrc = (int)_srcRect.y;
-        int srcWidth = (int)_srcRect.width;
-        int srcHeight = (int)_srcRect.height;
-
         if ( _rotated == false ) {
-            _dest.SetPixels( xDest, yDest, srcWidth, srcHeight, 
-                             _src.GetPixels( xSrc, ySrc, srcWidth, srcHeight ) );
+            _dest.SetPixels( _destX, _destY, _srcWidth, _srcHeight, 
+                             _src.GetPixels( _srcX, _srcY, _srcWidth, _srcHeight ) );
         }
         else {
-            int destWidth = srcHeight;
-            int destHeight = srcWidth;
+            int destWidth = _srcHeight;
+            int destHeight = _srcWidth;
+            Color32[] srcPixels = _src.GetPixels32(0);
 
             for ( int j = 0; j < destHeight; ++j ) {
                 for ( int i = 0; i < destWidth; ++i ) {
-                    // Color c = _src.GetPixel( xSrc + srcWidth - j, ySrc + _src.height + i );
-                    // _dest.SetPixel( xDest + i, yDest + j, c ); 
-
-                    Color c = _src.GetPixel( xSrc + j, ySrc + _src.height + i );
-                    _dest.SetPixel( xDest + destWidth - i, yDest + j, c ); 
+                    int src_x = _srcX + j;
+                    int src_y = _srcY + _srcHeight - i;
+                    int dest_x = _destX + i;
+                    int dest_y = _destY + j;
+                    Color32 pixel = srcPixels[src_x + src_y*_src.width];
+                    _dest.SetPixel( dest_x, dest_y, pixel );
                 }
             }
         }
     }
-
 
     // ------------------------------------------------------------------ 
     /// \param _tex the texture in which to apply contour bleed

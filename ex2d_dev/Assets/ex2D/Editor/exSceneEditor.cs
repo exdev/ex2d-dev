@@ -742,26 +742,42 @@ class exSceneEditor : EditorWindow {
                                         _textureInfo.height * 0.5f );
 
         float s0 = (float) _textureInfo.x / (float) _textureInfo.texture.width;
-        float s1 = (float) (_textureInfo.x+_textureInfo.width)  / (float) _textureInfo.texture.width;
+        float s1 = (float) (_textureInfo.x+_textureInfo.rotatedWidth)  / (float) _textureInfo.texture.width;
         float t0 = (float) _textureInfo.y / (float) _textureInfo.texture.height;
-        float t1 = (float) (_textureInfo.y+_textureInfo.height) / (float) _textureInfo.texture.height;
+        float t1 = (float) (_textureInfo.y+_textureInfo.rotatedHeight) / (float) _textureInfo.texture.height;
 
         exEditorUtility.AlphaBlendedMaterial().mainTexture = _textureInfo.texture;
         exEditorUtility.AlphaBlendedMaterial().SetPass(0);
         GL.Begin(GL.QUADS);
             GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
 
-            GL.TexCoord2 ( s0, t0 );
-            GL.Vertex3 ( -halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+            if ( _textureInfo.rotated == false ) {
+                GL.TexCoord2 ( s0, t0 );
+                GL.Vertex3 ( -halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
 
-            GL.TexCoord2 ( s0, t1 );
-            GL.Vertex3 ( -halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
+                GL.TexCoord2 ( s0, t1 );
+                GL.Vertex3 ( -halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
 
-            GL.TexCoord2 ( s1, t1 );
-            GL.Vertex3 (  halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
+                GL.TexCoord2 ( s1, t1 );
+                GL.Vertex3 (  halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
 
-            GL.TexCoord2 ( s1, t0 );
-            GL.Vertex3 (  halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+                GL.TexCoord2 ( s1, t0 );
+                GL.Vertex3 (  halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+            }
+            else {
+                GL.TexCoord2 ( s1, t0 );
+                GL.Vertex3 ( -halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+
+                GL.TexCoord2 ( s0, t0 );
+                GL.Vertex3 ( -halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
+
+                GL.TexCoord2 ( s0, t1 );
+                GL.Vertex3 (  halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
+
+                GL.TexCoord2 ( s1, t1 );
+                GL.Vertex3 (  halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+            }
+
         GL.End();
     }
 
