@@ -1,4 +1,4 @@
-// ======================================================================================
+ï»¿// ======================================================================================
 // File         : exBitmapFont.cs
 // Author       : Wu Jie 
 // Last Change  : 07/26/2013 | 17:18:41 PM | Friday,July
@@ -183,7 +183,7 @@ public class exBitmapFont : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public void RebuildKerningTable () {
-        // Èç¹û´ó²¿·Ö×Ö·ûµÄkerningÊıÁ¿¶¼ÔÚ10¸öÒÔÏÂ£¬¿ÉÒÔÖ±½ÓÏßĞÔ´æµ½CharInfoÀï¡£
+        // å¦‚æœå¤§éƒ¨åˆ†å­—ç¬¦çš„kerningæ•°é‡éƒ½åœ¨10ä¸ªä»¥ä¸‹ï¼Œå¯ä»¥ç›´æ¥çº¿æ€§å­˜åˆ°CharInfoé‡Œã€‚
         if ( kerningTable == null ) {
             kerningTable = new Dictionary<KerningTableKey,int> (kernings.Count, KerningTableKey.Comparer.instance);
         }
