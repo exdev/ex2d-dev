@@ -877,8 +877,12 @@ public static class exAtlasUtility {
             // copy raw texture into atlas texture
             exTextureUtility.Fill( atlasTexture
                                  , rawTexture
-                                 , new Vector2 ( textureInfo.x, textureInfo.y )
-                                 , new Rect ( textureInfo.trim_x, textureInfo.trim_y, textureInfo.width, textureInfo.height )
+                                 , textureInfo.x
+                                 , textureInfo.y
+                                 , textureInfo.trim_x
+                                 , textureInfo.trim_y
+                                 , textureInfo.width
+                                 , textureInfo.height
                                  , textureInfo.rotated
                                  );
 
@@ -910,5 +914,6 @@ public static class exAtlasUtility {
         _atlas.needRebuild = false;
 
         EditorUtility.SetDirty(_atlas);
+        AssetDatabase.SaveAssets();
     }
 }

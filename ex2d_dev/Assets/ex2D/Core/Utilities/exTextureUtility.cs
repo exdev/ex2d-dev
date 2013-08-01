@@ -107,31 +107,30 @@ public static class exTextureUtility {
 
     public static void Fill ( Texture2D _dest, 
                               Texture2D _src, 
-                              Vector2 _destPos, 
-                              Rect _srcRect, 
+                              int _destX,
+                              int _destY,
+                              int _srcX,
+                              int _srcY,
+                              int _srcWidth,
+                              int _srcHeight,
                               bool _rotated ) {
-        int xDest = (int)_destPos.x;
-        int yDest = (int)_destPos.y;
-        int xSrc = (int)_srcRect.x;
-        int ySrc = (int)_srcRect.y;
-        int srcWidth = (int)_srcRect.width;
-        int srcHeight = (int)_srcRect.height;
-
         if ( _rotated == false ) {
-            _dest.SetPixels( xDest, yDest, srcWidth, srcHeight, 
-                             _src.GetPixels( xSrc, ySrc, srcWidth, srcHeight ) );
+            _dest.SetPixels( _destX, _destY, _srcWidth, _srcHeight, 
+                             _src.GetPixels( _srcX, _srcY, _srcWidth, _srcHeight ) );
         }
         else {
-            int destWidth = srcHeight;
-            int destHeight = srcWidth;
+            int destWidth = _srcHeight;
+            int destHeight = _srcWidth;
+            Color32[] srcPixels = _src.GetPixels32(0);
 
             for ( int j = 0; j < destHeight; ++j ) {
                 for ( int i = 0; i < destWidth; ++i ) {
-                    // Color c = _src.GetPixel( xSrc + srcWidth - j, ySrc + _src.height + i );
-                    // _dest.SetPixel( xDest + i, yDest + j, c ); 
-
-                    Color c = _src.GetPixel( xSrc + j, ySrc + _src.height + i );
-                    _dest.SetPixel( xDest + destWidth - i, yDest + j, c ); 
+                    int src_x = _srcX + j;
+                    int src_y = _srcY + _srcHeight - i;
+                    int dest_x = _destX + i;
+                    int dest_y = _destY + j;
+                    Color32 pixel = srcPixels[src_x + src_y*_src.width];
+                    _dest.SetPixel( dest_x, dest_y, pixel );
                 }
             }
         }
