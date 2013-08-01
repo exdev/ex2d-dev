@@ -23,6 +23,20 @@ using System.IO;
 [CustomEditor(typeof(exSpriteFont))]
 class exSpriteFontInspector : exSpriteBaseInspector {
 
+    SerializedProperty fontProp;
+    SerializedProperty textProp;
+    SerializedProperty textAlignProp;
+    SerializedProperty useKerningProp;
+    SerializedProperty spacingProp;
+    SerializedProperty topColorProp;
+    SerializedProperty botColorProp;
+    SerializedProperty useOutlineProp;
+    SerializedProperty outlineWidthProp;
+    SerializedProperty outlineColorProp;
+    SerializedProperty useShadowProp;
+    SerializedProperty shadowBiasProp;
+    SerializedProperty shadowColorProp;
+
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
@@ -43,32 +57,186 @@ class exSpriteFontInspector : exSpriteBaseInspector {
 
         EditorGUILayout.Space();
 
-        // // textureInfo
-        // EditorGUI.BeginChangeCheck();
-        // EditorGUILayout.PropertyField ( textureInfoProp, new GUIContent("Texture Info") );
-        // if ( EditorGUI.EndChangeCheck() ) {
-        //     foreach ( Object obj in serializedObject.targetObjects ) {
-        //         exSprite sp = obj as exSprite;
-        //         if ( sp ) {
-        //             sp.textureInfo = textureInfoProp.objectReferenceValue as exTextureInfo;
-        //             EditorUtility.SetDirty(sp);
-        //         }
-        //     }
-        // }
+        // font
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( fontProp, new GUIContent("Font") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.font = fontProp.objectReferenceValue as exBitmapFont;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
 
-        // // useTextureOffset
-        // EditorGUI.BeginChangeCheck();
-        // EditorGUILayout.PropertyField ( useTextureOffsetProp, new GUIContent("Use Texture Offset") );
-        // if ( EditorGUI.EndChangeCheck() ) {
-        //     foreach ( Object obj in serializedObject.targetObjects ) {
-        //         exSprite sp = obj as exSprite;
-        //         if ( sp ) {
-        //             sp.useTextureOffset = useTextureOffsetProp.boolValue;
-        //             EditorUtility.SetDirty(sp);
-        //         }
-        //     }
-        // }
+        // text
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( textProp, new GUIContent("Text") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.text = textProp.stringValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
 
+        // textAlign
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( textAlignProp, new GUIContent("Text Align") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.textAlign = (TextAlignment)textAlignProp.enumValueIndex;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        // useKerning
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( useKerningProp, new GUIContent("Use Kerning") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.useKerning = useKerningProp.boolValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        // spacing
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( spacingProp, new GUIContent("Spacing"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.spacing = spacingProp.vector2Value;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        // topColor
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( topColorProp, new GUIContent("Top Color"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.topColor = topColorProp.colorValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        // botColor
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( botColorProp, new GUIContent("Bot Color"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.botColor = botColorProp.colorValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        // useOutline
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( useOutlineProp, new GUIContent("Use Outline") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.useOutline = useOutlineProp.boolValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        GUI.enabled = useOutlineProp.boolValue;
+        EditorGUI.indentLevel++;
+        // outlineWidth
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( outlineWidthProp, new GUIContent("Outline Width") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.outlineWidth = outlineWidthProp.floatValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        // outlineColor
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( outlineColorProp, new GUIContent("Outline Color") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.outlineColor = outlineColorProp.colorValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+        EditorGUI.indentLevel--;
+        GUI.enabled = true;
+
+        // useShadow
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( useShadowProp, new GUIContent("Use Shadow") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.useShadow = useShadowProp.boolValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        GUI.enabled = useShadowProp.boolValue;
+        EditorGUI.indentLevel++;
+
+        // shadowBias
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( shadowBiasProp, new GUIContent("Shadow Bias"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.shadowBias = shadowBiasProp.vector2Value;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        // shadowColor
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( shadowColorProp, new GUIContent("Shadow Color") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteFont sp = obj as exSpriteFont;
+                if ( sp ) {
+                    sp.shadowColor = shadowColorProp.colorValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        EditorGUI.indentLevel--;
+        GUI.enabled = true;
+        
+        //
         EditorGUILayout.Space();
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
@@ -85,6 +253,19 @@ class exSpriteFontInspector : exSpriteBaseInspector {
 
     protected new void InitProperties () {
         base.InitProperties();
+        fontProp = serializedObject.FindProperty("font_");
+        textProp = serializedObject.FindProperty("text_");
+        textAlignProp = serializedObject.FindProperty("textAlign_");
+        useKerningProp = serializedObject.FindProperty("useKerning_");
+        spacingProp = serializedObject.FindProperty("spacing_");
+        topColorProp = serializedObject.FindProperty("topColor_");
+        botColorProp = serializedObject.FindProperty("botColor_");
+        useOutlineProp = serializedObject.FindProperty("useOutline_");
+        outlineWidthProp = serializedObject.FindProperty("outlineWidth_");
+        outlineColorProp = serializedObject.FindProperty("outlineColor_");
+        useShadowProp = serializedObject.FindProperty("useShadow_");
+        shadowBiasProp = serializedObject.FindProperty("shadowBias_");
+        shadowColorProp = serializedObject.FindProperty("shadowColor_");
     }
 }
 

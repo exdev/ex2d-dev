@@ -65,6 +65,7 @@ class exSpriteBaseInspector : Editor {
         }
 
         // if customSize == true
+        EditorGUI.indentLevel++;
         if ( customSizeProp.boolValue ) {
             // width
             EditorGUI.BeginChangeCheck();
@@ -102,6 +103,7 @@ class exSpriteBaseInspector : Editor {
             }
             GUI.enabled = true;
         }
+        EditorGUI.indentLevel--;
 
         // anchor
         EditorGUI.BeginChangeCheck();
