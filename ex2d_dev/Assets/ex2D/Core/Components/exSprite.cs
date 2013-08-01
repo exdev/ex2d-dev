@@ -39,6 +39,9 @@ public class exSprite : exSpriteBase {
                 return;
             }
             if (value != null) {
+                if (value.texture == null) {
+                    Debug.LogWarning("invalid textureInfo");
+                }
                 if (customSize_ == false && (value.width != width_ || value.height != height_)) {
                     width_ = value.width;
                     height_ = value.height;
@@ -47,6 +50,7 @@ public class exSprite : exSpriteBase {
                 updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
 
                 if (textureInfo_ == null || ReferenceEquals(textureInfo_.texture, value.texture) == false) {
+                    // texture changed
                     textureInfo_ = value;
                     UpdateMaterial();
                     return;
@@ -86,44 +90,26 @@ public class exSprite : exSpriteBase {
         }
     }
 
-    // ------------------------------------------------------------------ 
-    /// The shader used to render this sprite
-    // ------------------------------------------------------------------ 
-
-    [SerializeField]
-    private Shader shader_ = null;
-    public Shader shader {
-        get { return shader_; }
-        set {
-            if (ReferenceEquals(shader_, value)) {
-                return;
-            }
-            shader_ = value;
-            if (layer_ != null) {
-                exLayer myLayer = layer_;
-                myLayer.Remove(this);
-                myLayer.Add(this);
-            }
-        }
-    }
-
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
 
-    [System.NonSerialized] private Material material_;
-    public override Material material {
+    public override int vertexCount {
+        get { return exMesh.QUAD_VERTEX_COUNT; }
+    }
+
+    public override int indexCount {
+        get { return exMesh.QUAD_INDEX_COUNT; }
+    }
+
+    protected override Texture texture {
         get {
-            if (material_ != null) {
-                return material_;
-            }
-            if (textureInfo != null) {
-                material_ = ex2DMng.GetMaterial(shader, textureInfo.texture);
+            if (textureInfo_ != null) {
+                return textureInfo_.texture;
             }
             else {
-                material_ = ex2DMng.GetMaterial(shader, null);
+                return null;
             }
-            return material_;
         }
     }
 
@@ -181,11 +167,7 @@ public class exSprite : exSpriteBase {
     // Overridable functions
     ///////////////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Other functions
-    ///////////////////////////////////////////////////////////////////////////////
-
-#region Functions used to update geometry buffer
+    #region Functions used to update geometry buffer
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -217,10 +199,10 @@ public class exSprite : exSpriteBase {
             Vector2 end = new Vector2((float)(textureInfo.x + textureInfo.rotatedWidth) * texelSize.x, 
                                        (float)(textureInfo.y + textureInfo.rotatedHeight) * texelSize.y);
             if ( textureInfo.rotated ) {
+                _uvs[vertexBufferIndex + 0] = new Vector2(end.x, start.y);
                 _uvs[vertexBufferIndex + 1] = start;
                 _uvs[vertexBufferIndex + 2] = new Vector2(start.x, end.y);
                 _uvs[vertexBufferIndex + 3] = end;
-                _uvs[vertexBufferIndex + 0] = new Vector2(end.x, start.y);
             }
             else {
                 _uvs[vertexBufferIndex + 0] = start;
@@ -230,44 +212,19 @@ public class exSprite : exSpriteBase {
             }
         }
         if ((updateFlags & exUpdateFlags.Color) != 0) {
-            _colors32[vertexBufferIndex + 0] = new Color32(255, 255, 255, 255); // TODO: * layer.alpha ?
-            _colors32[vertexBufferIndex + 1] = new Color32(255, 255, 255, 255);
-            _colors32[vertexBufferIndex + 2] = new Color32(255, 255, 255, 255);
-            _colors32[vertexBufferIndex + 3] = new Color32(255, 255, 255, 255);
+            exDebug.Assert(layer_ != null);
+            Color32 color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
+            _colors32[vertexBufferIndex + 0] = color32;
+            _colors32[vertexBufferIndex + 1] = color32;
+            _colors32[vertexBufferIndex + 2] = color32;
+            _colors32[vertexBufferIndex + 3] = color32;
         }
         exUpdateFlags spriteUpdateFlags = updateFlags;
         updateFlags = exUpdateFlags.None;
         return spriteUpdateFlags;
     }
 
-#endregion // Functions used to update geometry buffer
-    
-    // ------------------------------------------------------------------ 
-    /// Calculate the world AABB rect of the sprite
-    // ------------------------------------------------------------------ 
-
-    public override Rect GetAABoundingRect () {
-        Vector3[] vertices = GetVertices();
-        Rect boundingRect = new Rect();
-        boundingRect.x = vertices[0].x;
-        boundingRect.y = vertices[0].y;
-        for (int i = 1; i < vertexCount; ++i) {
-            Vector3 vertex = vertices[i];
-            if (vertex.x < boundingRect.xMin) {
-                boundingRect.xMin = vertex.x;
-            }
-            else if (vertex.x > boundingRect.xMax) {
-                boundingRect.xMax = vertex.x;
-            }
-            if (vertex.y < boundingRect.yMin) {
-                boundingRect.yMin = vertex.y;
-            }
-            else if (vertex.y > boundingRect.yMax) {
-                boundingRect.yMax = vertex.y;
-            }
-        }
-        return boundingRect;
-    }
+    #endregion // Functions used to update geometry buffer
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -284,6 +241,10 @@ public class exSprite : exSpriteBase {
         UpdateVertexBuffer(vertices, 0);
         return vertices.ToArray();
     }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Other functions
+    ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -420,21 +381,5 @@ public class exSprite : exSpriteBase {
         _vertices[_startIndex + 3] = v3;
         
         // TODO: pixel-perfect
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-    
-    void UpdateMaterial (/*Shader _newShader, Texture2D _newTexture*/) {
-        if (layer_ != null) {
-            exLayer myLayer = layer_;
-            myLayer.Remove(this);
-            material_ = null;   // set dirty, make material update.
-            myLayer.Add(this);
-        }
-        else {
-            material_ = null;   // set dirty, make material update.
-        }
     }
 }

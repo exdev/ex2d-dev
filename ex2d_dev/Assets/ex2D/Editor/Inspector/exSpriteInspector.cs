@@ -25,7 +25,6 @@ class exSpriteInspector : exSpriteBaseInspector {
 
     SerializedProperty textureInfoProp;
     SerializedProperty useTextureOffsetProp;
-    SerializedProperty shaderProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -73,19 +72,6 @@ class exSpriteInspector : exSpriteBaseInspector {
             }
         }
 
-        // shader
-        EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( shaderProp, new GUIContent("Shader") );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exSprite sp = obj as exSprite;
-                if ( sp ) {
-                    sp.shader = shaderProp.objectReferenceValue as Shader;
-                    EditorUtility.SetDirty(sp);
-                }
-            }
-        }
-
         EditorGUILayout.Space();
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
@@ -104,7 +90,6 @@ class exSpriteInspector : exSpriteBaseInspector {
         base.InitProperties();
         textureInfoProp = serializedObject.FindProperty("textureInfo_");
         useTextureOffsetProp = serializedObject.FindProperty("useTextureOffset_");
-        shaderProp = serializedObject.FindProperty("shader_");
     }
 }
 

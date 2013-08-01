@@ -40,7 +40,6 @@ public enum exLayerType
 public class exLayer : MonoBehaviour
 {
     const int MAX_DYNAMIC_VERTEX_COUNT = 300;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
-    const int MAX_STATIC_VERTEX_COUNT = 65000;   ///< 超过这个数量的话，static layer将会自动进行拆分
     
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -50,7 +49,7 @@ public class exLayer : MonoBehaviour
     /// show/hide layer and all its sprites.
     // ------------------------------------------------------------------ 
     
-    [HideInInspector] [SerializeField] 
+    [SerializeField] 
     private bool show_ = true;
     public bool show {
         get {
@@ -102,6 +101,25 @@ public class exLayer : MonoBehaviour
         }
     }
     
+    // ------------------------------------------------------------------ 
+    /// the layer's alpha affects every sprites drawn by the layer.
+    // ------------------------------------------------------------------ 
+    
+    [SerializeField] 
+    private float alpha_ = 1.0f;
+    public float alpha {
+        get {
+            return alpha_;
+        }
+        set { 
+            if (alpha_ == value) {
+                return;
+            }
+            alpha_ = value;
+            alphaHasChanged = true;
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -119,11 +137,16 @@ public class exLayer : MonoBehaviour
     }
 
     [System.NonSerialized] private int nextSpriteUniqueId = 0;
+    [System.NonSerialized] private bool alphaHasChanged = false;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
+    // If layer can be standalone, we should check whether the layer belongs to any 2D Manager, otherwise we need to call GenerateMeshes when OnEnable.
+
+    /// \NOTE You should not deactivate the layer manually. 
+    ///       If you want to change the visibility of the whole layer, you should set its show property.
     void OnDisable () {
         DestroyMeshes();
     }
@@ -149,6 +172,9 @@ public class exLayer : MonoBehaviour
                 for (int i = 0; i < mesh.spriteList.Count; ++i) {
                     exSpriteBase sprite = mesh.spriteList[i];
                     exDebug.Assert(sprite.isInIndexBuffer == sprite.visible);
+                    if (alphaHasChanged) {
+                        sprite.updateFlags |= exUpdateFlags.Color;
+                    }
                     if (sprite.isInIndexBuffer) {
                         sprite.UpdateTransform();
                         exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
@@ -158,6 +184,7 @@ public class exLayer : MonoBehaviour
                 // TODO: 如果需要排序，进行排序并且更新相关mesh的indices
                 mesh.Apply(meshUpdateFlags);
             }
+            alphaHasChanged = false;
         }
     }
 
@@ -335,14 +362,14 @@ public class exLayer : MonoBehaviour
         Material mat = _sprite.material;
         for (int i = 0; i < meshList.Count; ++i) {
             exMesh mesh = meshList[i];
-                    if (mesh != null && object.ReferenceEquals(mesh.material, mat)) {
+            if (mesh != null && object.ReferenceEquals(mesh.material, mat)) {
                 bool containsSprite = (_sprite.spriteIndexInMesh >= 0 && _sprite.spriteIndexInMesh < mesh.spriteList.Count && 
                                       ReferenceEquals(mesh.spriteList[_sprite.spriteIndexInMesh], _sprite));
                 exDebug.Assert(containsSprite == mesh.spriteList.Contains(_sprite), "wrong sprite.spriteIndex");
                 if (containsSprite) {
                     return mesh;
                 }
-                    }
+            }
         }
         return null;
     }
@@ -399,6 +426,9 @@ public class exLayer : MonoBehaviour
         if (oldLayer != null) {
             oldLayer.Remove(_sprite);
         }
+
+        _sprite.OnPreAddToLayer();
+
         exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase>(true);
         for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
             exSpriteBase sprite = spritesToAdd[spriteIndex];
@@ -409,7 +439,7 @@ public class exLayer : MonoBehaviour
                 return;
             }
             sprite.layer = this;
-                    
+
             // Check sprite id
             CheckDuplicated(sprite);
             if (_newSprite || sprite.spriteIdInLayer == -1) {
@@ -423,7 +453,7 @@ public class exLayer : MonoBehaviour
             // Find available mesh
             // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
             exMesh sameDrawcallMesh = null;
-            int maxVertexCount = (layerType == exLayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : MAX_STATIC_VERTEX_COUNT;
+            int maxVertexCount = (layerType == exLayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : exMesh.MAX_VERTEX_COUNT;
             maxVertexCount -= sprite.vertexCount;
             for (int i = meshList.Count - 1; i >= 0; --i) {
                 exMesh mesh = meshList[i];

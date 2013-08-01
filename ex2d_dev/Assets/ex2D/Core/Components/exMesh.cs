@@ -24,10 +24,12 @@ public enum exUpdateFlags {
 	Vertex		= 2,  ///< update the vertices
 	UV	        = 4,  ///< update the uv coordination
 	Color	    = 8,  ///< update the vertex color
-	Normal	    = 16, ///< update the normal, not implemented yet
+    Normal      = 16, ///< update the normal, not implemented yet
+    Text	    = 32, ///< update the text, only used in sprite font
 
 	VertexAndIndex = (Index | Vertex),
-	All = (Index | Vertex | UV | Color | Normal), ///< update all
+	AllExcludeIndex = (Vertex | UV | Color | Normal | Text),
+	All = (AllExcludeIndex | Index),
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -43,12 +45,17 @@ public enum exUpdateFlags {
 public class exMesh : MonoBehaviour
 {
     public const int QUAD_INDEX_COUNT = 6;
+    public const int QUAD_VERTEX_COUNT = 4;
+    public const int MAX_VERTEX_COUNT = 65000;
+    public const int MAX_QUAD_COUNT = MAX_VERTEX_COUNT / QUAD_VERTEX_COUNT;
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
+    // 这个类由exLayer动态创建的，不会进行任何序列化操作，所以字段的序列化标记其实没用。
     ///////////////////////////////////////////////////////////////////////////////
     
     //material
+    [System.NonSerialized]
     Renderer cachedRenderer;
     public Material material {
         get {
@@ -71,27 +78,27 @@ public class exMesh : MonoBehaviour
     }
 
     /// sprite序列，用于索引vertices。Only used by exLayer, just place here for convenience.
-    public List<exSpriteBase> spriteList = new List<exSpriteBase>();
+    [System.NonSerialized] public List<exSpriteBase> spriteList = new List<exSpriteBase>();
 
     /// sprite序列，用于索引indices，顺序和sprite在indices中的顺序一致，也就是按照深度值从小到大排序。Only used by exLayer, just place here for convenience.
     /// 可用此序列访问到所有在能在mesh显示的sprite
-    public List<exSpriteBase> sortedSpriteList = new List<exSpriteBase>();
+    [System.NonSerialized] public List<exSpriteBase> sortedSpriteList = new List<exSpriteBase>();
     
-    [HideInInspector] public Mesh mesh;
+    [System.NonSerialized] [HideInInspector] public Mesh mesh;
 
     /// cache mesh.vertices
     /// 依照sprite在spriteList中的相同顺序排列，每个sprite的顶点都放在连续的一段区间中
     /// vertices的数量和索引都保持和uvs, colors, normals, tangents一致
-    public List<Vector3> vertices = new List<Vector3>();
+    [System.NonSerialized] public List<Vector3> vertices = new List<Vector3>();
 
     /// cache mesh.triangles (按深度排序)
     // 如果不手动给出QUAD_INDEX_COUNT，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
-    public List<int> indices = new List<int>(QUAD_INDEX_COUNT); 
+    [System.NonSerialized] public List<int> indices = new List<int>(QUAD_INDEX_COUNT); 
 
-    public List<Vector2> uvs = new List<Vector2>();       ///< cache mesh.vertices
-    public List<Color32> colors32 = new List<Color32>();  ///< cache mesh.colors32
+    [System.NonSerialized] public List<Vector2> uvs = new List<Vector2>();       ///< cache mesh.vertices
+    [System.NonSerialized] public List<Color32> colors32 = new List<Color32>();  ///< cache mesh.colors32
 
-    public exUpdateFlags updateFlags = exUpdateFlags.None;
+    [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.None;
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -227,25 +234,25 @@ public class exMesh : MonoBehaviour
         }
 
         string vertexInfo = "Vertex Buffer: ";
-        foreach (var v in vertices) {
-            vertexInfo += v;
-            vertexInfo += ", ";
-        }
-        Debug.Log(vertexInfo, this);
+        //foreach (var v in vertices) {
+        //    vertexInfo += v;
+        //    vertexInfo += ", ";
+        //}
+        //Debug.Log(vertexInfo, this);
         
         vertexInfo = "Mesh.vertices: ";
         foreach (var v in mesh.vertices) {
-            vertexInfo += v;
+            vertexInfo += v.ToString("F3");
             vertexInfo += ", ";
         }
         Debug.Log(vertexInfo, this);
 
         string indicesInfo = "Index Buffer: ";
-        foreach (var index in indices) {
-            indicesInfo += index;
-            indicesInfo += ",";
-        }
-        Debug.Log(indicesInfo, this);
+        //foreach (var index in indices) {
+        //    indicesInfo += index;
+        //    indicesInfo += ",";
+        //}
+        //Debug.Log(indicesInfo, this);
 
         indicesInfo = "Mesh.triangles: ";
         foreach (var index in mesh.triangles) {
@@ -255,15 +262,29 @@ public class exMesh : MonoBehaviour
         Debug.Log(indicesInfo, this);
 
         string uvInfo = "UV Buffer: ";
-        foreach (var uv in uvs) {
-            uvInfo += uv;
-            uvInfo += ",";
-        }
-        Debug.Log(uvInfo, this);
+        //foreach (var uv in uvs) {
+        //    uvInfo += uv;
+        //    uvInfo += ",";
+        //}
+        //Debug.Log(uvInfo, this);
         
         uvInfo = "Mesh.uvs: ";
         foreach (var uv in mesh.uv) {
-            uvInfo += uv;
+            uvInfo += uv.ToString("F4");
+            uvInfo += ",";
+        }
+        Debug.Log(uvInfo, this);
+
+        uvInfo = "Mesh.colors: ";
+        foreach (var c in mesh.colors) {
+            uvInfo += c;
+            uvInfo += ",";
+        }
+        Debug.Log(uvInfo, this);
+
+        uvInfo = "Mesh.normals: ";
+        foreach (var n in mesh.normals) {
+            uvInfo += n;
             uvInfo += ",";
         }
         Debug.Log(uvInfo, this);

@@ -30,6 +30,7 @@ class exSpriteBaseInspector : Editor {
     SerializedProperty offsetProp;
     SerializedProperty depthProp;
     SerializedProperty shearProp;
+    SerializedProperty shaderProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -153,6 +154,19 @@ class exSpriteBaseInspector : Editor {
                 }
             }
         }
+        
+        // shader
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( shaderProp, new GUIContent("Shader") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSprite sp = obj as exSprite;
+                if ( sp ) {
+                    sp.shader = shaderProp.objectReferenceValue as Shader;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -167,6 +181,7 @@ class exSpriteBaseInspector : Editor {
         offsetProp = serializedObject.FindProperty("offset_");
         depthProp = serializedObject.FindProperty("depth_");
         shearProp = serializedObject.FindProperty("shear_");
+        shaderProp = serializedObject.FindProperty("shader_");
     }
 }
 

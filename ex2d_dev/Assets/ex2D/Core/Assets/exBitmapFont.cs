@@ -10,6 +10,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -28,11 +29,11 @@ public class exBitmapFont : ScriptableObject {
 
     [System.Serializable]
     public class CharInfo {
-        public int id = -1;                ///< the character id 
-        public int x = -1;                 ///< the x pos
+        public int id = -1;                ///< the char value
+        public int x = -1;                 ///< the x pos   // TODO: why not use uv
         public int y = -1;                 ///< the y pos
         public int width = -1;             ///< the width
-        public int height = -1;            ///< the height                          
+        public int height = -1;            ///< the height
         public int xoffset = -1;           ///< the xoffset
         public int yoffset = -1;           ///< the yoffset
         public int xadvance = -1;          ///< the xadvance
@@ -60,9 +61,50 @@ public class exBitmapFont : ScriptableObject {
 
     [System.Serializable]
     public class KerningInfo {
-        public int first = -1;  ///< the id of first character 
-        public int second = -1; ///< the id of second character
+        public char first = '\x0';  ///< the first character 
+        public char second = '\x0'; ///< the second character
         public int amount = -1; ///< the amount of kerning
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    ///
+    /// A structure to descrip the pair of char
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+
+    public struct KerningTableKey { // TODO: benchmark with dict<int, dict<int, int>>
+        
+        // ------------------------------------------------------------------ 
+        /// In Xamarin.iOS, if KerningTableKey is a type as dictionary keys, we should manually implement its IEqualityComparer,
+        /// and provide an instance to the Dictionary<TKey, TValue>(IEqualityComparer<TKey>) constructor.
+        /// See http://docs.xamarin.com/guides/ios/advanced_topics/limitations for more info.
+        // ------------------------------------------------------------------ 
+        
+        public class Comparer : IEqualityComparer<KerningTableKey> {
+            static Comparer instance_;
+            public static Comparer instance {
+                get {
+                    if (instance_ == null) {
+                        instance_ = new Comparer();
+                    }
+                    return instance_;
+                }
+            }
+            public bool Equals (KerningTableKey _lhs, KerningTableKey _rhs) {
+                return _lhs.first == _rhs.first && _lhs.second == _rhs.second;
+            }
+            public int GetHashCode(KerningTableKey _obj) {
+                return ((int)_obj.first << 16) ^ _obj.second;
+            }
+        }
+        
+        public char first;
+        public char second;
+
+        public KerningTableKey (char _first, char _second) {
+            first = _first;
+            second = _second;
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -82,7 +124,8 @@ public class exBitmapFont : ScriptableObject {
     // internal fileds
     ///////////////////////////////////////////////////////////////////////////////
 
-    protected Dictionary<int,CharInfo> idToCharInfo = null;
+    protected Dictionary<int,CharInfo> charInfoTable = null;
+    protected Dictionary<KerningTableKey,int> kerningTable = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
@@ -98,6 +141,75 @@ public class exBitmapFont : ScriptableObject {
         lineHeight = 0;
         size = 0;
 
-        idToCharInfo = null;
+        charInfoTable = null;
+        kerningTable = null;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Rebuild the table to store key exBitmapFont.CharInfo.id to value exBitmapFont.CharInfo
+    // ------------------------------------------------------------------ 
+
+    public void RebuildCharInfoTable () {
+        if ( charInfoTable == null ) {
+            charInfoTable = new Dictionary<int,CharInfo>(charInfos.Count);
+        }
+        charInfoTable.Clear();
+        for ( int i = 0; i < charInfos.Count; ++i ) {
+            CharInfo c = charInfos[i];
+            charInfoTable[c.id] = c;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// \param _id the look up key 
+    /// \return the expect character info
+    /// Get the character information by exBitmapFont.CharInfo.id
+    // ------------------------------------------------------------------ 
+
+    public CharInfo GetCharInfo ( char _symbol ) {
+        // create and build idToCharInfo table if null
+        if ( charInfoTable == null ) {
+            RebuildCharInfoTable ();
+        }
+
+        CharInfo charInfo;
+        if ( charInfoTable.TryGetValue (_symbol, out charInfo) )
+            return charInfo;
+        return null;
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// Rebuild the kerningTable to store key <first char, second char> to value kerning amount
+    // ------------------------------------------------------------------ 
+
+    public void RebuildKerningTable () {
+        // 如果大部分字符的kerning数量都在10个以下，可以直接线性存到CharInfo里。
+        if ( kerningTable == null ) {
+            kerningTable = new Dictionary<KerningTableKey,int> (kernings.Count, KerningTableKey.Comparer.instance);
+        }
+        kerningTable.Clear();
+        for ( int i = 0; i < kernings.Count; ++i ) {
+            KerningInfo k = kernings[i];
+            kerningTable[new KerningTableKey(k.first, k.second)] = k.amount;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// \param _first the first character
+    /// \param _second the second character
+    /// \return the kerning amount
+    /// Get the kerning amount between first and sceond character
+    // ------------------------------------------------------------------ 
+
+    public int GetKerning ( char _first, char _second ) {
+        if ( kerningTable == null ) {
+            RebuildKerningTable ();
+        }
+
+        int amount;
+        if ( kerningTable.TryGetValue (new KerningTableKey (_first, _second), out amount) ) {
+            return amount;
+        }
+        return 0;
     }
 }

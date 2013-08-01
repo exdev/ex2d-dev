@@ -18,15 +18,15 @@ using System.Collections.Generic;
 // ------------------------------------------------------------------ 
 
 public enum Anchor {
-    TopLeft = 0, ///< the top-left of the plane  
-    TopCenter,   ///< the top-center of the plane
-    TopRight,    ///< the top-right of the plane
-    MidLeft,     ///< the middle-left of the plane
-    MidCenter,   ///< the middle-center of the plane
-    MidRight,    ///< the middle-right of the plane
-    BotLeft,     ///< the bottom-left of the plane
-    BotCenter,   ///< the bottom-center of the plane
-    BotRight,    ///< the bottom-right of the plane
+    TopLeft = 0, ///< the top-left of the sprite  
+    TopCenter,   ///< the top-center of the sprite
+    TopRight,    ///< the top-right of the sprite
+    MidLeft,     ///< the middle-left of the sprite
+    MidCenter,   ///< the middle-center of the sprite
+    MidRight,    ///< the middle-right of the sprite
+    BotLeft,     ///< the bottom-left of the sprite
+    BotCenter,   ///< the bottom-center of the sprite
+    BotRight,    ///< the bottom-right of the sprite
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -126,14 +126,29 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
                 exLayer originalLayer = layer_;
                 SetLayer(null);
                 SetLayer(originalLayer);
-                //updateFlags |= UpdateFlags.Index;
+                //updateFlags |= exUpdateFlags.Index;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Color color_ = new Color(1f, 1f, 1f, 1f);
+    /// the color of the sprite
+    // ------------------------------------------------------------------ 
+
+    public Color color {
+        get { return color_; }
+        set {
+            if ( color_ != value ) {
+                color_ = value;
+                updateFlags |= exUpdateFlags.Color;
             }
         }
     }
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected Vector2 offset_ = Vector2.zero;
-    /// the offset based on the anchor, the final position of the plane equals to offset + anchor
+    /// the offset based on the anchor, the final position of the sprite equals to offset + anchor
     // ------------------------------------------------------------------ 
 
     public Vector2 offset {
@@ -161,15 +176,28 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         }
     }
     
+    // ------------------------------------------------------------------ 
+    [SerializeField] private Shader shader_ = null;
+    /// The shader used to render this sprite
+    // ------------------------------------------------------------------ 
+
+    public Shader shader {
+        get { return shader_; }
+        set {
+            if (ReferenceEquals(shader_, value)) {
+                return;
+            }
+            shader_ = value;
+            UpdateMaterial();
+        }
+    }
+
     /// 用于相同depth的sprite之间的排序
-    public int spriteIdInLayer = -1;
+    [HideInInspector] public int spriteIdInLayer = -1;
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
-    
-    [System.NonSerialized] public int vertexCount = 4;
-    [System.NonSerialized] public int indexCount = 6;
     
     // cached for geometry buffers
     [System.NonSerialized] internal int spriteIndexInMesh = -1;
@@ -189,18 +217,8 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
     
-    [System.NonSerialized] protected Transform cachedTransform_ = null;    
-    public Transform cachedTransform {
-        get {
-            if (ReferenceEquals(cachedTransform_, null)) {
-                cachedTransform_ = transform;
-                cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
-            }
-            return cachedTransform_;
-        }
-    }
-
-    [System.NonSerialized] protected Matrix4x4 cachedWorldMatrix;
+    public abstract int vertexCount { get; }
+    public abstract int indexCount { get; }
 
     [System.NonSerialized]
     protected exLayer layer_ = null;
@@ -213,7 +231,18 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         }
     }
 
-    public abstract Material material { get; }
+    [System.NonSerialized] private Material material_;
+    public Material material {
+        get {
+            if (material_ != null) {
+                return material_;
+            }
+            material_ = ex2DMng.GetMaterial(shader_, texture);
+            return material_;
+        }
+    }
+
+    protected abstract Texture texture { get; }
 
     /// 当前sprite是否可见？只返回sprite自身属性，不一定真的显示在任一camera中。
     public virtual bool visible {
@@ -236,6 +265,19 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             }
         }
     }
+
+    [System.NonSerialized] protected Transform cachedTransform_ = null;    
+    public Transform cachedTransform {
+        get {
+            if (ReferenceEquals(cachedTransform_, null)) {
+                cachedTransform_ = transform;
+                cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
+            }
+            return cachedTransform_;
+        }
+    }
+
+    [System.NonSerialized] protected Matrix4x4 cachedWorldMatrix;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
@@ -351,13 +393,19 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         //}
     }
     
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    public virtual void OnPreAddToLayer () { }
+
 #region Functions used to update geometry buffer.
 
     // ------------------------------------------------------------------ 
     /// Add sprite's geometry data to buffers
     // ------------------------------------------------------------------ 
 
-    internal void FillBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32) {
+    internal virtual void FillBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32) {
         vertexBufferIndex = _vertices.Count;
 
         for (int i = 0; i < vertexCount; ++i) {
@@ -366,7 +414,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             _uvs.Add(new Vector2());
         }
         
-        updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.Color | exUpdateFlags.UV | exUpdateFlags.Normal);
+        updateFlags |= exUpdateFlags.AllExcludeIndex;
     }
 
     // ------------------------------------------------------------------ 
@@ -377,6 +425,12 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // ------------------------------------------------------------------ 
 
     internal abstract exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices = null);
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public abstract Vector3[] GetVertices ();
 
 #if UNITY_EDITOR
 
@@ -406,16 +460,13 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
 #endregion
 
     // ------------------------------------------------------------------ 
-    /// Calculate the bounding rect of the plane
+    /// Calculate the world AA bounding rect of the sprite
     // ------------------------------------------------------------------ 
 
-    public abstract Rect GetAABoundingRect ();
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public abstract Vector3[] GetVertices ();
+    public Rect GetAABoundingRect () {
+        Vector3[] vertices = GetVertices();
+        return exGeometryUtility.GetAABoundingRect(vertices);
+    }
     
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -426,6 +477,22 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             cachedTransform_.hasChanged = false;
             cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
             updateFlags |= exUpdateFlags.Vertex;
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    protected void UpdateMaterial () {
+        if (layer_ != null) {
+            exLayer myLayer = layer_;
+            myLayer.Remove(this);
+            material_ = null;   // set dirty, make material update.
+            myLayer.Add(this);
+        }
+        else {
+            material_ = null;   // set dirty, make material update.
         }
     }
 }
