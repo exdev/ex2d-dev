@@ -878,6 +878,7 @@ public static class exAtlasUtility {
             // copy raw texture into atlas texture
             exTextureUtility.Fill( atlasTexture
                                  , rawTexture
+                                 , textureInfo.name
                                  , textureInfo.x
                                  , textureInfo.y
                                  , textureInfo.trim_x
