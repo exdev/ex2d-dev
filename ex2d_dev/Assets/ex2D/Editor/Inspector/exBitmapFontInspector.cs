@@ -48,6 +48,15 @@ class exBitmapFontInspector : Editor {
             GUILayout.FlexibleSpace();
 
             if ( GUILayout.Button("Rebuild...", GUILayout.Width(80), GUILayout.Height(20) ) ) {
+
+                string fontInfoPath = AssetDatabase.GetAssetPath(newRef);
+                bool isFontInfo = (Path.GetExtension(fontInfoPath) == ".txt" || 
+                                   Path.GetExtension(fontInfoPath) == ".fnt");
+                if ( isFontInfo == false ) {
+                    Debug.LogError ( "The file you choose to parse is not a font-info file. Must be \".txt\", \".fnt\" file" );
+                    return;
+                }
+
                 exBitmapFontUtility.Parse( bitmapFont, newRef );
             }
         GUILayout.Space(5);
