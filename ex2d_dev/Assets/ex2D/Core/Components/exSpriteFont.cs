@@ -379,7 +379,7 @@ public class exSpriteFont : exSpriteBase {
 
     internal override exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
 #if UNITY_EDITOR
-        if (vertexCountCapacity / exMesh.QUAD_VERTEX_COUNT < text_.Length) {
+        if (vertexCountCapacity < text_.Length * exMesh.QUAD_VERTEX_COUNT) {
             Debug.LogError("[UpdateBuffers|exSpriteFont] 顶点缓冲长度不够，是否绕开属性直接修改了text_?");
             return updateFlags;
         }
@@ -424,7 +424,7 @@ public class exSpriteFont : exSpriteBase {
 
     public override Vector3[] GetVertices () {
 #if UNITY_EDITOR
-        if (vertexCountCapacity / exMesh.QUAD_VERTEX_COUNT < text_.Length) {
+        if (vertexCountCapacity < text_.Length * exMesh.QUAD_VERTEX_COUNT) {
             Debug.LogError("[UpdateBuffers|exSpriteFont] 顶点缓冲长度不够，是否绕开属性直接修改了text_?");
             return new Vector3[0];
         }
@@ -1074,229 +1074,182 @@ public class exSpriteFont : exSpriteBase {
     // Desc:
     // ------------------------------------------------------------------ 
     
-    void BuildText (int _startIndex, List<Vector3> _vertices, List<Vector2> _uvs = null) {
+    void BuildText (int _vbIndex, List<Vector3> _vertices, List<Vector2> _uvs = null) {
+        width_ = 0.0f;    // 和SpriteBase一致，用于表示实际宽度
+        height_ = 0.0f;   // 和SpriteBase一致，用于表示实际高度
+
         if (font_ == null) {
-            int vertexBufferEnd = _startIndex + vertexCountCapacity;
-            for (int i = _startIndex; i < vertexBufferEnd; ++i) {
+            int vertexBufferEnd = _vbIndex + vertexCountCapacity;
+            for (int i = _vbIndex; i < vertexBufferEnd; ++i) {
                 _vertices[i] = new Vector3();
             }
             return;
         }
-
-        int curLine = 0;    // used to get line width
-        float curX = 0.0f;
-        float curY = 0.0f;
-
+        
         Vector2 texelSize = new Vector2();
-        if (_uvs != null) {
-            if (font_.texture != null) {
-                texelSize = font_.texture.texelSize;
-            }
-            else {
-                texelSize = new Vector2(1.0f / font_.texture.width, 1.0f / font_.texture.height);
-            }
+        if (_uvs != null && font_.texture != null) {
+            texelSize = font_.texture.texelSize;
         }
 
-        for (int i = 0; i < text_.Length; ++i, _startIndex += 4) {
-            char c = text_[i];
+        for (int charIndex = 0; charIndex < text_.Length; ) {
+            int vbStart = _vbIndex;
+            // build line
+            float lineWidth = BuildLine (_vertices, _uvs, ref charIndex, ref _vbIndex, texelSize, height_);
+            // text alignment
+            switch ( textAlign_ ) {
+            case TextAlignment.Left:
+                break;
+            case TextAlignment.Center:
+                float halfLineWidth = lineWidth * 0.5f;
+                for (int i = vbStart; i < _vbIndex; ++i) {
+                    Vector3 v = _vertices[i];
+                    _vertices[i] = new Vector3(v.x - halfLineWidth, v.y, v.z);
+                }
+                break;
+            case TextAlignment.Right:
+                for (int i = vbStart; i < _vbIndex; ++i) {
+                    Vector3 v = _vertices[i];
+                    _vertices[i] = new Vector3(v.x - lineWidth, v.y, v.z);
+                }
+                break;
+            }
+            // update width and height
+            if (lineWidth > width) {
+                width_ = lineWidth;
+            }
+            height_ += font_.lineHeight + spacing_.y;
+        }
+
+        /*float halfWidth = width_ * 0.5f;
+        float halfHeight = height_ * 0.5f;
+        float anchorOffsetX = 0.0f;
+        float anchorOffsetY = 0.0f;
+
+        switch ( anchor_ ) {
+            case Anchor.TopLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = -halfHeight;  break;
+            case Anchor.TopCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = -halfHeight;  break;
+            case Anchor.TopRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = -halfHeight;  break;
+            case Anchor.MidLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = 0.0f;         break;
+            case Anchor.MidCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
+            case Anchor.MidRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = 0.0f;         break;
+            case Anchor.BotLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = halfHeight;   break;
+            case Anchor.BotCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = halfHeight;   break;
+            case Anchor.BotRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = halfHeight;   break;
+            default                 : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
+        }
+
+        exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
+        Vector3 v0 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
+        Vector3 v1 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
+        Vector3 v2 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
+        Vector3 v3 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
+        v0.z = 0;
+        v1.z = 0;
+        v2.z = 0;
+        v3.z = 0;
+        // shear
+        if (shear_.x != 0) {
+            float worldScaleY = (new Vector3(cachedWorldMatrix.m01, cachedWorldMatrix.m11, cachedWorldMatrix.m21)).magnitude;
+            float offsetX = worldScaleY * shear_.x;
+            float topOffset = offsetX * (halfHeight + anchorOffsetY);
+            float botOffset = offsetX * (-halfHeight + anchorOffsetY);
+            v0.x += botOffset;
+            v1.x += topOffset;
+            v2.x += topOffset;
+            v3.x += botOffset;
+        }
+        if (shear_.y != 0) {
+            float worldScaleX = (new Vector3(cachedWorldMatrix.m00, cachedWorldMatrix.m10, cachedWorldMatrix.m20)).magnitude;
+            float offsetY = worldScaleX * shear_.y;
+            float leftOffset = offsetY * (-halfWidth + anchorOffsetX);
+            float rightOffset = offsetY * (halfWidth + anchorOffsetX);
+            v0.y += leftOffset;
+            v1.y += leftOffset;
+            v2.y += rightOffset;
+            v3.y += rightOffset;
+        }
+
+        _vertices[_startIndex + 0] = v0;
+        _vertices[_startIndex + 1] = v1;
+        _vertices[_startIndex + 2] = v2;
+        _vertices[_startIndex + 3] = v3;*/
+        // TODO: pixel-perfect
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    float BuildLine (List<Vector3> _vertices, List<Vector2> _uvs, ref int _charIndex, ref int _vbIndex, Vector2 _texelSize, float _top) {
+        // TODO: cache vertices, only transform them if text not changed.
+        int firstChar = _charIndex;
+        float curX = 0.0f;
+        float lastAdvance = 0.0f;
+        for ( ; _charIndex < text_.Length ; ++_charIndex, _vbIndex += 4, curX += spacing_.x) {
+            char c = text_[_charIndex];
+
+            // if new line  // TODO: auto wrap
+            if (c == '\n') {
+                return curX;
+            }
+
+            if (_charIndex > firstChar) {   // if has previous character
+                curX += lastAdvance;
+                // kerning
+                if (useKerning_) {
+                    curX += font_.GetKerning(text_[_charIndex - 1], c);
+                }
+            }
+
             exBitmapFont.CharInfo ci = font_.GetCharInfo(c);
             if (ci == null) {
-                // character is not present
-                Debug.LogWarning ("character is not present: " + c, this);
-                _vertices[_startIndex + 0] = new Vector3();
-                _vertices[_startIndex + 1] = new Vector3();
-                _vertices[_startIndex + 2] = new Vector3();
-                _vertices[_startIndex + 3] = new Vector3();
+                // character is not present, it will not display
+                Debug.Log("character is not present: " + c, this);
+                _vertices[_vbIndex + 0] = new Vector3();
+                _vertices[_vbIndex + 1] = new Vector3();
+                _vertices[_vbIndex + 2] = new Vector3();
+                _vertices[_vbIndex + 3] = new Vector3();
                 continue;
             }
-            // if new line
-            if (c == '\n' || i == 0) {
-                if (c == '\n') {
-                    ++curLine;
-                    curY = curY + font_.lineHeight + spacing_.y;
-                }
-                switch ( textAlign_ ) {
-                case TextAlignment.Left:
-                    curX = 0.0f;
-                    break;
-                case TextAlignment.Center:
-                    //curX = halfWidthScaled - lineWidths[curLine] * 0.5f * finalScale.x;
-                    break;
-                case TextAlignment.Right:
-                    //curX = halfWidthScaled * 2.0f - lineWidths[curLine] * finalScale.x;
-                    break;
-                }
-            }
-            //build vertex
-            float halfWidth = ci.width * 0.5f;
-            float halfHeight = ci.height * 0.5f;
-            float anchorOffsetX = curX;
-            float anchorOffsetY = curY;
-            exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
-            Vector3 v0 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
-            Vector3 v1 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
-            Vector3 v2 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
-            Vector3 v3 = cachedWorldMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
-            v0.z = 0;
-            v1.z = 0;
-            v2.z = 0;
-            v3.z = 0;
-            // shear
-            if (shear_.x != 0) {
-                float worldScaleY = (new Vector3(cachedWorldMatrix.m01, cachedWorldMatrix.m11, cachedWorldMatrix.m21)).magnitude;
-                float offsetX = worldScaleY * shear_.x;
-                float topOffset = offsetX * (halfHeight + anchorOffsetY);
-                float botOffset = offsetX * (-halfHeight + anchorOffsetY);
-                v0.x += botOffset;
-                v1.x += topOffset;
-                v2.x += topOffset;
-                v3.x += botOffset;
-            }
-            if (shear_.y != 0) {
-                float worldScaleX = (new Vector3(cachedWorldMatrix.m00, cachedWorldMatrix.m10, cachedWorldMatrix.m20)).magnitude;
-                float offsetY = worldScaleX * shear_.y;
-                float leftOffset = offsetY * (-halfWidth + anchorOffsetX);
-                float rightOffset = offsetY * (halfWidth + anchorOffsetX);
-                v0.y += leftOffset;
-                v1.y += leftOffset;
-                v2.y += rightOffset;
-                v3.y += rightOffset;
-            }
-            //
-            _vertices[_startIndex + 0] = v0;
-            _vertices[_startIndex + 1] = v1;
-            _vertices[_startIndex + 2] = v2;
-            _vertices[_startIndex + 3] = v3;
 
-            curX = curX + ci.xadvance + spacing_.x;
+            // build text vertices
+            curX += ci.xoffset;
+            float y = _top + ci.yoffset;
+            _vertices[_vbIndex + 0] = new Vector3(curX, y - ci.height, 0.0f);
+            _vertices[_vbIndex + 1] = new Vector3(curX, y, 0.0f);
+            _vertices[_vbIndex + 2] = new Vector3(curX + ci.width, y, 0.0f);
+            _vertices[_vbIndex + 3] = new Vector3(curX + ci.width, y - ci.height, 0.0f);
 
-            // kerning
-            if ( useKerning_ && i + 1 < text_.Length ) {
-                curX += font_.GetKerning(c, text_[i + 1]);
-            }
+            curX += ci.width;
+            lastAdvance = ci.xadvance;
 
+            // build uv
             if (_uvs != null) {
-                // build uv
-                Vector2 start = new Vector2(ci.x * texelSize.x, ci.y * texelSize.y);
-                Vector2 end = new Vector2((ci.x + ci.width) * texelSize.x, (ci.y + ci.height) * texelSize.y);
+                Vector2 start = new Vector2(ci.x * _texelSize.x, ci.y * _texelSize.y);
+                Vector2 end = new Vector2((ci.x + ci.width) * _texelSize.x, (ci.y + ci.height) * _texelSize.y);
                 if ( ci.rotated ) {
-                    _uvs[_startIndex + 0] = new Vector2(end.x, start.y);
-                    _uvs[_startIndex + 1] = start;
-                    _uvs[_startIndex + 2] = new Vector2(start.x, end.y);
-                    _uvs[_startIndex + 3] = end;
+                    _uvs[_vbIndex + 0] = new Vector2(end.x, start.y);
+                    _uvs[_vbIndex + 1] = start;
+                    _uvs[_vbIndex + 2] = new Vector2(start.x, end.y);
+                    _uvs[_vbIndex + 3] = end;
                 }
                 else {
-                    _uvs[_startIndex + 0] = start;
-                    _uvs[_startIndex + 1] = new Vector2(start.x, end.y);
-                    _uvs[_startIndex + 2] = end;
-                    _uvs[_startIndex + 3] = new Vector2(end.x, start.y);
+                    _uvs[_vbIndex + 0] = start;
+                    _uvs[_vbIndex + 1] = new Vector2(start.x, end.y);
+                    _uvs[_vbIndex + 2] = end;
+                    _uvs[_vbIndex + 3] = new Vector2(end.x, start.y);
                 }
             }
         }
-        // TODO: cache vertices, only transform them if text not changed.
-            //            float halfWidthScaled;
-            //            float halfHeightScaled;
-            //            float offsetX;
-            //            float offsetY;
-            //            CalculateSize ( out lineWidths,
-            //                            out kernings, 
-            //                            out halfWidthScaled,
-            //                            out halfHeightScaled,
-            //                            out offsetX,
-            //                            out offsetY );
+        return curX;
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
 
-            //            //
-            //            Vector3[] vertices  = new Vector3[vertexCount];
-            //            Vector2[] uvs       = new Vector2[vertexCount];
-            //            int[] indices       = new int[indexCount];
-            //            Vector2 finalScale  = new Vector2 ( scale_.x * ppfScale_.x, scale_.y * ppfScale_.y );
-
-            //            //
-            //            int curLine = 0;
-            //            float curX = 0.0f;
-            //            if ( useMultiline_ ) {
-            //                switch ( textAlign_ ) {
-            //                case TextAlign.Left:
-            //                    curX = 0.0f;
-            //                    break;
-            //                case TextAlign.Center:
-            //                    curX = halfWidthScaled - lineWidths[curLine] * 0.5f * finalScale.x;
-            //                    break;
-            //                case TextAlign.Right:
-            //                    curX = halfWidthScaled * 2.0f - lineWidths[curLine] * finalScale.x;
-            //                    break;
-            //                }
-            //            }
-            //            float curY = 0.0f;
-            //            for ( int i = 0; i < text_.Length; ++i ) {
-            //                int id = text_[i];
-
-
-            //                int vert_id = vertexStartAt + 4 * i;
-            //                int idx_id = indexStartAt + 6 * i;
-            //                // if we don't have the character, it will become space.
-            //                exBitmapFont.CharInfo charInfo = fontInfo_.GetCharInfo(id);
-
-            //                //
-            //                if ( charInfo != null ) {
-            //                    // build vertices & normals
-            //                    for ( int r = 0; r < 2; ++r ) {
-            //                        for ( int c = 0; c < 2; ++c ) {
-            //                            int j = r * 2 + c;
-
-            //                            // calculate the base pos
-            //                            float x = curX - halfWidthScaled + c * charInfo.width * finalScale.x + charInfo.xoffset * finalScale.x;
-            //                            float y = -curY + halfHeightScaled - r * charInfo.height * finalScale.y - charInfo.yoffset * finalScale.y;
-
-            //                            // calculate the pos affect by anchor
-            //                            x -= offsetX;
-            //                            y += offsetY;
-
-            //                            // calculate the shear
-            //                            float old_x = x;
-            //                            x += y * shear_.x;
-            //                            y += old_x * shear_.y;
-
-            //                            // build vertices and normals
-            //                            vertices[vert_id+j] = new Vector3( x, y, 0.0f );
-            //                            // normals[vert_id+j] = new Vector3( 0.0f, 0.0f, -1.0f );
-            //                        }
-            //                    }
-
-            //                    //
-            //                    curX = curX + (charInfo.xadvance + tracking_) * finalScale.x;
-            //                    if ( useKerning_ ) {
-            //                        if ( i < text_.Length - 1 ) {
-            //                            curX += kernings[i] * finalScale.x;
-            //                        }
-            //                    }
-            //                }
-            //            }
-
-
-
-
-/*
-        switch ( anchor_ ) {
-        case Anchor.TopLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = -halfHeight;  break;
-        case Anchor.TopCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = -halfHeight;  break;
-        case Anchor.TopRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = -halfHeight;  break;
-
-        case Anchor.MidLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = 0.0f;         break;
-        case Anchor.MidCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
-        case Anchor.MidRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = 0.0f;         break;
-
-        case Anchor.BotLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = halfHeight;   break;
-        case Anchor.BotCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = halfHeight;   break;
-        case Anchor.BotRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = halfHeight;   break;
-
-        default                 : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
-        }
-
-        anchorOffsetX += offset_.x;
-        anchorOffsetY += offset_.y;
-        */
-        // TODO: pixel-perfect
+    void Align () {
+        /**/
     }
 
     // ------------------------------------------------------------------ 
