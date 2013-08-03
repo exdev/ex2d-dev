@@ -73,7 +73,7 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
     
-    [HideInInspector] [SerializeField] 
+    [SerializeField] 
     private exLayerType layerType_ = exLayerType.Dynamic;
     public exLayerType layerType {
         get {
@@ -264,17 +264,25 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void Compact () {
-        // TDDO: 如果是dynamic，尽量把每个mesh的顶点都填充满。如果是static，把同材质的mesh都合并起来
-        for (int i = meshList.Count - 1; i >= 0; --i) {
-            if (meshList[i].spriteList.Count == 0) {
-                Object.Destroy(meshList[i].gameObject);
-                meshList.RemoveAt(i);
-            }
-            else {
-                meshList[i].Compact();
+        float meshZ = 0.0f;
+        for (int i = 0; i < meshList.Count; ++i) {
+            exMesh mesh = meshList[i];
+            if (mesh != null) {
+                meshZ = mesh.transform.position.z;
+                break;
             }
         }
+
+        DestroyMeshes();
+        GenerateMeshes();
         meshList.TrimExcess();
+
+        for (int i = 0; i < meshList.Count; ++i) {
+            exMesh mesh = meshList[i];
+            if (mesh != null) {
+                mesh.transform.position = new Vector3(0, 0, meshZ);
+            }
+        }
     }
 
     // ------------------------------------------------------------------ 

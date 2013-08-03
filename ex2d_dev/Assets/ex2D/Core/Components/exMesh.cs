@@ -227,7 +227,7 @@ public class exMesh : MonoBehaviour
     [ContextMenu("Output Mesh Info")]
     [System.Diagnostics.Conditional("EX_DEBUG")]
     public void OutputDebugInfo () {
-        Debug.Log("exLayer MeshInfo: SpriteCount: " + spriteList.Count, this);
+        Debug.Log(string.Format("exMesh SpriteCount: {0} ", spriteList.Count), this);
         if (mesh == null) {
             Debug.Log("mesh is null");
             return;
@@ -240,7 +240,7 @@ public class exMesh : MonoBehaviour
         //}
         //Debug.Log(vertexInfo, this);
         
-        vertexInfo = "Mesh.vertices: ";
+        vertexInfo = "Mesh.vertices[" + mesh.vertexCount + "]: ";
         foreach (var v in mesh.vertices) {
             vertexInfo += v.ToString("F3");
             vertexInfo += ", ";
@@ -254,7 +254,7 @@ public class exMesh : MonoBehaviour
         //}
         //Debug.Log(indicesInfo, this);
 
-        indicesInfo = "Mesh.triangles: ";
+        indicesInfo = "Mesh.indices[" + mesh.triangles.Length + "]: ";
         foreach (var index in mesh.triangles) {
             indicesInfo += index;
             indicesInfo += ",";
@@ -333,6 +333,8 @@ public class exMesh : MonoBehaviour
         }
     }
 
+#if UNITY_EDITOR || EX_DEBUG
+
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
@@ -358,4 +360,7 @@ public class exMesh : MonoBehaviour
         newName += ("@" + layerName);
         gameObject.name = newName;
     }
+
+#endif
+
 }

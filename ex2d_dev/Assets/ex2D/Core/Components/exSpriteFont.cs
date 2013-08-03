@@ -4,8 +4,7 @@
 // Last Change  : 07/28/2013 | 22:13:41
 // Description  : 
 // ======================================================================================
-#define  ENABLE
-#if ENABLE
+
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
@@ -17,12 +16,22 @@ using System.Collections.Generic;
 ///////////////////////////////////////////////////////////////////////////////
 /// \class exSpriteFont
 /// 
-/// A component to render exBitmapFont in the game 
+/// A component to render exBitmapFont in the layer 
 /// 
 ///////////////////////////////////////////////////////////////////////////////
 
 [AddComponentMenu("ex2D Sprite/Sprite Font")]
 public class exSpriteFont : exSpriteBase {
+    
+    // ------------------------------------------------------------------ 
+    /// The type of font effect
+    // ------------------------------------------------------------------ 
+
+    public enum OutlineType {
+        Outline4 = 1,   ///< up down left right
+        Outline4X,      ///< top-left top-right bottom-left bottom-right
+        Outline8,       ///< 
+    };
 
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -30,7 +39,6 @@ public class exSpriteFont : exSpriteBase {
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected exBitmapFont font_;
-
     /// The referenced bitmap font asset
     // ------------------------------------------------------------------ 
 
@@ -52,7 +60,7 @@ public class exSpriteFont : exSpriteBase {
                     UpdateMaterial();
                     return;
                 }
-                else if (layer_ != null && isOnEnabled_ && visible == false) {
+                if (layer_ != null && isOnEnabled_ && visible == false) {
                     font_ = value;
                     if (visible) {
                         // become visible
@@ -73,9 +81,9 @@ public class exSpriteFont : exSpriteBase {
 #endif
         }
     }
+
     // ------------------------------------------------------------------ 
     [SerializeField] protected string text_ = "Hello World!";
-
     /// The text to rendered. 
     /// \NOTE If you need to change the text frequently, you should use dynamic layer.
     // ------------------------------------------------------------------ 
@@ -116,7 +124,6 @@ public class exSpriteFont : exSpriteBase {
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected TextAlignment textAlign_ = TextAlignment.Left;
-
     /// The alignment method used in the text
     // ------------------------------------------------------------------ 
 
@@ -129,9 +136,9 @@ public class exSpriteFont : exSpriteBase {
             }
         }
     }
+
     // ------------------------------------------------------------------ 
     [SerializeField] protected bool useKerning_ = false;
-
     /// If useKerning is true, the SpriteFont will use the exBitmapFont.KerningInfo in 
     /// the exSpriteFont.fontInfo to layout the text
     // ------------------------------------------------------------------ 
@@ -145,9 +152,9 @@ public class exSpriteFont : exSpriteBase {
             }
         }
     }
+
     // ------------------------------------------------------------------ 
     [SerializeField] protected Vector2 spacing_;
-
     /// spacing_.x : the fixed width applied between two characters in the text. 
     /// spacing_.y : the fixed line space applied between two lines.
     // ------------------------------------------------------------------ 
@@ -161,7 +168,9 @@ public class exSpriteFont : exSpriteBase {
             }
         }
     }
+
     // color option
+
     // ------------------------------------------------------------------ 
     [SerializeField] protected Color topColor_ = Color.white;
     // TODO: use gradient
@@ -177,9 +186,9 @@ public class exSpriteFont : exSpriteBase {
             }
         }
     }
+
     // ------------------------------------------------------------------ 
     [SerializeField] protected Color botColor_ = Color.white;
-
     /// the color of the vertices at bottom 
     // ------------------------------------------------------------------ 
 
@@ -192,10 +201,11 @@ public class exSpriteFont : exSpriteBase {
             }
         }
     }
+
     // outline option
+
     // ------------------------------------------------------------------ 
     [SerializeField] protected bool useOutline_ = false;
-
     /// If useOutline is true, the component will render the text with outline
     // ------------------------------------------------------------------ 
 
@@ -208,9 +218,9 @@ public class exSpriteFont : exSpriteBase {
             }
         }
     }
+
     // ------------------------------------------------------------------ 
     [SerializeField] protected float outlineWidth_ = 1.0f;
-
     /// The width of the outline text
     // ------------------------------------------------------------------ 
 
@@ -225,9 +235,9 @@ public class exSpriteFont : exSpriteBase {
             }
         }
     }
+
     // ------------------------------------------------------------------ 
     [SerializeField] protected Color outlineColor_ = Color.black;
-
     /// The color of the outline text
     // ------------------------------------------------------------------ 
 
@@ -242,10 +252,11 @@ public class exSpriteFont : exSpriteBase {
             }
         }
     }
+
     // shadow option
+
     // ------------------------------------------------------------------ 
     [SerializeField] protected bool useShadow_ = false;
-
     /// If useShadow is true, the component will render the text with shadow
     // ------------------------------------------------------------------ 
 
@@ -258,9 +269,9 @@ public class exSpriteFont : exSpriteBase {
             }
         }
     }
+
     // ------------------------------------------------------------------ 
     [SerializeField] protected Vector2 shadowBias_ = new Vector2(1.0f, -1.0f);
-
     /// The bias of the shadow text 
     // ------------------------------------------------------------------ 
 
@@ -275,9 +286,9 @@ public class exSpriteFont : exSpriteBase {
             }
         }
     }
+
     // ------------------------------------------------------------------ 
     [SerializeField] protected Color shadowColor_ = Color.black;
-
     /// The color of the shadow text 
     // ------------------------------------------------------------------ 
 
@@ -309,6 +320,7 @@ public class exSpriteFont : exSpriteBase {
             return vertexCountCapacity;
         }
     }
+
     // ------------------------------------------------------------------ 
     /// 返回capacity的顶点索引数量，实际渲染的字符顶点索引数可能少于这个值。
     // ------------------------------------------------------------------ 
@@ -338,6 +350,7 @@ public class exSpriteFont : exSpriteBase {
 
     [System.NonSerialized] private int vertexCountCapacity = 0;
     [System.NonSerialized] private int indexCountCapacity = 0;
+    [System.NonSerialized] private bool lockCapacity = false;
     /*
     ///////////////////////////////////////////////////////////////////////////////
     // geometry buffers
@@ -373,8 +386,9 @@ public class exSpriteFont : exSpriteBase {
 
     internal override exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
 #if UNITY_EDITOR
-        if (vertexCountCapacity < text_.Length * exMesh.QUAD_VERTEX_COUNT) {
-            Debug.LogError("[UpdateBuffers|exSpriteFont] 顶点缓冲长度不够，是否绕开属性直接修改了text_?");
+        // TODO: 有层级关系时，运行会导致报错
+        if (text_ == null || vertexCountCapacity < text_.Length * exMesh.QUAD_VERTEX_COUNT) {
+            Debug.LogError("[UpdateBuffers|exSpriteFont] 顶点缓冲长度不够，是否绕开属性直接修改了text_?: " + vertexCountCapacity, this);
             return updateFlags;
         }
 #endif
@@ -399,7 +413,7 @@ public class exSpriteFont : exSpriteBase {
         if ((updateFlags & exUpdateFlags.Color) != 0) {
             Color32 top = new Color(topColor_.r, topColor_.g, topColor_.b, topColor_.a * layer_.alpha);
             Color32 bot = new Color(botColor_.r, botColor_.g, botColor_.b, botColor_.a * layer_.alpha);
-            int vertexBufferEnd = vertexBufferIndex + text_.Length * exMesh.QUAD_VERTEX_COUNT;
+            int vertexBufferEnd = vertexBufferIndex + text_.Length * 4;
             for (int i = vertexBufferIndex; i < vertexBufferEnd; i += 4) {
                 _colors32[i + 0] = bot;
                 _colors32[i + 1] = top;
@@ -419,15 +433,16 @@ public class exSpriteFont : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     public override Vector3[] GetVertices () {
-#if UNITY_EDITOR
-        if (vertexCountCapacity < text_.Length * exMesh.QUAD_VERTEX_COUNT) {
-            Debug.LogError("[UpdateBuffers|exSpriteFont] 顶点缓冲长度不够，是否绕开属性直接修改了text_?");
-            return new Vector3[0];
-        }
-#endif
+//#if UNITY_EDITOR
+//        if (layer_ != null || vertexCountCapacity < text_.Length * exMesh.QUAD_VERTEX_COUNT) {
+//            Debug.LogError("[UpdateBuffers|exSpriteFont] 顶点缓冲长度不够，是否绕开属性直接修改了text_?");
+//            return new Vector3[0];
+//        }
+//#endif
         // TODO: only return the rotated bounding box of the sprite font
-        List<Vector3> vertices = new List<Vector3>(vertexCount);    // TODO: use global static temp List instead
-        for (int i = 0; i < vertexCount; ++i) {
+        int visibleVertexCount = text_.Length * 4;
+        List<Vector3> vertices = new List<Vector3>(visibleVertexCount);    // TODO: use global static temp List instead
+        for (int i = 0; i < visibleVertexCount; ++i) {
             vertices.Add(new Vector3());
         }
         if (cachedTransform.hasChanged == false) {
@@ -870,66 +885,86 @@ public class exSpriteFont : exSpriteBase {
         }
         return curX + lastWidth;
     }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    int GetTextCapacity (int _oldTextCapacity) {
+        if (text_ == null) {
+            return 0;
+        }
+        // TODO: check multiline
+        int textLength = text_.Length;
+        //            if (useShadow_) {
+        //                textLength += text_.Length;
+        //            }
+        //            if (useOutline_) {
+        //                textLength += (text_.Length * 4);
+        //            }
+        int textCapacity = _oldTextCapacity;
+#if UNITY_EDITOR && !EX_DEBUG
+        if (UnityEditor.EditorApplication.isPlaying == false) {
+            textCapacity = textLength;
+        }
+        else
+#endif
+        if (layer_ != null && layer_.layerType == exLayerType.Dynamic) {
+            if (textLength > textCapacity) {
+                // append
+                textCapacity = Mathf.Max(textCapacity, 1);
+                while (textLength > textCapacity) {
+                    textCapacity <<= 1;
+                }
+            }
+            else {
+                // trim
+                while (textLength < textCapacity / 2 && textCapacity > 4) {
+                    textCapacity >>= 1;
+                }
+                return textCapacity;
+            }
+        }
+        else {
+            textCapacity = textLength;
+        }
+        exDebug.Assert (textCapacity <= exMesh.MAX_QUAD_COUNT);
+        if (textCapacity > exMesh.MAX_QUAD_COUNT) {
+            textCapacity = exMesh.MAX_QUAD_COUNT;
+        }
+        return textCapacity;
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
     void UpdateCapacity () {
-        //Debug.Log("[UpdateCapacity|exSpriteFont] ");
-        int oldTextCapaticy = vertexCountCapacity / exMesh.QUAD_VERTEX_COUNT;
-        int textCapaticy;
-        if (text_ != null) {
-            textCapaticy = oldTextCapaticy;
-            // TODO: check multiline
-            int textLength = text_.Length;
-            // append
-            if (textLength > textCapaticy) {
-                if (layer_ != null && layer_.layerType == exLayerType.Dynamic) {
-                    textCapaticy = Mathf.Max(textCapaticy, 1);
-                    while (textLength > textCapaticy) {
-                        textCapaticy <<= 1;
-                    }
-                }
-                else {
-                    textCapaticy = textLength;
-                }
-                if (textCapaticy > exMesh.MAX_QUAD_COUNT) {
-                    exDebug.Assert(textLength <= exMesh.MAX_QUAD_COUNT);
-                    textCapaticy = exMesh.MAX_QUAD_COUNT;
-                }
-            }
-            else {
-                // trim
-                if (layer_ != null && layer_.layerType == exLayerType.Dynamic) {
-                    while (textLength < textCapaticy / 2) {
-                        textCapaticy >>= 1;
-                    }
-                } 
-                else {
-                    textCapaticy = textLength;
-                }
-            }
+        if (lockCapacity) {
+            exDebug.Assert(text_ == null || vertexCountCapacity >= text_.Length * exMesh.QUAD_VERTEX_COUNT);
+            return;
         }
-        else {
-            textCapaticy = 0;
-        }
-        if (textCapaticy != oldTextCapaticy) {
+        int oldTextCapacity = vertexCountCapacity / exMesh.QUAD_VERTEX_COUNT;
+        int textCapacity = GetTextCapacity(oldTextCapacity);
+        
+        if (textCapacity != oldTextCapacity) {
             if (layer_ != null) {
                 // remove from layer
                 exLayer myLayer = layer_;
                 myLayer.Remove(this);
                 // change capacity
-                vertexCountCapacity = textCapaticy * exMesh.QUAD_VERTEX_COUNT;
-                indexCountCapacity = textCapaticy * exMesh.QUAD_INDEX_COUNT;
+                vertexCountCapacity = textCapacity * exMesh.QUAD_VERTEX_COUNT;
+                indexCountCapacity = textCapacity * exMesh.QUAD_INDEX_COUNT;
                 // re-add to layer
+                lockCapacity = true;
                 myLayer.Add(this);
+                Debug.Log("Update Capacity");
+                lockCapacity = false;
             }
             else {
-                vertexCountCapacity = textCapaticy * exMesh.QUAD_VERTEX_COUNT;
-                indexCountCapacity = textCapaticy * exMesh.QUAD_INDEX_COUNT;
+                vertexCountCapacity = textCapacity * exMesh.QUAD_VERTEX_COUNT;
+                indexCountCapacity = textCapacity * exMesh.QUAD_INDEX_COUNT;
             }
         }
     }
 }
-#endif
