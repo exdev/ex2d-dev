@@ -61,8 +61,8 @@ public class exBitmapFont : ScriptableObject {
 
     [System.Serializable]
     public class KerningInfo {
-        public char first = '\x0';  ///< the first character 
-        public char second = '\x0'; ///< the second character
+        public int first = -1;  ///< the first character 
+        public int second = -1; ///< the second character
         public int amount = -1; ///< the amount of kerning
     }
 
@@ -189,8 +189,8 @@ public class exBitmapFont : ScriptableObject {
         }
         kerningTable.Clear();
         for ( int i = 0; i < kernings.Count; ++i ) {
-            KerningInfo k = kernings[i];
-            kerningTable[new KerningTableKey(k.first, k.second)] = k.amount;
+            KerningInfo k = kernings [i];
+            kerningTable[new KerningTableKey((char)k.first, (char)k.second)] = k.amount;
         }
     }
 

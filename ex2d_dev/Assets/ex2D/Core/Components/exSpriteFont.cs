@@ -366,9 +366,11 @@ public class exSpriteFont : exSpriteBase {
         }
         base.FillBuffers(_vertices, _uvs, _colors32);
     }
+
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
+
     internal override exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
 #if UNITY_EDITOR
         if (vertexCountCapacity < text_.Length * exMesh.QUAD_VERTEX_COUNT) {
@@ -395,22 +397,27 @@ public class exSpriteFont : exSpriteBase {
             }
         }
         if ((updateFlags & exUpdateFlags.Color) != 0) {
-            // 更新可见顶点的颜色值
+            Color32 top = new Color(topColor_.r, topColor_.g, topColor_.b, topColor_.a * layer_.alpha);
+            Color32 bot = new Color(botColor_.r, botColor_.g, botColor_.b, botColor_.a * layer_.alpha);
             int vertexBufferEnd = vertexBufferIndex + text_.Length * exMesh.QUAD_VERTEX_COUNT;
-            Color32 color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
-            for (int i = vertexBufferIndex; i < vertexBufferEnd; ++i) {
-                _colors32[i] = color32;
+            for (int i = vertexBufferIndex; i < vertexBufferEnd; i += 4) {
+                _colors32[i + 0] = bot;
+                _colors32[i + 1] = top;
+                _colors32[i + 2] = top;
+                _colors32[i + 3] = bot;
             }
-            // TODO: top color / bot color
         }
-        exUpdateFlags spriteUpdateFlags = updateFlags;
+        exUpdateFlags updatedFlags = updateFlags;
         updateFlags = exUpdateFlags.None;
-        return spriteUpdateFlags;
+        return updatedFlags;
     }
-    #endregion
+
+    #endregion  // Functions used to update geometry buffer
+
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
+
     public override Vector3[] GetVertices () {
 #if UNITY_EDITOR
         if (vertexCountCapacity < text_.Length * exMesh.QUAD_VERTEX_COUNT) {
@@ -429,9 +436,11 @@ public class exSpriteFont : exSpriteBase {
         BuildText(0, vertices);
         return vertices.ToArray();
     }
+
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
+
     public override void OnPreAddToLayer () {
         exDebug.Assert(layer_ == null);
         if (layer_ == null) {
@@ -442,387 +451,6 @@ public class exSpriteFont : exSpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
-
-    // ------------------------------------------------------------------ 
-    /// Get the character rect at _idx
-    /// \param _idx the index of the character
-    /// \return the rect
-    // ------------------------------------------------------------------ 
-
-    //public Rect GetCharRect ( int _idx ) {
-    //    if ( meshFilter ) {
-    //        if ( meshFilter_.sharedMesh != null ) {
-
-    //            // ======================================================== 
-    //            // init value 
-    //            // ======================================================== 
-
-    //            int numVerts = text_.Length * 4;
-    //            int vertexCount = 0;
-
-    //            // first shadow
-    //            if ( useShadow_ ) {
-    //                vertexCount += numVerts;
-    //            }
-
-    //            // second outline
-    //            if ( useOutline_ ) {
-    //                vertexCount += 8 * numVerts;
-    //            }
-
-    //            // finally normal
-    //            int vertexStartAt = vertexCount;
-    //            vertexCount += numVerts;
-
-    //            //
-    //            int vert_id = vertexStartAt + 4 * _idx;
-    //            Vector3[] verts = meshFilter_.sharedMesh.vertices;
-    //            return new Rect ( verts[vert_id].x, 
-    //                              verts[vert_id].y, 
-    //                              verts[vert_id+3].x - verts[vert_id].x,
-    //                              verts[vert_id+3].y - verts[vert_id].y );
-    //        }
-    //    }
-    //    return new Rect ( 0.0f, 0.0f, 0.0f, 0.0f );
-    //}
-
-    //// ------------------------------------------------------------------ 
-    ///// Set the character alpha
-    ///// \param _idx the index of the character
-    ///// \param _topColor the top color to set
-    ///// \param _botColor the bot color to set
-    ///// \param _alpha the alpha value to set
-    //// ------------------------------------------------------------------ 
-
-    //public void SetCharColor ( int _idx, Color _topColor, Color _botColor, float _alpha ) {
-    //    if ( meshFilter ) {
-    //        if ( meshFilter_.sharedMesh != null ) {
-
-    //            // ======================================================== 
-    //            // init value 
-    //            // ======================================================== 
-
-    //            int numVerts = text_.Length * 4;
-    //            int vertexCount = 0;
-
-    //            // first shadow
-    //            int shadowVertexStartAt = -1;
-    //            if ( useShadow_ ) {
-    //                shadowVertexStartAt = vertexCount;
-    //                vertexCount += numVerts;
-    //            }
-
-    //            // second outline
-    //            int outlineVertexStartAt = -1;
-    //            if ( useOutline_ ) {
-    //                outlineVertexStartAt = vertexCount;
-    //                vertexCount += 8 * numVerts;
-    //            }
-
-    //            // finally normal
-    //            int vertexStartAt = vertexCount;
-    //            vertexCount += numVerts;
-
-    //            // ======================================================== 
-    //            // Update Color
-    //            // ======================================================== 
-
-    //            Color[] colors = new Color[vertexCount];
-    //            Color newTopColor = new Color( _topColor.r, _topColor.g, _topColor.b, _alpha );
-    //            Color newBotColor = new Color( _botColor.r, _botColor.g, _botColor.b, _alpha );
-
-    //            for ( int i = 0; i < text_.Length; ++i ) {
-    //                Color clrTop = topColor_;
-    //                Color clrBot = botColor_;
-    //                Color clrOutline = outlineColor_;
-    //                Color clrShadow = shadowColor_;
-    //                if ( i == _idx ) {
-    //                    clrTop = newTopColor;
-    //                    clrBot = newBotColor;
-    //                    clrOutline.a = _alpha;
-    //                    clrShadow.a = _alpha;
-    //                }
-
-    //                int vert_id = vertexStartAt + 4 * i;
-    //                colors[vert_id+0] = colors[vert_id+1] = clrTop;
-    //                colors[vert_id+2] = colors[vert_id+3] = clrBot;
-
-
-    //                if ( outlineVertexStartAt != -1 ) {
-    //                    vert_id = 4 * i;
-    //                    int[] vi = new int[] {
-    //                        outlineVertexStartAt + vert_id + 0 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 1 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 2 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 3 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 4 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 5 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 6 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 7 * numVerts
-    //                    };
-    //                    for ( int k = 0; k < vi.Length; ++k ) {
-    //                        colors[vi[k]+0] = 
-    //                        colors[vi[k]+1] = 
-    //                        colors[vi[k]+2] = 
-    //                        colors[vi[k]+3] = clrOutline;
-    //                    }
-    //                }
-    //                if ( shadowVertexStartAt != -1 ) {
-    //                    vert_id = shadowVertexStartAt + 4 * i;
-    //                    colors[vert_id+0] = 
-    //                    colors[vert_id+1] = 
-    //                    colors[vert_id+2] = 
-    //                    colors[vert_id+3] = clrShadow;
-    //                }
-    //            }
-    //            meshFilter_.sharedMesh.colors = colors;
-    //        }
-    //    }
-    //} 
-
-    //    // ------------------------------------------------------------------ 
-    //    // Desc: 
-    //    // ------------------------------------------------------------------ 
-
-    //    public void CalculateSize ( out float[] _lineWidths,
-    //                                out float[] _kernings, 
-    //                                out float _halfWidthScaled,
-    //                                out float _halfHeightScaled,
-    //                                out float _offsetX,
-    //                                out float _offsetY )
-    //    {
-    //        if ( useMultiline_ ) {
-    //            long lines = exStringHelper.CountLinesInString(text_);
-    //            _lineWidths = new float[lines];
-    //        }
-    //        else {
-    //            _lineWidths = new float[0];
-    //        }
-    //        _kernings = new float[Mathf.Max(text_.Length-1,0)];
-    //        float maxWidth = 0.0f;
-    //        float curWidth = 0.0f;
-    //        float height = fontInfo_.lineHeight;
-
-    //        int curLine = 0;
-    //        for ( int i = 0; i < text_.Length; ++i ) {
-    //            char c = text_[i];
-    //            if ( c == '\n' ) {
-    //                if ( useMultiline_ ) {
-    //                    if ( curWidth > maxWidth ) {
-    //                        maxWidth = curWidth;
-    //                    }
-    //                    _lineWidths[curLine] = curWidth;
-    //                    curWidth = 0.0f;
-    //                    height = height + fontInfo_.lineHeight + lineSpacing_;
-    //                    ++curLine;
-    //                }
-    //                continue;
-    //            }
-
-    //            // if we don't have the character, it will become space.
-    //            exBitmapFont.CharInfo charInfo = fontInfo_.GetCharInfo(c);
-    //            if ( charInfo != null ) {
-    //                curWidth = curWidth + charInfo.xadvance + tracking_;
-    //                if ( useKerning_ ) {
-    //                    if ( i < text_.Length - 1 ) {
-    //                        for ( int idx = 0; idx < fontInfo_.kernings.Count; ++idx ) {
-    //                            exBitmapFont.KerningInfo k = fontInfo_.kernings[idx];
-    //                            if ( k.first == c && k.second == text_[i+1] ) {
-    //                                curWidth += k.amount;
-    //                                _kernings[i] = k.amount;
-    //                                break;
-    //                            }
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //        }
-    //        if ( curWidth > maxWidth ) {
-    //            maxWidth = curWidth;
-    //        }
-    //        if ( useMultiline_ ) {
-    //            _lineWidths[curLine] = curWidth;
-    //        }
-
-    //        Vector2 finalScale = new Vector2 ( scale_.x * ppfScale_.x, scale_.y * ppfScale_.y );
-    //        _halfWidthScaled = maxWidth * finalScale.x * 0.5f;
-    //        _halfHeightScaled = height * finalScale.y * 0.5f;
-    //        _offsetX = 0.0f;
-    //        _offsetY = 0.0f;
-
-    //        // calculate anchor offset
-    //        switch ( anchor_ ) {
-    //        case Anchor.TopLeft     : _offsetX = -_halfWidthScaled;  _offsetY = -_halfHeightScaled; break;
-    //        case Anchor.TopCenter   : _offsetX = 0.0f;               _offsetY = -_halfHeightScaled; break;
-    //        case Anchor.TopRight    : _offsetX = _halfWidthScaled;   _offsetY = -_halfHeightScaled; break;
-
-    //        case Anchor.MidLeft     : _offsetX = -_halfWidthScaled;  _offsetY = 0.0f;               break;
-    //        case Anchor.MidCenter   : _offsetX = 0.0f;               _offsetY = 0.0f;               break;
-    //        case Anchor.MidRight    : _offsetX = _halfWidthScaled;   _offsetY = 0.0f;               break;
-
-    //        case Anchor.BotLeft     : _offsetX = -_halfWidthScaled;  _offsetY = _halfHeightScaled;  break;
-    //        case Anchor.BotCenter   : _offsetX = 0.0f;               _offsetY = _halfHeightScaled;  break;
-    //        case Anchor.BotRight    : _offsetX = _halfWidthScaled;   _offsetY = _halfHeightScaled;  break;
-
-    //        default                 : _offsetX = 0.0f;               _offsetY = 0.0f;               break;
-    //        }
-    //        _offsetX -= offset_.x;
-    //        _offsetY += offset_.y;
-    //    }
-
-    //    // ------------------------------------------------------------------ 
-    //    /// \param _mesh the mesh to update
-    //    /// 
-    //    /// Update the _mesh depends on the exPlane.updateFlags
-    //    // ------------------------------------------------------------------ 
-
-    //    public void UpdateMesh ( Mesh _mesh ) {
-
-
-
-    //        // ======================================================== 
-    //        // init value 
-    //        // ======================================================== 
-
-    //        int numVerts = text_.Length * 4;
-    //        int numIndices = text_.Length * 6;
-    //        int vertexCount = 0;
-    //        int indexCount = 0;
-
-    //        // first shadow
-    //        int shadowVertexStartAt = -1;
-    //        int shadowIndexStartAt = -1;
-    //        if ( useShadow_ ) {
-    //            shadowVertexStartAt = vertexCount;
-    //            vertexCount += numVerts;
-
-    //            shadowIndexStartAt = indexCount;
-    //            indexCount += numIndices;
-    //        }
-
-    //        // second outline
-    //        int outlineVertexStartAt = -1;
-    //        int outlineIndexStartAt = -1;
-    //        if ( useOutline_ ) {
-    //            outlineVertexStartAt = vertexCount;
-    //            vertexCount += 8 * numVerts;
-
-    //            outlineIndexStartAt = indexCount; 
-    //            indexCount += 8 * numIndices;
-    //        }
-
-    //        // finally normal
-    //        int vertexStartAt = vertexCount;
-    //        vertexCount += numVerts;
-
-    //        int indexStartAt = indexCount;
-    //        indexCount += numIndices;
-
-    //        // ======================================================== 
-    //        // Update Vertex, UV and Indices 
-    //        // ======================================================== 
-
-    //        
-
-    //        // ======================================================== 
-    //        // Update Vertex Only 
-    //        // ======================================================== 
-
-    //        else if ( (updateFlags & UpdateFlags.Vertex) != 0 ) {
-
-    //            float[] lineWidths;
-    //            float[] kernings;
-    //            float halfWidthScaled;
-    //            float halfHeightScaled;
-    //            float offsetX;
-    //            float offsetY;
-    //            CalculateSize ( out lineWidths,
-    //                            out kernings, 
-    //                            out halfWidthScaled,
-    //                            out halfHeightScaled,
-    //                            out offsetX,
-    //                            out offsetY );
-
-    //            //
-    //            Vector3[] vertices  = new Vector3[vertexCount];
-    //            Vector2 finalScale  = new Vector2 ( scale_.x * ppfScale_.x, scale_.y * ppfScale_.y );
-
-    //            //
-    //            int curLine = 0;
-    //            float curX = 0.0f;
-    //            if ( useMultiline_ ) {
-    //                switch ( textAlign_ ) {
-    //                case TextAlign.Left:
-    //                    curX = 0.0f;
-    //                    break;
-    //                case TextAlign.Center:
-    //                    curX = halfWidthScaled - lineWidths[curLine] * 0.5f * finalScale.x;
-    //                    break;
-    //                case TextAlign.Right:
-    //                    curX = halfWidthScaled * 2.0f - lineWidths[curLine] * finalScale.x;
-    //                    break;
-    //                }
-    //            }
-    //            float curY = 0.0f;
-    //            for ( int i = 0; i < text_.Length; ++i ) {
-    //                int id = text_[i];
-
-    //                // if next line
-    //                if ( id == '\n' ) {
-    //                    if ( useMultiline_ ) {
-    //                        ++curLine;
-    //                        switch ( textAlign_ ) {
-    //                        case TextAlign.Left:
-    //                            curX = 0.0f;
-    //                            break;
-    //                        case TextAlign.Center:
-    //                            curX = halfWidthScaled - lineWidths[curLine] * 0.5f * finalScale.x;
-    //                            break;
-    //                        case TextAlign.Right:
-    //                            curX = halfWidthScaled * 2.0f - lineWidths[curLine] * finalScale.x;
-    //                            break;
-    //                        }
-    //                        curY = curY + (fontInfo_.lineHeight + lineSpacing_) * finalScale.y;
-    //                    }
-    //                    continue;
-    //                }
-
-    //                int vert_id = vertexStartAt + 4 * i;
-    //                // if we don't have the character, it will become space.
-    //                exBitmapFont.CharInfo charInfo = fontInfo_.GetCharInfo(id);
-
-    //                if ( charInfo != null ) {
-    //                    // build vertices & normals
-    //                    for ( int r = 0; r < 2; ++r ) {
-    //                        for ( int c = 0; c < 2; ++c ) {
-    //                            int j = r * 2 + c;
-
-    //                            // calculate the base pos
-    //                            float x = curX - halfWidthScaled + c * charInfo.width * finalScale.x + charInfo.xoffset * finalScale.x;
-    //                            float y = -curY + halfHeightScaled - r * charInfo.height * finalScale.y - charInfo.yoffset * finalScale.y;
-
-    //                            // calculate the pos affect by anchor
-    //                            x -= offsetX;
-    //                            y += offsetY;
-
-    //                            // calculate the shear
-    //                            x += y * shear_.x;
-    //                            y += x * shear_.y;
-
-    //                            // build vertices
-    //                            vertices[vert_id+j] = new Vector3( x, y, 0.0f );
-    //                        }
-    //                    }
-
-    //                    //
-    //                    curX = curX + (charInfo.xadvance + tracking_) * finalScale.x;
-    //                    if ( useKerning_ ) {
-    //                        if ( i < text_.Length - 1 ) {
-    //                            curX += kernings[i] * finalScale.x;
-    //                        }
-    //                    }
-    //                }
-    //            }
 
     //            // update outline
     //            if ( useOutline_ ) {
@@ -903,33 +531,6 @@ public class exSpriteFont : exSpriteBase {
     //        // NOTE: though we set updateFlags to None at exPlane::LateUpdate, 
     //        //       the Editor still need this or it will caused editor keep dirty
     //        updateFlags = UpdateFlags.None;
-    //    }
-
-    //    // ------------------------------------------------------------------ 
-    //    /// \param _mesh the mesh to update
-    //    /// 
-    //    /// Force to update the _mesh use the Text flags in exPlane.UpdateFlags
-    //    // ------------------------------------------------------------------ 
-
-    //    public void ForceUpdateMesh ( Mesh _mesh ) {
-    //        if ( _mesh == null )
-    //            return;
-
-    //        _mesh.Clear();
-    //        updateFlags = UpdateFlags.Text | UpdateFlags.Color;
-    //        UpdateMesh( _mesh );
-    //    }
-
-    //    // ------------------------------------------------------------------ 
-    //    // Desc: 
-    //    // ------------------------------------------------------------------ 
-
-    //    public override void Commit () {
-    //        if ( meshFilter ) {
-    //            if ( meshFilter_.sharedMesh != null ) {
-    //                UpdateMesh (meshFilter_.sharedMesh);
-    //            }
-    //        }
     //    }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -1065,9 +666,10 @@ public class exSpriteFont : exSpriteBase {
         width_ = 0.0f;    // 和SpriteBase一致，用于表示实际宽度
         height_ = 0.0f;   // 和SpriteBase一致，用于表示实际高度
 
-        int vertexBufferEnd = _vbIndex + vertexCountCapacity;
+        int vbEnd = _vbIndex + text_.Length * 4;
+
         if (font_ == null) {
-            for (int i = _vbIndex; i < vertexBufferEnd; ++i) {
+            for (int i = _vbIndex; i < vbEnd; ++i) {
                 _vertices[i] = new Vector3();
             }
             return;
@@ -1082,14 +684,14 @@ public class exSpriteFont : exSpriteBase {
         for (int charIndex = 0; charIndex < text_.Length;) {
             int lineStart = parsedVBIndex;
             // build line
-            float lineWidth = BuildLine(_vertices, _uvs, ref charIndex, ref parsedVBIndex, texelSize, height_);
+            float lineWidth = BuildLine(_vertices, _uvs, ref charIndex, ref parsedVBIndex, texelSize, -height_);
             // text alignment
             switch (textAlign_) {
             case TextAlignment.Left:
-                // make anchor at top left
+                // convert to top left
                 break;
             case TextAlignment.Center:
-                // make anchor at top center
+                // convert to top center
                 float halfLineWidth = lineWidth * 0.5f;
                 for (int i = lineStart; i < parsedVBIndex; ++i) {
                     Vector3 v = _vertices[i];
@@ -1097,7 +699,7 @@ public class exSpriteFont : exSpriteBase {
                 }
                 break;
             case TextAlignment.Right:
-                // make anchor at  top right
+                // convert to top right
                 for (int i = lineStart; i < parsedVBIndex; ++i) {
                     Vector3 v = _vertices[i];
                     _vertices[i] = new Vector3(v.x - lineWidth, v.y, v.z);
@@ -1108,13 +710,16 @@ public class exSpriteFont : exSpriteBase {
             if (lineWidth > width) {
                 width_ = lineWidth;
             }
-            height_ += font_.lineHeight + spacing_.y;
+            height_ += font_.lineHeight;
+            if (charIndex < text_.Length) {
+                height_ += spacing_.y;
+            }
         }
 
         float anchorOffsetX = 0.0f;
         float anchorOffsetY;
 
-        // make anchor at top left
+        // convert to top left
         switch (textAlign_) {
         case TextAlignment.Left:
             break;
@@ -1126,18 +731,18 @@ public class exSpriteFont : exSpriteBase {
             break;
         }
 
-        // top center to user defined
+        // convert anchor from top center to user defined
         switch ( anchor_ ) {
-        case Anchor.TopLeft     :                                   anchorOffsetY = 0.0f;              break;
-        case Anchor.TopCenter   : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = 0.0f;              break;
-        case Anchor.TopRight    : anchorOffsetX -= width_;          anchorOffsetY = 0.0f;              break;
-        case Anchor.MidLeft     :                                   anchorOffsetY = -(height_ * 0.5f); break;
-        case Anchor.MidCenter   : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = -(height_ * 0.5f); break;
-        case Anchor.MidRight    : anchorOffsetX -= width_;          anchorOffsetY = -(height_ * 0.5f); break;
-        case Anchor.BotLeft     :                                   anchorOffsetY = -height_;          break;
-        case Anchor.BotCenter   : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = -height_;          break;
-        case Anchor.BotRight    : anchorOffsetX -= width_;          anchorOffsetY = -height_;          break;
-        default                 : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = -(height_ * 0.5f); break;
+        case Anchor.TopLeft   :                                   anchorOffsetY = 0.0f;           break;
+        case Anchor.TopCenter : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = 0.0f;           break;
+        case Anchor.TopRight  : anchorOffsetX -= width_;          anchorOffsetY = 0.0f;           break;
+        case Anchor.MidLeft   :                                   anchorOffsetY = height_ * 0.5f; break;
+        case Anchor.MidCenter : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = height_ * 0.5f; break;
+        case Anchor.MidRight  : anchorOffsetX -= width_;          anchorOffsetY = height_ * 0.5f; break;
+        case Anchor.BotLeft   :                                   anchorOffsetY = height_;        break;
+        case Anchor.BotCenter : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = height_;        break;
+        case Anchor.BotRight  : anchorOffsetX -= width_;          anchorOffsetY = height_;        break;
+        default               : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = height_ * 0.5f; break;
         }
 
         // offset
@@ -1145,28 +750,23 @@ public class exSpriteFont : exSpriteBase {
         anchorOffsetY += offset_.y;
 
         exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
-        int vbEnd = _vbIndex + text_.Length * 4;
         for (int i = _vbIndex; i < vbEnd; i += 4) {
             Vector3 v0 = _vertices[i + 0];
             Vector3 v1 = _vertices[i + 1];
             Vector3 v2 = _vertices[i + 2];
             Vector3 v3 = _vertices[i + 3];
-            v0.x += anchorOffsetX;
-            v0.y += anchorOffsetY;
-            v1.x += anchorOffsetX;
-            v1.y += anchorOffsetY;
-            v2.x += anchorOffsetX;
-            v2.y += anchorOffsetY;
-            v3.x += anchorOffsetX;
-            v3.y += anchorOffsetY;
+            // apply anchor and offset
+            v0.x += anchorOffsetX; v0.y += anchorOffsetY;
+            v1.x += anchorOffsetX; v1.y += anchorOffsetY;
+            v2.x += anchorOffsetX; v2.y += anchorOffsetY;
+            v3.x += anchorOffsetX; v3.y += anchorOffsetY;
+            // apply transform
             v0 = cachedWorldMatrix.MultiplyPoint3x4(v0);
             v1 = cachedWorldMatrix.MultiplyPoint3x4(v1);
             v2 = cachedWorldMatrix.MultiplyPoint3x4(v2);
             v3 = cachedWorldMatrix.MultiplyPoint3x4(v3);
-            v0.z = 0;
-            v1.z = 0;
-            v2.z = 0;
-            v3.z = 0;
+
+            v0.z = 0; v1.z = 0; v2.z = 0; v3.z = 0;
             // shear
             if (shear_.x != 0) {
                 float worldScaleY = (new Vector3(cachedWorldMatrix.m01, cachedWorldMatrix.m11, cachedWorldMatrix.m21)).magnitude;
@@ -1193,7 +793,6 @@ public class exSpriteFont : exSpriteBase {
             _vertices[i + 2] = v2;
             _vertices[i + 3] = v3;
         }
-
         // TODO: pixel-perfect
     }
 
@@ -1206,12 +805,19 @@ public class exSpriteFont : exSpriteBase {
         int firstChar = _charIndex;
         float curX = 0.0f;
         float lastAdvance = 0.0f;
+        float lastWidth = 0.0f;
         for (; _charIndex < text_.Length; ++_charIndex, _vbIndex += 4, curX += spacing_.x) {
             char c = text_[_charIndex];
 
             // if new line  // TODO: auto wrap
             if (c == '\n') {
-                return curX;
+                _vertices[_vbIndex + 0] = new Vector3();
+                _vertices[_vbIndex + 1] = new Vector3();
+                _vertices[_vbIndex + 2] = new Vector3();
+                _vertices[_vbIndex + 3] = new Vector3();
+                ++_charIndex;
+                _vbIndex += 4;
+                break;
             }
 
             if (_charIndex > firstChar) {   // if has previous character
@@ -1225,7 +831,7 @@ public class exSpriteFont : exSpriteBase {
             exBitmapFont.CharInfo ci = font_.GetCharInfo(c);
             if (ci == null) {
                 // character is not present, it will not display
-                Debug.Log("character is not present: " + c, this);
+                // Debug.Log("character is not present: " + c, this);
                 _vertices[_vbIndex + 0] = new Vector3();
                 _vertices[_vbIndex + 1] = new Vector3();
                 _vertices[_vbIndex + 2] = new Vector3();
@@ -1234,14 +840,14 @@ public class exSpriteFont : exSpriteBase {
             }
 
             // build text vertices
-            curX += ci.xoffset;
-            float y = _top + ci.yoffset;
-            _vertices[_vbIndex + 0] = new Vector3(curX, y - ci.height, 0.0f);
-            _vertices[_vbIndex + 1] = new Vector3(curX, y, 0.0f);
-            _vertices[_vbIndex + 2] = new Vector3(curX + ci.width, y, 0.0f);
-            _vertices[_vbIndex + 3] = new Vector3(curX + ci.width, y - ci.height, 0.0f);
+            float x = curX + ci.xoffset;
+            float y = _top - ci.yoffset;
+            _vertices[_vbIndex + 0] = new Vector3(x, y - ci.height, 0.0f);
+            _vertices[_vbIndex + 1] = new Vector3(x, y, 0.0f);
+            _vertices[_vbIndex + 2] = new Vector3(x + ci.width, y, 0.0f);
+            _vertices[_vbIndex + 3] = new Vector3(x + ci.width, y - ci.height, 0.0f);
 
-            curX += ci.width;
+            lastWidth = ci.width;
             lastAdvance = ci.xadvance;
 
             // build uv
@@ -1262,15 +868,7 @@ public class exSpriteFont : exSpriteBase {
                 }
             }
         }
-        return curX;
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void Align () {
-        /**/
+        return curX + lastWidth;
     }
 
     // ------------------------------------------------------------------ 
@@ -1278,7 +876,7 @@ public class exSpriteFont : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     void UpdateCapacity () {
-        Debug.Log("[UpdateCapacity|exSpriteFont] ");
+        //Debug.Log("[UpdateCapacity|exSpriteFont] ");
         int oldTextCapaticy = vertexCountCapacity / exMesh.QUAD_VERTEX_COUNT;
         int textCapaticy;
         if (text_ != null) {

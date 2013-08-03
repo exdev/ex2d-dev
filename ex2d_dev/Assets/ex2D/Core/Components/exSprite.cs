@@ -220,9 +220,9 @@ public class exSprite : exSpriteBase {
             _colors32[vertexBufferIndex + 2] = color32;
             _colors32[vertexBufferIndex + 3] = color32;
         }
-        exUpdateFlags spriteUpdateFlags = updateFlags;
+        exUpdateFlags updatedFlags = updateFlags;
         updateFlags = exUpdateFlags.None;
-        return spriteUpdateFlags;
+        return updatedFlags;
     }
 
     #endregion // Functions used to update geometry buffer
