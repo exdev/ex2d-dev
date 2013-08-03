@@ -604,7 +604,9 @@ class exSceneEditor : EditorWindow {
 
                 // Show a copy icon on the drag
                 foreach ( Object o in DragAndDrop.objectReferences ) {
-                    if ( o is exTextureInfo ) {
+                    if ( o is exTextureInfo ||
+                         o is exBitmapFont ) 
+                    {
                         DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
                         break;
                     }
@@ -624,23 +626,35 @@ class exSceneEditor : EditorWindow {
                 DragAndDrop.AcceptDrag();
 
                 foreach ( Object o in DragAndDrop.objectReferences ) {
+                    GameObject newGO = null; 
+
                     if ( o is exTextureInfo ) {
-                        GameObject gameObject = new GameObject(o.name);
-                        exSprite sprite = gameObject.AddComponent<exSprite>();
+                        newGO = new GameObject(o.name);
+                        exSprite sprite = newGO.AddComponent<exSprite>();
                         if ( sprite.shader == null )
                             sprite.shader = Shader.Find("ex2D/Alpha Blended");
                         sprite.textureInfo = o as exTextureInfo;
-                        gameObject.transform.position = SceneField_MapToWorld( _rect, e.mousePosition);
-                        gameObject.transform.localScale = Vector3.one;
-                        gameObject.transform.rotation = Quaternion.identity;
+                    }
+                    else if ( o is exBitmapFont ) {
+                        newGO = new GameObject(o.name);
+                        exSpriteFont spriteFont = newGO.AddComponent<exSpriteFont>();
+                        if ( spriteFont.shader == null )
+                            spriteFont.shader = Shader.Find("ex2D/Alpha Blended");
+                        spriteFont.font = o as exBitmapFont;
+                    }
 
-                        if ( activeLayer != null ) {
-                            activeLayer.Add(sprite);
-                            EditorUtility.SetDirty(activeLayer);
-                            EditorUtility.SetDirty(sprite);
-                        }
+                    if ( newGO != null && activeLayer != null ) {
+                        newGO.transform.position = SceneField_MapToWorld( _rect, e.mousePosition);
+                        newGO.transform.localScale = Vector3.one;
+                        newGO.transform.rotation = Quaternion.identity;
 
-                        Selection.activeObject = gameObject;
+                        exSpriteBase sp = newGO.GetComponent<exSpriteBase>();
+                        activeLayer.Add(sp);
+
+                        EditorUtility.SetDirty(activeLayer);
+                        EditorUtility.SetDirty(sp);
+
+                        Selection.activeObject = newGO;
                     }
                 }
 
@@ -699,6 +713,9 @@ class exSceneEditor : EditorWindow {
                     if ( o is exTextureInfo ) {
                         DrawTextureInfoPreview ( o as exTextureInfo, 
                                                  SceneField_MapToWorld( _rect, Event.current.mousePosition) );
+                    }
+                    else if ( o is exBitmapFont ) {
+                        // TODO:
                     }
                 }
             }

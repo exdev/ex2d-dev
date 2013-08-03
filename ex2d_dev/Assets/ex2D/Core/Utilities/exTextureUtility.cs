@@ -107,6 +107,7 @@ public static class exTextureUtility {
 
     public static void Fill ( Texture2D _dest, 
                               Texture2D _src, 
+                              string _name,
                               int _destX,
                               int _destY,
                               int _srcX,
@@ -126,11 +127,21 @@ public static class exTextureUtility {
             for ( int j = 0; j < destHeight; ++j ) {
                 for ( int i = 0; i < destWidth; ++i ) {
                     int src_x = _srcX + j;
-                    int src_y = _srcY + _srcHeight - i;
+                    int src_y = _srcY + _srcHeight - 1 - i;
                     int dest_x = _destX + i;
                     int dest_y = _destY + j;
                     Color32 pixel = srcPixels[src_x + src_y*_src.width];
                     _dest.SetPixel( dest_x, dest_y, pixel );
+
+                    // DEBUG { 
+                    // try {
+                    //     Color32 pixel = srcPixels[src_x + src_y*_src.width];
+                    //     _dest.SetPixel( dest_x, dest_y, pixel );
+                    // }
+                    // catch {
+                    //     Debug.Log( string.Format( "src_x = {0}, src_y = {1}, name = {2}", src_x, src_y, _name ) );
+                    // }
+                    // } DEBUG end 
                 }
             }
         }

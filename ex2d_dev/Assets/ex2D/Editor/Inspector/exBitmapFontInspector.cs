@@ -32,11 +32,32 @@ class exBitmapFontInspector : Editor {
         DrawDefaultInspector(); 
 
         EditorGUILayout.Space();
+
+
+        exBitmapFont bitmapFont = target as exBitmapFont;
+        Object oldRef = exEditorUtility.LoadAssetFromGUID<Object>( bitmapFont.rawFontGUID );
+        Object newRef = EditorGUILayout.ObjectField ( "Import Data"
+                                                      , oldRef
+                                                      , typeof(Object)
+                                                      , false );
+        if ( oldRef != newRef ) {
+            bitmapFont.rawFontGUID = exEditorUtility.AssetToGUID(newRef);
+        }
+
         GUILayout.BeginHorizontal();
-        GUILayout.FlexibleSpace();
+            GUILayout.FlexibleSpace();
+
             if ( GUILayout.Button("Rebuild...", GUILayout.Width(80), GUILayout.Height(20) ) ) {
-                exBitmapFont bitmapFont = target as exBitmapFont;
-                exBitmapFontUtility.Parse( bitmapFont, exEditorUtility.LoadAssetFromGUID<Object>(bitmapFont.rawFontGUID) );
+
+                string fontInfoPath = AssetDatabase.GetAssetPath(newRef);
+                bool isFontInfo = (Path.GetExtension(fontInfoPath) == ".txt" || 
+                                   Path.GetExtension(fontInfoPath) == ".fnt");
+                if ( isFontInfo == false ) {
+                    Debug.LogError ( "The file you choose to parse is not a font-info file. Must be \".txt\", \".fnt\" file" );
+                    return;
+                }
+
+                exBitmapFontUtility.Parse( bitmapFont, newRef );
             }
         GUILayout.Space(5);
         GUILayout.EndHorizontal();

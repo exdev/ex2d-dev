@@ -61,6 +61,7 @@ public class exSprite : exSpriteBase {
                 }
             }
             else if (textureInfo_ != null && isOnEnabled_ && layer_ != null) {
+                textureInfo_ = value;
                 // become invisible
                 layer_.HideSprite(this);
             }

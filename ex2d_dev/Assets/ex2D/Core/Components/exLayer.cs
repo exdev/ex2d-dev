@@ -171,10 +171,10 @@ public class exLayer : MonoBehaviour
                 exUpdateFlags meshUpdateFlags = exUpdateFlags.None;
                 for (int i = 0; i < mesh.spriteList.Count; ++i) {
                     exSpriteBase sprite = mesh.spriteList[i];
-                    exDebug.Assert(sprite.isInIndexBuffer == sprite.visible);
                     if (alphaHasChanged) {
                         sprite.updateFlags |= exUpdateFlags.Color;
                     }
+                    exDebug.Assert(sprite.isInIndexBuffer == sprite.visible);
                     if (sprite.isInIndexBuffer) {
                         sprite.UpdateTransform();
                         exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);

@@ -756,6 +756,7 @@ public static class exAtlasUtility {
         _progress( 0.8f, "Syncing atlas texture" );
         string atlasTexturePath = AssetDatabase.GetAssetPath(_atlas.texture);
         string expectAtlasTexturePath = Path.Combine( atlasAssetsDir, _atlas.name + ".png" );
+        expectAtlasTexturePath = expectAtlasTexturePath.Replace("\\", "/");
         if ( _atlas.texture != null &&
              atlasTexturePath != expectAtlasTexturePath )
         {
@@ -877,6 +878,7 @@ public static class exAtlasUtility {
             // copy raw texture into atlas texture
             exTextureUtility.Fill( atlasTexture
                                  , rawTexture
+                                 , textureInfo.name
                                  , textureInfo.x
                                  , textureInfo.y
                                  , textureInfo.trim_x
