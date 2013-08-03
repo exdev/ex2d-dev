@@ -119,8 +119,8 @@ public static class exBitmapFontUtility {
             }
             else if ( words[0] == "kerning" ) {
                 exBitmapFont.KerningInfo kerningInfo = new exBitmapFont.KerningInfo();
-                kerningInfo.first = (char)int.Parse ( ParseValue( words, "first" ) );
-                kerningInfo.second = (char)int.Parse ( ParseValue( words, "second" ) );
+                kerningInfo.first = int.Parse ( ParseValue( words, "first" ) );
+                kerningInfo.second = int.Parse ( ParseValue( words, "second" ) );
                 kerningInfo.amount = int.Parse ( ParseValue( words, "amount" ) );
                 _bitmapFont.kernings.Add(kerningInfo);
             }
