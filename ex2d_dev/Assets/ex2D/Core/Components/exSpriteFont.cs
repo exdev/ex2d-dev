@@ -445,9 +445,7 @@ public class exSpriteFont : exSpriteBase {
         for (int i = 0; i < visibleVertexCount; ++i) {
             vertices.Add(new Vector3());
         }
-        if (cachedTransform.hasChanged == false) {
-            cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
-        }
+        cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
         BuildText(0, vertices);
         return vertices.ToArray();
     }
@@ -456,7 +454,7 @@ public class exSpriteFont : exSpriteBase {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public override void OnPreAddToLayer () {
+    protected override void OnPreAddToLayer () {
         exDebug.Assert(layer_ == null);
         if (layer_ == null) {
             UpdateCapacity();
@@ -902,6 +900,7 @@ public class exSpriteFont : exSpriteBase {
         //            if (useOutline_) {
         //                textLength += (text_.Length * 4);
         //            }
+        exDebug.Assert (textLength <= exMesh.MAX_QUAD_COUNT);
         int textCapacity = _oldTextCapacity;
 #if UNITY_EDITOR && !EX_DEBUG
         if (UnityEditor.EditorApplication.isPlaying == false) {
@@ -928,7 +927,6 @@ public class exSpriteFont : exSpriteBase {
         else {
             textCapacity = textLength;
         }
-        exDebug.Assert (textCapacity <= exMesh.MAX_QUAD_COUNT);
         if (textCapacity > exMesh.MAX_QUAD_COUNT) {
             textCapacity = exMesh.MAX_QUAD_COUNT;
         }

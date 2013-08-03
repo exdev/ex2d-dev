@@ -435,8 +435,6 @@ public class exLayer : MonoBehaviour
             oldLayer.Remove(_sprite);
         }
 
-        _sprite.OnPreAddToLayer();
-
         exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase>(true);
         for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
             exSpriteBase sprite = spritesToAdd[spriteIndex];
@@ -444,8 +442,9 @@ public class exLayer : MonoBehaviour
             Material mat = sprite.material;
             if (mat == null) {
                 Debug.LogError("no material assigned in sprite", sprite);
-                return;
+                continue;
             }
+
             sprite.layer = this;
 
             // Check sprite id

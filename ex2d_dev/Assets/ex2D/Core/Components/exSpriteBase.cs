@@ -227,6 +227,10 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             return layer_;
         }
         internal set {
+            if (value != null) {
+                exDebug.Assert(layer_ == null, "Sprite should remove from last layer before add to new one");
+                OnPreAddToLayer();
+            }
             layer_ = value;
         }
     }
@@ -397,7 +401,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public virtual void OnPreAddToLayer () { }
+    protected virtual void OnPreAddToLayer () { }
 
 #region Functions used to update geometry buffer.
 

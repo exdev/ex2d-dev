@@ -236,9 +236,7 @@ public class exSprite : exSpriteBase {
         for (int i = 0; i < vertexCount; ++i) {
             vertices.Add(new Vector3());
         }
-        if (cachedTransform.hasChanged == false) {
-            cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
-        }
+        cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
         UpdateVertexBuffer(vertices, 0);
         return vertices.ToArray();
     }
