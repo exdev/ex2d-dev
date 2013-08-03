@@ -45,6 +45,7 @@ partial class exAtlasEditor : EditorWindow {
     Vector2 scrollPos = Vector2.zero;
     List<exTextureInfo> selectedTextureInfos = new List<exTextureInfo>();
     Rect atlasRect = new Rect( 0, 0, 1, 1 );
+    Rect scrollViewRect = new Rect( 0, 0, 1, 1 );
 
     // GUI options 
     bool lockCurEdit = false; 
@@ -218,6 +219,10 @@ partial class exAtlasEditor : EditorWindow {
             EditorGUILayout.EndHorizontal();
 
             //
+            Rect lastRect = GUILayoutUtility.GetLastRect();
+            CalculateScrollViewRect( new Rect( 0, 0, lastRect.xMax, lastRect.yMax ),
+                                     false, 
+                                     false );
             ProcessEvents();
             rectSelection.SetSelection(selectedTextureInfos.ToArray());
             rectSelection.OnGUI();
@@ -765,6 +770,27 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawTextureInfo ( Rect _rect, exTextureInfo _textureInfo ) {
+        // calculate scroll view rect in altas space plus atlas clipped rect
+        Rect scrollViewRectInAtlasSpace = scrollViewRect;
+        scrollViewRectInAtlasSpace.xMin = Mathf.Max( scrollViewRectInAtlasSpace.xMin, atlasRect.xMin); 
+        scrollViewRectInAtlasSpace.xMax = Mathf.Min( scrollViewRectInAtlasSpace.xMax, atlasRect.xMax); 
+        scrollViewRectInAtlasSpace.yMin = Mathf.Max( scrollViewRectInAtlasSpace.yMin, atlasRect.yMin); 
+        scrollViewRectInAtlasSpace.yMax = Mathf.Min( scrollViewRectInAtlasSpace.yMax, atlasRect.yMax); 
+        scrollViewRectInAtlasSpace = new Rect( scrollViewRectInAtlasSpace.x - atlasRect.x,
+                                               scrollViewRectInAtlasSpace.y - atlasRect.y,
+                                               scrollViewRectInAtlasSpace.width,
+                                               scrollViewRectInAtlasSpace.height ); 
+
+        // check if we've been clipped
+        if ( _rect.xMin >= scrollViewRectInAtlasSpace.xMax )
+            return;
+        if ( _rect.xMax <= scrollViewRectInAtlasSpace.xMin )
+            return;
+        if ( _rect.yMin >= scrollViewRectInAtlasSpace.yMax )
+            return;
+        if ( _rect.yMax <= scrollViewRectInAtlasSpace.yMin )
+            return;
+
         Color old = GUI.color;
         GUI.color = curEdit.elementBgColor;
             GUI.DrawTexture( _rect, EditorGUIUtility.whiteTexture );
@@ -773,20 +799,52 @@ partial class exAtlasEditor : EditorWindow {
         Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( _textureInfo.rawTextureGUID );
         if ( rawTexture ) {
             if ( _textureInfo.rotated ) {
-                float xStart = (float)_textureInfo.trim_x/(float)rawTexture.width;
-                float xEnd = xStart + (float)_textureInfo.width/(float)rawTexture.width;
-                float yStart = (float)_textureInfo.trim_y/(float)rawTexture.height;
-                float yEnd = yStart + (float)_textureInfo.height/(float)rawTexture.height;
+                Rect clippedRect = _rect;
+                float trim_x = (float)_textureInfo.trim_x;
+                float trim_y = (float)_textureInfo.trim_y;
+                float trim_width = (float)_textureInfo.width;
+                float trim_height = (float)_textureInfo.height;
+
+                if ( _rect.xMax > scrollViewRectInAtlasSpace.xMax ) {
+                    float delta = (_rect.xMax - scrollViewRectInAtlasSpace.xMax)/_rect.width * (float)_textureInfo.height;
+                    trim_height -= delta;
+                    trim_y += delta;
+                    clippedRect.width -= (_rect.xMax - scrollViewRectInAtlasSpace.xMax);
+                }
+                if ( _rect.yMax > scrollViewRectInAtlasSpace.yMax ) {
+                    float delta = (_rect.yMax - scrollViewRectInAtlasSpace.yMax)/_rect.height * (float)_textureInfo.width;
+                    trim_width -= delta;
+                    trim_x += delta;
+                    clippedRect.height -= (_rect.yMax - scrollViewRectInAtlasSpace.yMax);
+                }
+
+                if ( _rect.xMin < scrollViewRectInAtlasSpace.xMin ) {
+                    float delta = (scrollViewRectInAtlasSpace.xMin - _rect.xMin)/_rect.width * (float)_textureInfo.height;
+                    trim_height -= delta;
+                    clippedRect.width -= (scrollViewRectInAtlasSpace.xMin - _rect.xMin);
+                    clippedRect.x += (scrollViewRectInAtlasSpace.xMin - _rect.xMin);
+                }
+                if ( _rect.yMin < scrollViewRectInAtlasSpace.yMin ) {
+                    float delta = (scrollViewRectInAtlasSpace.yMin - _rect.yMin)/_rect.height * (float)_textureInfo.width;
+                    trim_width -= delta;
+                    clippedRect.height -= (scrollViewRectInAtlasSpace.yMin - _rect.yMin);
+                    clippedRect.y += (scrollViewRectInAtlasSpace.yMin - _rect.yMin);
+                }
+
+                float xStart = trim_x/(float)rawTexture.width;
+                float xEnd = xStart + trim_width/(float)rawTexture.width;
+                float yStart = trim_y/(float)rawTexture.height;
+                float yEnd = yStart + trim_height/(float)rawTexture.height;
 
                 quadMaterial.mainTexture = rawTexture;
                 quadMaterial.SetPass(0);
 
                 quadMesh.hideFlags = HideFlags.DontSave;
                 quadMesh.vertices = new Vector3[] {
-                    new Vector3 ( _rect.x, _rect.y, 0.0f ),
-                    new Vector3 ( _rect.x, _rect.y + _rect.height, 0.0f ),
-                    new Vector3 ( _rect.x + _rect.width, _rect.y + _rect.height, 0.0f ),
-                    new Vector3 ( _rect.x + _rect.width, _rect.y, 0.0f ),
+                    new Vector3 ( clippedRect.x, clippedRect.y, 0.0f ),
+                    new Vector3 ( clippedRect.x, clippedRect.y + clippedRect.height, 0.0f ),
+                    new Vector3 ( clippedRect.x + clippedRect.width, clippedRect.y + clippedRect.height, 0.0f ),
+                    new Vector3 ( clippedRect.x + clippedRect.width, clippedRect.y, 0.0f ),
                 };
                 quadMesh.uv = new Vector2[] {
                     new Vector2 ( xEnd, yEnd ),
@@ -818,6 +876,40 @@ partial class exAtlasEditor : EditorWindow {
 
         if ( selectedTextureInfos.IndexOf(_textureInfo) != -1 ) {
             exEditorUtility.DrawRectBorder( _rect, curEdit.elementSelectColor );
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void CalculateScrollViewRect ( Rect _viewRect, bool _alwaysShowHorizontal, bool _alwaysShowVertical ) {
+        Event e = Event.current;
+        if ( e.type != EventType.Layout && e.type != EventType.Used ) {
+            bool flag = _alwaysShowVertical;
+            bool flag2 = _alwaysShowHorizontal;
+            GUIStyle horizontalScrollbar = GUI.skin.horizontalScrollbar;
+            GUIStyle verticalScrollbar = GUI.skin.verticalScrollbar;
+			Rect screenRect = new Rect( 0, 0, position.width, position.height );
+
+            if ( flag2 || _viewRect.width > screenRect.width ) {
+                screenRect.height -= horizontalScrollbar.fixedHeight + (float)horizontalScrollbar.margin.top;
+                flag2 = true;
+            }
+            if ( flag || _viewRect.height > screenRect.height ) {
+                screenRect.width -= verticalScrollbar.fixedWidth + (float)verticalScrollbar.margin.left;
+                flag = true;
+                if ( !flag2 && _viewRect.width > screenRect.width ) {
+                    screenRect.height -= horizontalScrollbar.fixedHeight + (float)horizontalScrollbar.margin.top;
+                    flag2 = true;
+                }
+            }
+
+            float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
+            scrollViewRect = screenRect;
+            scrollViewRect.x += scrollPos.x;
+            scrollViewRect.y += scrollPos.y;
+            scrollViewRect.height -= toolbarHeight;
         }
     }
 
