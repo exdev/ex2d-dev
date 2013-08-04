@@ -333,14 +333,13 @@ public class exMesh : MonoBehaviour
         }
     }
 
-#if UNITY_EDITOR || EX_DEBUG
-
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
 
     [System.Diagnostics.Conditional("UNITY_EDITOR"), System.Diagnostics.Conditional("EX_DEBUG")]
     void UpdateDebugName (string layerName = null) {
+#if UNITY_EDITOR || EX_DEBUG
         if (string.IsNullOrEmpty(layerName)) {
             string[] splitted = gameObject.name.Split('@');
             if (splitted.Length > 0) {
@@ -359,8 +358,6 @@ public class exMesh : MonoBehaviour
         }
         newName += ("@" + layerName);
         gameObject.name = newName;
-    }
-
 #endif
-
+    }
 }

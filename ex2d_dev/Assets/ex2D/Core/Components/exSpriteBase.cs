@@ -193,7 +193,10 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     }
 
     /// 用于相同depth的sprite之间的排序
-    [HideInInspector] public int spriteIdInLayer = -1;
+#if !EX_DEBUG
+    [HideInInspector]
+#endif
+    public int spriteIdInLayer = -1;
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized

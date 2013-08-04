@@ -646,4 +646,12 @@ public class exDebugHelper : MonoBehaviour {
         }
 #endif
     }
+    public static void ClearScreen () {
+        instance.pendingLogs.Clear ();
+        instance.logs.Clear ();
+//        for (int i = instance.logs.Count-1; i >= 0; --i) {
+//            LogInfo info = logs [i];
+//            info.Dead ();
+//        }
+    }
 }

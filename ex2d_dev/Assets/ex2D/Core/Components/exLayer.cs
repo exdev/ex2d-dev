@@ -342,7 +342,6 @@ public class exLayer : MonoBehaviour
         meshList.Clear();
     }
     
-#if UNITY_EDITOR
 
     // ------------------------------------------------------------------ 
     /// To update scene view in edit mode immediately
@@ -351,12 +350,12 @@ public class exLayer : MonoBehaviour
 
     [System.Diagnostics.Conditional("UNITY_EDITOR")]
     public void UpdateNowInEditMode () {
+#if UNITY_EDITOR
         if (UnityEditor.EditorApplication.isPlaying == false) {
             UpdateSprites();
         }
-    }
-
 #endif
+    }
     
     ///////////////////////////////////////////////////////////////////////////////
     // Internal Functions
@@ -397,7 +396,6 @@ public class exLayer : MonoBehaviour
         return mesh;
     }
     
-#if UNITY_EDITOR
 
     // ------------------------------------------------------------------ 
     /// To update scene view in edit mode immediately
@@ -406,6 +404,7 @@ public class exLayer : MonoBehaviour
 
     [System.Diagnostics.Conditional("UNITY_EDITOR")]
     public void CheckDuplicated (exSpriteBase _sprite) {
+#if UNITY_EDITOR
         Material mat = _sprite.material;
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
@@ -418,9 +417,8 @@ public class exLayer : MonoBehaviour
                 }
             }
         }
-    }
-
 #endif
+    }
     
     // ------------------------------------------------------------------ 
     /// \param _newSprite 如果为true，则将sprite渲染到其它相同depth的sprite上面

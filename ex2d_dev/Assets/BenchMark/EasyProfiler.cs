@@ -7,12 +7,21 @@ public class EasyProfiler : MonoBehaviour {
     private float beginTime;
 
     string testName;
+    bool showReturnToMenu = false;
+
+    protected virtual void Awake() {
+        useGUILayout = false;
+        Application.targetFrameRate = 6000;
+    }
 
     public void Print (string _info) {
         exDebugHelper.ScreenLog(_info, exDebugHelper.LogType.Normal, null, false);
     }
     public void Print (string _format, params object[] _args) {
         Print(string.Format(_format, _args));
+    }
+    public void ClearScreen () {
+        exDebugHelper.ClearScreen ();
     }
 
     public void RenderProfilerBegin (string _testName) {
@@ -42,7 +51,18 @@ public class EasyProfiler : MonoBehaviour {
     }
 
     [ContextMenu("Test")]
-    public void Test () {
+    public virtual void Test () {
         StartCoroutine("Start");
+    }
+
+    void OnGUI() {
+        if (showReturnToMenu) {
+            if (GUI.Button(new Rect(100, 100, 300, 100), "Return To Menu")) {
+                Main.BackToMenu();
+            }
+        }
+    }
+    public void ShowReturnToMenu (bool _show) {
+        showReturnToMenu = _show;
     }
 }
