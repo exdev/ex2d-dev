@@ -83,21 +83,23 @@ public static class exGeometryUtility {
 
     public static Rect GetAABoundingRect ( Vector3[] _vertices ) {
         Rect boundingRect = new Rect();
-        boundingRect.x = _vertices[0].x;
-        boundingRect.y = _vertices[0].y;
-        for (int i = 1; i < _vertices.Length; ++i) {
-            Vector3 vertex = _vertices[i];
-            if (vertex.x < boundingRect.xMin) {
-                boundingRect.xMin = vertex.x;
-            }
-            else if (vertex.x > boundingRect.xMax) {
-                boundingRect.xMax = vertex.x;
-            }
-            if (vertex.y < boundingRect.yMin) {
-                boundingRect.yMin = vertex.y;
-            }
-            else if (vertex.y > boundingRect.yMax) {
-                boundingRect.yMax = vertex.y;
+        if (_vertices.Length > 0) {
+            boundingRect.x = _vertices[0].x;
+            boundingRect.y = _vertices[0].y;
+            for (int i = 1; i < _vertices.Length; ++i) {
+                Vector3 vertex = _vertices[i];
+                if (vertex.x < boundingRect.xMin) {
+                    boundingRect.xMin = vertex.x;
+                }
+                else if (vertex.x > boundingRect.xMax) {
+                    boundingRect.xMax = vertex.x;
+                }
+                if (vertex.y < boundingRect.yMin) {
+                    boundingRect.yMin = vertex.y;
+                }
+                else if (vertex.y > boundingRect.yMax) {
+                    boundingRect.yMax = vertex.y;
+                }
             }
         }
         return boundingRect;

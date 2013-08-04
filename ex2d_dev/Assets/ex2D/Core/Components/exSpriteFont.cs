@@ -445,7 +445,7 @@ public class exSpriteFont : exSpriteBase {
         for (int i = 0; i < visibleVertexCount; ++i) {
             vertices.Add(new Vector3());
         }
-        cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
+        cachedWorldMatrix = cachedTransform.localToWorldMatrix;
         BuildText(0, vertices);
         return vertices.ToArray();
     }
@@ -956,7 +956,7 @@ public class exSpriteFont : exSpriteBase {
                 // re-add to layer
                 lockCapacity = true;
                 myLayer.Add(this);
-                Debug.Log("Update Capacity");
+                //Debug.Log("Update Capacity");
                 lockCapacity = false;
             }
             else {
