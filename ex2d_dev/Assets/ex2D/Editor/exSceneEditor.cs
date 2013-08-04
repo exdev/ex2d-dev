@@ -819,7 +819,7 @@ class exSceneEditor : EditorWindow {
 
     void DrawBoundingRect ( exSpriteBase _node ) {
         Vector3[] vertices = _node.GetVertices();
-        if ( _node is exSprite ) {
+        if ( _node is exSprite || _node is exSpriteFont ) {
             exEditorUtility.DrawRectLine ( vertices, Color.white );
         }
     }
@@ -1057,15 +1057,11 @@ class exSceneEditor : EditorWindow {
     }
 
     Rect MapBoundingRect ( Rect _rect, exSpriteBase _node ) {
-        exSprite sprite = _node as exSprite;
+        exSpriteBase spriteBase = _node as exSpriteBase;
         Vector2 screenPos = Vector2.zero;
 
-        if ( sprite ) {
-            // Rect boundingRect = new Rect ( screenPos.x - sprite.textureInfo.rotatedWidth/2.0f * scale,
-            //                                screenPos.y - sprite.textureInfo.rotatedHeight/2.0f * scale,
-            //                                sprite.textureInfo.rotatedWidth * scale,
-            //                                sprite.textureInfo.rotatedHeight * scale );
-            Rect boundingRect = sprite.GetAABoundingRect();
+        if ( spriteBase ) {
+            Rect boundingRect = spriteBase.GetAABoundingRect();
             screenPos = SceneField_WorldToScreen ( _rect, boundingRect.center );
             boundingRect = new Rect ( screenPos.x - boundingRect.width * scale / 2.0f,
                                       screenPos.y - boundingRect.height * scale / 2.0f,

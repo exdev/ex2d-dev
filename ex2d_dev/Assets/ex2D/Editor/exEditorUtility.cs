@@ -239,17 +239,19 @@ public static class exEditorUtility {
         GL.Begin( GL.LINES );
             GL.Color(_color);
 
-            GL.Vertex3( _points[0].x, _points[0].y, 0.0f );
-            GL.Vertex3( _points[1].x, _points[1].y, 0.0f );
+            for ( int i = 0; i < _points.Length; i += 4 ) {
+                GL.Vertex3( _points[i+0].x, _points[i+0].y, 0.0f );
+                GL.Vertex3( _points[i+1].x, _points[i+1].y, 0.0f );
 
-            GL.Vertex3( _points[1].x, _points[1].y, 0.0f );
-            GL.Vertex3( _points[2].x, _points[2].y, 0.0f );
+                GL.Vertex3( _points[i+1].x, _points[i+1].y, 0.0f );
+                GL.Vertex3( _points[i+2].x, _points[i+2].y, 0.0f );
 
-            GL.Vertex3( _points[2].x, _points[2].y, 0.0f );
-            GL.Vertex3( _points[3].x, _points[3].y, 0.0f );
+                GL.Vertex3( _points[i+2].x, _points[i+2].y, 0.0f );
+                GL.Vertex3( _points[i+3].x, _points[i+3].y, 0.0f );
 
-            GL.Vertex3( _points[3].x, _points[3].y, 0.0f );
-            GL.Vertex3( _points[0].x, _points[0].y, 0.0f );
+                GL.Vertex3( _points[i+3].x, _points[i+3].y, 0.0f );
+                GL.Vertex3( _points[i+0].x, _points[i+0].y, 0.0f );
+            }
         GL.End();
     }
 

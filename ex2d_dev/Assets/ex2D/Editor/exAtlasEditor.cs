@@ -772,10 +772,10 @@ partial class exAtlasEditor : EditorWindow {
     void DrawTextureInfo ( Rect _rect, exTextureInfo _textureInfo ) {
         // calculate scroll view rect in altas space plus atlas clipped rect
         Rect scrollViewRectInAtlasSpace = scrollViewRect;
-        scrollViewRectInAtlasSpace.xMin = Mathf.Max( scrollViewRectInAtlasSpace.xMin, atlasRect.xMin); 
-        scrollViewRectInAtlasSpace.xMax = Mathf.Min( scrollViewRectInAtlasSpace.xMax, atlasRect.xMax); 
-        scrollViewRectInAtlasSpace.yMin = Mathf.Max( scrollViewRectInAtlasSpace.yMin, atlasRect.yMin); 
-        scrollViewRectInAtlasSpace.yMax = Mathf.Min( scrollViewRectInAtlasSpace.yMax, atlasRect.yMax); 
+        scrollViewRectInAtlasSpace.xMin = Mathf.Max( scrollViewRectInAtlasSpace.xMin, atlasRect.xMin ); 
+        scrollViewRectInAtlasSpace.xMax = Mathf.Min( scrollViewRectInAtlasSpace.xMax, atlasRect.xMax ); 
+        scrollViewRectInAtlasSpace.yMin = Mathf.Max( scrollViewRectInAtlasSpace.yMin, atlasRect.yMin ); 
+        scrollViewRectInAtlasSpace.yMax = Mathf.Min( scrollViewRectInAtlasSpace.yMax, atlasRect.yMax ); 
         scrollViewRectInAtlasSpace = new Rect( scrollViewRectInAtlasSpace.x - atlasRect.x,
                                                scrollViewRectInAtlasSpace.y - atlasRect.y,
                                                scrollViewRectInAtlasSpace.width,
