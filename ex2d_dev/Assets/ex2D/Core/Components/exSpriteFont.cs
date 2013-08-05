@@ -393,10 +393,12 @@ public class exSpriteFont : exSpriteBase {
         }
 #endif
         if ((updateFlags & exUpdateFlags.Text) != 0) {
-            BuildText(vertexBufferIndex, _vertices, _uvs);
+            exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
+            BuildText(_vertices, vertexBufferIndex, ref cachedWorldMatrix, _uvs);
         }
         else if ((updateFlags & exUpdateFlags.Vertex) != 0) {
-            BuildText(vertexBufferIndex, _vertices);
+            exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
+            BuildText(_vertices, vertexBufferIndex, ref cachedWorldMatrix);
         }
         if ((updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
             // update index buffer
@@ -432,7 +434,7 @@ public class exSpriteFont : exSpriteBase {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public override Vector3[] GetVertices () {
+    protected override Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix) {
 //#if UNITY_EDITOR
 //        if (layer_ != null || vertexCountCapacity < text_.Length * exMesh.QUAD_VERTEX_COUNT) {
 //            Debug.LogError("[UpdateBuffers|exSpriteFont] 顶点缓冲长度不够，是否绕开属性直接修改了text_?");
@@ -445,8 +447,7 @@ public class exSpriteFont : exSpriteBase {
         for (int i = 0; i < visibleVertexCount; ++i) {
             vertices.Add(new Vector3());
         }
-        cachedWorldMatrix = cachedTransform.localToWorldMatrix;
-        BuildText(0, vertices);
+        BuildText(vertices, 0, ref _spriteMatrix);
         return vertices.ToArray();
     }
 
@@ -675,7 +676,7 @@ public class exSpriteFont : exSpriteBase {
     // Desc:
     // ------------------------------------------------------------------ 
     
-    void BuildText (int _vbIndex, List<Vector3> _vertices, List<Vector2> _uvs = null) {
+    void BuildText (List<Vector3> _vertices, int _vbIndex, ref Matrix4x4 _spriteMatrix, List<Vector2> _uvs = null) {
         width_ = 0.0f;    // 和SpriteBase一致，用于表示实际宽度
         height_ = 0.0f;   // 和SpriteBase一致，用于表示实际高度
 
@@ -762,7 +763,6 @@ public class exSpriteFont : exSpriteBase {
         anchorOffsetX += offset_.x;
         anchorOffsetY += offset_.y;
 
-        exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
         for (int i = _vbIndex; i < vbEnd; i += 4) {
             Vector3 v0 = _vertices[i + 0];
             Vector3 v1 = _vertices[i + 1];
@@ -774,15 +774,15 @@ public class exSpriteFont : exSpriteBase {
             v2.x += anchorOffsetX; v2.y += anchorOffsetY;
             v3.x += anchorOffsetX; v3.y += anchorOffsetY;
             // apply transform
-            v0 = cachedWorldMatrix.MultiplyPoint3x4(v0);
-            v1 = cachedWorldMatrix.MultiplyPoint3x4(v1);
-            v2 = cachedWorldMatrix.MultiplyPoint3x4(v2);
-            v3 = cachedWorldMatrix.MultiplyPoint3x4(v3);
+            v0 = _spriteMatrix.MultiplyPoint3x4(v0);
+            v1 = _spriteMatrix.MultiplyPoint3x4(v1);
+            v2 = _spriteMatrix.MultiplyPoint3x4(v2);
+            v3 = _spriteMatrix.MultiplyPoint3x4(v3);
 
             v0.z = 0; v1.z = 0; v2.z = 0; v3.z = 0;
             // shear
             if (shear_.x != 0) {
-                float worldScaleY = (new Vector3(cachedWorldMatrix.m01, cachedWorldMatrix.m11, cachedWorldMatrix.m21)).magnitude;
+                float worldScaleY = (new Vector3(_spriteMatrix.m01, _spriteMatrix.m11, _spriteMatrix.m21)).magnitude;
                 float offsetX = worldScaleY * shear_.x;
                 float topOffset = offsetX * (height_ * 0.5f + anchorOffsetY);
                 float botOffset = offsetX * (-height_ * 0.5f + anchorOffsetY);
@@ -792,7 +792,7 @@ public class exSpriteFont : exSpriteBase {
                 v3.x += botOffset;
             }
             if (shear_.y != 0) {
-                float worldScaleX = (new Vector3(cachedWorldMatrix.m00, cachedWorldMatrix.m10, cachedWorldMatrix.m20)).magnitude;
+                float worldScaleX = (new Vector3(_spriteMatrix.m00, _spriteMatrix.m10, _spriteMatrix.m20)).magnitude;
                 float offsetY = worldScaleX * shear_.y;
                 float leftOffset = offsetY * (-width_ * 0.5f + anchorOffsetX);
                 float rightOffset = offsetY * (width_ * 0.5f + anchorOffsetX);

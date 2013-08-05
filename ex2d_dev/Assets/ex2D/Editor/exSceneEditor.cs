@@ -838,7 +838,7 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawBoundingRect ( exSpriteBase _node ) {
-        Vector3[] vertices = _node.GetVertices();
+        Vector3[] vertices = _node.GetWorldVertices();
         if ( _node is exSprite || _node is exSpriteFont ) {
             exEditorUtility.DrawRectLine ( vertices, Color.white );
         }

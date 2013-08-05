@@ -432,12 +432,30 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // ------------------------------------------------------------------ 
 
     internal abstract exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices = null);
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected abstract Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix);
+        
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public Vector3[] GetLocalVertices () {
+        Matrix4x4 scaleMatrix = Matrix4x4.Scale(cachedTransform_.localScale);
+        return GetVertices(ref scaleMatrix);
+    }
     
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public abstract Vector3[] GetVertices ();
+    public Vector3[] GetWorldVertices () {
+        Matrix4x4 l2w = cachedTransform_.localToWorldMatrix;
+        return GetVertices(ref l2w);
+    }
 
 #if UNITY_EDITOR
 
@@ -471,10 +489,10 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // ------------------------------------------------------------------ 
 
     public Rect GetAABoundingRect () {
-        Vector3[] vertices = GetVertices();
+        Vector3[] vertices = GetWorldVertices();
         return exGeometryUtility.GetAABoundingRect(vertices);
     }
-    
+
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
