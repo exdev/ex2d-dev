@@ -92,6 +92,7 @@ class exSceneEditor : EditorWindow {
     int firstResolutionIdx = 0;
     int secondResolutionIdx = 0;
     string[] resolutionList = new string[] { 
+        "None",
         "320 x 480 (iPhone3 Tall)",  // iPhone3 Tall
         "480 x 320 (iPhone3 Wide)",  // iPhone3 Wide
         "640 x 960 (iPhone4 Tall)",  // iPhone4 Tall
@@ -100,6 +101,7 @@ class exSceneEditor : EditorWindow {
         "1136 x 640 (iPhone5 Wide)", // iPhone5 Wide
         "768 x 1024 (iPad Tall)",    // iPad Tall
         "1024 x 768 (iPad Wide)",    // iPad Wide
+        "Custom",
     };
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -154,6 +156,9 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void OnInspectorUpdate () {
+        // TODO: this make selection can not select exMeshes, confirm with Jare { 
+        // ex2DMng.instance.ForceRenderScene();
+        // } TODO end 
         Repaint();
     }
 
@@ -347,12 +352,12 @@ class exSceneEditor : EditorWindow {
                                            GUILayout.ExpandWidth(false),
                                        } );
         GUILayout.Space(10);
-        EditorGUILayout.BeginVertical( settingsStyles.boxBackground );
 
-            // ======================================================== 
-            // General 
-            // ======================================================== 
+        // ======================================================== 
+        // General 
+        // ======================================================== 
 
+        EditorGUILayout.BeginVertical();
             EditorGUILayout.LabelField ( "General", settingsStyles.boldLabel );
             EditorGUILayout.ObjectField ( ""
                                           , ex2DMng.instance
@@ -360,18 +365,28 @@ class exSceneEditor : EditorWindow {
                                           , false 
                                         );
 
-            firstResolutionIdx = EditorGUILayout.Popup ( "1st Resolution", firstResolutionIdx, resolutionList );
-            secondResolutionIdx = EditorGUILayout.Popup ( "2nd Resolution", secondResolutionIdx, resolutionList );
+            // Color oldContentColor = GUI.contentColor;
+                // GUI.contentColor = Color.yellow;
+                firstResolutionIdx = EditorGUILayout.Popup ( "1st Resolution", firstResolutionIdx, resolutionList );
 
-            // ======================================================== 
-            // Layers 
-            // ======================================================== 
+                // GUI.contentColor = Color.red;
+                secondResolutionIdx = EditorGUILayout.Popup ( "2nd Resolution", secondResolutionIdx, resolutionList );
+            // GUI.contentColor = oldContentColor;
 
-            EditorGUILayout.Space();
+        EditorGUILayout.Space();
+        EditorGUILayout.Space();
+
+        // ======================================================== 
+        // Layers 
+        // ======================================================== 
+
+        EditorGUILayout.BeginVertical( settingsStyles.boxBackground );
             EditorGUILayout.LabelField ( "Layers", settingsStyles.boldLabel );
             GUILayout.Space(2);
 
             Layout_LayerElementsField();
+
+        EditorGUILayout.EndVertical();
 
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
@@ -724,8 +739,8 @@ class exSceneEditor : EditorWindow {
             }
 
             // draw resolution line
-            DrawResolutionRect ( firstResolutionIdx, Color.yellow );
             DrawResolutionRect ( secondResolutionIdx, Color.red );
+            DrawResolutionRect ( firstResolutionIdx, Color.yellow );
 
             // Show a copy icon on the drag
             if ( DragAndDrop.visualMode == DragAndDropVisualMode.Copy ) {
@@ -860,6 +875,9 @@ class exSceneEditor : EditorWindow {
 
         switch ( _idx ) {
         case 0:
+            break;
+
+        case 1:
             exEditorUtility.DrawRectLine ( new Vector3[] {
                                            new Vector3 ( -160.0f, -240.0f, 0.0f ),
                                            new Vector3 ( -160.0f,  240.0f, 0.0f ),
@@ -868,7 +886,7 @@ class exSceneEditor : EditorWindow {
                                            }, _color );
             break;
 
-        case 1:
+        case 2:
             exEditorUtility.DrawRectLine ( new Vector3[] {
                                            new Vector3 ( -240.0f, -160.0f, 0.0f ),
                                            new Vector3 ( -240.0f,  160.0f, 0.0f ),
@@ -877,7 +895,7 @@ class exSceneEditor : EditorWindow {
                                            }, _color );
             break;
 
-        case 2:
+        case 3:
             exEditorUtility.DrawRectLine ( new Vector3[] {
                                            new Vector3 ( -320.0f, -480.0f, 0.0f ),
                                            new Vector3 ( -320.0f,  480.0f, 0.0f ),
@@ -886,7 +904,7 @@ class exSceneEditor : EditorWindow {
                                            }, _color );
             break;
 
-        case 3:
+        case 4:
             exEditorUtility.DrawRectLine ( new Vector3[] {
                                            new Vector3 ( -480.0f, -320.0f, 0.0f ),
                                            new Vector3 ( -480.0f,  320.0f, 0.0f ),
@@ -895,7 +913,7 @@ class exSceneEditor : EditorWindow {
                                            }, _color );
             break;
 
-        case 4:
+        case 5:
             exEditorUtility.DrawRectLine ( new Vector3[] {
                                            new Vector3 ( -320.0f, -568.0f, 0.0f ),
                                            new Vector3 ( -320.0f,  568.0f, 0.0f ),
@@ -904,7 +922,7 @@ class exSceneEditor : EditorWindow {
                                            }, _color );
             break;
 
-        case 5:
+        case 6:
             exEditorUtility.DrawRectLine ( new Vector3[] {
                                            new Vector3 ( -568.0f, -320.0f, 0.0f ),
                                            new Vector3 ( -568.0f,  320.0f, 0.0f ),
@@ -913,7 +931,7 @@ class exSceneEditor : EditorWindow {
                                            }, _color );
             break;
 
-        case 6:
+        case 7:
             exEditorUtility.DrawRectLine ( new Vector3[] {
                                            new Vector3 ( -384.0f, -512.0f, 0.0f ),
                                            new Vector3 ( -384.0f,  512.0f, 0.0f ),
@@ -922,7 +940,7 @@ class exSceneEditor : EditorWindow {
                                            }, _color );
             break;
 
-        case 7:
+        case 8:
             exEditorUtility.DrawRectLine ( new Vector3[] {
                                            new Vector3 ( -512.0f, -384.0f, 0.0f ),
                                            new Vector3 ( -512.0f,  384.0f, 0.0f ),
@@ -1063,8 +1081,27 @@ class exSceneEditor : EditorWindow {
                 trans_rotation = Handles.Disc ( trans_rotation, trans_position, Vector3.forward, handleSize * 0.5f, true, 1 );
 
             if ( EditorGUI.EndChangeCheck() ) {
-                trans.position = trans_position;
-                trans.rotation = trans_rotation;
+                if ( Selection.transforms.Length == 1 ) {
+                    trans.position = trans_position;
+                    trans.rotation = trans_rotation;
+                }
+                else {
+                    Vector3 delta = trans_position - trans.position;
+                    // float deltaAngle = Quaternion.Angle( trans_rotation, trans.rotation );
+
+                    float deltaAngle;
+                    Vector3 axis;
+                    (Quaternion.Inverse(trans.rotation) * trans_rotation).ToAngleAxis(out deltaAngle, out axis);
+                    axis = (Vector3) (trans.rotation * axis);
+
+                    foreach ( Transform transObj in Selection.transforms ) {
+                        transObj.position += delta;
+                        transObj.RotateAround( trans_position, axis, deltaAngle );
+                    }
+
+                    trans.position = trans_position;
+                    trans.rotation = trans_rotation;
+                }
             }
 
             if ( spriteBase ) {
