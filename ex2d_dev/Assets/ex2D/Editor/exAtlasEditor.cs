@@ -731,13 +731,11 @@ partial class exAtlasEditor : EditorWindow {
                         Object[] objs = Selection.GetFiltered( typeof(Texture2D), SelectionMode.DeepAssets);
                         importObjects.AddRange(objs);
 
-                        // TODO { 
-                        // // add exBitmapFont objects
-                        // objs = Selection.GetFiltered( typeof(exBitmapFont), SelectionMode.DeepAssets);
-                        // importObjects.AddRange(objs);
-                        // } TODO end 
+                        // add exBitmapFont objects
+                        objs = Selection.GetFiltered( typeof(exBitmapFont), SelectionMode.DeepAssets);
+                        importObjects.AddRange(objs);
                     }
-                    else if ( o is Texture2D /* TODO || o is exBitmapFont*/ ) {
+                    else if ( o is Texture2D || o is exBitmapFont ) {
                         importObjects.Add(o);
                     }
                 }
@@ -746,7 +744,7 @@ partial class exAtlasEditor : EditorWindow {
 
                 try {
                     exAtlasUtility.ImportObjects ( curEdit, importObjects.ToArray(), (_progress, _info) => {
-                                                      EditorUtility.DisplayProgressBar( "Adding Textures...", _info, _progress );
+                                                      EditorUtility.DisplayProgressBar( "Adding zbjects to Atlas...", _info, _progress );
                                                    } );
                 }
                 finally {

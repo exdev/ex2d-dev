@@ -1005,63 +1005,208 @@ class exSceneEditor : EditorWindow {
             // resize
             exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
             if ( spriteBase && spriteBase.customSize ) {
-                Vector3 center = new Vector3( 0.0f, 0.0f, 0.0f );
+                Vector3[] vertices = spriteBase.GetLocalVertices();
+                Vector3 min = new Vector3 ( float.MaxValue, float.MaxValue, 0.0f );
+                Vector3 max = new Vector3 ( float.MinValue, float.MinValue, 0.0f );
+                foreach ( Vector3 vertex in vertices ) {
+                    if ( vertex.x > max.x )
+                        max.x = vertex.x;
+                    if ( vertex.x < min.x )
+                        min.x = vertex.x;
+
+                    if ( vertex.y > max.y )
+                        max.y = vertex.y;
+                    if ( vertex.y < min.y )
+                        min.y = vertex.y;
+                }
+                Vector3 center = (max + min) * 0.5f;
                 Vector3 size = new Vector3( spriteBase.width, spriteBase.height, 0.0f );
-                Vector3 min = center - size * 0.5f;
-                Vector3 max = center + size * 0.5f;
 
-                Vector3 dir = size.normalized;
-                Vector3 dir_a = new Vector3( dir.x, dir.y, 0.0f );
-                Vector3 dir_b = new Vector3( -dir.x, dir.y, 0.0f );
-                Vector3 dir_up = Vector3.up;
-                Vector3 dir_right = Vector3.right;
+                Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f, center.y + size.y * 0.5f, 0.0f ) );
+                Vector3 tc = trans.TransformPoint ( new Vector3 (                 center.x, center.y + size.y * 0.5f, 0.0f ) );
+                Vector3 tr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f, center.y + size.y * 0.5f, 0.0f ) );
+                Vector3 ml = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,                 center.y, 0.0f ) );
+                // Vector3 mc = trans.TransformPoint ( new Vector3 (                     center.x,                 center.y, 0.0f ) );
+                Vector3 mr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f,                 center.y, 0.0f ) );
+                Vector3 bl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f, center.y - size.y * 0.5f, 0.0f ) );
+                Vector3 bc = trans.TransformPoint ( new Vector3 (                 center.x, center.y - size.y * 0.5f, 0.0f ) );
+                Vector3 br = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f, center.y - size.y * 0.5f, 0.0f ) );
 
-                Vector3 result = Vector3.zero; 
-
-                Matrix4x4 oldMatrix = Handles.matrix;
-                Handles.matrix = trans.localToWorldMatrix;
-                Handles.color = Color.white;
+                Vector3 dir_up = trans.up;
+                Vector3 dir_right = trans.right;
+                Vector3 delta = Vector3.zero;
+                bool changed = false;
 
                 EditorGUI.BeginChangeCheck();
-
-                    result = Handles.Slider ( new Vector3( max.x, 0.0f, 0.0f ), dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
-                    max.x = result.x;
-
-                    result = Handles.Slider ( new Vector3( min.x, 0.0f, 0.0f ), dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
-                    min.x = result.x;
-
-                    result = Handles.Slider ( new Vector3( 0.0f, max.y, 0.0f ), dir_up, handleSize * 0.05f, Handles.DotCap, -1 );
-                    max.y = result.y;
-
-                    result = Handles.Slider ( new Vector3( 0.0f, min.y, 0.0f ), dir_up, handleSize * 0.05f, Handles.DotCap, -1 );
-                    min.y = result.y;
-
-                    result = Handles.Slider ( new Vector3( max.x, max.y, 0.0f ), dir_a, handleSize * 0.05f, Handles.DotCap, -1 );
-                    max = result;
-
-                    result = Handles.Slider ( new Vector3( min.x, max.y, 0.0f ), dir_b, handleSize * 0.05f, Handles.DotCap, -1 );
-                    min.x = result.x;
-                    max.y = result.y;
-
-                    result = Handles.Slider ( new Vector3( max.x, min.y, 0.0f ), dir_b, handleSize * 0.05f, Handles.DotCap, -1 );
-                    max.x = result.x;
-                    min.y = result.y;
-
-                    result = Handles.Slider ( new Vector3( min.x, min.y, 0.0f ), dir_a, handleSize * 0.05f, Handles.DotCap, -1 );
-                    min = result;
-
+                    Vector3 ml2 = Handles.Slider ( ml, dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
                 if ( EditorGUI.EndChangeCheck() ) {
-                    center = (max + min) * 0.5f;
-                    size = (max - min);
+                    delta = ml2 - ml;
+                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    delta = -delta;
+                    size += delta;
+                    center = (ml2 + mr) * 0.5f;
+                    changed = true;
+                }
 
-                    Vector3 pos = trans.TransformPoint(center);
-                    trans_position.x = pos.x;
-                    trans_position.y = pos.y;
-                    trans.position = trans_position;
+                EditorGUI.BeginChangeCheck();
+                    Vector3 mr2 = Handles.Slider ( mr, dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    delta = mr2 - mr;
+                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    size += delta;
+                    center = (mr2 + ml) * 0.5f;
+                    changed = true;
+                }
+
+                EditorGUI.BeginChangeCheck();
+                    Vector3 tc2 = Handles.Slider ( tc, dir_up,    handleSize * 0.05f, Handles.DotCap, -1 );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    delta = tc2 - tc;
+                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    size += delta;
+                    center = (tc2 + bc) * 0.5f;
+                    changed = true;
+                }
+
+                EditorGUI.BeginChangeCheck();
+                    Vector3 bc2 = Handles.Slider ( bc, dir_up,    handleSize * 0.05f, Handles.DotCap, -1 );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    delta = bc2 - bc;
+                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    delta = -delta;
+                    size += delta;
+                    center = (bc2 + tc) * 0.5f;
+                    changed = true;
+                }
+
+                EditorGUI.BeginChangeCheck();
+                    Vector3 tr2 = Handles.FreeMoveHandle ( tr, trans.rotation, handleSize * 0.05f, Vector3.zero, Handles.DotCap );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    delta = tr2 - tr;
+                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    size += delta;
+                    center = (tr2 + bl) * 0.5f;
+                    changed = true;
+                }
+
+                EditorGUI.BeginChangeCheck();
+                    Vector3 tl2 = Handles.FreeMoveHandle ( tl, trans.rotation, handleSize * 0.05f, Vector3.zero, Handles.DotCap );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    delta = tl2 - tl;
+                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    delta.x = -delta.x;
+                    size += delta;
+                    center = (tl2 + br) * 0.5f;
+                    changed = true;
+                }
+
+                EditorGUI.BeginChangeCheck();
+                    Vector3 br2 = Handles.FreeMoveHandle ( br, trans.rotation, handleSize * 0.05f, Vector3.zero, Handles.DotCap );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    delta = br2 - br;
+                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    delta.y = -delta.y;
+                    size += delta;
+                    center = (br2 + tl) * 0.5f;
+                    changed = true;
+                }
+
+                EditorGUI.BeginChangeCheck();
+                    Vector3 bl2 = Handles.FreeMoveHandle ( bl, trans.rotation, handleSize * 0.05f, Vector3.zero, Handles.DotCap );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    delta = bl2 - bl;
+                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    delta = -delta;
+                    size += delta;
+                    center = (bl2 + tr) * 0.5f;
+                    changed = true;
+                }
+
+                if ( changed ) {
                     spriteBase.width = size.x;
                     spriteBase.height = size.y;
+
+                    switch (spriteBase.anchor) {
+                    case Anchor.TopLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*0.5f,  size.y*0.5f, 0.0f ); break;
+                    case Anchor.TopCenter:  trans.position = center + trans.rotation * new Vector3(         0.0f,  size.y*0.5f, 0.0f ); break;
+                    case Anchor.TopRight:   trans.position = center + trans.rotation * new Vector3(  size.x*0.5f,  size.y*0.5f, 0.0f ); break;
+                    case Anchor.MidLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*0.5f,         0.0f, 0.0f ); break;
+                    case Anchor.MidCenter:  trans.position = center;                                                                    break;
+                    case Anchor.MidRight:   trans.position = center + trans.rotation * new Vector3(  size.x*0.5f,         0.0f, 0.0f ); break;
+                    case Anchor.BotLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*0.5f, -size.y*0.5f, 0.0f ); break;
+                    case Anchor.BotCenter:  trans.position = center + trans.rotation * new Vector3(         0.0f, -size.y*0.5f, 0.0f ); break;
+                    case Anchor.BotRight:   trans.position = center + trans.rotation * new Vector3(  size.x*0.5f, -size.y*0.5f, 0.0f ); break;
+                    }
                 }
-                Handles.matrix = oldMatrix;
+
+                // Vector3 size = new Vector3( spriteBase.width, spriteBase.height, 0.0f );
+                // Vector3 center = new Vector3( 0.0f, 0.0f, 0.0f );
+                // switch (spriteBase.anchor) {
+                // case Anchor.TopLeft:    center = new Vector3(  size.x*0.5f, -size.y*0.5f, 0.0f ); break;
+                // case Anchor.TopCenter:  center = new Vector3(         0.0f, -size.y*0.5f, 0.0f ); break;
+                // case Anchor.TopRight:   center = new Vector3( -size.x*0.5f, -size.y*0.5f, 0.0f ); break;
+                // case Anchor.MidLeft:    center = new Vector3(  size.x*0.5f,         0.0f, 0.0f ); break;
+                // case Anchor.MidCenter:  center = new Vector3(         0.0f,         0.0f, 0.0f ); break;
+                // case Anchor.MidRight:   center = new Vector3( -size.x*0.5f,         0.0f, 0.0f ); break;
+                // case Anchor.BotLeft:    center = new Vector3(  size.x*0.5f,  size.y*0.5f, 0.0f ); break;
+                // case Anchor.BotCenter:  center = new Vector3(         0.0f,  size.y*0.5f, 0.0f ); break;
+                // case Anchor.BotRight:   center = new Vector3( -size.x*0.5f,  size.y*0.5f, 0.0f ); break;
+                // }
+                // Vector3 min = center - size * 0.5f;
+                // Vector3 max = center + size * 0.5f;
+
+                // Vector3 dir = size.normalized;
+                // Vector3 dir_a = new Vector3( dir.x, dir.y, 0.0f );
+                // Vector3 dir_b = new Vector3( -dir.x, dir.y, 0.0f );
+                // Vector3 dir_up = Vector3.up;
+                // Vector3 dir_right = Vector3.right;
+
+                // Vector3 result = Vector3.zero; 
+
+                // Matrix4x4 oldMatrix = Handles.matrix;
+                // Handles.matrix = trans.localToWorldMatrix;
+                // Handles.color = Color.white;
+
+                // EditorGUI.BeginChangeCheck();
+
+                //     result = Handles.Slider ( new Vector3( max.x, 0.0f, 0.0f ), dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
+                //     max.x = result.x;
+
+                //     result = Handles.Slider ( new Vector3( min.x, 0.0f, 0.0f ), dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
+                //     min.x = result.x;
+
+                //     result = Handles.Slider ( new Vector3( 0.0f, max.y, 0.0f ), dir_up, handleSize * 0.05f, Handles.DotCap, -1 );
+                //     max.y = result.y;
+
+                //     result = Handles.Slider ( new Vector3( 0.0f, min.y, 0.0f ), dir_up, handleSize * 0.05f, Handles.DotCap, -1 );
+                //     min.y = result.y;
+
+                //     result = Handles.Slider ( new Vector3( max.x, max.y, 0.0f ), dir_a, handleSize * 0.05f, Handles.DotCap, -1 );
+                //     max = result;
+
+                //     result = Handles.Slider ( new Vector3( min.x, max.y, 0.0f ), dir_b, handleSize * 0.05f, Handles.DotCap, -1 );
+                //     min.x = result.x;
+                //     max.y = result.y;
+
+                //     result = Handles.Slider ( new Vector3( max.x, min.y, 0.0f ), dir_b, handleSize * 0.05f, Handles.DotCap, -1 );
+                //     max.x = result.x;
+                //     min.y = result.y;
+
+                //     result = Handles.Slider ( new Vector3( min.x, min.y, 0.0f ), dir_a, handleSize * 0.05f, Handles.DotCap, -1 );
+                //     min = result;
+
+                // if ( EditorGUI.EndChangeCheck() ) {
+                //     center = (max + min) * 0.5f;
+                //     size = (max - min);
+
+                //     Vector3 pos = trans.TransformPoint(center);
+                //     trans_position.x = pos.x;
+                //     trans_position.y = pos.y;
+                //     trans.position = trans_position;
+                //     spriteBase.width = size.x;
+                //     spriteBase.height = size.y;
+                // }
+                // Handles.matrix = oldMatrix;
             }
 
             EditorGUI.BeginChangeCheck();
