@@ -692,11 +692,6 @@ public static class exAtlasUtility {
             }
         }
 
-        if ( _atlas.textureInfos.Count > 0 ) {
-            _atlas.name = ".atlas";
-            AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(_atlas) );
-        }
-
         EditorUtility.SetDirty(_atlas);
     }
 
