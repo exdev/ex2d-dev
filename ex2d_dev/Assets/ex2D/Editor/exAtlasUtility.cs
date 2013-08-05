@@ -611,7 +611,7 @@ public static class exAtlasUtility {
         bool noToAll = false;
         for ( int i = 0; i < _objects.Length; ++i ) {
             Object o = _objects[i];
-            _progress( 0.2f + (float)i/(float)_objects.Length * 0.8f, "Add texture " + o.name );
+            _progress( 0.2f + (float)i/(float)_objects.Length * 0.8f, "Add element " + o.name );
 
             if ( o is Texture2D ) {
                 Texture2D rawTexture = o as Texture2D;
@@ -674,6 +674,21 @@ public static class exAtlasUtility {
 
                 if ( _atlas.textureInfos.IndexOf(textureInfo) == -1 )
                     _atlas.textureInfos.Add(textureInfo);
+            }
+            else {
+                Object rawFontInfo = o;
+                if ( o is exBitmapFont ) {
+                    exBitmapFont bitmapFont = o as exBitmapFont;
+                    rawFontInfo = exEditorUtility.LoadAssetFromGUID<Object>( bitmapFont.rawFontGUID );
+                    if ( rawFontInfo == null ) {
+                        Debug.LogWarning ( "Can't not find raw font info from " + bitmapFont.name );
+                    }
+                }
+
+                if ( rawFontInfo != null && exBitmapFontUtility.IsFontInfo(rawFontInfo) ) {
+                    // TODO:
+                }
+
             }
         }
 

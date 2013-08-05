@@ -56,17 +56,15 @@ public static class MenuItems {
     [MenuItem ("Assets/Create/ex2D/Bitmap Font", false, 1003)]
     static void ex2D_CreateBitmapFont () {
         Object fontInfo = Selection.activeObject; // font info is a ".txt" or ".fnt" text file
-        string fontInfoPath = AssetDatabase.GetAssetPath(fontInfo);
-        bool isFontInfo = (Path.GetExtension(fontInfoPath) == ".txt" || 
-                           Path.GetExtension(fontInfoPath) == ".fnt");
 
         // check if this is a font info
-        if ( isFontInfo == false ) {
+        if ( exBitmapFontUtility.IsFontInfo(fontInfo) == false ) {
             Debug.LogError ( "The file you choose to parse is not a font-info file. Must be \".txt\", \".fnt\" file" );
             return;
         }
 
         // check if the bitmapfont asset already exists
+        string fontInfoPath = AssetDatabase.GetAssetPath(fontInfo);
         string dirPath = Path.GetDirectoryName(fontInfoPath);
         string path = Path.Combine( dirPath, fontInfo.name + ".asset" );
         FileInfo fileInfo = new FileInfo(path);

@@ -137,4 +137,15 @@ public static class exBitmapFontUtility {
 
         return true;
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static bool IsFontInfo ( Object _obj ) {
+        string fontInfoPath = AssetDatabase.GetAssetPath(_obj);
+        bool isFontInfo = (Path.GetExtension(fontInfoPath) == ".txt" || 
+                           Path.GetExtension(fontInfoPath) == ".fnt");
+        return isFontInfo;
+    } 
 }
