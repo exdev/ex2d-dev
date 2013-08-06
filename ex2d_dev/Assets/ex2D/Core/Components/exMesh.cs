@@ -44,6 +44,8 @@ public enum exUpdateFlags {
 [RequireComponent(typeof(MeshRenderer))]
 public class exMesh : MonoBehaviour
 {
+    public static bool enableDoubleBuffer = true;   // for profiling
+
     public const int QUAD_INDEX_COUNT = 6;
     public const int QUAD_VERTEX_COUNT = 4;
     public const int MAX_VERTEX_COUNT = 65000;
@@ -54,9 +56,9 @@ public class exMesh : MonoBehaviour
     // 这个类由exLayer动态创建的，不会进行任何序列化操作，所以字段的序列化标记其实没用。
     ///////////////////////////////////////////////////////////////////////////////
     
-    //material
-    [System.NonSerialized]
-    Renderer cachedRenderer;
+    [System.NonSerialized] private Renderer cachedRenderer;
+    [System.NonSerialized] private MeshFilter cachedFilter;
+
     public Material material {
         get {
             if (cachedRenderer) {
@@ -83,8 +85,10 @@ public class exMesh : MonoBehaviour
     /// sprite序列，用于索引indices，顺序和sprite在indices中的顺序一致，也就是按照深度值从小到大排序。Only used by exLayer, just place here for convenience.
     /// 可用此序列访问到所有在能在mesh显示的sprite
     [System.NonSerialized] public List<exSpriteBase> sortedSpriteList = new List<exSpriteBase>();
-    
-    [System.NonSerialized] [HideInInspector] public Mesh mesh;
+
+    [System.NonSerialized] private Mesh mesh0;    ///< first mesh buffer
+    [System.NonSerialized] private Mesh mesh1;    ///< second mesh buffer, only used in dynamic mode
+    [System.NonSerialized] private bool isEvenMeshBuffer = true; ///< select first mesh or second
 
     /// cache mesh.vertices
     /// 依照sprite在spriteList中的相同顺序排列，每个sprite的顶点都放在连续的一段区间中
@@ -98,7 +102,8 @@ public class exMesh : MonoBehaviour
     [System.NonSerialized] public List<Vector2> uvs = new List<Vector2>();       ///< cache mesh.vertices
     [System.NonSerialized] public List<Color32> colors32 = new List<Color32>();  ///< cache mesh.colors32
 
-    [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.None;
+    [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.None;         ///< current mesh buffer update flags
+    [System.NonSerialized] public exUpdateFlags lastUpdateFlags = exUpdateFlags.None;     ///< last mesh buffer update flags
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -116,20 +121,32 @@ public class exMesh : MonoBehaviour
         }
     }
 
+    private bool isDynamic {
+        get {
+            return (!ReferenceEquals(mesh0, null) && !ReferenceEquals(mesh1, null));    // default is false
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
     void Awake () {
-        CreateMesh();
+        Init();
     }
 
     void OnDestroy () {
         Clear();
-        mesh.Destroy();
-        mesh = null;
-        MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
-        meshFilter.sharedMesh = null;
+        if (mesh0 != null) {
+            mesh0.Destroy();
+        }
+        mesh0 = null;
+        if (mesh1 != null) {
+            mesh1.Destroy();
+        }
+        mesh1 = null;
+        cachedFilter.sharedMesh = null;
+        cachedFilter = null;
         cachedRenderer.sharedMaterial = null;
         cachedRenderer = null;
     }
@@ -148,7 +165,7 @@ public class exMesh : MonoBehaviour
         go.hideFlags = exReleaseFlags.hideAndDontSave | exReleaseFlags.notEditable;
         exMesh res = go.AddComponent<exMesh>();
         res.UpdateDebugName(_layer.name);
-        res.CreateMesh();
+        res.Init();
         return res;
     }
 
@@ -158,6 +175,15 @@ public class exMesh : MonoBehaviour
 
     public void Apply (exUpdateFlags _additionalUpdateFlags = exUpdateFlags.None) {
         updateFlags |= _additionalUpdateFlags;
+
+        Mesh mesh;
+        if (isDynamic && updateFlags != exUpdateFlags.None) {
+            mesh = SwapMeshBuffer();
+        }
+        else {
+            mesh = GetMeshBuffer();
+        }
+        
         if ((updateFlags & exUpdateFlags.VertexAndIndex) == exUpdateFlags.VertexAndIndex) {
             // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
             mesh.triangles = null;  //这里如果使用clear，那么uv和color就必须赋值，否则有时会出错
@@ -216,10 +242,40 @@ public class exMesh : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public void MarkDynamic () {
-        mesh.MarkDynamic();
+    public void SetDynamic (bool _dynamic) {
+        //Debug.Log(string.Format("[SetDynamic|exMesh] _dynamic: {0} isDynamic: " + isDynamic, _dynamic));
+        if (isDynamic == _dynamic) {
+            return;
+        }
+        if (_dynamic) {
+            // create all buffer
+            exDebug.Assert(mesh0 != null);
+            if (mesh0 == null) {
+                mesh0 = CreateMesh();
+            }
+            mesh0.MarkDynamic();
+
+            exDebug.Assert(mesh1 == null);
+            if (mesh1 == null) {
+                mesh1 = CreateMesh();
+            }
+            mesh1.MarkDynamic();
+
+            lastUpdateFlags = exUpdateFlags.All;    // init new created mesh buffer
+        }
+        else {
+            if (isEvenMeshBuffer != true) {
+                isEvenMeshBuffer = true;
+                updateFlags |= lastUpdateFlags;
+            }
+            // destroy another buffer
+            if (mesh1 != null) {
+                mesh1.Destroy();
+            }
+            mesh1 = null;
+        }
     }
-   
+
     // ------------------------------------------------------------------ 
     // Output debug info
     // ------------------------------------------------------------------ 
@@ -227,11 +283,13 @@ public class exMesh : MonoBehaviour
     [ContextMenu("Output Mesh Info")]
     [System.Diagnostics.Conditional("EX_DEBUG")]
     public void OutputDebugInfo () {
-        Debug.Log(string.Format("exMesh SpriteCount: {0} ", spriteList.Count), this);
+        Mesh mesh = GetMeshBuffer();
         if (mesh == null) {
             Debug.Log("mesh is null");
             return;
         }
+
+        Debug.Log(string.Format("exMesh SpriteCount: {0} Current mesh buffer: {1}", spriteList.Count, isEvenMeshBuffer ? 0 : 1), this);
 
         string vertexInfo = "Vertex Buffer: ";
         //foreach (var v in vertices) {
@@ -305,26 +363,78 @@ public class exMesh : MonoBehaviour
         indices.Clear();
         uvs.Clear();
         colors32.Clear();
-        mesh.Clear();
+        if (mesh0 != null) {
+            mesh0.Clear();
+        }
+        if (mesh1 != null) {
+            mesh1.Clear();
+        }
         updateFlags = exUpdateFlags.None;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// If we are using dynamic layer, the mesh is double buffered so that we can get the best performance on iOS devices.
+    /// http://forum.unity3d.com/threads/118723-Huge-performance-loss-in-Mesh.CreateVBO-for-dynamic-meshes-IOS
+    // ------------------------------------------------------------------ 
+    
+    private Mesh SwapMeshBuffer() {
+        exDebug.Assert(isDynamic);
+        if (enableDoubleBuffer) {
+    		isEvenMeshBuffer = !isEvenMeshBuffer;
+            exUpdateFlags currentBufferUpdate = updateFlags;
+            updateFlags |= lastUpdateFlags;          // combine changes during two frame
+            lastUpdateFlags = currentBufferUpdate;   // for next buffer
+        }
+        return GetMeshBuffer();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    private Mesh GetMeshBuffer () {
+        if (isEvenMeshBuffer) {
+            if (mesh0 == null) {
+                mesh0 = CreateMesh();
+            }
+            if (cachedFilter.sharedMesh != mesh0) {
+                cachedFilter.sharedMesh = mesh0;
+            }
+            return mesh0;
+        }
+        else {
+            exDebug.Assert(isDynamic);
+            if (mesh1 == null) {
+                mesh1 = CreateMesh();
+            }
+            if (cachedFilter.sharedMesh != mesh1) {
+                cachedFilter.sharedMesh = mesh1;
+            }
+            return mesh1;
+        }
     }
 
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
 
-    void CreateMesh () {
-        if (mesh == null) {
-            MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
-            if (!meshFilter.sharedMesh) {
-                mesh = new Mesh();
-                mesh.name = "ex2D mesh";
-                mesh.hideFlags = HideFlags.DontSave;
-                meshFilter.sharedMesh = mesh;
-            }
-            else {
-                mesh = meshFilter.sharedMesh;
-            }
+    private Mesh CreateMesh () {
+        Mesh mesh = new Mesh();
+        mesh.name = "ex2D mesh";
+        mesh.hideFlags = HideFlags.DontSave;
+        return mesh;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private void Init () {
+        if (cachedFilter == null) {
+            cachedFilter = gameObject.GetComponent<MeshFilter>();
+        }
+        if (mesh0 == null) {
+            mesh0 = CreateMesh();
         }
         if (cachedRenderer == null) {
             cachedRenderer = gameObject.GetComponent<MeshRenderer>();

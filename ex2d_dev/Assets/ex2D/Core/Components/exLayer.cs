@@ -89,12 +89,11 @@ public class exLayer : MonoBehaviour
                 Debug.LogWarning("can't change to static during runtime");
             }
 #endif
-            if (value == exLayerType.Dynamic) {
-                for (int i = 0; i < meshList.Count; ++i) {
-                    meshList[i].MarkDynamic();
-                }
+            bool dynamic = (value == exLayerType.Dynamic);
+            for (int i = 0; i < meshList.Count; ++i) {
+                meshList[i].SetDynamic(dynamic);
             }
-            else if (value == exLayerType.Static){
+            if (value == exLayerType.Static){
                 Compact();
                 // TODO: batch same material meshes
             }
@@ -252,7 +251,6 @@ public class exLayer : MonoBehaviour
             exMesh mesh = GetMesh(_sprite);
             if (mesh != null) {
                 RemoveIndices(mesh, _sprite);
-                mesh.updateFlags |= exUpdateFlags.Index;
                 exDebug.Assert(_sprite.indexBufferIndex == -1);
                 UpdateNowInEditMode();
             }
@@ -388,9 +386,7 @@ public class exLayer : MonoBehaviour
     private exMesh CreateNewMesh (Material _mat) {
         exMesh mesh = exMesh.Create(this);
         mesh.material = _mat;
-        if (layerType == exLayerType.Dynamic) {
-            mesh.MarkDynamic();
-        }
+        mesh.SetDynamic(layerType_ == exLayerType.Dynamic);
         meshList.Add(mesh);
         ex2DMng.instance.ResortLayerDepth();
         return mesh;
@@ -458,7 +454,7 @@ public class exLayer : MonoBehaviour
             // Find available mesh
             // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
             exMesh sameDrawcallMesh = null;
-            int maxVertexCount = (layerType == exLayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : exMesh.MAX_VERTEX_COUNT;
+            int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : exMesh.MAX_VERTEX_COUNT;
             maxVertexCount -= sprite.vertexCount;
             for (int i = meshList.Count - 1; i >= 0; --i) {
                 exMesh mesh = meshList[i];
