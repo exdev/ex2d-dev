@@ -789,6 +789,9 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawTextureInfoPreview ( exTextureInfo _textureInfo, Vector3 _pos ) {
+        if (_textureInfo.texture == null) {
+            return;
+        }
 
         Vector2 halfSize = new Vector2( _textureInfo.width * 0.5f,
                                         _textureInfo.height * 0.5f );
