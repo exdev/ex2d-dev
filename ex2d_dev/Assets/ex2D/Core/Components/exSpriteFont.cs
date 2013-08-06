@@ -386,7 +386,6 @@ public class exSpriteFont : exSpriteBase {
 
     internal override exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
 #if UNITY_EDITOR
-        // TODO: 有层级关系时，运行会导致报错
         if (text_ == null || vertexCountCapacity < text_.Length * exMesh.QUAD_VERTEX_COUNT) {
             Debug.LogError("[UpdateBuffers|exSpriteFont] 顶点缓冲长度不够，是否绕开属性直接修改了text_?: " + vertexCountCapacity, this);
             return updateFlags;
@@ -435,12 +434,6 @@ public class exSpriteFont : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     protected override Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix) {
-//#if UNITY_EDITOR
-//        if (layer_ != null || vertexCountCapacity < text_.Length * exMesh.QUAD_VERTEX_COUNT) {
-//            Debug.LogError("[UpdateBuffers|exSpriteFont] 顶点缓冲长度不够，是否绕开属性直接修改了text_?");
-//            return new Vector3[0];
-//        }
-//#endif
         // TODO: only return the rotated bounding box of the sprite font
         int visibleVertexCount = text_.Length * 4;
         List<Vector3> vertices = new List<Vector3>(visibleVertexCount);    // TODO: use global static temp List instead
@@ -866,7 +859,7 @@ public class exSpriteFont : exSpriteBase {
             // build uv
             if (_uvs != null) {
                 Vector2 start = new Vector2(ci.x * _texelSize.x, ci.y * _texelSize.y);
-                Vector2 end = new Vector2((ci.x + ci.width) * _texelSize.x, (ci.y + ci.height) * _texelSize.y);
+                Vector2 end = new Vector2((ci.x + ci.rotatedWidth) * _texelSize.x, (ci.y + ci.rotatedHeight) * _texelSize.y);
                 if (ci.rotated) {
                     _uvs[_vbIndex + 0] = new Vector2(end.x, start.y);
                     _uvs[_vbIndex + 1] = start;
