@@ -1,7 +1,7 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
-public class StaticScene0 : EasyProfiler {
+public class DynamicScene0_ex2D : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
