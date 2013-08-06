@@ -106,8 +106,8 @@ public static class exBitmapFontUtility {
                 charInfo.id = int.Parse ( ParseValue( words, "id" ) );
                 charInfo.width = int.Parse ( ParseValue( words, "width" ) );
                 charInfo.height = int.Parse ( ParseValue( words, "height" ) );
-                charInfo.x = int.Parse ( ParseValue( words, "x" ) );
-                charInfo.y = int.Parse ( ParseValue( words, "y" ) );
+                charInfo.trim_x = int.Parse ( ParseValue( words, "x" ) );
+                charInfo.trim_y = int.Parse ( ParseValue( words, "y" ) );
                 charInfo.xoffset = int.Parse ( ParseValue( words, "xoffset" ) );
                 charInfo.yoffset = int.Parse ( ParseValue( words, "yoffset" ) );
                 charInfo.xadvance = int.Parse ( ParseValue( words, "xadvance" ) );
@@ -127,10 +127,13 @@ public static class exBitmapFontUtility {
         }
         reader.Close();
         _bitmapFont.rawFontGUID = exEditorUtility.AssetToGUID(_fontInfo);
+        _bitmapFont.rawTextureGUID = exEditorUtility.AssetToGUID(_bitmapFont.texture);
 
         // revert charInfo uv-y to fit the Unity's uv-coordination.
         foreach ( exBitmapFont.CharInfo charInfo in _bitmapFont.charInfos ) {
-            charInfo.y = textureHeight - (charInfo.y + charInfo.height);
+            charInfo.trim_y = textureHeight - (charInfo.trim_y + charInfo.height);
+            charInfo.x = charInfo.trim_x;
+            charInfo.y = charInfo.trim_y;
         }
 
         EditorUtility.SetDirty(_bitmapFont);

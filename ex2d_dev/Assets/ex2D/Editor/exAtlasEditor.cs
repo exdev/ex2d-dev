@@ -43,7 +43,7 @@ partial class exAtlasEditor : EditorWindow {
     SerializedObject curSerializedObject = null;
 
     Vector2 scrollPos = Vector2.zero;
-    List<exTextureInfo> selectedTextureInfos = new List<exTextureInfo>();
+    List<Object> selectedObjects = new List<Object>();
     Rect atlasRect = new Rect( 0, 0, 1, 1 );
     Rect scrollViewRect = new Rect( 0, 0, 1, 1 );
 
@@ -112,21 +112,6 @@ partial class exAtlasEditor : EditorWindow {
     void OnSelectionChange () {
         if ( lockCurEdit == false ) {
             exAtlas atlas = Selection.activeObject as exAtlas;
-            // DISABLE: AddObjectToAsset { 
-            // if ( atlas == null ) {
-            //     string path = AssetDatabase.GetAssetPath(Selection.activeObject);
-            //     if ( Path.GetExtension(path) == ".asset" ) {
-            //         Object[] objs = AssetDatabase.LoadAllAssetsAtPath(path);
-            //         foreach ( Object obj in objs ) {
-            //             atlas = obj as exAtlas;
-            //             if ( atlas != null ) {
-            //                 break;
-            //             }
-            //         }
-            //     }
-            // }
-            // } DISABLE end 
-
             if ( atlas != null && atlas != curEdit ) {
                 Edit (atlas);
                 return;
@@ -151,10 +136,16 @@ partial class exAtlasEditor : EditorWindow {
                 curEdit.textureInfos.RemoveAt(i);
             }
         }
-        for ( int i = selectedTextureInfos.Count-1; i >= 0; --i ) {
-            exTextureInfo textureInfo = selectedTextureInfos[i];
-            if ( textureInfo == null ) {
-                selectedTextureInfos.RemoveAt(i);
+        for ( int i = curEdit.bitmapFonts.Count-1; i >= 0; --i ) {
+            exBitmapFont bitmapFont = curEdit.bitmapFonts[i];
+            if ( bitmapFont == null ) {
+                curEdit.bitmapFonts.RemoveAt(i);
+            }
+        }
+        for ( int i = selectedObjects.Count-1; i >= 0; --i ) {
+            Object obj = selectedObjects[i];
+            if ( obj == null ) {
+                selectedObjects.RemoveAt(i);
             }
         }
 
@@ -224,7 +215,7 @@ partial class exAtlasEditor : EditorWindow {
                                      false, 
                                      false );
             ProcessEvents();
-            rectSelection.SetSelection(selectedTextureInfos.ToArray());
+            rectSelection.SetSelection(selectedObjects.ToArray());
             rectSelection.OnGUI();
 
         EditorGUILayout.EndScrollView();
@@ -243,7 +234,7 @@ partial class exAtlasEditor : EditorWindow {
     public void Reset () {
         curSerializedObject = null;
         scrollPos = Vector2.zero;
-        selectedTextureInfos.Clear();
+        selectedObjects.Clear();
         importObjects.Clear();
         oldSelActiveObject = null;
         oldSelObjects.Clear();
@@ -275,11 +266,17 @@ partial class exAtlasEditor : EditorWindow {
     void UpdateSelection () {
         if ( curEdit != null ) {
             bool needRepaint = false;
-            selectedTextureInfos.Clear();
+            selectedObjects.Clear();
             foreach ( Object obj in Selection.objects ) {
                 exTextureInfo textureInfo = obj as exTextureInfo;
                 if ( textureInfo != null && curEdit.textureInfos.IndexOf(textureInfo) != -1 ) {
-                    selectedTextureInfos.Add(textureInfo);
+                    selectedObjects.Add(textureInfo);
+                    needRepaint = true;
+                }
+
+                exBitmapFont bitmapFont = obj as exBitmapFont;
+                if ( bitmapFont != null && curEdit.bitmapFonts.IndexOf(bitmapFont) != -1 ) {
+                    selectedObjects.Add(bitmapFont);
                     needRepaint = true;
                 }
             }
@@ -303,10 +300,10 @@ partial class exAtlasEditor : EditorWindow {
             // // Select 
             // // ======================================================== 
 
-            // GUI.enabled = selectedTextureInfos.Count != 0;
+            // GUI.enabled = selectedObjects.Count != 0;
             // if ( GUILayout.Button( "Select In Project...", EditorStyles.toolbarButton ) ) {
-            //     selectIdx = (selectIdx + 1) % selectedTextureInfos.Count;  
-            //     Selection.objects = selectedTextureInfos.ToArray();
+            //     selectIdx = (selectIdx + 1) % selectedObjects.Count;  
+            //     Selection.objects = selectedObjects.ToArray();
             //     EditorGUIUtility.PingObject(Selection.objects[selectIdx]);
             // }
             // GUI.enabled = true;
@@ -597,29 +594,6 @@ partial class exAtlasEditor : EditorWindow {
             }
             EditorGUILayout.Space();
 
-            // TODO { 
-            // // ======================================================== 
-            // // bitmap fonts 
-            // // ======================================================== 
-
-            // GUILayout.Space(20);
-            // GUILayout.Label ( "Atlas Fonts" );
-            // for ( int i = 0; i < curEdit.bitmapFonts.Count; ++i ) {
-            //     EditorGUILayout.BeginHorizontal();
-            //         exBitmapFont bmfont = curEdit.bitmapFonts[i];
-            //         EditorGUILayout.ObjectField( bmfont 
-            //                                      , typeof(exBitmapFont) 
-            //                                      , false 
-            //                                    );
-            //         if ( GUILayout.Button("Delete", GUILayout.MaxWidth(80) ) ) {
-            //             curEdit.RemoveBitmapFont(bmfont);
-            //             AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(bmfont));
-            //             --i;
-            //         }
-            //     EditorGUILayout.EndHorizontal();
-            // }
-            // } TODO end 
-
         // check gui changes 
         if ( EditorGUI.EndChangeCheck() ) {
             EditorUtility.SetDirty(curEdit);
@@ -673,7 +647,33 @@ partial class exAtlasEditor : EditorWindow {
                 if ( textureInfo == null )
                     continue;
 
-                DrawTextureInfo ( MapTextureInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), textureInfo ), textureInfo );
+                Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( textureInfo.rawTextureGUID );
+                bool selected = selectedObjects.IndexOf(textureInfo) != -1;
+                DrawAtlasElement ( MapTextureInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), textureInfo ),
+                                   rawTexture, 
+                                   textureInfo.trim_x,
+                                   textureInfo.trim_y,
+                                   textureInfo.width,
+                                   textureInfo.height,
+                                   textureInfo.rotated,
+                                   selected );
+            }
+            foreach ( exBitmapFont bitmapFont in curEdit.bitmapFonts ) {
+                if ( bitmapFont == null )
+                    continue;
+                
+                Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( bitmapFont.rawTextureGUID );
+                bool selected = selectedObjects.IndexOf(bitmapFont) != -1;
+                foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+                    DrawAtlasElement ( MapCharInfo ( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), charInfo ), 
+                                       rawTexture,
+                                       charInfo.trim_x,
+                                       charInfo.trim_y,
+                                       charInfo.width,
+                                       charInfo.height,
+                                       charInfo.rotated,
+                                       selected );
+                }
             }
             GUI.EndGroup();
 
@@ -771,7 +771,15 @@ partial class exAtlasEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DrawTextureInfo ( Rect _rect, exTextureInfo _textureInfo ) {
+    void DrawAtlasElement ( Rect _rect, 
+                            Texture2D _rawTexture, 
+                            int _trim_x,
+                            int _trim_y,
+                            int _trim_width,
+                            int _trim_height,
+                            bool _rotated,
+                            bool _selected ) 
+    {
         // calculate scroll view rect in altas space plus atlas clipped rect
         Rect scrollViewRectInAtlasSpace = scrollViewRect;
         scrollViewRectInAtlasSpace.xMin = Mathf.Max( scrollViewRectInAtlasSpace.xMin, atlasRect.xMin ); 
@@ -798,47 +806,46 @@ partial class exAtlasEditor : EditorWindow {
             GUI.DrawTexture( _rect, EditorGUIUtility.whiteTexture );
         GUI.color = old;
 
-        Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( _textureInfo.rawTextureGUID );
-        if ( rawTexture ) {
-            if ( _textureInfo.rotated ) {
+        if ( _rawTexture ) {
+            if ( _rotated ) {
                 Rect clippedRect = _rect;
-                float trim_x = (float)_textureInfo.trim_x;
-                float trim_y = (float)_textureInfo.trim_y;
-                float trim_width = (float)_textureInfo.width;
-                float trim_height = (float)_textureInfo.height;
+                float trim_x = (float)_trim_x;
+                float trim_y = (float)_trim_y;
+                float trim_width = (float)_trim_width;
+                float trim_height = (float)_trim_height;
 
                 if ( _rect.xMax > scrollViewRectInAtlasSpace.xMax ) {
-                    float delta = (_rect.xMax - scrollViewRectInAtlasSpace.xMax)/_rect.width * (float)_textureInfo.height;
+                    float delta = (_rect.xMax - scrollViewRectInAtlasSpace.xMax)/_rect.width * (float)_trim_height;
                     trim_height -= delta;
                     trim_y += delta;
                     clippedRect.width -= (_rect.xMax - scrollViewRectInAtlasSpace.xMax);
                 }
                 if ( _rect.yMax > scrollViewRectInAtlasSpace.yMax ) {
-                    float delta = (_rect.yMax - scrollViewRectInAtlasSpace.yMax)/_rect.height * (float)_textureInfo.width;
+                    float delta = (_rect.yMax - scrollViewRectInAtlasSpace.yMax)/_rect.height * (float)_trim_width;
                     trim_width -= delta;
                     trim_x += delta;
                     clippedRect.height -= (_rect.yMax - scrollViewRectInAtlasSpace.yMax);
                 }
 
                 if ( _rect.xMin < scrollViewRectInAtlasSpace.xMin ) {
-                    float delta = (scrollViewRectInAtlasSpace.xMin - _rect.xMin)/_rect.width * (float)_textureInfo.height;
+                    float delta = (scrollViewRectInAtlasSpace.xMin - _rect.xMin)/_rect.width * (float)_trim_height;
                     trim_height -= delta;
                     clippedRect.width -= (scrollViewRectInAtlasSpace.xMin - _rect.xMin);
                     clippedRect.x += (scrollViewRectInAtlasSpace.xMin - _rect.xMin);
                 }
                 if ( _rect.yMin < scrollViewRectInAtlasSpace.yMin ) {
-                    float delta = (scrollViewRectInAtlasSpace.yMin - _rect.yMin)/_rect.height * (float)_textureInfo.width;
+                    float delta = (scrollViewRectInAtlasSpace.yMin - _rect.yMin)/_rect.height * (float)_trim_width;
                     trim_width -= delta;
                     clippedRect.height -= (scrollViewRectInAtlasSpace.yMin - _rect.yMin);
                     clippedRect.y += (scrollViewRectInAtlasSpace.yMin - _rect.yMin);
                 }
 
-                float xStart = trim_x/(float)rawTexture.width;
-                float xEnd = xStart + trim_width/(float)rawTexture.width;
-                float yStart = trim_y/(float)rawTexture.height;
-                float yEnd = yStart + trim_height/(float)rawTexture.height;
+                float xStart = trim_x/(float)_rawTexture.width;
+                float xEnd = xStart + trim_width/(float)_rawTexture.width;
+                float yStart = trim_y/(float)_rawTexture.height;
+                float yEnd = yStart + trim_height/(float)_rawTexture.height;
 
-                quadMaterial.mainTexture = rawTexture;
+                quadMaterial.mainTexture = _rawTexture;
                 quadMaterial.SetPass(0);
 
                 quadMesh.hideFlags = HideFlags.DontSave;
@@ -868,15 +875,16 @@ partial class exAtlasEditor : EditorWindow {
                 Graphics.DrawMeshNow ( quadMesh, Vector3.zero, Quaternion.identity );
             }
             else {
-                GUI.DrawTextureWithTexCoords( _rect, rawTexture,
-                                              new Rect( (float)_textureInfo.trim_x/(float)rawTexture.width,
-                                                        (float)_textureInfo.trim_y/(float)rawTexture.height,
-                                                        (float)_textureInfo.width/(float)rawTexture.width,
-                                                        (float)_textureInfo.height/(float)rawTexture.height ) );
+                GUI.DrawTextureWithTexCoords( _rect, 
+                                              _rawTexture,
+                                              new Rect( (float)_trim_x/(float)_rawTexture.width,
+                                                        (float)_trim_y/(float)_rawTexture.height,
+                                                        (float)_trim_width/(float)_rawTexture.width,
+                                                        (float)_trim_height/(float)_rawTexture.height ) );
             }
         }
 
-        if ( selectedTextureInfos.IndexOf(_textureInfo) != -1 ) {
+        if ( _selected ) {
             exEditorUtility.DrawRectBorder( _rect, curEdit.elementSelectColor );
         }
     }
@@ -937,20 +945,32 @@ partial class exAtlasEditor : EditorWindow {
             if ( e.keyCode == KeyCode.Backspace ||
                  e.keyCode == KeyCode.Delete ) 
             {
-                if ( selectedTextureInfos.Count > 0 ) {
+                if ( selectedObjects.Count > 0 ) {
                     AssetDatabase.StartAssetEditing();
-                        foreach ( exTextureInfo textureInfo in selectedTextureInfos ) {
-                            int i = curEdit.textureInfos.IndexOf(textureInfo);
-                            if ( i != -1 ) {
-                                curEdit.textureInfos.RemoveAt(i);
-                                curEdit.needRebuild = true;
-                                AssetDatabase.DeleteAsset( AssetDatabase.GetAssetPath(textureInfo) );
-                                // Object.DestroyImmediate(textureInfo,true); // DISABLE: AddObjectToAsset
+                        foreach ( Object obj in selectedObjects ) {
+                            exTextureInfo textureInfo = obj as exTextureInfo;
+                            if ( textureInfo ) {
+                                int i = curEdit.textureInfos.IndexOf(textureInfo);
+                                if ( i != -1 ) {
+                                    curEdit.textureInfos.RemoveAt(i);
+                                    curEdit.needRebuild = true;
+                                    AssetDatabase.DeleteAsset( AssetDatabase.GetAssetPath(textureInfo) );
+                                }
+                            }
+
+                            exBitmapFont bitmapFont = obj as exBitmapFont;
+                            if ( bitmapFont ) {
+                                int i = curEdit.bitmapFonts.IndexOf(bitmapFont);
+                                if ( i != -1 ) {
+                                    curEdit.bitmapFonts.RemoveAt(i);
+                                    curEdit.needRebuild = true;
+                                    AssetDatabase.DeleteAsset( AssetDatabase.GetAssetPath(bitmapFont) );
+                                }
                             }
                         }
                         AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(curEdit) );
                     AssetDatabase.StopAssetEditing();
-                    selectedTextureInfos.Clear();
+                    selectedObjects.Clear();
                     Repaint();
                     e.Use();
                 }
@@ -988,6 +1008,20 @@ partial class exAtlasEditor : EditorWindow {
                 objects.Add (textureInfo);
             }
         }
+        foreach ( exBitmapFont bitmapFont in curEdit.bitmapFonts ) {
+            if ( bitmapFont == null )
+                continue;
+
+            foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+                Rect charInfoRect = MapCharInfo ( atlasRect, charInfo );
+                if ( exGeometryUtility.RectRect_Contains( _rect, charInfoRect ) != 0 ||
+                     exGeometryUtility.RectRect_Intersect( _rect, charInfoRect ) )
+                {
+                    objects.Add (bitmapFont);
+                    break;
+                }
+            }
+        }
 
         return objects.ToArray();
     }
@@ -997,9 +1031,14 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void ConfirmRectSelection ( Object _activeObj, Object[] _selectedObjs ) {
-        selectedTextureInfos.Clear();
-        foreach ( Object obj in _selectedObjs )
-            selectedTextureInfos.Add (obj as exTextureInfo);
+        selectedObjects.Clear();
+        foreach ( Object obj in _selectedObjs ) {
+            if ( obj is exTextureInfo ||
+                 obj is exBitmapFont )
+            {
+                selectedObjects.Add (obj);
+            }
+        }
         Selection.activeObject = _activeObj;
         Selection.objects = _selectedObjs;
     }
@@ -1009,16 +1048,33 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     Rect MapTextureInfo ( Rect _atlasRect, exTextureInfo _textureInfo ) {
-        Rect textureInfoRect = new Rect ( _textureInfo.x * curEdit.scale,
-                                          _textureInfo.y * curEdit.scale,
-                                          _textureInfo.rotatedWidth * curEdit.scale,
-                                          _textureInfo.rotatedHeight * curEdit.scale );
+        Rect rect = new Rect ( _textureInfo.x * curEdit.scale,
+                               _textureInfo.y * curEdit.scale,
+                               _textureInfo.rotatedWidth * curEdit.scale,
+                               _textureInfo.rotatedHeight * curEdit.scale );
 
-        textureInfoRect.x = _atlasRect.x + textureInfoRect.x;
-        textureInfoRect.y = _atlasRect.y + _atlasRect.height - textureInfoRect.y - textureInfoRect.height;
-        textureInfoRect = exGeometryUtility.Rect_FloorToInt(textureInfoRect);
+        rect.x = _atlasRect.x + rect.x;
+        rect.y = _atlasRect.y + _atlasRect.height - rect.y - rect.height;
+        rect = exGeometryUtility.Rect_FloorToInt(rect);
 
-        return textureInfoRect;
+        return rect;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    Rect MapCharInfo ( Rect _atlasRect, exBitmapFont.CharInfo _charInfo ) {
+        Rect rect = new Rect ( _charInfo.x * curEdit.scale,
+                               _charInfo.y * curEdit.scale,
+                               _charInfo.rotatedWidth * curEdit.scale,
+                               _charInfo.rotatedHeight * curEdit.scale );
+
+        rect.x = _atlasRect.x + rect.x;
+        rect.y = _atlasRect.y + _atlasRect.height - rect.y - rect.height;
+        rect = exGeometryUtility.Rect_FloorToInt(rect);
+
+        return rect;
     }
 
     // ------------------------------------------------------------------ 

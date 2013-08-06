@@ -220,6 +220,19 @@ public static class exAtlasUtility {
             el.height = info.height;
             elements.Add(el);
         }
+        foreach ( exBitmapFont bitmapFont in _atlas.bitmapFonts ) {
+            foreach ( exBitmapFont.CharInfo info in bitmapFont.charInfos ) {
+                Element el = new Element();
+                el.x = 0;
+                el.y = 0;
+                el.rotated = false;
+                el.charInfo = info;
+                el.id = info.id + "@" + bitmapFont.name;
+                el.width = info.width;
+                el.height = info.height;
+                elements.Add(el);
+            }
+        }
         return elements;
     }
 
@@ -629,15 +642,6 @@ public static class exAtlasUtility {
 
                 //
                 exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate( atlasAssetsDir, rawTexture.name );
-                // DISABLE: AddObjectToAsset { 
-                // exTextureInfo textureInfo = _atlas.GetTextureInfoByName (rawTexture.name);
-                // if ( textureInfo == null ) {
-                //     textureInfo = ScriptableObject.CreateInstance<exTextureInfo>();
-                //     textureInfo.name = rawTexture.name;
-                //     AssetDatabase.AddObjectToAsset( textureInfo, _atlas );
-                //     AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(textureInfo) );
-                // }
-                // } DISABLE end 
 
                 int result = 1;
                 if ( noToAll == false 
@@ -685,8 +689,33 @@ public static class exAtlasUtility {
                     }
                 }
 
+                // start parsing font-info
                 if ( rawFontInfo != null && exBitmapFontUtility.IsFontInfo(rawFontInfo) ) {
-                    // TODO:
+
+                    bool doReplace = true;
+                    exBitmapFont bitmapFont = exGenericAssetUtility<exBitmapFont>.LoadExistsOrCreate( atlasAssetsDir, rawFontInfo.name );
+                    if ( string.IsNullOrEmpty(bitmapFont.rawFontGUID) == false 
+                      && bitmapFont.rawFontGUID != exEditorUtility.AssetToGUID(rawFontInfo) ) 
+                    {
+                        doReplace = EditorUtility.DisplayDialog( "BitmapFont " + bitmapFont.name + " already exists, it is bind to font-info " + AssetDatabase.GUIDToAssetPath(bitmapFont.rawFontGUID),
+                                                                 "Do you want to bind it with new font-info " + AssetDatabase.GetAssetPath(rawFontInfo),
+                                                                 "Yes",
+                                                                 "No" );
+                    }
+
+                    if ( doReplace ) {
+                        bitmapFont.rawAtlasGUID = exEditorUtility.AssetToGUID(_atlas);
+
+                        if ( exBitmapFontUtility.Parse( bitmapFont, rawFontInfo ) ) {
+                            bitmapFont.texture = _atlas.texture; // overwrite the raw texture
+                            if ( _atlas.bitmapFonts.IndexOf(bitmapFont) == -1 )
+                                _atlas.bitmapFonts.Add(bitmapFont);
+                        }
+                        else {
+                            AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(bitmapFont));
+                            Debug.LogError ( "Parse Error: " + rawFontInfo.name );
+                        }
+                    }
                 }
 
             }
@@ -723,6 +752,7 @@ public static class exAtlasUtility {
 
     public static void Sync ( exAtlas _atlas, System.Action<float,string> _progress ) {
         string atlasAssetsDir = Path.Combine( Path.GetDirectoryName (AssetDatabase.GetAssetPath(_atlas)), _atlas.name  );
+        string rawAtlasGUID = exEditorUtility.AssetToGUID(_atlas);
 
         // check if create atlas directory
         _progress( 0.1f, "Checking atlas directory" );
@@ -737,7 +767,6 @@ public static class exAtlasUtility {
         for ( int i = 0; i < _atlas.textureInfos.Count; ++i ) {
             exTextureInfo textureInfo = _atlas.textureInfos[i]; 
             string textureInfoPath = AssetDatabase.GetAssetPath(textureInfo);
-            // string textureInfoDir = Path.GetDirectoryName (textureInfoPath);
 
             string rawTexturePath = AssetDatabase.GUIDToAssetPath(textureInfo.rawTextureGUID);
             string rawTextureName = Path.GetFileNameWithoutExtension(rawTexturePath);
@@ -759,6 +788,35 @@ public static class exAtlasUtility {
                     AssetDatabase.MoveAsset ( textureInfoPath, expectPath );
                 }
             }
+
+            textureInfo.rawAtlasGUID = rawAtlasGUID;
+        }
+        for ( int i = 0; i < _atlas.bitmapFonts.Count; ++i ) {
+            exBitmapFont bitmapFont = _atlas.bitmapFonts[i]; 
+            string bitmapFontPath = AssetDatabase.GetAssetPath(bitmapFont);
+
+            string rawFontPath = AssetDatabase.GUIDToAssetPath(bitmapFont.rawFontGUID);
+            string rawFontName = Path.GetFileNameWithoutExtension(rawFontPath);
+
+            string expectPath = Path.Combine( atlasAssetsDir, rawFontName + ".asset" );
+            expectPath = expectPath.Replace("\\", "/");
+            if ( bitmapFontPath != expectPath ) {
+                bool doMove = true;
+                FileInfo fileInfo = new FileInfo(expectPath);
+                if ( fileInfo.Exists ) {
+                    doMove = EditorUtility.DisplayDialog( "Texture Info " + rawFontName + " already exists",
+                                                          "Do you want to replace it with new texture infor?",
+                                                          "Yes",
+                                                          "No" );
+                }
+
+                if ( doMove ) {
+                    AssetDatabase.DeleteAsset ( expectPath );
+                    AssetDatabase.MoveAsset ( bitmapFontPath, expectPath );
+                }
+            }
+
+            bitmapFont.rawAtlasGUID = rawAtlasGUID;
         }
         AssetDatabase.StopAssetEditing();
 
@@ -858,9 +916,10 @@ public static class exAtlasUtility {
         }
         atlasTexture.Apply(false);
 
-        // fill raw texture to atlas
-        _progress( 0.4f, "Filling texture-info to atlas" );
         string rawAtlasGUID = exEditorUtility.AssetToGUID(_atlas);
+
+        // fill raw texture-info to atlas
+        _progress( 0.4f, "Filling texture-info to atlas" );
         foreach ( exTextureInfo textureInfo in _atlas.textureInfos ) {
             Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>(textureInfo.rawTextureGUID); 
             if ( exEditorUtility.IsValidForAtlas(rawTexture) == false ) {
@@ -910,7 +969,62 @@ public static class exAtlasUtility {
             }
         }
 
+        // fill raw bitmapfont to atlas
+        _progress( 0.6f, "Filling bitmap-font to atlas" );
+        foreach ( exBitmapFont bitmapFont in _atlas.bitmapFonts ) {
+            Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>(bitmapFont.rawTextureGUID); 
+            if ( exEditorUtility.IsValidForAtlas(rawTexture) == false ) {
+                exEditorUtility.ImportTextureForAtlas(rawTexture);
+            }
+
+            bool dirty = false;
+            if ( bitmapFont.rawAtlasGUID != rawAtlasGUID ) {
+                bitmapFont.rawAtlasGUID = rawAtlasGUID;
+                dirty = true;
+            }
+            if ( bitmapFont.texture != atlasTexture ) {
+                bitmapFont.texture = atlasTexture;
+                dirty = true;
+            }
+            if ( dirty )
+                EditorUtility.SetDirty(bitmapFont);
+
+            // NOTE: we do this because the texture already been trimmed, and only this way to make texture have better filter
+            // apply contour bleed
+            if ( _atlas.useContourBleed ) {
+                rawTexture = exTextureUtility.ApplyContourBleed( rawTexture );
+            }
+
+            foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+
+                // copy raw texture into atlas texture
+                exTextureUtility.Fill( atlasTexture
+                                       , rawTexture
+                                       , bitmapFont.name + "@" + charInfo.id
+                                       , charInfo.x
+                                       , charInfo.y
+                                       , charInfo.trim_x
+                                       , charInfo.trim_y
+                                       , charInfo.width
+                                       , charInfo.height
+                                       , charInfo.rotated
+                                     );
+
+                // apply padding bleed
+                if ( _atlas.usePaddingBleed ) {
+                    exTextureUtility.ApplyPaddingBleed( atlasTexture,
+                                                        new Rect( charInfo.x, charInfo.y, charInfo.width, charInfo.height ) );
+                }
+            }
+
+            //
+            if ( _atlas.useContourBleed ) {
+                Object.DestroyImmediate(rawTexture);
+            }
+        }
+
         // write new atlas texture to disk
+        _progress( 0.8f, "Importing atlas texture" );
         File.WriteAllBytes(atlasTexturePath, atlasTexture.EncodeToPNG());
         AssetDatabase.ImportAsset( atlasTexturePath, ImportAssetOptions.ForceSynchronousImport );
 

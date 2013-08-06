@@ -68,6 +68,7 @@ public class exAtlas : ScriptableObject {
     public int width = 512; ///< the width of the atlas texture 
     public int height = 512; ///< the height of the atlas texture
     public List<exTextureInfo> textureInfos = new List<exTextureInfo>(); ///< the list of exTextureInfo
+    public List<exBitmapFont> bitmapFonts = new List<exBitmapFont>(); ///< the list of exBitmapFont
     public Texture2D texture; ///< the referenced atlas texture
     public bool customBuildColor = false; ///< use buildColor as background color for transparent pixels
     public Color buildColor = new Color(1.0f, 1.0f, 1.0f, 0.0f); ///< the color of transparent pixels in atlas texture
