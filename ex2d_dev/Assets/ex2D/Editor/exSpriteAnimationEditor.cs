@@ -62,6 +62,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         }
     }
     int previewSize = 256;
+    float previewScale = 1.0f;
 
     //
     float playingSeconds = 0.0f;
@@ -230,9 +231,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                                                                    GUILayout.Width(300) );
                 if ( EditorGUI.EndChangeCheck() ) {
                     previewSize = newPreviewSize;
-                    // TODO { 
-                    // CalculatePreviewScale();
-                    // } TODO end 
+                    previewScale = CalculatePreviewScale( previewSize, previewSize );
                 }
                 EditorGUILayout.Space();
 
@@ -1076,6 +1075,45 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    float CalculatePreviewScale ( int _width, int _height ) {
+        // get the max width and max height
+        float maxWidth = float.MinValue;
+        float maxHeight = float.MinValue;
+        foreach ( FrameInfo frameInfo in curEdit.frameInfos ) {
+            //
+            exTextureInfo textureInfo = frameInfo.textureInfo;
+            float fiWidth = (float)textureInfo.width;
+            float fiHeight = (float)textureInfo.height;
+
+            //
+            if ( maxWidth < fiWidth ) {
+                maxWidth = fiWidth;
+            }
+            if ( maxHeight < fiHeight ) {
+                maxHeight = fiHeight;
+            }
+        }
+
+        // get the preview scale
+        float scale = 1.0f;
+        float viewWidth = (float)_width;
+        float viewHeight = (float)_height;
+        if ( maxWidth > viewWidth && maxHeight > viewHeight ) {
+            scale = Mathf.Min( viewWidth / maxWidth, viewHeight / maxHeight );
+        }
+        else if ( maxWidth > viewWidth ) {
+            scale = viewWidth / maxWidth;
+        }
+        else if ( maxHeight > viewHeight ) {
+            scale = viewHeight / maxHeight;
+        }
+        return scale;
+    } 
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void FrameInfoEditField () {
         GUILayout.BeginVertical();
 
@@ -1270,8 +1308,14 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DrawTextureInfo ( Rect _rect, exTextureInfo _textureInfo, Color _color ) {
+    void DrawTextureInfo ( Rect _rect, 
+                           exTextureInfo _textureInfo, 
+                           Color _color ) {
         if ( _textureInfo == null )
+            return;
+
+        Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( _textureInfo.rawTextureGUID );
+        if ( rawTexture == null )
             return;
 
         float scale = 1.0f;
@@ -1299,17 +1343,14 @@ partial class exSpriteAnimationEditor : EditorWindow {
                               height );
 
         // draw the texture
-        Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( _textureInfo.rawTextureGUID );
-        if ( rawTexture ) {
-            Color old = GUI.color;
-            GUI.color = _color;
-            GUI.DrawTextureWithTexCoords( pos, rawTexture,
-                                          new Rect( (float)_textureInfo.trim_x /(float)rawTexture.width,
-                                                    (float)_textureInfo.trim_y /(float)rawTexture.height,
-                                                    (float)_textureInfo.width  /(float)rawTexture.width,
-                                                    (float)_textureInfo.height /(float)rawTexture.height ) );
-            GUI.color = old;
-        }
+        Color old = GUI.color;
+        GUI.color = _color;
+        GUI.DrawTextureWithTexCoords( pos, rawTexture,
+                                      new Rect( (float)_textureInfo.trim_x /(float)rawTexture.width,
+                                                (float)_textureInfo.trim_y /(float)rawTexture.height,
+                                                (float)_textureInfo.width  /(float)rawTexture.width,
+                                                (float)_textureInfo.height /(float)rawTexture.height ) );
+        GUI.color = old;
 
         // DEBUG { 
         // exEditorUtility.DrawRectBorder ( _rect, Color.white );
