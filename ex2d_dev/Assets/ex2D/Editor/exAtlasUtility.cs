@@ -1010,11 +1010,13 @@ public static class exAtlasUtility {
                                        , charInfo.rotated
                                      );
 
-                // apply padding bleed
-                if ( _atlas.usePaddingBleed ) {
-                    exTextureUtility.ApplyPaddingBleed( atlasTexture,
-                                                        new Rect( charInfo.x, charInfo.y, charInfo.width, charInfo.height ) );
-                }
+                // DISABLE: character don't need padding bleed { 
+                // // apply padding bleed
+                // if ( _atlas.usePaddingBleed ) {
+                //     exTextureUtility.ApplyPaddingBleed( atlasTexture,
+                //                                         new Rect( charInfo.x, charInfo.y, charInfo.width, charInfo.height ) );
+                // }
+                // } DISABLE end 
             }
 
             //
