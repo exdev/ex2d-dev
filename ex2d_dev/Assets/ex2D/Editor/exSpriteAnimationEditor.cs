@@ -1370,7 +1370,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         }
 
         //
-        Rect pos = new Rect( _rect.center.x - width * 0.5f + offsetX,
+        Rect pos = new Rect( _rect.center.x - width * 0.5f - offsetX,
                              _rect.center.y - height * 0.5f + offsetY,
                              width, 
                              height );
