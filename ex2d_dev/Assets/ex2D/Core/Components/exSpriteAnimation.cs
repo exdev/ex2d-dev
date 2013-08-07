@@ -291,7 +291,7 @@ public class exSpriteAnimation : MonoBehaviour {
     /// exSpriteAnimation.defaultAnimation at the start
     // ------------------------------------------------------------------ 
 
-    public bool playAutomatically = false;
+    public bool playAutomatically = true;
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
