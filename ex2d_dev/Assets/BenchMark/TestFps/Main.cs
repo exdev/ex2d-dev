@@ -5,12 +5,20 @@ using System.Collections.Generic;
 public class Main : EasyProfiler {
 
     public string menuSceneName;
-    public static Main instance;
+    private static Main instance_;
+    public static Main instance {
+        get {
+            if (instance_ == null) {
+                Debug.LogError("No instance of Main, you should only play scene: Launch");
+            }
+            return instance_;
+        }
+    }
     public float defaultTestTime = 5;
 
-    protected override void Awake() {
+    protected new void Awake() {
         base.Awake ();
-        instance = this;
+        instance_ = this;
     }
 	// Use this for initialization
 	void Start () {

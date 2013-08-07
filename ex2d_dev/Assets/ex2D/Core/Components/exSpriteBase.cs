@@ -444,7 +444,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // ------------------------------------------------------------------ 
 
     public Vector3[] GetLocalVertices () {
-        Matrix4x4 scaleMatrix = Matrix4x4.Scale(cachedTransform_.localScale);
+        Matrix4x4 scaleMatrix = Matrix4x4.Scale(cachedTransform.localScale);
         return GetVertices(ref scaleMatrix);
     }
     
@@ -453,7 +453,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // ------------------------------------------------------------------ 
 
     public Vector3[] GetWorldVertices () {
-        Matrix4x4 l2w = cachedTransform_.localToWorldMatrix;
+        Matrix4x4 l2w = cachedTransform.localToWorldMatrix;
         return GetVertices(ref l2w);
     }
 

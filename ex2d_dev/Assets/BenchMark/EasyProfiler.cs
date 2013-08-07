@@ -9,9 +9,10 @@ public class EasyProfiler : MonoBehaviour {
     string testName;
     bool showReturnToMenu = false;
 
-    protected virtual void Awake() {
+    protected void Awake() {
         useGUILayout = false;
         Application.targetFrameRate = 6000;
+        QualitySettings.vSyncCount = 0;
     }
 
     public void Print (string _info) {

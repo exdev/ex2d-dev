@@ -299,7 +299,12 @@ public class exSpriteAnimation : MonoBehaviour {
 
     private Dictionary<string, exSpriteAnimationState> nameToState;
     private exSpriteAnimationState curAnimation;
-    private exSprite sprite;
+    private exSprite sprite_;
+    public exSprite sprite { 
+        get {
+            return sprite_;
+        }
+    }
     private exTextureInfo defaultTextureInfo;
     private int lastFrameIndex = -1;
     
@@ -400,11 +405,11 @@ public class exSpriteAnimation : MonoBehaviour {
                 break;
 
             case exSpriteAnimationClip.StopAction.DefaultSprite:
-                sprite.textureInfo = defaultTextureInfo;
+                sprite_.textureInfo = defaultTextureInfo;
                 break;
 
             case exSpriteAnimationClip.StopAction.Hide:
-                sprite.enabled = false;
+                sprite_.enabled = false;
                 break;
 
             case exSpriteAnimationClip.StopAction.Destroy:
@@ -420,7 +425,7 @@ public class exSpriteAnimation : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void SetDefaultSprite () {
-        sprite.textureInfo = defaultTextureInfo;
+        sprite_.textureInfo = defaultTextureInfo;
     }
 
     // ------------------------------------------------------------------ 
@@ -585,8 +590,8 @@ public class exSpriteAnimation : MonoBehaviour {
     void Init () {
         bool unInited = (nameToState == null);
         if (unInited) {
-            sprite = GetComponent<exSprite>();
-            defaultTextureInfo = sprite.textureInfo;
+            sprite_ = GetComponent<exSprite>();
+            defaultTextureInfo = sprite_.textureInfo;
 
             nameToState = new Dictionary<string, exSpriteAnimationState>();
             for (int i = 0; i < animations.Count; ++i) {
@@ -630,7 +635,7 @@ public class exSpriteAnimation : MonoBehaviour {
                 ++eventStartIndex;
             }
 
-            curAnimation.time += _deltaTime;
+            curAnimation.time += _deltaTime * curAnimation.speed;
             Sample();
 
             // check if stop
@@ -673,7 +678,7 @@ public class exSpriteAnimation : MonoBehaviour {
         if (curAnimation != null) {
             int newIndex = curAnimation.GetCurrentIndex();
             if (newIndex >= 0 && newIndex != curIndex) {
-                sprite.textureInfo = curAnimation.clip.frameInfos[newIndex].textureInfo;
+                sprite_.textureInfo = curAnimation.clip.frameInfos[newIndex].textureInfo;
             }
             curIndex = newIndex;
         }
