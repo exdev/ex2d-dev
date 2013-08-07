@@ -446,7 +446,7 @@ public class exDebugHelper : MonoBehaviour {
                 y = Screen.height - 10;
             }
             else {
-                y = 20;
+                y = 50;
             }
             for ( int i = logs.Count-1; i >= 0; --i ) {
                 LogInfo info = logs[i];
