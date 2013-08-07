@@ -47,7 +47,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
     //
     bool isPlaying = false; 
-    float previewSpeed = 1.0f;
     bool lockCurEdit = false; 
     float offset = 0.0f;
     float scale_ = 1.0f; ///< the zoom value of the atlas
@@ -149,7 +148,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
     void Update () {
         if ( isPlaying ) {
             float delta = (float)(EditorApplication.timeSinceStartup - lastTime);
-            playingSeconds += delta * previewSpeed;
+            playingSeconds += delta * curEdit.speed;
             float curSeconds = exMath.Wrap( playingSeconds, 
                                             totalSeconds, 
                                             curEdit.wrapMode );
@@ -506,31 +505,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
                                                 GUILayout.Height(18)
                                              } );
 
-            // ======================================================== 
-            // Preview Speed
-            // ======================================================== 
-
-            GUILayout.Space(10);
-            previewSpeed = EditorGUILayout.FloatField( new GUIContent("Preview Speed"),
-                                                       previewSpeed,
-                                                       EditorStyles.toolbarTextField,
-                                                       new GUILayoutOption [] {
-                                                           GUILayout.ExpandWidth(false),
-                                                           GUILayout.Width(200),
-                                                       } );
-
-            // ======================================================== 
-            // Preview Length
-            // ======================================================== 
-
-            GUILayout.Space(5);
-            EditorGUILayout.SelectableLabel( (totalSeconds / previewSpeed).ToString("f3") + " secs", 
-                                             new GUILayoutOption [] {
-                                                GUILayout.Width(80),
-                                                GUILayout.Height(18)
-                                             } );
-
-
             GUILayout.FlexibleSpace();
 
             // ======================================================== 
@@ -636,18 +610,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
             GUILayout.Label( "secs" );
         GUILayout.EndHorizontal();
 
-        // Frame Rate
-        EditorGUI.BeginChangeCheck();
-        float newFrameRate = EditorGUILayout.FloatField( "Frame Rate", 
-                                                         curEdit.frameRate, 
-                                                         new GUILayoutOption [] {
-                                                            GUILayout.MaxWidth(250)
-                                                         } );
-        if ( EditorGUI.EndChangeCheck() ) {
-            curEdit.frameRate = newFrameRate;
-            EditorUtility.SetDirty(curEdit);
-        }
-
         // Wrap Mode enum popup
         EditorGUI.BeginChangeCheck();
         WrapMode newWrapMode = (WrapMode)EditorGUILayout.EnumPopup ( "Wrap Mode", 
@@ -669,6 +631,18 @@ partial class exSpriteAnimationEditor : EditorWindow {
                                                                             } );
         if ( EditorGUI.EndChangeCheck() ) {
             curEdit.stopAction = newStopAction;
+        }
+
+        // Frame Rate
+        EditorGUI.BeginChangeCheck();
+        float newFrameRate = EditorGUILayout.FloatField( "Frame Rate", 
+                                                         curEdit.frameRate, 
+                                                         new GUILayoutOption [] {
+                                                            GUILayout.MaxWidth(250)
+                                                         } );
+        if ( EditorGUI.EndChangeCheck() ) {
+            curEdit.frameRate = newFrameRate;
+            EditorUtility.SetDirty(curEdit);
         }
     }
 
@@ -1087,12 +1061,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
             if ( textureInfo == null )
                 continue;
 
-            Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( textureInfo.rawTextureGUID );
-            if ( rawTexture == null )
-                continue;
-
-            float fiWidth = (float)rawTexture.width;
-            float fiHeight = (float)rawTexture.height;
+            float fiWidth = (float)textureInfo.rawWidth;
+            float fiHeight = (float)textureInfo.rawHeight;
 
             //
             if ( maxWidth < fiWidth ) {
@@ -1362,10 +1332,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
         float offsetY = 0.0f;
 
         if ( _useTextureOffset ) {
-            offsetX = (rawTexture.width - _textureInfo.width) * 0.5f - _textureInfo.trim_x;
+            offsetX = (_textureInfo.rawWidth - _textureInfo.width) * 0.5f - _textureInfo.trim_x;
             offsetX *= _scale;
 
-            offsetY = (rawTexture.height - _textureInfo.height) * 0.5f - _textureInfo.trim_y;
+            offsetY = (_textureInfo.rawHeight - _textureInfo.height) * 0.5f - _textureInfo.trim_y;
             offsetY *= _scale;
         }
 
