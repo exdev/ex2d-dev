@@ -47,6 +47,9 @@ public class exSprite : exSpriteBase {
                     height_ = value.height;
                     updateFlags |= exUpdateFlags.Vertex;
                 }
+                else if (useTextureOffset_) {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
                 updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
 
                 if (textureInfo_ == null || ReferenceEquals(textureInfo_.texture, value.texture) == false) {
@@ -273,46 +276,46 @@ public class exSprite : exSpriteBase {
             switch (anchor_) {
             //
             case Anchor.TopLeft:
-                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth;
-                anchorOffsetY = -halfHeight - textureInfo_.trim_y;
+                anchorOffsetX = halfWidth + textureInfo_.trim_x;
+                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight;
                 break;
             case Anchor.TopCenter:
-                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth * 0.5f;
-                anchorOffsetY = -halfHeight - textureInfo_.trim_y;
+                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth * 0.5f;
+                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight;
                 break;
             case Anchor.TopRight:
-                anchorOffsetX = -halfWidth - textureInfo_.trim_x;
-                anchorOffsetY = -halfHeight - textureInfo_.trim_y;
+                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth;;
+                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight;
                 break;
             //
             case Anchor.MidLeft:
-                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth;
-                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight * 0.5f;
+                anchorOffsetX = halfWidth + textureInfo_.trim_x;
+                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight * 0.5f;
                 break;
             case Anchor.MidCenter:
-                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth * 0.5f;
-                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight * 0.5f;
+                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth * 0.5f;
+                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight * 0.5f;
                 break;
             case Anchor.MidRight:
-                anchorOffsetX = -halfWidth - textureInfo_.trim_x;
-                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight * 0.5f;
+                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth;;
+                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight * 0.5f;
                 break;
             //
             case Anchor.BotLeft:
-                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth;
-                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight;
+                anchorOffsetX = halfWidth + textureInfo_.trim_x;
+                anchorOffsetY = halfHeight + textureInfo_.trim_y;
                 break;
             case Anchor.BotCenter:
-                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth * 0.5f;
-                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight;
+                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth * 0.5f;
+                anchorOffsetY = halfHeight + textureInfo_.trim_y;
                 break;
             case Anchor.BotRight:
-                anchorOffsetX = -halfWidth - textureInfo_.trim_x;
-                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight;
+                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth;
+                anchorOffsetY = halfHeight + textureInfo_.trim_y;
                 break;
             default:
-                anchorOffsetX = -halfWidth - textureInfo_.trim_x + textureInfo_.rawWidth * 0.5f;
-                anchorOffsetY = -halfHeight - textureInfo_.trim_y + textureInfo_.rawHeight * 0.5f;
+                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth * 0.5f;
+                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight * 0.5f;
                 break;
             }
         }

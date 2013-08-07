@@ -59,7 +59,7 @@ public static class exMath {
         else if (_wrapMode == WrapMode.PingPong) {
             int cnt = _value / _maxValue;
             _value %= _maxValue;
-            if (cnt % 2 == 1) {
+            if ((cnt & 0x1) == 1) {
                 return _maxValue - _value;
             }
         }

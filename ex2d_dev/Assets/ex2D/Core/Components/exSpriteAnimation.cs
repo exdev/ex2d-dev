@@ -107,7 +107,7 @@ public class exSpriteAnimationState {
                 wrappedIndex = frame;
                 int cnt = wrappedIndex / totalFrames;
                 wrappedIndex %= totalFrames;
-                if ( cnt % 2 == 1 ) {
+                if ((cnt & 0x1) == 1) {
                     wrappedIndex = totalFrames - 1 - wrappedIndex;
                 }
             }
@@ -159,7 +159,7 @@ public class exSpriteAnimationState {
                 //wrappedIndex = exMath.Wrap(i, totalFrame, wrapMode);
                 int cnt = i / totalFrames;
                 wrappedIndex = i % totalFrames;
-                reversed = (cnt % 2 == 1);
+                reversed = ((cnt & 0x1) == 1);
                 if (reversed) {
                     wrappedIndex = totalFrames - wrappedIndex;
                 }
@@ -167,7 +167,7 @@ public class exSpriteAnimationState {
                 int cnt = (i - 1) / (totalFrames - 1);
                 wrappedIndex = (i - 1) % (totalFrames - 1) + 1;
                 bool skippedEndsEvent = (i > 1 && wrappedIndex == 1);
-                reversed = (cnt % 2 == 1);
+                reversed = ((cnt & 0x1) == 1);
                 if (reversed) {
                     if (skippedEndsEvent) {
                         TriggerEvents(_target, totalFrames, true);
