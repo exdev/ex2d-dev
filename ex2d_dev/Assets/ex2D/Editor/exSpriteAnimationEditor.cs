@@ -1061,12 +1061,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
             if ( textureInfo == null )
                 continue;
 
-            Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( textureInfo.rawTextureGUID );
-            if ( rawTexture == null )
-                continue;
-
-            float fiWidth = (float)rawTexture.width;
-            float fiHeight = (float)rawTexture.height;
+            float fiWidth = (float)textureInfo.rawWidth;
+            float fiHeight = (float)textureInfo.rawHeight;
 
             //
             if ( maxWidth < fiWidth ) {
@@ -1336,10 +1332,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
         float offsetY = 0.0f;
 
         if ( _useTextureOffset ) {
-            offsetX = (rawTexture.width - _textureInfo.width) * 0.5f - _textureInfo.trim_x;
+            offsetX = (_textureInfo.rawWidth - _textureInfo.width) * 0.5f - _textureInfo.trim_x;
             offsetX *= _scale;
 
-            offsetY = (rawTexture.height - _textureInfo.height) * 0.5f - _textureInfo.trim_y;
+            offsetY = (_textureInfo.rawHeight - _textureInfo.height) * 0.5f - _textureInfo.trim_y;
             offsetY *= _scale;
         }
 
