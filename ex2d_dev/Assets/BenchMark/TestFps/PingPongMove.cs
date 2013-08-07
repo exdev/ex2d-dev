@@ -11,12 +11,17 @@ public class PingPongMove : MonoBehaviour {
     exSpriteAnimation ani;
 	// Use this for initialization
 	void Start () {
+        ani = GetComponent<exSpriteAnimation>();
+        if (Menu.setted) {
+            randomShowHide = Menu.showhide;
+            randomStop = Menu.stopmove;
+            ani.enabled = Menu.enableAni;
+        }
         step = Random.onUnitSphere;
         step.z = 0;
         step.Normalize();
         step *= speed;
         screenEdge = new Rect(-Screen.width * 0.5f, -Screen.height * 0.5f, Screen.width, Screen.height);
-        ani = GetComponent<exSpriteAnimation>();
 	}
 	
 	// Update is called once per frame

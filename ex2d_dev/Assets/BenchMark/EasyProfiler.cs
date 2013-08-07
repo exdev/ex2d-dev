@@ -58,7 +58,7 @@ public class EasyProfiler : MonoBehaviour {
 
     void OnGUI() {
         if (showReturnToMenu) {
-            if (GUI.Button(new Rect(100, 100, 300, 100), "Return To Menu")) {
+            if (GUI.Button(new Rect(20, 300, 200, 50), "Return To Menu")) {
                 Main.BackToMenu();
             }
         }
