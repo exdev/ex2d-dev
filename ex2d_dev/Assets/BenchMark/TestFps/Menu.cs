@@ -2,15 +2,23 @@
 using System.Collections;
 
 public class Menu : MonoBehaviour {
-    const int buttonWidth = 450;
+    const int buttonWidth = 600;
+    const int paramLabelWidth = 150;
 
     public static bool setted = false;
+    public static bool enableAni = true;
+    public static bool testMeshBuffer = false;
 
     public static float count = 1000;
-    public static bool enableAni = true;
-    public static float showhide;
-    public static float stopmove;
-    public static float param4;
+    public static string inputCount = count.ToString();
+    public static float showhide = 1;
+    public static string inputShowhide = showhide.ToString();
+    public static float stopmove = 3;
+    public static string inputStopmove = stopmove.ToString();
+    public static float speed = 200;
+    public static string inputSpeed = speed.ToString();
+
+    public static string inputVertexCount = exLayer.maxDynamicMeshVertex.ToString();
 
     public GUIStyle scrollStyle;
     public GUIStyle textStyle;
@@ -38,6 +46,30 @@ public class Menu : MonoBehaviour {
         _style.onActive.textColor = textStyle.onActive.textColor;
         _style.onFocused.textColor = textStyle.onFocused.textColor;
     }
+    void OnGuiSlider (string name, ref int val, float min, float max, ref string inputVal) {
+        float t = val;
+        OnGuiSlider (name, ref t, min, max, ref inputVal);
+        val = (int)t;
+    }
+    void OnGuiSlider (string name, ref float val, float min, float max, ref string inputVal) {
+        GUILayout.Space(20);
+        GUILayout.BeginHorizontal();
+        {
+            GUILayout.Label(name, textStyle, GUILayout.Width(paramLabelWidth));
+            float size = (max - min) / 10;
+            float newVal = GUILayout.HorizontalScrollbar(val, size, min, max + size);
+            if (val != newVal && GUI.changed) {
+                GUI.changed = false;
+                val = newVal;
+                inputVal = val.ToString();
+            }
+            inputVal = GUILayout.TextField(inputVal, textFieldStyle, GUILayout.Width(80));
+            if (float.TryParse(inputVal, out newVal)) {
+                val = newVal;
+            }
+        }
+        GUILayout.EndHorizontal();
+    }
     // Update is called once per frame
     void OnGUI () {
         if (btnStyle == null) {
@@ -53,43 +85,32 @@ public class Menu : MonoBehaviour {
             ApplyTextStyle(textFieldStyle);
         }
         GUILayout.BeginArea(new Rect(10, 10, 630, 950));
+        GUILayout.BeginVertical();
         scrollPos = GUILayout.BeginScrollView(scrollPos, /*true, true, GUI.skin.horizontalScrollbar, GUI.skin.verticalScrollbar, */scrollStyle, GUILayout.Width(buttonWidth + 30), GUILayout.Height(600));
-        //GUILayout.Space (50);
-        GUILayout.BeginVertical ();
-        foreach (var sceneName in sceneNameList) {
-            if (GUILayout.Button("Test " + sceneName, btnStyle, GUILayout.Width(buttonWidth), GUILayout.Height(40))) {
-                Main.RunTest (sceneName);
+        {
+            foreach (var sceneName in sceneNameList) {
+                if (GUILayout.Button("Test " + sceneName, btnStyle, GUILayout.Width(buttonWidth), GUILayout.Height(40))) {
+                    Main.RunTest(sceneName);
+                }
+                GUILayout.Space(20);
             }
+            GUILayout.Space(20);
+            GUILayout.BeginHorizontal();
+            {
+                exMesh.enableDoubleBuffer = GUILayout.Toggle(exMesh.enableDoubleBuffer, "ex2D: Double Mesh Buffer", toggleStyle);
+                testMeshBuffer = GUILayout.Toggle(testMeshBuffer, "Test Mesh Buffer", toggleStyle);
+            }
+            GUILayout.EndHorizontal();
+            OnGuiSlider("DynMesh Vertex:", ref exLayer.maxDynamicMeshVertex, 4, 4096, ref inputVertexCount);
+            enableAni = GUILayout.Toggle(enableAni, "Sprite animation", toggleStyle);
+
+            OnGuiSlider("Sprite Count:", ref count, 0, 1000, ref inputCount);
+            OnGuiSlider("Sprite Speed:", ref speed, 0, 1000, ref inputSpeed);
+            OnGuiSlider("Stop/Move Fps:", ref stopmove, 0, 70, ref inputStopmove);
+            OnGuiSlider("Show/Hide Fps:", ref showhide, 0, 70, ref inputShowhide);
         }
-        exMesh.enableDoubleBuffer = GUILayout.Toggle(exMesh.enableDoubleBuffer, "ex2D: Double mesh buffer", toggleStyle);
-        enableAni = GUILayout.Toggle(enableAni, "Sprite animation", toggleStyle);
-
-        GUILayout.BeginHorizontal ();
-        GUILayout.Label("count", textStyle, GUILayout.Width(100));
-        count = GUILayout.HorizontalScrollbar (count, 180, 0, 15000);
-        count = float.Parse(GUILayout.TextField(count.ToString(), textFieldStyle, GUILayout.Width(80)));
-        GUILayout.EndHorizontal ();
-
-        GUILayout.BeginHorizontal ();
-        GUILayout.Label("showhide fps", textStyle, GUILayout.Width(100));
-        showhide = GUILayout.HorizontalScrollbar (showhide, 180, 0, 1000);
-        showhide = float.Parse(GUILayout.TextField(showhide.ToString(), textFieldStyle, GUILayout.Width(80)));
-        GUILayout.EndHorizontal ();
-
-        GUILayout.BeginHorizontal ();
-        GUILayout.Label("stopmove fps", textStyle, GUILayout.Width(100));
-        stopmove = GUILayout.HorizontalScrollbar (stopmove, 180, 0, 1000);
-        stopmove = float.Parse(GUILayout.TextField(stopmove.ToString(), textFieldStyle, GUILayout.Width(80)));
-        GUILayout.EndHorizontal ();
-
-        GUILayout.BeginHorizontal ();
-        GUILayout.Label("param4", textStyle, GUILayout.Width(100));
-        param4 = GUILayout.HorizontalScrollbar (param4, 180, 0, 1500);
-        param4 = float.Parse(GUILayout.TextField(param4.ToString(), textFieldStyle, GUILayout.Width(80)));
-        GUILayout.EndHorizontal ();
-
         GUILayout.EndScrollView();
-        GUILayout.EndVertical ();
+        GUILayout.EndVertical();
         GUILayout.EndArea();
     }
 }

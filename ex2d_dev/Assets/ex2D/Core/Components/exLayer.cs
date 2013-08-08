@@ -39,7 +39,7 @@ public enum exLayerType
 [ExecuteInEditMode]
 public class exLayer : MonoBehaviour
 {
-    const int MAX_DYNAMIC_VERTEX_COUNT = 300;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
+    public static int maxDynamicMeshVertex = 300;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
     
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -454,7 +454,7 @@ public class exLayer : MonoBehaviour
             // Find available mesh
             // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
             exMesh sameDrawcallMesh = null;
-            int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? MAX_DYNAMIC_VERTEX_COUNT : exMesh.MAX_VERTEX_COUNT;
+            int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT;
             maxVertexCount -= sprite.vertexCount;
             for (int i = meshList.Count - 1; i >= 0; --i) {
                 exMesh mesh = meshList[i];

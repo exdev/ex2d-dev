@@ -545,6 +545,7 @@ public class exSpriteAnimation : MonoBehaviour {
         }
 
         //
+        Init();
         animations.Remove(_animClip);
         nameToState.Remove(_animClip.name);
     }
@@ -588,8 +589,8 @@ public class exSpriteAnimation : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void Init () {
-        bool unInited = (nameToState == null);
-        if (unInited) {
+        bool initialized = (nameToState != null);
+        if (initialized == false) {
             sprite_ = GetComponent<exSprite>();
             defaultTextureInfo = sprite_.textureInfo;
 
@@ -635,7 +636,7 @@ public class exSpriteAnimation : MonoBehaviour {
                 ++eventStartIndex;
             }
 
-            curAnimation.time += _deltaTime * curAnimation.speed;
+            curAnimation.time += _deltaTime;
             Sample();
 
             // check if stop
