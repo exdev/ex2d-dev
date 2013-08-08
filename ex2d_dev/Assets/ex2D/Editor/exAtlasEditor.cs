@@ -471,7 +471,6 @@ partial class exAtlasEditor : EditorWindow {
                                             new GUILayoutOption [] {
                                                 GUILayout.Width(80)
                                             } ) ) {
-                        curEdit.needRebuild = true;
                         LayoutAtlasElements();
                     }
                 EditorGUILayout.EndHorizontal();
@@ -755,6 +754,9 @@ partial class exAtlasEditor : EditorWindow {
                     importObjects.Clear();
                     EditorUtility.ClearProgressBar();    
                 }
+
+                LayoutAtlasElements();
+
                 Repaint();
 
                 // recover selections
@@ -1105,6 +1107,7 @@ partial class exAtlasEditor : EditorWindow {
             foreach ( exAtlasUtility.Element el in elements ) {
                 el.Apply();
             }
+            curEdit.needLayout = false;
             curEdit.needRebuild = true;
             EditorUtility.SetDirty(curEdit);
         }

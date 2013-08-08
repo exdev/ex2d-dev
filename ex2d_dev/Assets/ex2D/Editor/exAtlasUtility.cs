@@ -721,6 +721,7 @@ public static class exAtlasUtility {
             }
         }
 
+        _atlas.needRebuild = true;
         EditorUtility.SetDirty(_atlas);
     }
 
@@ -765,12 +766,28 @@ public static class exAtlasUtility {
         _progress( 0.4f, "Syncing texture infos" );
         AssetDatabase.StartAssetEditing();
         for ( int i = 0; i < _atlas.textureInfos.Count; ++i ) {
+            // check textureInfo itself
             exTextureInfo textureInfo = _atlas.textureInfos[i]; 
             string textureInfoPath = AssetDatabase.GetAssetPath(textureInfo);
+            if ( textureInfo == null ) {
+                _atlas.textureInfos.RemoveAt(i);
+                AssetDatabase.DeleteAsset ( textureInfoPath );
+                --i;
+                continue;
+            }
 
+            // check raw-texture
             string rawTexturePath = AssetDatabase.GUIDToAssetPath(textureInfo.rawTextureGUID);
             string rawTextureName = Path.GetFileNameWithoutExtension(rawTexturePath);
+            Texture2D rawTexture = (Texture2D)AssetDatabase.LoadAssetAtPath( rawTexturePath, typeof(Texture2D) ); 
+            if ( rawTexture == null ) {
+                _atlas.textureInfos.RemoveAt(i);
+                AssetDatabase.DeleteAsset ( textureInfoPath );
+                --i;
+                continue;
+            }
 
+            // check if texture info same with raw-texture
             string expectPath = Path.Combine( atlasAssetsDir, rawTextureName + ".asset" );
             expectPath = expectPath.Replace("\\", "/");
             if ( textureInfoPath != expectPath ) {
@@ -789,15 +806,46 @@ public static class exAtlasUtility {
                 }
             }
 
-            textureInfo.rawAtlasGUID = rawAtlasGUID;
+            //
+            Rect trimRect = new Rect ( 0, 0, rawTexture.width, rawTexture.height );
+            if ( textureInfo.trim ) {
+                trimRect = exTextureUtility.GetTrimTextureRect(rawTexture,textureInfo.trimThreshold);
+            }
+            textureInfo.rawAtlasGUID = exEditorUtility.AssetToGUID(_atlas);
+            textureInfo.name = rawTexture.name;
+            textureInfo.rawWidth = rawTexture.width;
+            textureInfo.rawHeight = rawTexture.height;
+            textureInfo.trim_x = (int)trimRect.x;
+            textureInfo.trim_y = (int)trimRect.y;
+            textureInfo.width = (int)trimRect.width;
+            textureInfo.height = (int)trimRect.height;
         }
+
+        // bitmapfont
+        _progress( 0.6f, "Syncing bitmap fonts" );
         for ( int i = 0; i < _atlas.bitmapFonts.Count; ++i ) {
+            // check bitmapfont
             exBitmapFont bitmapFont = _atlas.bitmapFonts[i]; 
             string bitmapFontPath = AssetDatabase.GetAssetPath(bitmapFont);
+            if ( bitmapFont == null ) {
+                _atlas.bitmapFonts.RemoveAt(i);
+                AssetDatabase.DeleteAsset ( bitmapFontPath );
+                --i;
+                continue;
+            }
 
+            // check raw-fontinfo
             string rawFontPath = AssetDatabase.GUIDToAssetPath(bitmapFont.rawFontGUID);
             string rawFontName = Path.GetFileNameWithoutExtension(rawFontPath);
+            FileInfo rawFontFileInfo = new FileInfo(rawFontPath);
+            if ( rawFontFileInfo.Exists == false ) {
+                _atlas.textureInfos.RemoveAt(i);
+                AssetDatabase.DeleteAsset ( bitmapFontPath );
+                --i;
+                continue;
+            }
 
+            // check if bitmapfont same with raw-fontinfo
             string expectPath = Path.Combine( atlasAssetsDir, rawFontName + ".asset" );
             expectPath = expectPath.Replace("\\", "/");
             if ( bitmapFontPath != expectPath ) {

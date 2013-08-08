@@ -1185,6 +1185,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             GUILayout.EndHorizontal();
         }
 
+        EditorGUILayout.Space();
         GUILayout.EndVertical();
     }
 
@@ -1286,6 +1287,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 GUI.backgroundColor = old;
             GUILayout.EndHorizontal();
         }
+
+        EditorGUILayout.Space();
         GUILayout.EndVertical();
     }
 
