@@ -51,6 +51,7 @@ public static class exGenericAssetUtility<T> where T : ScriptableObject {
             return null;
         }
         string assetPath = Path.Combine( _path, _name + ".asset" );
+        assetPath = AssetDatabase.GenerateUniqueAssetPath(assetPath);
 
         //
         T newAsset = ScriptableObject.CreateInstance<T>();
@@ -88,18 +89,22 @@ public static class exGenericAssetUtility<T> where T : ScriptableObject {
             }
         }
         else {
-            Debug.LogWarning("please select a folder");
+            assetPath = exEditorUtility.SaveFileInProject ( "Create...", "Assets/", _assetName, "asset" );
+            if ( string.IsNullOrEmpty (assetPath) )
+                return;
         }
 
         //
         bool doCreate = true;
-        string path = Path.Combine( assetPath, _assetName + ".asset" );
-        FileInfo fileInfo = new FileInfo(path);
-        if ( fileInfo.Exists ) {
-            doCreate = EditorUtility.DisplayDialog( _assetName + " already exists.",
-                                                    "Do you want to overwrite the old one?",
-                                                    "Yes", "No" );
-        }
+        // DISABLE: we use AssetDatabase.GenerateUniqueAssetPath in Create instead { 
+        // string path = Path.Combine( assetPath, _assetName + ".asset" );
+        // FileInfo fileInfo = new FileInfo(path);
+        // if ( fileInfo.Exists ) {
+        //     doCreate = EditorUtility.DisplayDialog( _assetName + " already exists.",
+        //                                             "Do you want to overwrite the old one?",
+        //                                             "Yes", "No" );
+        // }
+        // } DISABLE end 
         if ( doCreate ) {
             T newAsset = Create ( assetPath, _assetName );
             Selection.activeObject = newAsset;
