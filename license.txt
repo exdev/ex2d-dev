@@ -1,0 +1,11 @@
+Copyright (C) exDev, Wu Jie 
+ 
+This software is provided 'as-is', without any express or implied 
+warranty.  In no event will the author be held liable for any damages 
+arising from the use of this software. 
+ 
+Permission is granted to anyone to use this software in both commercial and non-commercial applications. You can copy, modify and merge the software to make it work for your application, but you are not allowed to sell the original or modified version of this software. 
+ 
+You must include this license file when you copy or distribute this software in any form. 
+ 
+exDev, Wu Jie KarasAya@gmail.com

@@ -1,0 +1,98 @@
+#  ======================================================================================
+#  File         : makefile_mac
+#  Author       : Wu Jie 
+#  Last Change  : 08/09/2013 | 15:32:26 PM | Friday,August
+#  Description  : 
+#  ======================================================================================
+
+# /////////////////////////////////////////////////////////////////////////////
+#  general
+# /////////////////////////////////////////////////////////////////////////////
+
+# settings (win)
+UNITY_PATH = "c:/Program Files/Unity/Editor/Data"
+
+# unit essential (win)
+COMPILER = $(UNITY_PATH)/Mono/bin/gmcs
+
+UNITY_ENGINE_DLL = $(UNITY_PATH)/Managed/UnityEngine.dll
+UNITY_EDITOR_DLL = $(UNITY_PATH)/Managed/UnityEditor.dll
+UNITY_VER = UNITY_4_2 
+
+# Utilities.
+MKDIR = mkdir -p
+RM = del /F
+
+# ex2D Target
+EX2D_TARGET_DIR = ../ex2d_submit/ex2D
+EX2D_RUNTIME_TARGET = $(EX2D_TARGET_DIR)/Runtime/ex2D.Runtime.dll
+EX2D_EDITOR_TARGET = $(EX2D_TARGET_DIR)/Editor/ex2D.Editor.dll
+
+# /////////////////////////////////////////////////////////////////////////////
+# do build
+# /////////////////////////////////////////////////////////////////////////////
+
+.PHONY: clean rebuild
+
+all: $(EX2D_RUNTIME_TARGET) $(EX2D_EDITOR_TARGET)
+clean: 
+	del /F ..\ex2d_submit\ex2D\Runtime\ex2D.Runtime.dll
+	del /F ..\ex2d_submit\ex2D\Editor\ex2D.Editor.dll
+rebuild: |clean all 
+
+# defines
+EX2D_DEFINE = -d:$(UNITY_VER) -d:UNITY_EDITOR
+
+# /////////////////////////////////////////////////////////////////////////////
+# ex2D runtime target
+# /////////////////////////////////////////////////////////////////////////////
+
+# get sources 
+EX2D_RUNTIME_SOURCE_DIRS += Assets/ex2D/Runtime/Assets/
+EX2D_RUNTIME_SOURCE_DIRS += Assets/ex2D/Runtime/Components/
+EX2D_RUNTIME_SOURCE_DIRS += Assets/ex2D/Runtime/Utilities/
+EX2D_RUNTIME_SOURCE = $(wildcard $(addsuffix *.cs,$(EX2D_RUNTIME_SOURCE_DIRS)))
+
+# argument (-d:DEBUG)
+EX2D_RUNTIME_ARGUMENT = $(EX2D_DEFINE) -r:$(UNITY_ENGINE_DLL),$(UNITY_EDITOR_DLL)
+
+# do the build
+$(EX2D_RUNTIME_TARGET):
+	@echo "========================================================" 
+	@echo Building ex2D.Runtime.dll...
+	@echo "========================================================" 
+	del /F /Q ..\ex2d_submit\ex2D\Runtime\Resources
+	xcopy Assets\ex2D\Runtime\Resources ..\ex2d_submit\ex2D\Runtime\Resources /E /Y
+	$(COMPILER) -target:library -out:$(EX2D_RUNTIME_TARGET) $(EX2D_RUNTIME_ARGUMENT) $(EX2D_RUNTIME_SOURCE)
+	@echo done!
+	@echo 
+
+# /////////////////////////////////////////////////////////////////////////////
+# ex2D editor target
+# /////////////////////////////////////////////////////////////////////////////
+
+# get sources 
+EX2D_EDITOR_SOURCE_DIRS += Assets/ex2D/Editor/
+EX2D_EDITOR_SOURCE_DIRS += Assets/ex2D/Editor/Inspector/
+EX2D_EDITOR_SOURCE = $(wildcard $(addsuffix *.cs,$(EX2D_EDITOR_SOURCE_DIRS)))
+
+# resources
+# EX2D_RESOURCES += -resource:Assets/ex2D/Editor/Resource/pixel.png
+# EX2D_RESOURCES += -resource:Assets/ex2D/Editor/Resource/checkerboard_64x64.png
+# EX2D_RESOURCES += -resource:Assets/ex2D/Editor/Resource/border.png
+# EX2D_RESOURCES += -resource:Assets/ex2D/Editor/Resource/rect_select.png
+
+# argument (-d:DEBUG)
+EX2D_EDITOR_ARGUMENT = $(EX2D_DEFINE) $(EX2D_RESOURCES) -r:$(EX2D_RUNTIME_TARGET),$(UNITY_ENGINE_DLL),$(UNITY_EDITOR_DLL)
+
+# do the build
+$(EX2D_EDITOR_TARGET): 
+	@echo "========================================================" 
+	@echo building ex2D.Editor.dll...
+	@echo "========================================================" 
+	del /F /Q ..\ex2d_submit\ex2D\Editor\Res
+	xcopy Assets\ex2D\Editor\Res ..\ex2d_submit\ex2D\Editor\Res /E /Y
+	$(COMPILER) -target:library -out:$(EX2D_EDITOR_TARGET) $(EX2D_EDITOR_ARGUMENT) $(EX2D_EDITOR_SOURCE)
+	@echo done!
+	@echo
+
