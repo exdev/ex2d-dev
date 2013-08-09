@@ -1,0 +1,74 @@
+#  ======================================================================================
+#  File         : makefile_mac
+#  Author       : Wu Jie 
+#  Last Change  : 08/09/2013 | 15:32:26 PM | Friday,August
+#  Description  : 
+#  ======================================================================================
+
+# /////////////////////////////////////////////////////////////////////////////
+#  general
+# /////////////////////////////////////////////////////////////////////////////
+
+# settings (mac)
+UNITY_PATH = /Applications/Unity/Unity.app/Contents/Frameworks
+
+# unit essential (mac)
+COMPILER = $(UNITY_PATH)/Mono/bin/gmcs
+
+UNITY_ENGINE_DLL = $(UNITY_PATH)/Managed/UnityEngine.dll
+UNITY_EDITOR_DLL = $(UNITY_PATH)/Managed/UnityEditor.dll
+UNITY_VER = UNITY_4_2 
+
+# Utilities.
+MKDIR = mkdir -p
+RM = rm -f
+
+# ex2D Target
+EX2D_TARGET_DIR = ../ex2d_submit/
+EX2D_EDITOR_TARGET = $(EX2D_TARGET_DIR)/Editor/ex2D.Editor.dll
+
+# /////////////////////////////////////////////////////////////////////////////
+# do build
+# /////////////////////////////////////////////////////////////////////////////
+
+.PHONY: clean rebuild
+
+all: $(EX2D_EDITOR_TARGET)
+clean: 
+	$(RM) $(EX2D_EDITOR_TARGET)
+rebuild: |clean all 
+
+# defines
+EDITOR_DEFINE = -d:$(UNITY_VER) -d:UNITY_EDITOR
+
+# /////////////////////////////////////////////////////////////////////////////
+# ex2D editor target
+# /////////////////////////////////////////////////////////////////////////////
+
+# get sources 
+EX2D_EDITOR_SOURCE_DIRS += Assets/ex2D/Editor/
+EX2D_EDITOR_SOURCE_DIRS += Assets/ex2D/Editor/Inspector/
+EX2D_EDITOR_SOURCE = $(wildcard $(addsuffix *.cs,$(EX2D_EDITOR_SOURCE_DIRS)))
+
+# resources
+# EX2D_RESOURCES += -resource:Assets/ex2D/Editor/Resource/pixel.png
+# EX2D_RESOURCES += -resource:Assets/ex2D/Editor/Resource/checkerboard_64x64.png
+# EX2D_RESOURCES += -resource:Assets/ex2D/Editor/Resource/border.png
+# EX2D_RESOURCES += -resource:Assets/ex2D/Editor/Resource/rect_select.png
+
+# deubg argument
+# EX2D_EDITOR_ARGUMENT = $(EDITOR_DEFINE) -d:DEBUG -r:$(UNITY_ENGINE_DLL),$(UNITY_EDITOR_DLL)
+# release argument
+EX2D_EDITOR_ARGUMENT = $(EDITOR_DEFINE) $(EX2D_RESOURCES) -r:$(UNITY_ENGINE_DLL),$(UNITY_EDITOR_DLL)
+
+# do the build
+$(EX2D_EDITOR_TARGET): 
+	@echo "========================================================" 
+	@echo building ex2D.Editor.dll...
+	@echo "========================================================" 
+	rm -rf $(EX2D_TARGET_DIR)/Editor/Res/
+	cp -r Assets/ex2D/Editor/Res/ $(EX2D_TARGET_DIR)/Editor/Res
+	$(COMPILER) -target:library -out:$(EX2D_EDITOR_TARGET) $(EX2D_EDITOR_ARGUMENT) $(EX2D_EDITOR_SOURCE)
+	@echo done!
+	@echo
+
