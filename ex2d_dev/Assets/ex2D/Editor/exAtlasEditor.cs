@@ -86,6 +86,8 @@ partial class exAtlasEditor : EditorWindow {
         rectSelection = new exRectSelection<Object>( PickObject,
                                                      PickRectObjects,
                                                      ConfirmRectSelection );
+
+        UpdateEditObject ();
     }
 
     // ------------------------------------------------------------------ 
@@ -102,6 +104,7 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void OnFocus () {
+        UpdateEditObject ();
         UpdateSelection();
     }
 
@@ -110,15 +113,7 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void OnSelectionChange () {
-        if ( lockCurEdit == false ) {
-            exAtlas atlas = Selection.activeObject as exAtlas;
-            if ( atlas != null && atlas != curEdit ) {
-                Edit (atlas);
-                return;
-            }
-        }
-
-        //
+        UpdateEditObject ();
         UpdateSelection();
     }
 
@@ -226,6 +221,19 @@ partial class exAtlasEditor : EditorWindow {
     ///////////////////////////////////////////////////////////////////////////////
     // functions
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void UpdateEditObject () {
+        if ( lockCurEdit == false || curEdit == null ) {
+            exAtlas atlas = Selection.activeObject as exAtlas;
+            if ( atlas != null && atlas != curEdit ) {
+                Edit (atlas);
+            }
+        }
+    } 
 
     // ------------------------------------------------------------------ 
     // Desc: 

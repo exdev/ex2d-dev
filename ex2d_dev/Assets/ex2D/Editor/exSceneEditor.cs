@@ -636,7 +636,8 @@ class exSceneEditor : EditorWindow {
                 // Show a copy icon on the drag
                 foreach ( Object o in DragAndDrop.objectReferences ) {
                     if ( o is exTextureInfo ||
-                         o is exBitmapFont ) 
+                         o is exBitmapFont ||
+                         o is exSpriteAnimationClip ) 
                     {
                         DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
                         break;
@@ -672,6 +673,20 @@ class exSceneEditor : EditorWindow {
                         if ( spriteFont.shader == null )
                             spriteFont.shader = Shader.Find("ex2D/Alpha Blended");
                         spriteFont.font = o as exBitmapFont;
+                    }
+                    else if ( o is exSpriteAnimationClip ) {
+                        exSpriteAnimationClip clip = o as exSpriteAnimationClip;
+                        newGO = new GameObject(o.name);
+                        exSprite sprite = newGO.AddComponent<exSprite>();
+                        if ( sprite.shader == null )
+                            sprite.shader = Shader.Find("ex2D/Alpha Blended");
+                        exSpriteAnimation spriteAnim = newGO.AddComponent<exSpriteAnimation>();
+                        spriteAnim.defaultAnimation = clip;
+                        spriteAnim.animations.Add(clip);
+
+                        if ( clip.frameInfos.Count > 0 ) {
+                            sprite.textureInfo = clip.frameInfos[0].textureInfo;
+                        }
                     }
 
                     if ( newGO != null && activeLayer != null ) {
@@ -751,6 +766,13 @@ class exSceneEditor : EditorWindow {
                     }
                     else if ( o is exBitmapFont ) {
                         // TODO:
+                    }
+                    else if ( o is exSpriteAnimationClip ) {
+                        exSpriteAnimationClip clip = o as exSpriteAnimationClip;
+                        if ( clip.frameInfos.Count > 0 ) {
+                            DrawTextureInfoPreview ( clip.frameInfos[0].textureInfo, 
+                                                     SceneField_MapToWorld( _rect, Event.current.mousePosition) );
+                        } 
                     }
                 }
             }

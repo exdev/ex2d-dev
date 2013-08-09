@@ -42,6 +42,29 @@ public static class exEditorUtility {
     static GUIStyle styleRectBorder = null;
 
     ///////////////////////////////////////////////////////////////////////////////
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+
+	public static string SaveFileInProject ( string _title, string _dirPath, string _fileName, string _extension ) {
+		string path = EditorUtility.SaveFilePanel(_title, _dirPath, _fileName, _extension);
+
+        // cancelled
+		if ( path.Length == 0 )
+			return "";
+
+		string cwd = System.IO.Directory.GetCurrentDirectory().Replace("\\","/") + "/assets/";
+		if ( path.ToLower().IndexOf(cwd.ToLower()) != 0 ) {
+			path = "";
+			EditorUtility.DisplayDialog(_title, "Assets must be saved inside the Assets folder", "Ok");
+		}
+		else {
+			path = path.Substring ( cwd.Length - "/assets".Length );
+		}
+		return path;
+	}
+
+
+    ///////////////////////////////////////////////////////////////////////////////
     // special material
     ///////////////////////////////////////////////////////////////////////////////
 

@@ -115,6 +115,16 @@ partial class exSpriteAnimationEditor : EditorWindow {
                                                              PickRectObjects_EventInfo,
                                                              ConfirmRectSelection_EventInfo,
                                                              UpdateRect_EventInfo );
+
+        UpdateEditObject ();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnFocus () {
+        UpdateEditObject ();
     }
 
     // ------------------------------------------------------------------ 
@@ -122,13 +132,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void OnSelectionChange () {
-        if ( lockCurEdit == false ) {
-            exSpriteAnimationClip clip = Selection.activeObject as exSpriteAnimationClip;
-            if ( clip != null && clip != curEdit ) {
-                Edit (clip);
-                return;
-            }
-        }
+        UpdateEditObject ();
     }
 
     // ------------------------------------------------------------------ 
@@ -274,6 +278,19 @@ partial class exSpriteAnimationEditor : EditorWindow {
     ///////////////////////////////////////////////////////////////////////////////
     // functions
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void UpdateEditObject () {
+        if ( lockCurEdit == false || curEdit == null ) {
+            exSpriteAnimationClip clip = Selection.activeObject as exSpriteAnimationClip;
+            if ( clip != null && clip != curEdit ) {
+                Edit (clip);
+            }
+        }
+    } 
 
     // ------------------------------------------------------------------ 
     // Desc: 
