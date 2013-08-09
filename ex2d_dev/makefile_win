@@ -24,7 +24,7 @@ MKDIR = mkdir -p
 RM = del /F
 
 # ex2D Target
-EX2D_TARGET_DIR = ../ex2d_submit
+EX2D_TARGET_DIR = ../ex2d_submit/ex2D
 EX2D_RUNTIME_TARGET = $(EX2D_TARGET_DIR)/Runtime/ex2D.Runtime.dll
 EX2D_EDITOR_TARGET = $(EX2D_TARGET_DIR)/Editor/ex2D.Editor.dll
 
