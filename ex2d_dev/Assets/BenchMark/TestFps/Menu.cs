@@ -104,10 +104,10 @@ public class Menu : MonoBehaviour {
             OnGuiSlider("DynMesh Vertex:", ref exLayer.maxDynamicMeshVertex, 4, 4096, ref inputVertexCount);
             enableAni = GUILayout.Toggle(enableAni, "Sprite animation", toggleStyle);
 
-            OnGuiSlider("Sprite Count:", ref count, 0, 1000, ref inputCount);
+            OnGuiSlider("Sprite Count:", ref count, 0, 10000, ref inputCount);
             OnGuiSlider("Sprite Speed:", ref speed, 0, 1000, ref inputSpeed);
-            OnGuiSlider("Stop/Move Fps:", ref stopmove, 0, 70, ref inputStopmove);
-            OnGuiSlider("Show/Hide Fps:", ref showhide, 0, 70, ref inputShowhide);
+            OnGuiSlider("Stop/Move Fps:", ref stopmove, 0, 30, ref inputStopmove);
+            OnGuiSlider("Show/Hide Fps:", ref showhide, 0, 30, ref inputShowhide);
         }
         GUILayout.EndScrollView();
         GUILayout.EndVertical();

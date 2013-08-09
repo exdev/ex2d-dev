@@ -53,3 +53,5 @@ quick_gen_project_*_autogen.bat.meta
 quick_gen_project_*_autogen.sh
 quick_gen_project_*_autogen.sh.meta
 *.userprefs
+*/-tk2d.asset
+*/-tk2d.asset.meta

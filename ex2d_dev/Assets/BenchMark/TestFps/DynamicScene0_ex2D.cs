@@ -4,9 +4,14 @@ using System.Collections;
 public class DynamicScene0_ex2D : MonoBehaviour {
     public exSpriteAnimation ani;
     public int aniCount;
+    //public int maxDynamicMeshVertex = 300;
 
-	// Use this for initialization
+    void Awake() {
+        //exLayer.maxDynamicMeshVertex = maxDynamicMeshVertex;
+    }
+
 	IEnumerator Start () {
+        ex2DMng.instance.ResetCamera (true);
         if (Menu.setted) {
             aniCount = (int)Menu.count;
         }
@@ -17,10 +22,5 @@ public class DynamicScene0_ex2D : MonoBehaviour {
                 yield return null;
             }
         }
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
 	}
 }
