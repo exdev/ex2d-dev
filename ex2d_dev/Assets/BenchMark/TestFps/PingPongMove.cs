@@ -18,7 +18,9 @@ public class PingPongMoveBase : MonoBehaviour {
         if (Menu.setted) {
             randomShowHide = Menu.showhide;
             randomStop = Menu.stopmove;
-            ani.enabled = Menu.enableAni;
+            if (ani != null) {
+                ani.enabled = Menu.enableAni;
+            }
             speed = Menu.speed;
         }
         step = Random.onUnitSphere;
@@ -40,8 +42,8 @@ public class PingPongMoveBase : MonoBehaviour {
                 moving = !moving;
             }
         }
-        if (moving) {
-            Vector3 newPos = transform.position + step * Time.deltaTime;
+        if (moving && (step.x != 0 || step.y != 0)) {
+            Vector3 newPos = transform.localPosition + step * Time.deltaTime;
             if (newPos.x <= screenEdge.xMin || newPos.x >= screenEdge.xMax) {
                 step.x = -step.x;
             }
@@ -49,7 +51,7 @@ public class PingPongMoveBase : MonoBehaviour {
                 step.y = -step.y;
             }
             else {
-                transform.position = newPos;
+                transform.localPosition = newPos;
             }
         }
 	}
