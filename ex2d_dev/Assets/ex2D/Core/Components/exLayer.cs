@@ -291,10 +291,12 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public float SetWorldBoundsMinZ (float z) {
-        for (int i = 0; i < meshList.Count; ++i) {
+        float interval = 0.01f;
+        for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
             if (mesh != null) {
                 mesh.transform.position = new Vector3(0, 0, z);
+                z += interval;  // TODO: 这里并未进行真正的排序
             }
         }
         return z;
