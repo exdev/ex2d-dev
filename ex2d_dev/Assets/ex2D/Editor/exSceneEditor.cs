@@ -789,8 +789,8 @@ class exSceneEditor : EditorWindow {
         Material material = _node.material;
         material.SetPass(0);
 
-        List<Vector3> vertices = new List<Vector3>();
-        List<Vector2> uvs = new List<Vector2>();
+        exList<Vector3> vertices = new exList<Vector3>();
+        exList<Vector2> uvs = new exList<Vector2>();
         _node.GetBuffers(vertices, uvs);
         exDebug.Assert(uvs.Count == vertices.Count);
 
@@ -799,8 +799,8 @@ class exSceneEditor : EditorWindow {
         GL.Begin(GL.QUADS);
             GL.Color( new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
             for (int i = 0; i < vertices.Count; ++i) {
-                GL.TexCoord2 ( uvs[i].x, uvs[i].y );
-                GL.Vertex ( vertices[i] );
+                GL.TexCoord2 ( uvs.buffer[i].x, uvs.buffer[i].y );
+                GL.Vertex ( vertices.buffer[i] );
             }
         GL.End();
         //GL.PopMatrix();

@@ -10,7 +10,6 @@ public class DynamicScene0_TK2D : MonoBehaviour {
     public int aniCount;
 
 #if BENCHMARK_TK2D
-	// Use this for initialization
 	IEnumerator Start () {
         if (Menu.setted) {
             aniCount = (int)Menu.count;

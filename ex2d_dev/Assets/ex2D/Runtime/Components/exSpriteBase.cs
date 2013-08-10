@@ -412,15 +412,11 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// Add sprite's geometry data to buffers
     // ------------------------------------------------------------------ 
 
-    internal virtual void FillBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32) {
+    internal virtual void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
         vertexBufferIndex = _vertices.Count;
-
-        for (int i = 0; i < vertexCount; ++i) {
-            _vertices.Add(new Vector3());
-            _colors32.Add(new Color32());
-            _uvs.Add(new Vector2());
-        }
-        
+        _vertices.AddRange(vertexCount);
+        _colors32.AddRange(vertexCount);
+        _uvs.AddRange(vertexCount);
         updateFlags |= exUpdateFlags.AllExcludeIndex;
     }
 
@@ -431,7 +427,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// NOTE: 这个方法不应修改对象中除了updateFlags外的其它字段
     // ------------------------------------------------------------------ 
 
-    internal abstract exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices = null);
+    internal abstract exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices = null);
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -463,12 +459,12 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// Get sprite's geometry data
     // ------------------------------------------------------------------ 
 
-    public void GetBuffers (List<Vector3> _vertices, List<Vector2> _uvs) {
+    public void GetBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs) {
         _vertices.Clear();
         _uvs.Clear();
         if (visible) {
             exUpdateFlags originalFlags = updateFlags;
-            List<Color32> colors = new List<Color32>(vertexCount);
+            exList<Color32> colors = new exList<Color32>(vertexCount);
 
             int originalVertexBufferIndex = vertexBufferIndex;
             FillBuffers(_vertices, _uvs, colors);

@@ -516,7 +516,7 @@ public class exLayer : MonoBehaviour
             // update indices to make them match new vertic index
             if (sprite.isInIndexBuffer) {
                 for (int index = sprite.indexBufferIndex; index < sprite.indexBufferIndex + sprite.indexCount; ++index) {
-                    _mesh.indices[index] -= _sprite.vertexCount;
+                    _mesh.indices.buffer[index] -= _sprite.vertexCount;
                 }
             }
         }
@@ -578,21 +578,9 @@ public class exLayer : MonoBehaviour
             }
             // insert range into _indices
             int indexCount = _sprite.indexCount;
-            if (indexCount == 6) {      // 大部分是6个
-                _mesh.indices.Add(0);
-                _mesh.indices.Add(0);
-                _mesh.indices.Add(0);
-                _mesh.indices.Add(0);
-                _mesh.indices.Add(0);
-                _mesh.indices.Add(0);
-            }
-            else {
-                for (int i = 0; i < indexCount; ++i) {
-                    _mesh.indices.Add(0);
-                }
-            }
+            _mesh.indices.AddRange(indexCount);
             for (int i = _mesh.indices.Count - 1 - indexCount; i >= _sprite.indexBufferIndex ; --i) {
-                _mesh.indices[i + indexCount] = _mesh.indices[i];
+                _mesh.indices.buffer[i + indexCount] = _mesh.indices.buffer[i];
             }
             _sprite.updateFlags |= exUpdateFlags.Index;
             // update other sprites indexBufferIndex

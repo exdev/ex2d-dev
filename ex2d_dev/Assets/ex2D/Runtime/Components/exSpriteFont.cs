@@ -373,7 +373,7 @@ public class exSpriteFont : exSpriteBase {
     /// Add sprite's geometry data to buffers
     // ------------------------------------------------------------------ 
 
-    internal override void FillBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32) {
+    internal override void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
         if (layer_ == null) {
             UpdateCapacity();
         }
@@ -384,7 +384,7 @@ public class exSpriteFont : exSpriteBase {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    internal override exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
+    internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
 #if UNITY_EDITOR
         if (text_ == null || vertexCountCapacity < text_.Length * exMesh.QUAD_VERTEX_COUNT) {
             Debug.LogError("[UpdateBuffers|exSpriteFont] 顶点缓冲长度不够，是否绕开属性直接修改了text_?: " + vertexCountCapacity, this);
@@ -403,12 +403,12 @@ public class exSpriteFont : exSpriteBase {
             // update index buffer
             int indexBufferEnd = indexBufferIndex + indexCountCapacity - 5;
             for (int i = indexBufferIndex, v = vertexBufferIndex; i < indexBufferEnd; i += 6, v += 4) {
-                _indices[i] = v;
-                _indices[i + 1] = v + 1;
-                _indices[i + 2] = v + 2;
-                _indices[i + 3] = v + 2;
-                _indices[i + 4] = v + 3;
-                _indices[i + 5] = v;
+                _indices.buffer[i] = v;
+                _indices.buffer[i + 1] = v + 1;
+                _indices.buffer[i + 2] = v + 2;
+                _indices.buffer[i + 3] = v + 2;
+                _indices.buffer[i + 4] = v + 3;
+                _indices.buffer[i + 5] = v;
             }
         }
         if ((updateFlags & exUpdateFlags.Color) != 0) {
@@ -416,10 +416,10 @@ public class exSpriteFont : exSpriteBase {
             Color32 bot = new Color(botColor_.r, botColor_.g, botColor_.b, botColor_.a * layer_.alpha);
             int vertexBufferEnd = vertexBufferIndex + text_.Length * 4;
             for (int i = vertexBufferIndex; i < vertexBufferEnd; i += 4) {
-                _colors32[i + 0] = bot;
-                _colors32[i + 1] = top;
-                _colors32[i + 2] = top;
-                _colors32[i + 3] = bot;
+                _colors32.buffer[i + 0] = bot;
+                _colors32.buffer[i + 1] = top;
+                _colors32.buffer[i + 2] = top;
+                _colors32.buffer[i + 3] = bot;
             }
         }
         exUpdateFlags updatedFlags = updateFlags;
@@ -436,10 +436,8 @@ public class exSpriteFont : exSpriteBase {
     protected override Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix) {
         // TODO: only return the rotated bounding box of the sprite font
         int visibleVertexCount = text_.Length * 4;
-        List<Vector3> vertices = new List<Vector3>(visibleVertexCount);    // TODO: use global static temp List instead
-        for (int i = 0; i < visibleVertexCount; ++i) {
-            vertices.Add(new Vector3());
-        }
+        exList<Vector3> vertices = new exList<Vector3>(visibleVertexCount);    // TODO: use global static temp List instead
+        vertices.AddRange(visibleVertexCount);
         BuildText(vertices, 0, ref _spriteMatrix);
         return vertices.ToArray();
     }
@@ -669,7 +667,7 @@ public class exSpriteFont : exSpriteBase {
     // Desc:
     // ------------------------------------------------------------------ 
     
-    void BuildText (List<Vector3> _vertices, int _vbIndex, ref Matrix4x4 _spriteMatrix, List<Vector2> _uvs = null) {
+    void BuildText (exList<Vector3> _vertices, int _vbIndex, ref Matrix4x4 _spriteMatrix, exList<Vector2> _uvs = null) {
         width_ = 0.0f;    // 和SpriteBase一致，用于表示实际宽度
         height_ = 0.0f;   // 和SpriteBase一致，用于表示实际高度
 
@@ -677,7 +675,7 @@ public class exSpriteFont : exSpriteBase {
 
         if (font_ == null) {
             for (int i = _vbIndex; i < vbEnd; ++i) {
-                _vertices[i] = new Vector3();
+                _vertices.buffer[i] = new Vector3();
             }
             return;
         }
@@ -701,15 +699,13 @@ public class exSpriteFont : exSpriteBase {
                 // convert to top center
                 float halfLineWidth = lineWidth * 0.5f;
                 for (int i = lineStart; i < parsedVBIndex; ++i) {
-                    Vector3 v = _vertices[i];
-                    _vertices[i] = new Vector3(v.x - halfLineWidth, v.y, v.z);
+                    _vertices.buffer[i].x -= halfLineWidth;
                 }
                 break;
             case TextAlignment.Right:
                 // convert to top right
                 for (int i = lineStart; i < parsedVBIndex; ++i) {
-                    Vector3 v = _vertices[i];
-                    _vertices[i] = new Vector3(v.x - lineWidth, v.y, v.z);
+                    _vertices.buffer[i].x -=lineWidth;
                 }
                 break;
             }
@@ -757,10 +753,10 @@ public class exSpriteFont : exSpriteBase {
         anchorOffsetY += offset_.y;
 
         for (int i = _vbIndex; i < vbEnd; i += 4) {
-            Vector3 v0 = _vertices[i + 0];
-            Vector3 v1 = _vertices[i + 1];
-            Vector3 v2 = _vertices[i + 2];
-            Vector3 v3 = _vertices[i + 3];
+            Vector3 v0 = _vertices.buffer[i + 0];
+            Vector3 v1 = _vertices.buffer[i + 1];
+            Vector3 v2 = _vertices.buffer[i + 2];
+            Vector3 v3 = _vertices.buffer[i + 3];
             // apply anchor and offset
             v0.x += anchorOffsetX; v0.y += anchorOffsetY;
             v1.x += anchorOffsetX; v1.y += anchorOffsetY;
@@ -794,10 +790,10 @@ public class exSpriteFont : exSpriteBase {
                 v2.y += rightOffset;
                 v3.y += rightOffset;
             }
-            _vertices[i + 0] = v0;
-            _vertices[i + 1] = v1;
-            _vertices[i + 2] = v2;
-            _vertices[i + 3] = v3;
+            _vertices.buffer[i + 0] = v0;
+            _vertices.buffer[i + 1] = v1;
+            _vertices.buffer[i + 2] = v2;
+            _vertices.buffer[i + 3] = v3;
         }
         // TODO: pixel-perfect
     }
@@ -806,7 +802,7 @@ public class exSpriteFont : exSpriteBase {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    float BuildLine (List<Vector3> _vertices, List<Vector2> _uvs, ref int _charIndex, ref int _vbIndex, Vector2 _texelSize, float _top) {
+    float BuildLine (exList<Vector3> _vertices, exList<Vector2> _uvs, ref int _charIndex, ref int _vbIndex, Vector2 _texelSize, float _top) {
         // TODO: cache vertices, only transform them if text not changed.
         int firstChar = _charIndex;
         float curX = 0.0f;
@@ -817,10 +813,10 @@ public class exSpriteFont : exSpriteBase {
 
             // if new line  // TODO: auto wrap
             if (c == '\n') {
-                _vertices[_vbIndex + 0] = new Vector3();
-                _vertices[_vbIndex + 1] = new Vector3();
-                _vertices[_vbIndex + 2] = new Vector3();
-                _vertices[_vbIndex + 3] = new Vector3();
+                _vertices.buffer[_vbIndex + 0] = new Vector3();
+                _vertices.buffer[_vbIndex + 1] = new Vector3();
+                _vertices.buffer[_vbIndex + 2] = new Vector3();
+                _vertices.buffer[_vbIndex + 3] = new Vector3();
                 ++_charIndex;
                 _vbIndex += 4;
                 break;
@@ -838,20 +834,20 @@ public class exSpriteFont : exSpriteBase {
             if (ci == null) {
                 // character is not present, it will not display
                 // Debug.Log("character is not present: " + c, this);
-                _vertices[_vbIndex + 0] = new Vector3();
-                _vertices[_vbIndex + 1] = new Vector3();
-                _vertices[_vbIndex + 2] = new Vector3();
-                _vertices[_vbIndex + 3] = new Vector3();
+                _vertices.buffer[_vbIndex + 0] = new Vector3();
+                _vertices.buffer[_vbIndex + 1] = new Vector3();
+                _vertices.buffer[_vbIndex + 2] = new Vector3();
+                _vertices.buffer[_vbIndex + 3] = new Vector3();
                 continue;
             }
 
             // build text vertices
             float x = curX + ci.xoffset;
             float y = _top - ci.yoffset;
-            _vertices[_vbIndex + 0] = new Vector3(x, y - ci.height, 0.0f);
-            _vertices[_vbIndex + 1] = new Vector3(x, y, 0.0f);
-            _vertices[_vbIndex + 2] = new Vector3(x + ci.width, y, 0.0f);
-            _vertices[_vbIndex + 3] = new Vector3(x + ci.width, y - ci.height, 0.0f);
+            _vertices.buffer[_vbIndex + 0] = new Vector3(x, y - ci.height, 0.0f);
+            _vertices.buffer[_vbIndex + 1] = new Vector3(x, y, 0.0f);
+            _vertices.buffer[_vbIndex + 2] = new Vector3(x + ci.width, y, 0.0f);
+            _vertices.buffer[_vbIndex + 3] = new Vector3(x + ci.width, y - ci.height, 0.0f);
 
             lastWidth = ci.width;
             lastAdvance = ci.xadvance;
@@ -861,16 +857,16 @@ public class exSpriteFont : exSpriteBase {
                 Vector2 start = new Vector2(ci.x * _texelSize.x, ci.y * _texelSize.y);
                 Vector2 end = new Vector2((ci.x + ci.rotatedWidth) * _texelSize.x, (ci.y + ci.rotatedHeight) * _texelSize.y);
                 if (ci.rotated) {
-                    _uvs[_vbIndex + 0] = new Vector2(end.x, start.y);
-                    _uvs[_vbIndex + 1] = start;
-                    _uvs[_vbIndex + 2] = new Vector2(start.x, end.y);
-                    _uvs[_vbIndex + 3] = end;
+                    _uvs.buffer[_vbIndex + 0] = new Vector2(end.x, start.y);
+                    _uvs.buffer[_vbIndex + 1] = start;
+                    _uvs.buffer[_vbIndex + 2] = new Vector2(start.x, end.y);
+                    _uvs.buffer[_vbIndex + 3] = end;
                 }
                 else {
-                    _uvs[_vbIndex + 0] = start;
-                    _uvs[_vbIndex + 1] = new Vector2(start.x, end.y);
-                    _uvs[_vbIndex + 2] = end;
-                    _uvs[_vbIndex + 3] = new Vector2(end.x, start.y);
+                    _uvs.buffer[_vbIndex + 0] = start;
+                    _uvs.buffer[_vbIndex + 1] = new Vector2(start.x, end.y);
+                    _uvs.buffer[_vbIndex + 2] = end;
+                    _uvs.buffer[_vbIndex + 3] = new Vector2(end.x, start.y);
                 }
             }
         }

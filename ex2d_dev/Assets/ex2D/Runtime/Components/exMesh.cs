@@ -93,14 +93,14 @@ public class exMesh : MonoBehaviour
     /// cache mesh.vertices
     /// 依照sprite在spriteList中的相同顺序排列，每个sprite的顶点都放在连续的一段区间中
     /// vertices的数量和索引都保持和uvs, colors, normals, tangents一致
-    [System.NonSerialized] public List<Vector3> vertices = new List<Vector3>();
+    [System.NonSerialized] public exList<Vector3> vertices = new exList<Vector3>();
 
     /// cache mesh.triangles (按深度排序)
     // 如果不手动给出QUAD_INDEX_COUNT，按List初始分配个数(4个)，则添加一个quad就要分配两次内存
-    [System.NonSerialized] public List<int> indices = new List<int>(QUAD_INDEX_COUNT); 
+    [System.NonSerialized] public exList<int> indices = new exList<int>(QUAD_INDEX_COUNT); 
 
-    [System.NonSerialized] public List<Vector2> uvs = new List<Vector2>();       ///< cache mesh.vertices
-    [System.NonSerialized] public List<Color32> colors32 = new List<Color32>();  ///< cache mesh.colors32
+    [System.NonSerialized] public exList<Vector2> uvs = new exList<Vector2>();       ///< cache mesh.vertices
+    [System.NonSerialized] public exList<Color32> colors32 = new exList<Color32>();  ///< cache mesh.colors32
 
     [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.None;         ///< current mesh buffer update flags
     [System.NonSerialized] public exUpdateFlags lastUpdateFlags = exUpdateFlags.None;     ///< last mesh buffer update flags
@@ -190,16 +190,16 @@ public class exMesh : MonoBehaviour
         }
         if ((updateFlags & exUpdateFlags.Vertex) != 0 || 
             (updateFlags & exUpdateFlags.Index) != 0) {           // 如果要重设triangles，则必须同时重设vertices，否则mesh将显示不出来
-            mesh.vertices = vertices.ToArray();
+            mesh.vertices = vertices.FastToArray(); // 使用此方法会导致list的在需要变长时重新分配buffer，不过由于最终调用ToArray时本来就要分配新的buffer，所以没有影响。反而减少了当list尺寸不变时拿array的GC消耗。
         }
         if ((updateFlags & exUpdateFlags.UV) != 0) {
-            mesh.uv = uvs.ToArray();
+            mesh.uv = uvs.FastToArray();
         }
         if ((updateFlags & exUpdateFlags.Color) != 0) {
-            mesh.colors32 = colors32.ToArray();
+            mesh.colors32 = colors32.FastToArray();
         }
         if ((updateFlags & exUpdateFlags.Index) != 0) {
-            mesh.triangles = indices.ToArray();      // During runtime, assigning triangles will automatically Recalculate the bounding volume.
+            mesh.triangles = indices.FastToArray();      // During runtime, assigning triangles will automatically Recalculate the bounding volume.
             bool visible = (indices.Count > 0);
             if (gameObject.activeSelf != visible) {
                 gameObject.SetActive(visible);

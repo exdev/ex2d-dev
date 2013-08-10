@@ -177,18 +177,18 @@ public class exSprite : exSpriteBase {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    internal override exUpdateFlags UpdateBuffers (List<Vector3> _vertices, List<Vector2> _uvs, List<Color32> _colors32, List<int> _indices) {
+    internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
         if ((updateFlags & exUpdateFlags.Vertex) != 0) {
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
             UpdateVertexBuffer(_vertices, vertexBufferIndex, ref cachedWorldMatrix);
         }
         if ((updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
-            _indices[indexBufferIndex]     = vertexBufferIndex;
-            _indices[indexBufferIndex + 1] = vertexBufferIndex + 1;
-            _indices[indexBufferIndex + 2] = vertexBufferIndex + 2;
-            _indices[indexBufferIndex + 3] = vertexBufferIndex + 2;
-            _indices[indexBufferIndex + 4] = vertexBufferIndex + 3;
-            _indices[indexBufferIndex + 5] = vertexBufferIndex;
+            _indices.buffer[indexBufferIndex]     = vertexBufferIndex;
+            _indices.buffer[indexBufferIndex + 1] = vertexBufferIndex + 1;
+            _indices.buffer[indexBufferIndex + 2] = vertexBufferIndex + 2;
+            _indices.buffer[indexBufferIndex + 3] = vertexBufferIndex + 2;
+            _indices.buffer[indexBufferIndex + 4] = vertexBufferIndex + 3;
+            _indices.buffer[indexBufferIndex + 5] = vertexBufferIndex;
             TestIndices(_indices);
         }
         if ((updateFlags & exUpdateFlags.UV) != 0) {
@@ -204,25 +204,25 @@ public class exSprite : exSpriteBase {
             Vector2 end = new Vector2((float)(textureInfo.x + textureInfo.rotatedWidth) * texelSize.x, 
                                        (float)(textureInfo.y + textureInfo.rotatedHeight) * texelSize.y);
             if ( textureInfo.rotated ) {
-                _uvs[vertexBufferIndex + 0] = new Vector2(end.x, start.y);
-                _uvs[vertexBufferIndex + 1] = start;
-                _uvs[vertexBufferIndex + 2] = new Vector2(start.x, end.y);
-                _uvs[vertexBufferIndex + 3] = end;
+                _uvs.buffer[vertexBufferIndex + 0] = new Vector2(end.x, start.y);
+                _uvs.buffer[vertexBufferIndex + 1] = start;
+                _uvs.buffer[vertexBufferIndex + 2] = new Vector2(start.x, end.y);
+                _uvs.buffer[vertexBufferIndex + 3] = end;
             }
             else {
-                _uvs[vertexBufferIndex + 0] = start;
-                _uvs[vertexBufferIndex + 1] = new Vector2(start.x, end.y);
-                _uvs[vertexBufferIndex + 2] = end;
-                _uvs[vertexBufferIndex + 3] = new Vector2(end.x, start.y);
+                _uvs.buffer[vertexBufferIndex + 0] = start;
+                _uvs.buffer[vertexBufferIndex + 1] = new Vector2(start.x, end.y);
+                _uvs.buffer[vertexBufferIndex + 2] = end;
+                _uvs.buffer[vertexBufferIndex + 3] = new Vector2(end.x, start.y);
             }
         }
         if ((updateFlags & exUpdateFlags.Color) != 0) {
             exDebug.Assert(layer_ != null);
             Color32 color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
-            _colors32[vertexBufferIndex + 0] = color32;
-            _colors32[vertexBufferIndex + 1] = color32;
-            _colors32[vertexBufferIndex + 2] = color32;
-            _colors32[vertexBufferIndex + 3] = color32;
+            _colors32.buffer[vertexBufferIndex + 0] = color32;
+            _colors32.buffer[vertexBufferIndex + 1] = color32;
+            _colors32.buffer[vertexBufferIndex + 2] = color32;
+            _colors32.buffer[vertexBufferIndex + 3] = color32;
         }
         exUpdateFlags updatedFlags = updateFlags;
         updateFlags = exUpdateFlags.None;
@@ -236,10 +236,8 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     protected override Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix) {
-        List<Vector3> vertices = new List<Vector3>(vertexCount);    // TODO: use global static temp List instead
-        for (int i = 0; i < vertexCount; ++i) {
-            vertices.Add(new Vector3());
-        }
+        exList<Vector3> vertices = new exList<Vector3>(vertexCount);    // TODO: use global static temp List instead
+        vertices.AddRange(vertexCount);
         UpdateVertexBuffer(vertices, 0, ref _spriteMatrix);
         return vertices.ToArray();
     }
@@ -253,20 +251,22 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
     
     [System.Diagnostics.Conditional("EX_DEBUG")]
-    void TestIndices (List<int> _indices) {
+    void TestIndices (exList<int> _indices) {
+#if UNITY_EDITOR
         // check indice is valid
         for (int i = indexBufferIndex; i < indexBufferIndex + indexCount; ++i) {
-            if (_indices[i] < vertexBufferIndex || _indices[i] > vertexBufferIndex + vertexCount) {
-                Debug.LogError("[exLayer] Wrong triangle index!");
+            if (_indices.buffer [i] < vertexBufferIndex || _indices.buffer [i] > vertexBufferIndex + vertexCount) {
+                Debug.LogError ("[exLayer] Wrong triangle index!");
             }
         }
+#endif
     }
     
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
     
-    void UpdateVertexBuffer (List<Vector3> _vertices, int _startIndex, ref Matrix4x4 _spriteMatrix) {
+    void UpdateVertexBuffer (exList<Vector3> _vertices, int _startIndex, ref Matrix4x4 _spriteMatrix) {
         float anchorOffsetX;
         float anchorOffsetY;
         float halfWidth = width * 0.5f;
@@ -376,10 +376,10 @@ public class exSprite : exSpriteBase {
             v3.y += rightOffset;
         }
 
-        _vertices[_startIndex + 0] = v0;
-        _vertices[_startIndex + 1] = v1;
-        _vertices[_startIndex + 2] = v2;
-        _vertices[_startIndex + 3] = v3;
+        _vertices.buffer[_startIndex + 0] = v0;
+        _vertices.buffer[_startIndex + 1] = v1;
+        _vertices.buffer[_startIndex + 2] = v2;
+        _vertices.buffer[_startIndex + 3] = v3;
         
         // TODO: pixel-perfect
     }
