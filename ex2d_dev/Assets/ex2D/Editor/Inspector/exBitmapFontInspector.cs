@@ -47,6 +47,13 @@ class exBitmapFontInspector : Editor {
         GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
 
+            // Select
+            if ( GUILayout.Button("Select...", GUILayout.Width(60), GUILayout.Height(20) ) ) {
+                Object obj = exEditorUtility.LoadAssetFromGUID<Object>( bitmapFont.rawFontGUID );
+                EditorGUIUtility.PingObject(obj);
+            }
+
+            // Rebuild
             if ( GUILayout.Button("Rebuild...", GUILayout.Width(80), GUILayout.Height(20) ) ) {
                 if ( exBitmapFontUtility.IsFontInfo(newRef) == false ) {
                     Debug.LogError ( "The file you choose to parse is not a font-info file. Must be \".txt\", \".fnt\" file" );
