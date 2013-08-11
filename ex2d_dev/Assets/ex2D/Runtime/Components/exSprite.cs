@@ -218,15 +218,21 @@ public class exSprite : exSpriteBase {
         }
         if ((updateFlags & exUpdateFlags.Color) != 0) {
             exDebug.Assert(layer_ != null);
-            Color32 color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
+            Color32 color32;
+            if (transparent_ == false) {
+                color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
+            }
+            else {
+                color32 = new Color32 ();
+            }
             _colors32.buffer[vertexBufferIndex + 0] = color32;
             _colors32.buffer[vertexBufferIndex + 1] = color32;
             _colors32.buffer[vertexBufferIndex + 2] = color32;
             _colors32.buffer[vertexBufferIndex + 3] = color32;
         }
-        exUpdateFlags updatedFlags = updateFlags;
+        exUpdateFlags applyedFlags = updateFlags;
         updateFlags = exUpdateFlags.None;
-        return updatedFlags;
+        return applyedFlags;
     }
 
     #endregion // Functions used to update geometry buffer

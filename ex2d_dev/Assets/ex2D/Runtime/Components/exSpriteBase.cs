@@ -38,6 +38,8 @@ public enum Anchor {
 [ExecuteInEditMode]
 public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteBase> {
 
+    public static bool enableFastShowHide = false;
+
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -210,6 +212,18 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// If OnEnable, isOnEnabled_ is true. If OnDisable, isOnEnabled_ is false.
     [System.NonSerialized] protected bool isOnEnabled_;
 
+    /// fast show hide
+    [System.NonSerialized] protected bool transparent_ = false;
+    public bool transparent {
+        get { return transparent_; }
+        set {
+            if ( transparent_ != value ) {
+                transparent_ = value;
+                updateFlags |= exUpdateFlags.Color;
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ 
     /// The current updateFlags
     // ------------------------------------------------------------------ 
@@ -293,14 +307,24 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     void OnEnable () {
         isOnEnabled_ = true;
         if (layer_ != null && visible) {
-            layer_.ShowSprite(this);
+            if (enableFastShowHide) {
+                layer_.FastShowSprite (this);
+            }
+            else {
+                layer_.ShowSprite (this);
+            }
         }
     }
 
     void OnDisable () {
         isOnEnabled_ = false;
         if (layer_ != null) {
-            layer_.HideSprite(this);
+            if (enableFastShowHide) {
+                layer_.FastHideSprite (this);
+            }
+            else {
+                layer_.HideSprite (this);
+            }
         }
     }
 

@@ -412,8 +412,15 @@ public class exSpriteFont : exSpriteBase {
             }
         }
         if ((updateFlags & exUpdateFlags.Color) != 0) {
-            Color32 top = new Color(topColor_.r, topColor_.g, topColor_.b, topColor_.a * layer_.alpha);
-            Color32 bot = new Color(botColor_.r, botColor_.g, botColor_.b, botColor_.a * layer_.alpha);
+            Color32 top, bot;
+            if (transparent_ == false) {
+                top = new Color (topColor_.r, topColor_.g, topColor_.b, topColor_.a * layer_.alpha);
+                bot = new Color (botColor_.r, botColor_.g, botColor_.b, botColor_.a * layer_.alpha);
+            }
+            else {
+                top = new Color32 ();
+                bot = new Color32 ();
+            }
             int vertexBufferEnd = vertexBufferIndex + text_.Length * 4;
             for (int i = vertexBufferIndex; i < vertexBufferEnd; i += 4) {
                 _colors32.buffer[i + 0] = bot;

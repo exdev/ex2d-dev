@@ -173,10 +173,9 @@ public class exLayer : MonoBehaviour
                     if (alphaHasChanged) {
                         sprite.updateFlags |= exUpdateFlags.Color;
                     }
-                    exDebug.Assert(sprite.isInIndexBuffer == sprite.visible);
                     if (sprite.isInIndexBuffer) {
                         sprite.UpdateTransform();
-                        exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
+                        exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);   // TODO: we only need to udpate color if transparent
                         meshUpdateFlags |= spriteUpdateFlags;
                     }
                 }
@@ -231,14 +230,16 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     internal void ShowSprite (exSpriteBase _sprite) {
-        if (!_sprite.isInIndexBuffer) {
+        if (_sprite.isInIndexBuffer == false) {
             exMesh mesh = GetMesh(_sprite);
             if (mesh != null) {
-                if (!_sprite.isInIndexBuffer) {
-                    AddIndices(mesh, _sprite);
-                }
+                AddIndices(mesh, _sprite);
                 UpdateNowInEditMode();
             }
+        }
+        else {
+            _sprite.transparent = false;
+            UpdateNowInEditMode();
         }
     }
     
@@ -255,6 +256,29 @@ public class exLayer : MonoBehaviour
                 UpdateNowInEditMode();
             }
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    internal void FastShowSprite (exSpriteBase _sprite) {
+        if (_sprite.isInIndexBuffer == false) {
+            ShowSprite (_sprite);
+        }
+        else {
+            _sprite.transparent = false;
+            UpdateNowInEditMode();
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    internal void FastHideSprite (exSpriteBase _sprite) {
+        _sprite.transparent = true;
+        UpdateNowInEditMode();
     }
 
     // ------------------------------------------------------------------ 

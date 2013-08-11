@@ -86,7 +86,7 @@ public class Menu : MonoBehaviour {
         }
         GUILayout.BeginArea(new Rect(10, 10, 630, 950));
         GUILayout.BeginVertical();
-        scrollPos = GUILayout.BeginScrollView(scrollPos, /*true, true, GUI.skin.horizontalScrollbar, GUI.skin.verticalScrollbar, */scrollStyle, GUILayout.Width(buttonWidth + 30), GUILayout.Height(600));
+        scrollPos = GUILayout.BeginScrollView(scrollPos, /*true, true, GUI.skin.horizontalScrollbar, GUI.skin.verticalScrollbar, */scrollStyle, GUILayout.Width(buttonWidth + 30), GUILayout.Height(900));
         {
             foreach (var sceneName in sceneNameList) {
                 if (GUILayout.Button("Test " + sceneName, btnStyle, GUILayout.Width(buttonWidth), GUILayout.Height(40))) {
@@ -95,14 +95,16 @@ public class Menu : MonoBehaviour {
                 GUILayout.Space(20);
             }
             GUILayout.Space(20);
+            enableAni = GUILayout.Toggle(enableAni, "Sprite animation", toggleStyle);
+            GUILayout.Space(20);
             GUILayout.BeginHorizontal();
             {
                 exMesh.enableDoubleBuffer = GUILayout.Toggle(exMesh.enableDoubleBuffer, "ex2D: Double Mesh Buffer", toggleStyle);
                 testMeshBuffer = GUILayout.Toggle(testMeshBuffer, "Test Mesh Buffer", toggleStyle);
             }
             GUILayout.EndHorizontal();
-            OnGuiSlider("DynMesh Vertex:", ref exLayer.maxDynamicMeshVertex, 4, 4096, ref inputVertexCount);
-            enableAni = GUILayout.Toggle(enableAni, "Sprite animation", toggleStyle);
+            OnGuiSlider("ex2D: DB Vertex:", ref exLayer.maxDynamicMeshVertex, 4, 4096, ref inputVertexCount);
+            exSpriteBase.enableFastShowHide = GUILayout.Toggle(exSpriteBase.enableFastShowHide, "ex2D: Enable FastShowHide", toggleStyle);
 
             OnGuiSlider("Sprite Count:", ref count, 0, 10000, ref inputCount);
             OnGuiSlider("Sprite Speed:", ref speed, 0, 1000, ref inputSpeed);
