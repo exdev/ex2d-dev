@@ -1227,8 +1227,8 @@ class exSceneEditor : EditorWindow {
 
         switch ( e.GetTypeForControl(controlID) ) {
         case EventType.KeyDown:
-            if ( (e.command || e.control) &&
-                 (e.keyCode == KeyCode.Backspace || e.keyCode == KeyCode.Delete) ) 
+            if ( ((e.command || e.control) &&
+                 e.keyCode == KeyCode.Backspace) || e.keyCode == KeyCode.Delete ) 
             {
                 Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
                 for ( int i = selection.Length-1; i >= 0; --i ) {

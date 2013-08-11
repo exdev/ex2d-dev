@@ -94,7 +94,7 @@ public class exList<T> {
             }
         }
         else {
-            buffer = null;
+            buffer = emptyArray;
         }
     }
 

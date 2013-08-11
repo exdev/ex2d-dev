@@ -34,13 +34,11 @@ public class PingPongMoveBase : MonoBehaviour {
     }
 	void Update () {
         bool flip = Menu.testMeshBuffer;
-        if (flip || (randomShowHide != 0 && Random.value < randomShowHide * Time.deltaTime)) {
+        if (flip || (Random.value < randomShowHide * Time.deltaTime && randomShowHide != 0)) {
             ShowHide();
         }
-        if (randomStop != 0) {
-            if (Random.value < randomStop * Time.deltaTime) {
-                moving = !moving;
-            }
+        if (Random.value < randomStop * Time.deltaTime && randomStop != 0) {
+            moving = !moving;
         }
         if (moving && (step.x != 0 || step.y != 0)) {
             Vector3 newPos = transform.localPosition + step * Time.deltaTime;

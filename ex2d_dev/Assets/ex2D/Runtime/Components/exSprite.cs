@@ -178,11 +178,11 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
-        if ((updateFlags & exUpdateFlags.Vertex) != 0) {
+        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Vertex) != 0) {
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
             UpdateVertexBuffer(_vertices, vertexBufferIndex, ref cachedWorldMatrix);
         }
-        if ((updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
             _indices.buffer[indexBufferIndex]     = vertexBufferIndex;
             _indices.buffer[indexBufferIndex + 1] = vertexBufferIndex + 1;
             _indices.buffer[indexBufferIndex + 2] = vertexBufferIndex + 2;
@@ -191,7 +191,7 @@ public class exSprite : exSpriteBase {
             _indices.buffer[indexBufferIndex + 5] = vertexBufferIndex;
             TestIndices(_indices);
         }
-        if ((updateFlags & exUpdateFlags.UV) != 0) {
+        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.UV) != 0) {
             Vector2 texelSize;
             if (textureInfo.texture != null) {
                 texelSize = textureInfo.texture.texelSize;
@@ -230,9 +230,16 @@ public class exSprite : exSpriteBase {
             _colors32.buffer[vertexBufferIndex + 2] = color32;
             _colors32.buffer[vertexBufferIndex + 3] = color32;
         }
-        exUpdateFlags applyedFlags = updateFlags;
-        updateFlags = exUpdateFlags.None;
-        return applyedFlags;
+        //if (transparent_ == false) {
+            exUpdateFlags applyedFlags = updateFlags;
+            updateFlags = exUpdateFlags.None;
+            return applyedFlags;
+        //}
+        //else {
+        //    exUpdateFlags applyedFlags = (updateFlags & exUpdateFlags.Color);
+        //    updateFlags &= ~exUpdateFlags.Color;
+        //    return applyedFlags;
+        //}
     }
 
     #endregion // Functions used to update geometry buffer

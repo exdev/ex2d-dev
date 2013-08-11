@@ -9,7 +9,7 @@ public class Menu : MonoBehaviour {
     public static bool enableAni = true;
     public static bool testMeshBuffer = false;
 
-    public static float count = 1000;
+    public static float count = 1500;
     public static string inputCount = count.ToString();
     public static float showhide = 1;
     public static string inputShowhide = showhide.ToString();
@@ -88,6 +88,9 @@ public class Menu : MonoBehaviour {
         GUILayout.BeginVertical();
         scrollPos = GUILayout.BeginScrollView(scrollPos, /*true, true, GUI.skin.horizontalScrollbar, GUI.skin.verticalScrollbar, */scrollStyle, GUILayout.Width(buttonWidth + 30), GUILayout.Height(900));
         {
+#if EX_DEBUG
+            GUILayout.Label ("[ex2D debug mode]", textStyle);
+#endif
             foreach (var sceneName in sceneNameList) {
                 if (GUILayout.Button("Test " + sceneName, btnStyle, GUILayout.Width(buttonWidth), GUILayout.Height(40))) {
                     Main.RunTest(sceneName);

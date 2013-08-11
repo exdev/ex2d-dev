@@ -174,8 +174,10 @@ public class exLayer : MonoBehaviour
                         sprite.updateFlags |= exUpdateFlags.Color;
                     }
                     if (sprite.isInIndexBuffer) {
-                        sprite.UpdateTransform();
-                        exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);   // TODO: we only need to udpate color if transparent
+                        //if (sprite.transparent == false) {
+                            sprite.UpdateTransform();
+                        //}
+                        exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
                         meshUpdateFlags |= spriteUpdateFlags;
                     }
                 }
