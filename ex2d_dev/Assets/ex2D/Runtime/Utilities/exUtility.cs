@@ -254,6 +254,35 @@ namespace UnityEngine {
                                             worldScale.y / oldWorldScale.y * localScale.y,
                                             worldScale.z / oldWorldScale.z * localScale.z );
         }
-    }
 
+        // ------------------------------------------------------------------ 
+        /// Use this method instead of GetComponentInChildren that may alloc lots of GC
+        // ------------------------------------------------------------------ 
+
+        public static T GetComponentInChildrenFast<T>(this GameObject go) where T : Component
+        {
+            if (go.activeInHierarchy) {
+                Component component = go.GetComponent(typeof(T));
+                if (component != null) {
+                    return component as T;
+                }
+            }
+            Transform transform = go.transform;
+            if (transform != null) {
+                int childCount = transform.childCount;
+                for (int i = 0; i < childCount; ++i) {
+                    Transform child = transform.GetChild(i);
+                    T componentInChildren = child.gameObject.GetComponentInChildrenFast<T>();
+                    if (componentInChildren != null) {
+                        return componentInChildren;
+                    }
+                }
+            }
+            return null;
+        }
+        public static T GetComponentInChildrenFast<T> (this Component component) where T : Component 
+        {
+            return component.gameObject.GetComponentInChildrenFast<T>();
+        }
+    }
 }
