@@ -443,7 +443,7 @@ public class exSpriteFont : exSpriteBase {
     protected override Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix) {
         // TODO: only return the rotated bounding box of the sprite font
         int visibleVertexCount = text_.Length * 4;
-        exList<Vector3> vertices = new exList<Vector3>(visibleVertexCount);    // TODO: use global static temp List instead
+        exList<Vector3> vertices = exList<Vector3>.GetTempList();
         vertices.AddRange(visibleVertexCount);
         BuildText(vertices, 0, ref _spriteMatrix);
         return vertices.ToArray();

@@ -643,7 +643,7 @@ public class exLayer : MonoBehaviour
                     break;
                 }
             }
-            _sprite.indexBufferIndex = -1;
+            _sprite.isInIndexBuffer = false;
         }
     }
 }

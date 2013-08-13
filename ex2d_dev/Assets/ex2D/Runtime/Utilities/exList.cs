@@ -1,4 +1,4 @@
-// ======================================================================================
+﻿// ======================================================================================
 // File         : exList.cs
 // Author       : Jare
 // Last Change  : 10 / 08 / 2013
@@ -24,6 +24,15 @@ using System.Collections;
 public class exList<T> {
 
     static readonly T[] emptyArray = new T[0];
+
+    static exList<T> tempList_;
+    public static exList<T> GetTempList () {
+        if (tempList_ == null) {
+            tempList_ = new exList<T>();
+        }
+        tempList_.Clear();
+        return tempList_;
+    }
 
     public T[] buffer;
     public int Count = 0;
@@ -117,7 +126,7 @@ public class exList<T> {
     void GrowIfNeeded (int _newCount) {
         int num = Count + _newCount;
         if (num > buffer.Length) {
-            Capacity = Math.Max(Math.Max(Capacity * 2, 4), num);
+            Capacity = Math.Max(Math.Max(Capacity * 2, 4), num);    // TODO: 测试如何只分配目标长度的数组，避免ToArray时重新new Array的性能
         }
     }
 

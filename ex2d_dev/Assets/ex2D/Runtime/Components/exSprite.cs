@@ -249,7 +249,7 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     protected override Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix) {
-        exList<Vector3> vertices = new exList<Vector3>(vertexCount);    // TODO: use global static temp List instead
+        exList<Vector3> vertices = exList<Vector3>.GetTempList();
         vertices.AddRange(vertexCount);
         UpdateVertexBuffer(vertices, 0, ref _spriteMatrix);
         return vertices.ToArray();

@@ -401,7 +401,6 @@ public class exSpriteAnimation : MonoBehaviour {
 
             switch ( stopAction ) {
             case exSpriteAnimationClip.StopAction.DoNothing:
-                // Nothing todo;
                 break;
 
             case exSpriteAnimationClip.StopAction.DefaultSprite:

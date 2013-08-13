@@ -87,7 +87,7 @@ public class exBitmapFont : ScriptableObject {
     ///
     ///////////////////////////////////////////////////////////////////////////////
 
-    public struct KerningTableKey { // TODO: benchmark with dict<int, dict<int, int>>
+    public struct KerningTableKey {
         
         // ------------------------------------------------------------------ 
         /// In Xamarin.iOS, if KerningTableKey is a type as dictionary keys, we should manually implement its IEqualityComparer,
