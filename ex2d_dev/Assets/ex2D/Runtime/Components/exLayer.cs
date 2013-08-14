@@ -39,7 +39,7 @@ public enum exLayerType
 [ExecuteInEditMode]
 public class exLayer : MonoBehaviour
 {
-    public static int maxDynamicMeshVertex = 300;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
+    public static int maxDynamicMeshVertex = 900;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
     
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -95,7 +95,6 @@ public class exLayer : MonoBehaviour
             }
             if (value == exLayerType.Static){
                 Compact();
-                // TODO: batch same material meshes
             }
         }
     }
@@ -322,7 +321,7 @@ public class exLayer : MonoBehaviour
             exMesh mesh = meshList[i];
             if (mesh != null) {
                 mesh.transform.position = new Vector3(0, 0, z);
-                z += interval;  // TODO: 这里并未进行真正的排序
+                z += interval;
             }
         }
         return z;
@@ -480,6 +479,7 @@ public class exLayer : MonoBehaviour
             }
     
             // Find available mesh
+            // TODO: meshList要按深度排序
             // TODO: 就算材质相同，如果中间有其它材质挡着，也要拆分多个mesh
             exMesh sameDrawcallMesh = null;
             int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT;

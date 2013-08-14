@@ -335,7 +335,7 @@ public class ex2DMng : MonoBehaviour {
         cachedCamera.transform.rotation = Quaternion.identity;
         cachedCamera.transform.SetLossyScale(Vector3.one);
         if (exclusiveCamera) {
-            // TODO: set layer
+            // TODO: set unity layer
         }
     }
 }

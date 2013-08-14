@@ -282,8 +282,24 @@ public class exSprite : exSpriteBase {
     void UpdateVertexBuffer (exList<Vector3> _vertices, int _startIndex, ref Matrix4x4 _spriteMatrix) {
         float anchorOffsetX;
         float anchorOffsetY;
-        float halfWidth = width * 0.5f;
-        float halfHeight = height * 0.5f;
+        float halfHeight;
+        float halfWidth;
+        if (customSize_ == false) {
+            if (textureInfo_ != null) {
+                halfHeight = textureInfo_.height * 0.5f;
+                halfWidth = textureInfo_.width * 0.5f;
+            }
+            else {
+                halfHeight = 0;
+                halfWidth = 0;
+            }
+        }
+        else {
+            halfHeight = height_ * 0.5f;
+            halfWidth = width_ * 0.5f;
+        }
+
+        exDebug.Assert(halfWidth == width * 0.5f && halfHeight == height * 0.5f);
 
         if (useTextureOffset_) {
             switch (anchor_) {
