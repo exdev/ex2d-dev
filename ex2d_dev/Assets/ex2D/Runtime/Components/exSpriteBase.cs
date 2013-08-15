@@ -38,7 +38,7 @@ public enum Anchor {
 [ExecuteInEditMode]
 public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteBase> {
 
-    public static bool enableFastShowHide = false;
+    public static bool enableFastShowHide = true;
 
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
