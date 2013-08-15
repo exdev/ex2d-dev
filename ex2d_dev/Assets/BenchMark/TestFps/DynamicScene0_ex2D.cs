@@ -11,7 +11,7 @@ public class DynamicScene0_ex2D : MonoBehaviour {
     }
 
 	IEnumerator Start () {
-        ex2DMng.instance.ResetCamera (true);
+        ex2DRenderer.instance.ResetCamera (true);
         if (Menu.setted) {
             aniCount = (int)Menu.count;
         }

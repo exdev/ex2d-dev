@@ -157,7 +157,7 @@ class exSceneEditor : EditorWindow {
 
     void OnInspectorUpdate () {
         // TODO: this make selection can not select exMeshes, confirm with Jare { 
-        // ex2DMng.instance.ForceRenderScene();
+        // ex2DRenderer.instance.ForceRenderScene();
         // } TODO end 
         Repaint();
     }
@@ -171,11 +171,11 @@ class exSceneEditor : EditorWindow {
         PreCheck ();
 
         //
-        if ( ex2DMng.instance == null )
+        if ( ex2DRenderer.instance == null )
             return;
 
         if ( curSerializedObject == null || curSerializedObject.targetObject == null )
-            curSerializedObject = new SerializedObject(ex2DMng.instance);
+            curSerializedObject = new SerializedObject(ex2DRenderer.instance);
 
         //
         curSerializedObject.Update ();
@@ -229,8 +229,8 @@ class exSceneEditor : EditorWindow {
         activeLayer = null;
         // draggingLayer = null; TODO
 
-        if ( ex2DMng.instance ) {
-            ex2DMng.instance.ForceRenderScene();
+        if ( ex2DRenderer.instance ) {
+            ex2DRenderer.instance.ForceRenderScene();
         }
     }
 
@@ -244,8 +244,8 @@ class exSceneEditor : EditorWindow {
             settingsStyles = new SettingsStyles();
         }
 
-        // if ex2DMng is null
-        if ( ex2DMng.instance == null ) {
+        // if ex2DRenderer is null
+        if ( ex2DRenderer.instance == null ) {
             EditorGUILayout.Space();
 
             EditorGUILayout.BeginHorizontal();
@@ -253,7 +253,7 @@ class exSceneEditor : EditorWindow {
 
                 Color old = GUI.color;
                 GUI.color = Color.yellow;
-                EditorGUILayout.LabelField ( "Can't find ex2DMng in the scene!" );
+                EditorGUILayout.LabelField ( "Can't find ex2DRenderer in the scene!" );
                 GUI.color = old;
             EditorGUILayout.EndHorizontal();
 
@@ -265,15 +265,15 @@ class exSceneEditor : EditorWindow {
                         GameObject go = new GameObject("Main Camera");
                         ex2DCamera = go.AddComponent<Camera>();
                     }
-                    ex2DCamera.gameObject.AddComponent<ex2DMng>();
-                    ex2DMng.instance.CreateLayer();
+                    ex2DCamera.gameObject.AddComponent<ex2DRenderer>();
+                    ex2DRenderer.instance.CreateLayer();
                 }
             EditorGUILayout.EndHorizontal();
 
             // SerializedObject
-            if ( ex2DMng.instance != null ) {
-                ex2DMng.instance.ResortLayerDepth();
-                ex2DMng.instance.UpdateLayers();
+            if ( ex2DRenderer.instance != null ) {
+                ex2DRenderer.instance.ResortLayerDepth();
+                ex2DRenderer.instance.UpdateLayers();
             }
         }
     }
@@ -292,8 +292,8 @@ class exSceneEditor : EditorWindow {
             // ======================================================== 
 
             if ( GUILayout.Button ("Update Scene", EditorStyles.toolbarButton) ) {
-                ex2DMng.instance.ForceRenderScene();
-                EditorUtility.SetDirty(ex2DMng.instance);
+                ex2DRenderer.instance.ForceRenderScene();
+                EditorUtility.SetDirty(ex2DRenderer.instance);
             }
 
             // ======================================================== 
@@ -360,8 +360,8 @@ class exSceneEditor : EditorWindow {
         EditorGUILayout.BeginVertical();
             EditorGUILayout.LabelField ( "General", settingsStyles.boldLabel );
             EditorGUILayout.ObjectField ( ""
-                                          , ex2DMng.instance
-                                          , typeof(ex2DMng)
+                                          , ex2DRenderer.instance
+                                          , typeof(ex2DRenderer)
                                           , false 
                                         );
 
@@ -399,7 +399,7 @@ class exSceneEditor : EditorWindow {
     void Layout_LayerElementsField () {
         SerializedProperty layerListProp = curSerializedObject.FindProperty ("layerList");
 
-        Rect rect = GUILayoutUtility.GetRect ( 10f, settingsStyles.elementHeight * ex2DMng.instance.layerList.Count );
+        Rect rect = GUILayoutUtility.GetRect ( 10f, settingsStyles.elementHeight * ex2DRenderer.instance.layerList.Count );
         LayerElementsField (rect, layerListProp);
 
         // add layer button
@@ -407,26 +407,26 @@ class exSceneEditor : EditorWindow {
         GUILayout.FlexibleSpace();
             if ( GUILayout.Button( "UP", settingsStyles.toolbarButton ) ) 
             {
-                int curIdx = ex2DMng.instance.layerList.IndexOf(activeLayer);
+                int curIdx = ex2DRenderer.instance.layerList.IndexOf(activeLayer);
                 if ( curIdx != -1 ) {
                     int nextIdx = System.Math.Max(curIdx-1,0);
                     layerListProp.MoveArrayElement ( curIdx, nextIdx );
-                    // activeLayer = ex2DMng.instance.layerList[nextIdx];
+                    // activeLayer = ex2DRenderer.instance.layerList[nextIdx];
                 }
             }
             if ( GUILayout.Button( "DOWN", settingsStyles.toolbarButton ) ) 
             {
-                int curIdx = ex2DMng.instance.layerList.IndexOf(activeLayer);
+                int curIdx = ex2DRenderer.instance.layerList.IndexOf(activeLayer);
                 if ( curIdx != -1 ) {
-                    int nextIdx = System.Math.Min(curIdx+1,ex2DMng.instance.layerList.Count-1);
+                    int nextIdx = System.Math.Min(curIdx+1,ex2DRenderer.instance.layerList.Count-1);
                     layerListProp.MoveArrayElement ( curIdx, nextIdx );
-                    // activeLayer = ex2DMng.instance.layerList[nextIdx];
+                    // activeLayer = ex2DRenderer.instance.layerList[nextIdx];
                 }
             }
             if ( GUILayout.Button( settingsStyles.iconToolbarPlus, 
                                    settingsStyles.toolbarDropDown ) ) 
             {
-                ex2DMng.instance.CreateLayer();
+                ex2DRenderer.instance.CreateLayer();
             }
         EditorGUILayout.EndHorizontal();
     }
@@ -513,7 +513,7 @@ class exSceneEditor : EditorWindow {
                                                "Yes",
                                                "No" ) )
             {
-                ex2DMng.instance.DestroyLayer(_layer);
+                ex2DRenderer.instance.DestroyLayer(_layer);
             }
         }
 
@@ -628,9 +628,9 @@ class exSceneEditor : EditorWindow {
             break;
 
         case EventType.DragUpdated:
-            if ( ex2DMng.instance.layerList.Count > 0 &&  _rect.Contains(e.mousePosition) ) {
+            if ( ex2DRenderer.instance.layerList.Count > 0 &&  _rect.Contains(e.mousePosition) ) {
                 if ( activeLayer == null ) {
-                    activeLayer = ex2DMng.instance.layerList[0];
+                    activeLayer = ex2DRenderer.instance.layerList[0];
                 }
 
                 // Show a copy icon on the drag
@@ -1208,8 +1208,8 @@ class exSceneEditor : EditorWindow {
             if ( spriteBase ) {
                 spriteBase.UpdateTransform ();
                 if ( spriteBase.updateFlags != exUpdateFlags.None ) {
-                    ex2DMng.instance.ResortLayerDepth();
-                    ex2DMng.instance.UpdateLayers();
+                    ex2DRenderer.instance.ResortLayerDepth();
+                    ex2DRenderer.instance.UpdateLayers();
                 }
             }
         }
@@ -1334,8 +1334,8 @@ class exSceneEditor : EditorWindow {
         spriteNodes.Clear();
 
         // draw all nodes in the scene
-        for ( int i = ex2DMng.instance.layerList.Count-1; i >= 0; --i ) {
-            exLayer layer = ex2DMng.instance.layerList[i];
+        for ( int i = ex2DRenderer.instance.layerList.Count-1; i >= 0; --i ) {
+            exLayer layer = ex2DRenderer.instance.layerList[i];
             if ( layer != null && layer.show ) {
                 exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
                 System.Array.Sort<exSpriteBase>(spriteList);

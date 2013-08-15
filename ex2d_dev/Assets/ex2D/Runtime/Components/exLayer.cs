@@ -32,7 +32,7 @@ public enum exLayerType
 ///////////////////////////////////////////////////////////////////////////////
 //
 /// The layer component
-/// NOTE: Don't add this component yourself, use ex2DMng.instance.CreateLayer instead.
+/// NOTE: Don't add this component yourself, use ex2DRenderer.instance.CreateLayer instead.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -141,7 +141,7 @@ public class exLayer : MonoBehaviour
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
-    // If layer can be standalone, we should check whether the layer belongs to any 2D Manager, otherwise we need to call GenerateMeshes when OnEnable.
+    // If layer can be standalone, we should check whether the layer belongs to any 2D Renderer, otherwise we need to call GenerateMeshes when OnEnable.
 
     /// \NOTE You should not deactivate the layer manually. 
     ///       If you want to change the visibility of the whole layer, you should set its show property.
@@ -163,6 +163,11 @@ public class exLayer : MonoBehaviour
             for (int m = meshList.Count - 1; m >= 0 ; --m) {
                 exMesh mesh = meshList[m];
                 if (mesh == null) {
+                    meshList.RemoveAt(m);
+                    continue;
+                }
+                else if (mesh.spriteList.Count == 0) {
+                    mesh.gameObject.DestroyImmediate();
                     meshList.RemoveAt(m);
                     continue;
                 }
@@ -249,6 +254,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     
     internal void HideSprite (exSpriteBase _sprite) {
+        exDebug.Assert(false, "GetMeshToAdd要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中");
         if (_sprite.isInIndexBuffer) {
             exMesh mesh = FindMesh(_sprite);
             if (mesh != null) {
@@ -360,7 +366,6 @@ public class exLayer : MonoBehaviour
                         sprite.ResetLayerProperties();
                     }
                 }
-                mesh.Clear();
                 mesh.gameObject.DestroyImmediate(); //dont save GO will auto destroy
             }
         }
@@ -410,12 +415,12 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private exMesh CreateNewMesh (Material _mat) {
+    private exMesh CreateNewMesh (Material _mat, int _index) {
         exMesh mesh = exMesh.Create(this);
         mesh.material = _mat;
         mesh.SetDynamic(layerType_ == exLayerType.Dynamic);
-        meshList.Add(mesh);
-        ex2DMng.instance.ResortLayerDepth();
+        meshList.Insert(_index, mesh);
+        ex2DRenderer.instance.ResortLayerDepth();
         return mesh;
     }
     
@@ -460,14 +465,50 @@ public class exLayer : MonoBehaviour
         maxVertexCount -= _sprite.vertexCount;
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
-            if (mesh != null && mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
-                //if (mesh.sortedSpriteList.Count > 0 && mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1].depth) {
-                //}
+            if (mesh == null) continue;
+            
+            //split mesh if batch failed
+            exDebug.Assert(exSpriteBase.enableFastShowHide);    // 要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中
+            if (mesh.sortedSpriteList.Count == 0) continue;
+
+            exSpriteBase top = mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1];
+            if (_sprite.CompareTo(top) > 0) {   // 在这个mesh之上层
+                if (mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
+                    return mesh;
+                }
+                else {
+                    return CreateNewMesh(mat, i + 1);   //在mesh上层创建一个新mesh
+                }
+            }
+            else {
+                exSpriteBase bot = mesh.sortedSpriteList[0];
+                if (_sprite.CompareTo(bot) > 0) {   // 在这个mesh的depth内
+                    if (mesh.material == mat) {
+                        if (mesh.vertices.Count <= maxVertexCount) {
+                            return mesh;
+                        }
+                        else {
+                            Debug.LogWarning("[GetMeshToAdd|exLayer] re-batch sprite not implemented");
+                            return mesh;
+                            //return CreateNewMesh(mat, i + 1);   //TODO: mesh太大，必须把同材质的连续mesh的最上面一个sprite分出去，然后用新加的sprite依次填满空出来的格子
+                        }
+                    }
+                    else {  // 在其它材质的mesh中间，需要拆分别的mesh
+                        Debug.LogWarning("[GetMeshToAdd|exLayer] re-batch sprite not implemented");
+                        return CreateNewMesh(mat, 0);
+                    }
+                }
+            }
+        }
+        if (meshList.Count > 0) {
+            exMesh mesh = meshList[0];
+            if (mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
+                // 插入到最下面一个mesh
                 return mesh;
             }
         }
-        // TODO: meshList要按深度排序
-        return CreateNewMesh(mat);
+        // 插入到所有mesh最下面
+        return CreateNewMesh(mat, 0);
     }
     
     // ------------------------------------------------------------------ 
@@ -530,7 +571,13 @@ public class exLayer : MonoBehaviour
         _mesh.spriteList.Add(_sprite);
 
         _sprite.FillBuffers(_mesh.vertices, _mesh.uvs, _mesh.colors32);
-        if (_sprite.visible) {
+        if (exSpriteBase.enableFastShowHide) {
+            AddIndices(_mesh, _sprite);
+            if (_sprite.visible == false) {
+                FastHideSprite(_sprite);
+            }
+        }
+        else if (_sprite.visible) {
             AddIndices(_mesh, _sprite);
         }
         

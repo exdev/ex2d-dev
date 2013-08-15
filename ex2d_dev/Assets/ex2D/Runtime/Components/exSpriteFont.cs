@@ -64,13 +64,23 @@ public class exSpriteFont : exSpriteBase {
                     font_ = value;
                     if (visible) {
                         // become visible
-                        layer_.ShowSprite(this);
+                        if (enableFastShowHide) {
+                            layer_.FastShowSprite(this);
+                        }
+                        else {
+                            layer_.ShowSprite(this);
+                        }
                     }
                 }
             }
             else if (layer_ != null && visible) {
                 // become invisible
-                layer_.HideSprite(this);
+                if (enableFastShowHide) {
+                    layer_.FastHideSprite(this);
+                }
+                else {
+                    layer_.HideSprite(this);
+                }
             }
             font_ = value;
 

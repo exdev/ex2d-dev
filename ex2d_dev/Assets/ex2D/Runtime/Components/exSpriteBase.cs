@@ -258,7 +258,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             if (material_ != null) {
                 return material_;
             }
-            material_ = ex2DMng.GetMaterial(shader_, texture);
+            material_ = ex2DRenderer.GetMaterial(shader_, texture);
             return material_;
         }
     }

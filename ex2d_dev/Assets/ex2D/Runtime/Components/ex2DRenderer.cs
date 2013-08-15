@@ -1,5 +1,5 @@
 ﻿// ======================================================================================
-// File         : ex2DMng.cs
+// File         : ex2DRenderer.cs
 // Author       : Jare
 // Last Change  : 06/15/2013 | 23:03:37
 // Description  : 
@@ -15,15 +15,15 @@ using System.Collections.Generic;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
-/// The 2D Manager component
+/// The 2D Renderer component
 /// For managing exLayers and responsing Camera OnPreRender event
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
 [ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
-[AddComponentMenu("ex2D/2D Manager")]
-public class ex2DMng : MonoBehaviour {
+[AddComponentMenu("ex2D/2D Renderer")]
+public class ex2DRenderer : MonoBehaviour {
     
     ///////////////////////////////////////////////////////////////////////////////
     // nested classes, enums
@@ -105,7 +105,7 @@ public class ex2DMng : MonoBehaviour {
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    [System.NonSerialized] public static ex2DMng instance;
+    [System.NonSerialized] public static ex2DRenderer instance;
 
     private Camera cachedCamera;
     
@@ -239,7 +239,7 @@ public class ex2DMng : MonoBehaviour {
 
     public void DestroyLayer ( int _idx ) { DestroyLayer ( layerList[_idx] ); }
     public void DestroyLayer (exLayer _layer) {
-        exDebug.Assert(layerList.Contains(_layer), "can't find layer in ex2DMng");
+        exDebug.Assert(layerList.Contains(_layer), "can't find layer in ex2DRenderer");
         layerList.Remove(_layer);
         if (_layer != null) {
             _layer.gameObject.Destroy();

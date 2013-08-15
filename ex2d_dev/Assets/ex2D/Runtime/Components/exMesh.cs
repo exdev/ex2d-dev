@@ -137,6 +137,14 @@ public class exMesh : MonoBehaviour
 
     void OnDestroy () {
         Clear();
+        
+        spriteList = null;
+        sortedSpriteList = null;
+        vertices = null;
+        indices = null;
+        uvs = null;
+        colors32 = null;
+
         if (mesh0 != null) {
             mesh0.Destroy();
         }
@@ -145,6 +153,7 @@ public class exMesh : MonoBehaviour
             mesh1.Destroy();
         }
         mesh1 = null;
+
         cachedFilter.sharedMesh = null;
         cachedFilter = null;
         cachedRenderer.sharedMaterial = null;

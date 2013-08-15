@@ -60,13 +60,23 @@ public class exSprite : exSpriteBase {
                 }
                 else if (textureInfo_ == null && isOnEnabled_ && layer_ != null) {
                     // become visible
-                    layer_.ShowSprite(this);
+                    if (enableFastShowHide) {
+                        layer_.FastShowSprite(this);
+                    }
+                    else {
+                        layer_.ShowSprite(this);
+                    }
                 }
             }
             else if (textureInfo_ != null && isOnEnabled_ && layer_ != null) {
                 textureInfo_ = value;
                 // become invisible
-                layer_.HideSprite(this);
+                if (enableFastShowHide) {
+                    layer_.FastHideSprite(this);
+                }
+                else {
+                    layer_.HideSprite(this);
+                }
             }
             textureInfo_ = value;
 
@@ -122,10 +132,10 @@ public class exSprite : exSpriteBase {
         set {
             if (customSize_ != value) {
                 customSize_ = value;
-                if (customSize_ == false && textureInfo != null) {
-                    if (textureInfo.width != width_ || textureInfo.height != height_) {
-                        width_ = textureInfo.width;
-                        height_ = textureInfo.height;
+                if (customSize_ == false && textureInfo_ != null) {
+                    if (textureInfo_.width != width_ || textureInfo_.height != height_) {
+                        width_ = textureInfo_.width;
+                        height_ = textureInfo_.height;
                         updateFlags |= exUpdateFlags.Vertex;
                     }
                 }
@@ -178,6 +188,7 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
+
         if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Vertex) != 0) {
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
             UpdateVertexBuffer(_vertices, vertexBufferIndex, ref cachedWorldMatrix);
@@ -191,19 +202,19 @@ public class exSprite : exSpriteBase {
             _indices.buffer[indexBufferIndex + 5] = vertexBufferIndex;
             TestIndices(_indices);
         }
-        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.UV) != 0) {
+        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.UV) != 0 && textureInfo_ != null) {
             Vector2 texelSize;
-            if (textureInfo.texture != null) {
-                texelSize = textureInfo.texture.texelSize;
+            if (textureInfo_.texture != null) {
+                texelSize = textureInfo_.texture.texelSize;
             }
             else {
-                texelSize = new Vector2(1.0f / textureInfo.rawWidth, 1.0f / textureInfo.rawHeight);
+                texelSize = new Vector2(1.0f / textureInfo_.rawWidth, 1.0f / textureInfo_.rawHeight);
             }
-            Vector2 start = new Vector2((float)textureInfo.x * texelSize.x, 
-                                         (float)textureInfo.y * texelSize.y);
-            Vector2 end = new Vector2((float)(textureInfo.x + textureInfo.rotatedWidth) * texelSize.x, 
-                                       (float)(textureInfo.y + textureInfo.rotatedHeight) * texelSize.y);
-            if ( textureInfo.rotated ) {
+            Vector2 start = new Vector2((float)textureInfo_.x * texelSize.x, 
+                                         (float)textureInfo_.y * texelSize.y);
+            Vector2 end = new Vector2((float)(textureInfo_.x + textureInfo_.rotatedWidth) * texelSize.x, 
+                                       (float)(textureInfo_.y + textureInfo_.rotatedHeight) * texelSize.y);
+            if ( textureInfo_.rotated ) {
                 _uvs.buffer[vertexBufferIndex + 0] = new Vector2(end.x, start.y);
                 _uvs.buffer[vertexBufferIndex + 1] = start;
                 _uvs.buffer[vertexBufferIndex + 2] = new Vector2(start.x, end.y);

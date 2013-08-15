@@ -1,5 +1,5 @@
 // ======================================================================================
-// File         : ex2DMngInspector.cs
+// File         : ex2DRendererInspector.cs
 // Author       : Wu Jie 
 // Last Change  : 07/08/2013 | 10:51:18 AM | Monday,July
 // Description  : 
@@ -20,8 +20,8 @@ using System.IO;
 ///////////////////////////////////////////////////////////////////////////////
 
 [CanEditMultipleObjects]
-[CustomEditor(typeof(ex2DMng))]
-class ex2DMngInspector : Editor {
+[CustomEditor(typeof(ex2DRenderer))]
+class ex2DRendererInspector : Editor {
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -35,7 +35,7 @@ class ex2DMngInspector : Editor {
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
             if ( GUILayout.Button("Reset Camera", GUILayout.Height(20) ) ) {
-                ((ex2DMng)target).ResetCamera(true);
+                ((ex2DRenderer)target).ResetCamera(true);
             }
             if ( GUILayout.Button("Edit...", GUILayout.MinWidth(50), GUILayout.Height(20) ) ) {
                 EditorWindow.GetWindow<exSceneEditor>();
