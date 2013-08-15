@@ -37,6 +37,11 @@ public class exTextureInfo : ScriptableObject {
     public int width = 1;
     public int height = 1;
 
+    public int borderLeft = 0;
+    public int borderRight = 0;
+    public int borderTop = 0;
+    public int borderBottom = 0;
+
     public int rotatedWidth {
         get {
             if ( rotated ) return height;

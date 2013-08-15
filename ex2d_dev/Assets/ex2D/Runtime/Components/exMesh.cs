@@ -248,7 +248,7 @@ public class exMesh : MonoBehaviour
     }
  
     // ------------------------------------------------------------------ 
-    // Desc:
+    /// \param _dynamic if true, optimize mesh for frequent updates
     // ------------------------------------------------------------------ 
 
     public void SetDynamic (bool _dynamic) {

@@ -13,6 +13,16 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+// ------------------------------------------------------------------ 
+/// The type of sprite
+// ------------------------------------------------------------------ 
+
+public enum exSpriteType {
+    Simple,
+    Sliced,
+    Tiled,
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ///
 /// The sprite component
@@ -100,6 +110,20 @@ public class exSprite : exSpriteBase {
             if ( useTextureOffset_ != value ) {
                 useTextureOffset_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected exSpriteType spriteType_ = exSpriteType.Simple;
+    // ------------------------------------------------------------------ 
+
+    public exSpriteType spriteType {
+        get { return spriteType_; }
+        set {
+            if ( spriteType_ != value ) {
+                spriteType_ = value;
+                updateFlags |= exUpdateFlags.All;   // TODO: implement sprite type
             }
         }
     }

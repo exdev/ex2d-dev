@@ -126,7 +126,7 @@ public class exList<T> {
     void GrowIfNeeded (int _newCount) {
         int num = Count + _newCount;
         if (num > buffer.Length) {
-            Capacity = Math.Max(Math.Max(Capacity * 2, 4), num);    // TODO: 测试如何只分配目标长度的数组，避免ToArray时重新new Array的性能
+            Capacity = Math.Max(Math.Max(Capacity * 2, 4), num);    // TODO: 测试只分配目标长度的数组，避免ToArray时重新new Array的性能
         }
     }
 
