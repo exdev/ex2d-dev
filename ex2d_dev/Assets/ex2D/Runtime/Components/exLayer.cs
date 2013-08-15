@@ -449,11 +449,12 @@ public class exLayer : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    /// 如果两个相同材质的sprite中间，因为depth需要插入了另一个材质的sprite，则需要将前面两个sprite拆分成两个mesh
+    /// 
     // ------------------------------------------------------------------ 
 
-    //private exMesh SplitMeshIfBatchFailed (exSpriteBase _sprite) {
-    //}
+    private void ShiftSprites (int _meshIndex, int _reservedspriteCount) {
+
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -493,7 +494,8 @@ public class exLayer : MonoBehaviour
                             //return CreateNewMesh(mat, i + 1);   //TODO: mesh太大，必须把同材质的连续mesh的最上面一个sprite分出去，然后用新加的sprite依次填满空出来的格子
                         }
                     }
-                    else {  // 在其它材质的mesh中间，需要拆分别的mesh
+                    else {  // 两个相同材质的sprite中间，因为depth需要插入了另一个材质的sprite，则需要将前面两个sprite拆分成两个mesh
+
                         Debug.LogWarning("[GetMeshToAdd|exLayer] re-batch sprite not implemented");
                         return CreateNewMesh(mat, 0);
                     }
