@@ -22,6 +22,12 @@ using System.Collections.Generic;
 ///////////////////////////////////////////////////////////////////////////////
 
 public static class exAtlasUtility {
+    public class LayoutException : System.Exception {
+        public string message = "";
+        public LayoutException ( string _message ) {
+            message = _message;
+        }
+    }
 
     public class Element {
         public string id = ""; // texture-info is its name, charinfo is its "bitmapfont.name@id"
@@ -511,8 +517,7 @@ public static class exAtlasUtility {
             }
 
             if ( bestElementIdx == -1 ) {
-                Debug.LogWarning ( "Failed to layout atlas elements" );
-                return;
+                throw new LayoutException( "Failed to layout atlas elements" );
             }
             MaxRect_PlaceRect( freeRects, bestRect );
 
@@ -551,7 +556,7 @@ public static class exAtlasUtility {
             }
             else {
                 // log warning but continue processing other elements
-                Debug.LogWarning("Failed to layout atlas element " + el.id);
+                throw new LayoutException( "Failed to layout atlas element " + el.id );
             }
         }
     }
@@ -577,8 +582,7 @@ public static class exAtlasUtility {
                 maxY = 0;
             }
             if ( (curY + el.rotatedHeight) > _atlasHeight ) {
-                Debug.LogWarning( "Failed to layout element " + el.id );
-                break;
+                throw new LayoutException( "Failed to layout element " + el.id );
             }
             el.x = curX;
             el.y = curY;

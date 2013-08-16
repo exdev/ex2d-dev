@@ -40,7 +40,6 @@ partial class exAtlasEditor : EditorWindow {
     ///////////////////////////////////////////////////////////////////////////////
 
     exAtlas curEdit = null;
-    SerializedObject curSerializedObject = null;
 
     Vector2 scrollPos = Vector2.zero;
     List<Object> selectedObjects = new List<Object>();
@@ -51,7 +50,7 @@ partial class exAtlasEditor : EditorWindow {
     bool lockCurEdit = false; 
     bool foldoutCanvas = true;
     bool foldoutLayout = true;
-    bool foldoutTextureInfo = true;
+    bool foldoutElement = true;
     bool foldoutBuild = true;
 
     // GUI states
@@ -157,11 +156,7 @@ partial class exAtlasEditor : EditorWindow {
             GUILayout.Label ( "Please select an Atlas" );
             return;
         }
-        if ( curSerializedObject == null )
-            curSerializedObject = new SerializedObject(curEdit);
 
-
-        curSerializedObject.Update ();
 
         // toolbar
         Toolbar ();
@@ -215,7 +210,7 @@ partial class exAtlasEditor : EditorWindow {
 
         EditorGUILayout.EndScrollView();
 
-        curSerializedObject.ApplyModifiedProperties ();
+        LayoutAtlasElements();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -240,7 +235,6 @@ partial class exAtlasEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void Reset () {
-        curSerializedObject = null;
         scrollPos = Vector2.zero;
         selectedObjects.Clear();
         importObjects.Clear();
@@ -362,6 +356,7 @@ partial class exAtlasEditor : EditorWindow {
                 finally {
                     EditorUtility.ClearProgressBar();    
                 }
+                LayoutAtlasElements (true); // force layout elements after sync
             }
 
             // ======================================================== 
@@ -420,8 +415,6 @@ partial class exAtlasEditor : EditorWindow {
                                            GUILayout.MaxWidth(250),
                                            GUILayout.ExpandWidth(false)
                                        } );
-        EditorGUI.BeginChangeCheck();
-
             // ======================================================== 
             // canvas
             // ======================================================== 
@@ -430,21 +423,25 @@ partial class exAtlasEditor : EditorWindow {
             if ( foldoutCanvas ) {
                 EditorGUI.indentLevel++;
 
-                // width and height
-                int width = EditorGUILayout.IntPopup ( "Width", curEdit.width, sizeTextList, sizeList );
-                int height = EditorGUILayout.IntPopup ( "Height", curEdit.height, sizeTextList, sizeList );
-
-                // Check if we need to Reset width & height
-                if ( width != curEdit.width || height != curEdit.height ) {
+                // width & height
+                EditorGUI.BeginChangeCheck();
+                    int width = EditorGUILayout.IntPopup ( "Width", curEdit.width, sizeTextList, sizeList );
+                    int height = EditorGUILayout.IntPopup ( "Height", curEdit.height, sizeTextList, sizeList );
+                if ( EditorGUI.EndChangeCheck() ) {
                     curEdit.width = width;
                     curEdit.height = height;
                     curEdit.needRebuild = true;
+                    curEdit.needLayout = true;
+                    EditorUtility.SetDirty(curEdit);
                 }
 
-                // EditorGUILayout.PropertyField (curSerializedObject.FindProperty ("bgColor"), new GUIContent("Background"));
-                // EditorGUILayout.PropertyField (curSerializedObject.FindProperty ("showCheckerboard"), new GUIContent("Checkerboard"));
-                curEdit.bgColor = EditorGUILayout.ColorField( "Background", curEdit.bgColor );
-                curEdit.showCheckerboard = EditorGUILayout.Toggle ( "Checkerboard", curEdit.showCheckerboard );
+                // bgColor, showCheckerboard,
+                EditorGUI.BeginChangeCheck();
+                    curEdit.bgColor = EditorGUILayout.ColorField( "Background", curEdit.bgColor );
+                    curEdit.showCheckerboard = EditorGUILayout.Toggle ( "Checkerboard", curEdit.showCheckerboard );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    EditorUtility.SetDirty(curEdit);
+                }
 
                 EditorGUI.indentLevel--;
             }
@@ -458,49 +455,74 @@ partial class exAtlasEditor : EditorWindow {
             if ( foldoutLayout ) {
                 EditorGUI.indentLevel++;
 
-                curEdit.algorithm = (exAtlas.Algorithm)EditorGUILayout.EnumPopup ( "Algorithm", curEdit.algorithm );
-                curEdit.sortBy = (exAtlas.SortBy)EditorGUILayout.EnumPopup ( "Sort By", curEdit.sortBy );
-                curEdit.sortOrder = (exAtlas.SortOrder)EditorGUILayout.EnumPopup ( "Sort Order", curEdit.sortOrder );
+                // algorithm, sortBy, sortOrder, paddingMode, pixels, allowRotate ....
+                EditorGUI.BeginChangeCheck();
+                    curEdit.algorithm = (exAtlas.Algorithm)EditorGUILayout.EnumPopup ( "Algorithm", curEdit.algorithm );
+                    curEdit.sortBy = (exAtlas.SortBy)EditorGUILayout.EnumPopup ( "Sort By", curEdit.sortBy );
+                    curEdit.sortOrder = (exAtlas.SortOrder)EditorGUILayout.EnumPopup ( "Sort Order", curEdit.sortOrder );
 
-                // padding
-                curEdit.paddingMode = (exAtlas.PaddingMode)EditorGUILayout.EnumPopup("Padding", curEdit.paddingMode);
-                EditorGUI.indentLevel++;
-                    GUI.enabled = (curEdit.paddingMode == exAtlas.PaddingMode.Custom);
-                    curEdit.customPadding = System.Math.Max( EditorGUILayout.IntField("Pixels", curEdit.actualPadding), 0 ); // Clamp to 0
-                    GUI.enabled = true;
-                EditorGUI.indentLevel--;
+                    // padding
+                    curEdit.paddingMode = (exAtlas.PaddingMode)EditorGUILayout.EnumPopup("Padding", curEdit.paddingMode);
+                    EditorGUI.indentLevel++;
+                        GUI.enabled = (curEdit.paddingMode == exAtlas.PaddingMode.Custom);
+                        curEdit.customPadding = System.Math.Max( EditorGUILayout.IntField("Pixels", curEdit.actualPadding), 0 ); // Clamp to 0
+                        GUI.enabled = true;
+                    EditorGUI.indentLevel--;
 
-                // allow rotate
-                curEdit.allowRotate = EditorGUILayout.Toggle ( "Allow Rotate", curEdit.allowRotate );
+                    // allow rotate
+                    curEdit.allowRotate = EditorGUILayout.Toggle ( "Allow Rotate", curEdit.allowRotate );
 
-                EditorGUILayout.BeginHorizontal();
-                    GUILayout.FlexibleSpace();
-                    if ( GUILayout.Button ( "Apply", 
-                                            new GUILayoutOption [] {
-                                                GUILayout.Width(80)
-                                            } ) ) {
-                        LayoutAtlasElements();
-                    }
-                EditorGUILayout.EndHorizontal();
+                    // DISABLE { 
+                    // EditorGUILayout.BeginHorizontal();
+                    //     GUILayout.FlexibleSpace();
+                    //     if ( GUILayout.Button ( "Apply", 
+                    //                             new GUILayoutOption [] {
+                    //                                 GUILayout.Width(80)
+                    //                             } ) ) {
+                    //         LayoutAtlasElements();
+                    //     }
+                    // EditorGUILayout.EndHorizontal();
+                    // } DISABLE end 
+                if ( EditorGUI.EndChangeCheck() ) {
+                    curEdit.needLayout = true;
+                    EditorUtility.SetDirty(curEdit);
+                }
 
                 EditorGUI.indentLevel--;
             }
             EditorGUILayout.Space();
+            EditorGUILayout.Space();
 
             // ======================================================== 
-            // TextureInfo
+            // Element
             // ======================================================== 
 
-            foldoutTextureInfo = EditorGUILayout.Foldout(foldoutTextureInfo, "TextureInfo");
-            if ( foldoutTextureInfo ) {
+            foldoutElement = EditorGUILayout.Foldout(foldoutElement, "Element");
+            if ( foldoutElement ) {
                 EditorGUI.indentLevel++;
 
-                // sprite background color
-                curEdit.elementBgColor = EditorGUILayout.ColorField( "Background", curEdit.elementBgColor );
-                curEdit.elementSelectColor = EditorGUILayout.ColorField( "Select", curEdit.elementSelectColor );
+                // elementBgColor, elementSelectColor
+                EditorGUI.BeginChangeCheck();
+                    curEdit.elementBgColor = EditorGUILayout.ColorField( "Background", curEdit.elementBgColor );
+                    curEdit.elementSelectColor = EditorGUILayout.ColorField( "Select", curEdit.elementSelectColor );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    EditorUtility.SetDirty(curEdit);
+                }
+
+                // trim settings
+                EditorGUI.BeginChangeCheck();
+                    // trim elements 
+                    curEdit.trimElements = EditorGUILayout.Toggle ( "Trimmed Elements", curEdit.trimElements );
+
+                    // trim threshold 
+                    curEdit.trimThreshold = EditorGUILayout.IntField ( "Trimmed Threshold", curEdit.trimThreshold );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    EditorUtility.SetDirty(curEdit);
+                }
 
                 EditorGUI.indentLevel--;
             }
+            EditorGUILayout.Space();
             EditorGUILayout.Space();
 
             // ======================================================== 
@@ -511,86 +533,68 @@ partial class exAtlasEditor : EditorWindow {
             if ( foldoutBuild ) {
                 EditorGUI.indentLevel++;
 
-                // ======================================================== 
                 // build color 
-                // ======================================================== 
-
                 EditorGUILayout.BeginHorizontal();
-                    bool newCustomBuildColor = EditorGUILayout.Toggle ( "Custom Build Color", curEdit.customBuildColor ); 
-                    if ( newCustomBuildColor != curEdit.customBuildColor ) {
-                        curEdit.customBuildColor = newCustomBuildColor;
-                        curEdit.needRebuild = true;
-                    }
-                    if ( curEdit.customBuildColor ) {
-                        Color newBuildColor = EditorGUILayout.ColorField( curEdit.buildColor );
-                        if ( newBuildColor != curEdit.buildColor ) {
-                            curEdit.buildColor = newBuildColor;
-                            curEdit.needRebuild = true;
+                    EditorGUI.BeginChangeCheck();
+                        // customBuildColor
+                        curEdit.customBuildColor = EditorGUILayout.Toggle ( "Custom Build Color", curEdit.customBuildColor ); 
+
+                        // buildColor
+                        if ( curEdit.customBuildColor ) {
+                            curEdit.buildColor = EditorGUILayout.ColorField( curEdit.buildColor );
                         }
+                    if ( EditorGUI.EndChangeCheck() ) {
+                        curEdit.needRebuild = true;
+                        EditorUtility.SetDirty(curEdit);
                     }
                 EditorGUILayout.EndHorizontal();
 
-                // ======================================================== 
                 // contour bleed
-                // ======================================================== 
-
                 GUI.enabled = !curEdit.customBuildColor;
                 EditorGUILayout.BeginHorizontal();
-                    content = new GUIContent( "Use Contour Bleed", 
-                                              "Prevents artifacts around the silhouette of artwork due to bilinear filtering (requires Build Color to be turned off)" );
-                    if ( curEdit.useContourBleed != EditorGUILayout.Toggle ( content, curEdit.useContourBleed ) ) {
-                        curEdit.useContourBleed = !curEdit.useContourBleed;
+                    EditorGUI.BeginChangeCheck();
+                        // useContourBleed
+                        content = new GUIContent( "Use Contour Bleed", 
+                                                  "Prevents artifacts around the silhouette of artwork due to bilinear filtering (requires Build Color to be turned off)" );
+                        curEdit.useContourBleed = EditorGUILayout.Toggle ( content, curEdit.useContourBleed );
+                    if ( EditorGUI.EndChangeCheck() ) {
                         curEdit.needRebuild = true;
+                        EditorUtility.SetDirty(curEdit);
                     }
                 EditorGUILayout.EndHorizontal();
                 GUI.enabled = true;
 
-                // ======================================================== 
                 // padding bleed
-                // ======================================================== 
-
                 GUI.enabled = (curEdit.paddingMode == exAtlas.PaddingMode.Auto) || (curEdit.actualPadding >= 2);
                 EditorGUILayout.BeginHorizontal();
-                    content = new GUIContent( "Use Padding Bleed", 
-                                              "Prevents artifacts and seams around the outer bounds of a texture due to bilinear filtering (requires at least Padding of 2)" );
-                    if ( curEdit.usePaddingBleed != EditorGUILayout.Toggle ( content, curEdit.usePaddingBleed ) ) {
-                        curEdit.usePaddingBleed = !curEdit.usePaddingBleed;
+                    EditorGUI.BeginChangeCheck();
+                        // usePaddingBleed
+                        content = new GUIContent( "Use Padding Bleed", 
+                                                  "Prevents artifacts and seams around the outer bounds of a texture due to bilinear filtering (requires at least Padding of 2)" );
+                        curEdit.usePaddingBleed = EditorGUILayout.Toggle ( content, curEdit.usePaddingBleed );
+                    if ( EditorGUI.EndChangeCheck() ) {
                         curEdit.needRebuild = true;
+                        EditorUtility.SetDirty(curEdit);
                     }
                 EditorGUILayout.EndHorizontal();
                 GUI.enabled = true;
 
-                // ======================================================== 
-                // trim elements 
-                // ======================================================== 
-
-                curEdit.trimElements = EditorGUILayout.Toggle ( "Trimmed Elements", curEdit.trimElements );
-
-                // ======================================================== 
-                // trim threshold 
-                // ======================================================== 
-
-                curEdit.trimThreshold = EditorGUILayout.IntField ( "Trimmed Threshold", curEdit.trimThreshold );
-
-                // ======================================================== 
                 // readable
-                // ======================================================== 
-
-                if ( EditorGUILayout.Toggle ( "Read/Write Enabled", curEdit.readable ) != curEdit.readable ) {
-                    curEdit.readable = !curEdit.readable;
-
+                EditorGUI.BeginChangeCheck();
+                    curEdit.readable = EditorGUILayout.Toggle ( "Read/Write Enabled", curEdit.readable );
+                if ( EditorGUI.EndChangeCheck() ) {
                     if ( curEdit.texture != null ) {
                         string atlasTexturePath = AssetDatabase.GetAssetPath(curEdit.texture);
                         TextureImporter importSettings = TextureImporter.GetAtPath(atlasTexturePath) as TextureImporter;
                         importSettings.isReadable = curEdit.readable;
                         AssetDatabase.ImportAsset( atlasTexturePath, ImportAssetOptions.ForceSynchronousImport );
+                        // NOTE: if you click the readable button quickly, you may not see the changes of the texture in the inspector
                     }
+
+                    EditorUtility.SetDirty(curEdit);
                 }
 
-                // ======================================================== 
                 // texture 
-                // ======================================================== 
-
                 EditorGUILayout.ObjectField( "Texture"
                                              , curEdit.texture
                                              , typeof(Texture2D)
@@ -600,11 +604,7 @@ partial class exAtlasEditor : EditorWindow {
                 EditorGUI.indentLevel--;
             }
             EditorGUILayout.Space();
-
-        // check gui changes 
-        if ( EditorGUI.EndChangeCheck() ) {
-            EditorUtility.SetDirty(curEdit);
-        }
+            EditorGUILayout.Space();
 
         EditorGUI.indentLevel++;
         GUIStyle style = new GUIStyle();
@@ -762,8 +762,6 @@ partial class exAtlasEditor : EditorWindow {
                     importObjects.Clear();
                     EditorUtility.ClearProgressBar();    
                 }
-
-                LayoutAtlasElements();
 
                 Repaint();
 
@@ -1091,7 +1089,10 @@ partial class exAtlasEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void LayoutAtlasElements () {
+    void LayoutAtlasElements ( bool _forced = false ) {
+        if ( _forced != true && curEdit.needLayout == false )
+            return;
+
         try {
             EditorUtility.DisplayProgressBar( "Layout Elements...", "Layout Elements...", 0.5f  );    
 
@@ -1110,17 +1111,22 @@ partial class exAtlasEditor : EditorWindow {
                                   curEdit.height,
                                   curEdit.actualPadding,
                                   curEdit.allowRotate );
-            
+
             // apply back element to atlas texture info, char info or others
             foreach ( exAtlasUtility.Element el in elements ) {
                 el.Apply();
             }
-            curEdit.needLayout = false;
-            curEdit.needRebuild = true;
-            EditorUtility.SetDirty(curEdit);
+        }
+        catch ( exAtlasUtility.LayoutException _exception ) {
+            EditorUtility.DisplayDialog( "Failed to layout atlas " + curEdit.name, _exception.message, "ok" );
         }
         finally {
             EditorUtility.ClearProgressBar();
+
+            curEdit.needLayout = false;
+            curEdit.needRebuild = true;
+            EditorUtility.SetDirty(curEdit);
+            Repaint();
         }
     }
 }
