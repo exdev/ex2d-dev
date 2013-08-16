@@ -109,12 +109,6 @@ public class exMesh : MonoBehaviour
     // properties
     ///////////////////////////////////////////////////////////////////////////////
 
-    public int vertexCount {
-        get {
-            return vertices.Count;
-        }
-    }
-
     public bool hasTriangle {
         get {
             return sortedSpriteList.Count > 0;

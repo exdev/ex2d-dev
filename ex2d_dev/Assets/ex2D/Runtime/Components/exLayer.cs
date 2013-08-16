@@ -436,7 +436,7 @@ public class exLayer : MonoBehaviour
         Material mat = _sprite.material;
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
-            if (mesh != null && mesh.material == mat ) {        // TODO: check depth
+            if (mesh != null && ReferenceEquals(mesh.material, mat) ) {        // TODO: check depth
                 for (int j = 0; j < mesh.spriteList.Count; ++j) {
                     if (_sprite.spriteIdInLayer == mesh.spriteList[j].spriteIdInLayer) {
                         _sprite.spriteIdInLayer = -1;        //duplicated
@@ -448,22 +448,132 @@ public class exLayer : MonoBehaviour
 #endif
     }
 
+    private void ShiftSprite (exMesh _src, exMesh _dst, exSpriteBase _sprite) {
+        RemoveFromMesh(_sprite, _src);
+        AddToMesh(_sprite, _dst);
+    }
+
     // ------------------------------------------------------------------ 
-    /// 
+    /// Set the vertex count of the mesh by rearranging sprites between meshes
+    /// \param _meshIndex the index of the mesh to set
+    /// \param _newVertexCount the new vertex count of the mesh to set 由于每个sprite的vertex数量不同，这个值只能尽量达到，但一定不会超出
+    /// \param _maxVertexCount the max vertex count of meshes in layer
     // ------------------------------------------------------------------ 
 
-    private void ShiftSprites (int _meshIndex, int _reservedspriteCount) {
+    private void ShiftSprites (int _meshIndex, int _newVertexCount, int _maxVertexCount) {
+        exDebug.Assert(_newVertexCount <= _maxVertexCount);
+        exMesh mesh = meshList[_meshIndex];
+        exDebug.Assert(_newVertexCount != mesh.vertices.Count);
+        bool shiftToAbove = mesh.vertices.Count > _newVertexCount;
+        if (shiftToAbove) {
+            int destDelta = mesh.vertices.Count - _newVertexCount;
+            int realDelta = 0;
+            for (int i = mesh.sortedSpriteList.Count - 1; i >= 0; --i) {
+        	    exSpriteBase aboveSprite = mesh.sortedSpriteList[i];
+                realDelta += aboveSprite.vertexCount;
+                if (realDelta >= destDelta) {
+                    if (_meshIndex == meshList.Count - 1 || ReferenceEquals(meshList[_meshIndex + 1].material, mesh.material) == false) {
+                        CreateNewMesh(mesh.material, _meshIndex + 1);
 
+                        return;
+                    }
+                    if (meshList[_meshIndex + 1].vertices.Count + realDelta > _maxVertexCount) {
+                        ShiftSprites(_meshIndex + 1, _newVertexCount)
+                    }
+                    else {
+
+                    }
+                }
+            }
+        }
+        else {
+            // shift sprites from above mesh to this mesh
+            int delta = _newVertexCount - mesh.vertices.Count;
+
+        }
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
+
+    private int GetBelowVertexCountInMesh (int _meshIndex, exSpriteBase _sprite, int _maxVertexCount, out int _aboveSpriteIndex) {
+        exMesh mesh = meshList[_meshIndex];
+        _aboveSpriteIndex = mesh.sortedSpriteList.BinarySearch(_sprite);
+        if (_aboveSpriteIndex < 0) {
+            _aboveSpriteIndex = ~_aboveSpriteIndex;
+            exDebug.Assert(0 < _aboveSpriteIndex && _aboveSpriteIndex <= mesh.sortedSpriteList.Count - 1, "no need to shift the mesh");
+        }
+        else {
+            exDebug.Assert(0 < _aboveSpriteIndex && _aboveSpriteIndex < mesh.sortedSpriteList.Count - 1, "no need to shift the mesh");
+            ++_aboveSpriteIndex;     // just insert above same depth sprite
+        }
+        if (_aboveSpriteIndex <= mesh.sortedSpriteList.Count) {
+            int belowVertexCount = 0;
+            for (int i = 0; i < _aboveSpriteIndex; ++i) {
+                belowVertexCount += mesh.sortedSpriteList[i].vertexCount;
+            }
+            return belowVertexCount;
+        }
+        return mesh.vertices.Count;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Shift sprites to the above mesh to make it has space to insert new sprite
+    /// \param _meshIndex The index of the mesh to insert
+    /// \param _sprite The sprite to insert
+    /// \param _maxVertexCount The max vertex count of meshes in layer
+    /// \return The mesh to insert
+    // ------------------------------------------------------------------ 
+
+    private exMesh GetShiftedMesh (int _meshIndex, exSpriteBase _sprite, int _maxVertexCount) {
+        exMesh mesh = meshList[_meshIndex];
+        int newSpriteVertexCount = _sprite.vertexCount;
+        int aboveSpriteIndex;
+        GetBelowVertexCountInMesh(_meshIndex, _sprite, _maxVertexCount, out aboveSpriteIndex);
+        int belowVertexCount = mesh.vertices.Count;
+        for (int i = mesh.sortedSpriteList.Count - 1; i >= aboveSpriteIndex; --i) {
+        	exSpriteBase aboveSprite = mesh.sortedSpriteList[i];
+            belowVertexCount -= aboveSprite.vertexCount;
+            if (belowVertexCount + newSpriteVertexCount <= _maxVertexCount) {
+                ShiftSprites(_meshIndex, belowVertexCount + newSpriteVertexCount, _maxVertexCount); // 上移
+                return mesh;
+            }
+        }
+        // 完全不能容纳，则把新的sprite和在它上面的sprite都再送到上一个mesh中
+        if (_meshIndex + 1 < meshList.Count) {
+            int aboveVertexCount = mesh.vertices.Count - belowVertexCount;
+            int aboveMeshVertexCount = _maxVertexCount - aboveVertexCount - newSpriteVertexCount;
+            ShiftSprites(_meshIndex + 1, aboveMeshVertexCount, _maxVertexCount);    // 空出上一个mesh
+            ShiftSprites(_meshIndex, belowVertexCount, _maxVertexCount);            // 把需要渲染在上面的sprite移到上面的mesh
+            return meshList[_meshIndex + 1];
+        }
+        return mesh;
+    }
     
+    // ------------------------------------------------------------------ 
+    /// Split the mesh
+    /// \param _meshIndex The index of the mesh to split
+    /// \param _seperatorSprite 深度小于等于它的sprite将会被分隔到新创建的下层的mesh中
+    /// \param _maxVertexCount The max vertex count of meshes in layer
+    // ------------------------------------------------------------------ 
+
+    private void SplitMesh (int _meshIndex, exSpriteBase _seperatorSprite, int _maxVertexCount) {
+        int t;
+        int belowVertexCount = GetBelowVertexCountInMesh(_meshIndex, _seperatorSprite, _maxVertexCount, out t);
+        ShiftSprites(_meshIndex, belowVertexCount, _maxVertexCount);    // 上移
+    }
+
+    // ------------------------------------------------------------------ 
+    /// 在保证渲染次序的前提下，获得可供插入的mesh，必要的话会进行mesh的拆分和创建操作。
+    /// 这个算法保证mesh不产生零散的碎片，效率应该还有优化的余地。
+    // ------------------------------------------------------------------ 
+
     private exMesh GetMeshToAdd (exSpriteBase _sprite) {
         Material mat = _sprite.material;
         int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT;
-        maxVertexCount -= _sprite.vertexCount;
+        // TODO: 如果sprite的vertex count大于maxVertexCount
+        int restVertexCount = maxVertexCount - _sprite.vertexCount;
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
             if (mesh == null) continue;
@@ -473,8 +583,9 @@ public class exLayer : MonoBehaviour
             if (mesh.sortedSpriteList.Count == 0) continue;
 
             exSpriteBase top = mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1];
-            if (_sprite.CompareTo(top) > 0) {   // 在这个mesh之上层
-                if (mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
+            bool aboveTopSprite = _sprite >= top;
+            if (aboveTopSprite) {   // 在这个mesh之上层
+                if (ReferenceEquals(mesh.material, mat) && mesh.vertices.Count <= restVertexCount) {
                     return mesh;
                 }
                 else {
@@ -483,33 +594,40 @@ public class exLayer : MonoBehaviour
             }
             else {
                 exSpriteBase bot = mesh.sortedSpriteList[0];
-                if (_sprite.CompareTo(bot) > 0) {   // 在这个mesh的depth内
-                    if (mesh.material == mat) {
-                        if (mesh.vertices.Count <= maxVertexCount) {
+                bool aboveBottomSprite = _sprite > bot;
+                if (aboveBottomSprite) {   // 在这个mesh的depth内
+                    if (ReferenceEquals(mesh.material, mat)) {
+                        if (mesh.vertices.Count <= restVertexCount) {
                             return mesh;
                         }
                         else {
-                            Debug.LogWarning("[GetMeshToAdd|exLayer] re-batch sprite not implemented");
-                            return mesh;
-                            //return CreateNewMesh(mat, i + 1);   //TODO: mesh太大，必须把同材质的连续mesh的最上面一个sprite分出去，然后用新加的sprite依次填满空出来的格子
+                            // mesh太大，把同材质的连续mesh的上面的sprite分出去，然后用新加的sprite依次填满空出来的格子
+                            return GetShiftedMesh(i, _sprite, maxVertexCount);
                         }
                     }
-                    else {  // 两个相同材质的sprite中间，因为depth需要插入了另一个材质的sprite，则需要将前面两个sprite拆分成两个mesh
-
-                        Debug.LogWarning("[GetMeshToAdd|exLayer] re-batch sprite not implemented");
-                        return CreateNewMesh(mat, 0);
+                    else {
+                        // 两个相同材质的sprite中间插入了另一个材质的sprite，则需要将上下两个sprite拆分到两个不同的mesh
+                        // 做法是将上面的sprite往上移动，直到该mesh只包含下面的sprite，然后插入其它材质的mesh
+                        SplitMesh(i, _sprite, maxVertexCount);
+                        return CreateNewMesh(mat, i + 1);
                     }
                 }
+                // 否则和bot的深度相等，这时交由下层的mesh去处理
             }
         }
         if (meshList.Count > 0) {
-            exMesh mesh = meshList[0];
-            if (mesh.material == mat && mesh.vertices.Count <= maxVertexCount) {
+            exMesh bottomMesh = meshList[0];
+            if (ReferenceEquals(bottomMesh.material, mat) && bottomMesh.vertices.Count <= restVertexCount) {
                 // 插入到最下面一个mesh
-                return mesh;
+                return bottomMesh;
             }
+            // 在最下面创建一个新mesh
+            exMesh newMesh = CreateNewMesh(mat, 0);
+            if (ReferenceEquals(bottomMesh.material, mat)) {
+                ShiftSprites(0, restVertexCount, maxVertexCount);   // 向下把mesh都填满
+            }
+            return newMesh;
         }
-        // 插入到所有mesh最下面
         return CreateNewMesh(mat, 0);
     }
     
@@ -550,6 +668,7 @@ public class exLayer : MonoBehaviour
             
             // find available mesh
             exMesh mesh = GetMeshToAdd(childSprite);
+            exDebug.Assert(mesh.vertices.Count + childSprite.vertexCount <= (layerType_ == exLayerType.Dynamic ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT), "Invalid mesh vertex count");
             AddToMesh(childSprite, mesh);
         }
         if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
@@ -563,11 +682,8 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     private void AddToMesh (exSpriteBase _sprite, exMesh _mesh) {
-        bool hasSprite = _mesh.spriteList.Contains(_sprite);
-        if (hasSprite) {
-            Debug.LogError("[Add|exLayer] can't add duplicated sprite");
-            return;
-        }
+        exDebug.Assert(_mesh.spriteList.Contains(_sprite) == false, "Can't add duplicated sprite");
+
         _sprite.updateFlags = exUpdateFlags.None;
         _sprite.spriteIndexInMesh = _mesh.spriteList.Count;
         _mesh.spriteList.Add(_sprite);
