@@ -20,7 +20,7 @@ using System.Collections.Generic;
 /// 
 ///////////////////////////////////////////////////////////////////////////////
 
-[AddComponentMenu("ex2D Sprite/Sprite Font")]
+[AddComponentMenu("ex2D/ex2D Sprite Font")]
 public class exSpriteFont : exSpriteBase {
     
     // ------------------------------------------------------------------ 

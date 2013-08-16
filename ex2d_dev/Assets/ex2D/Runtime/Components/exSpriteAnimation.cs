@@ -267,7 +267,7 @@ public class exSpriteAnimationState {
 ///////////////////////////////////////////////////////////////////////////////
 
 [RequireComponent (typeof(exSprite))]
-[AddComponentMenu("ex2D Sprite/Sprite Animation")]
+[AddComponentMenu("ex2D/ex2D Sprite Animation")]
 public class exSpriteAnimation : MonoBehaviour {
         
     ///////////////////////////////////////////////////////////////////////////////

@@ -22,7 +22,7 @@ using System.Collections.Generic;
 
 [ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
-[AddComponentMenu("ex2D/2D Renderer")]
+[AddComponentMenu("ex2D/ex2D Renderer")]
 public class ex2DRenderer : MonoBehaviour {
     
     ///////////////////////////////////////////////////////////////////////////////
