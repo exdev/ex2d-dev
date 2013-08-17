@@ -39,7 +39,7 @@ public enum exLayerType
 [ExecuteInEditMode]
 public class exLayer : MonoBehaviour
 {
-    public static int maxDynamicMeshVertex = 8;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
+    public static int maxDynamicMeshVertex = 900;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
     
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -204,7 +204,6 @@ public class exLayer : MonoBehaviour
                     meshUpdateFlags |= spriteUpdateFlags;
                 }
             }
-            // TODO: 如果需要排序，进行排序并且更新相关mesh的indices
             mesh.Apply(meshUpdateFlags);
         }
         alphaHasChanged = false;
@@ -469,7 +468,7 @@ public class exLayer : MonoBehaviour
         Material mat = _sprite.material;
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
-            if (mesh != null && ReferenceEquals(mesh.material, mat) ) {        // TODO: check depth
+            if (mesh != null && ReferenceEquals(mesh.material, mat) ) {
                 for (int j = 0; j < mesh.spriteList.Count; ++j) {
                     if (_sprite.spriteIdInLayer == mesh.spriteList[j].spriteIdInLayer) {
                         _sprite.spriteIdInLayer = -1;        //duplicated
