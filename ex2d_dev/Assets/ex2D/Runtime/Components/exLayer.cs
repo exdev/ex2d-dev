@@ -1,7 +1,7 @@
 ﻿// ======================================================================================
 // File         : exLayer.cs
-// Author       : Jare
-// Last Change  : 06/15/2013 | 22:34:19
+// Author       : 
+// Last Change  : 08/17/2013 | 15:27:56
 // Description  : 
 // ======================================================================================
 
@@ -159,46 +159,55 @@ public class exLayer : MonoBehaviour
  
     [ContextMenu("UpdateSprites")]
     public void UpdateSprites () {
-        if (show_) {
-            for (int m = meshList.Count - 1; m >= 0 ; --m) {
-                exMesh mesh = meshList[m];
-                bool meshDestroyed = (mesh == null);
-                if (meshDestroyed || mesh.spriteList.Count == 0) {
-                    if (meshDestroyed == false) {
-                        mesh.gameObject.DestroyImmediate();
-                    }
-                    meshList.RemoveAt(m);
-
-                    // compact
-                    if (m - 1 > 0 && m < meshList.Count) {
-                        int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT;
-                        if (meshList[m - 1].vertices.Count < maxVertexCount) {
-                            ShiftSpritesDown (m - 1, maxVertexCount, maxVertexCount);
-                        }
-                    }
-
-                    UpdateMeshDebugName(m);
-                    continue;
-                }
-                exUpdateFlags meshUpdateFlags = exUpdateFlags.None;
-                for (int i = 0; i < mesh.spriteList.Count; ++i) {
-                    exSpriteBase sprite = mesh.spriteList[i];
-                    if (alphaHasChanged) {
-                        sprite.updateFlags |= exUpdateFlags.Color;
-                    }
-                    if (sprite.isInIndexBuffer) {
-                        //if (sprite.transparent == false) {
-                            sprite.UpdateTransform();
-                        //}
-                        exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
-                        meshUpdateFlags |= spriteUpdateFlags;
-                    }
-                }
-                // TODO: 如果需要排序，进行排序并且更新相关mesh的indices
-                mesh.Apply(meshUpdateFlags);
-            }
-            alphaHasChanged = false;
+        if (show_ == false) {
+            return;
         }
+
+        // compact mesh
+        for (int m = 0; m < meshList.Count; ) {
+            exMesh mesh = meshList[m];
+            bool meshDestroyed = (mesh == null);
+            if (meshDestroyed || mesh.spriteList.Count == 0) {
+                if (meshDestroyed == false) {
+                    mesh.gameObject.DestroyImmediate ();
+                }
+                meshList.RemoveAt (m);
+
+                if (m - 1 > 0 && m < meshList.Count) {
+                    int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT;
+                    if (meshList [m - 1].vertices.Count < maxVertexCount) {
+                        ShiftSpritesDown (m - 1, maxVertexCount, maxVertexCount);
+                    }
+                }
+
+                UpdateMeshDebugName (m);
+            }
+            else {
+                ++m;
+            }
+        }
+
+        // update
+        for (int m = meshList.Count - 1; m >= 0 ; --m) {
+            exMesh mesh = meshList[m];
+            exUpdateFlags meshUpdateFlags = exUpdateFlags.None;
+            for (int i = 0; i < mesh.spriteList.Count; ++i) {
+                exSpriteBase sprite = mesh.spriteList[i];
+                if (alphaHasChanged) {
+                    sprite.updateFlags |= exUpdateFlags.Color;
+                }
+                if (sprite.isInIndexBuffer) {
+                    //if (sprite.transparent == false) {
+                        sprite.UpdateTransform();
+                    //}
+                    exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
+                    meshUpdateFlags |= spriteUpdateFlags;
+                }
+            }
+            // TODO: 如果需要排序，进行排序并且更新相关mesh的indices
+            mesh.Apply(meshUpdateFlags);
+        }
+        alphaHasChanged = false;
     }
 
     // ------------------------------------------------------------------ 
