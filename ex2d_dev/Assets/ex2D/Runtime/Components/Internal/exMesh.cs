@@ -167,7 +167,7 @@ public class exMesh : MonoBehaviour
         // 当在EX_DEBUG模式下，如果显示着GO的Inspector，再启动游戏，由于GO是DontSave的，会先被销毁。这时Unity将会报错，但不影响运行，这个问题在类似插件中也会存在。
         go.hideFlags = exReleaseFlags.hideAndDontSave | exReleaseFlags.notEditable;
         exMesh res = go.AddComponent<exMesh>();
-        res.UpdateDebugName(_layer.name);
+        res.UpdateDebugName(_layer);
         res.Init();
         return res;
     }
@@ -446,31 +446,41 @@ public class exMesh : MonoBehaviour
         }
     }
 
+#if UNITY_EDITOR || EX_DEBUG
+    [System.NonSerialized] private exLayer layerForDebug;
+#endif
+
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
 
     [System.Diagnostics.Conditional("UNITY_EDITOR"), System.Diagnostics.Conditional("EX_DEBUG")]
-    void UpdateDebugName (string layerName = null) {
+    public void UpdateDebugName (exLayer layer = null) {
 #if UNITY_EDITOR || EX_DEBUG
-        if (string.IsNullOrEmpty(layerName)) {
-            string[] splitted = gameObject.name.Split('@');
-            if (splitted.Length > 0) {
-                layerName = gameObject.name.Split('@')[1];
-            }
+        if (ReferenceEquals(layer, null) == false) {
+            layerForDebug = layer;
         }
-        string newName = "_exMesh";
+        string matName;
         Material mat = material;
         if (mat != null) {
             if (mat.mainTexture) {
-                newName += ("[" + mat.mainTexture.name + "]");
+                matName = mat.mainTexture.name;
             }
             else {
-                newName += ("[" + mat.name + "]");
+                matName = mat.name;
             }
         }
-        newName += ("@" + layerName);
-        gameObject.name = newName;
+        else {
+            matName = "None";
+        }
+        int meshIndex = -1;
+        for (int i = 0; i < layerForDebug.meshList.Count; ++i) {
+            if (ReferenceEquals(this, layerForDebug.meshList[i])) {
+                meshIndex = i;
+                break;
+            }
+        }
+        gameObject.name = string.Format("_exMesh@{0}[{1:D2}]({2})", layerForDebug.name, meshIndex, matName);
 #endif
     }
 }
