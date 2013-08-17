@@ -72,6 +72,24 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
+
+    [SerializeField] 
+    private bool ordered_ = true;
+    public bool ordered {
+        get {
+            return ordered_;
+        }
+        set { 
+            if (ordered_ == value) {
+                return;
+            }
+            ordered_ = value;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
     
     [SerializeField] 
     private exLayerType layerType_ = exLayerType.Dynamic;
@@ -239,7 +257,7 @@ public class exLayer : MonoBehaviour
             else {
                 sprite.ResetLayerProperties();  //if mesh has been destroyed, just reset sprite
             }
-            if (sprite.spriteIdInLayer == nextSpriteUniqueId - 1) {
+            if (sprite.spriteIdInLayer == nextSpriteUniqueId - 1 && nextSpriteUniqueId > 0) {
                 --nextSpriteUniqueId;
             }
             sprite.spriteIdInLayer = 0;	
@@ -465,6 +483,9 @@ public class exLayer : MonoBehaviour
     [System.Diagnostics.Conditional("UNITY_EDITOR")]
     public void CheckDuplicated (exSpriteBase _sprite) {
 #if UNITY_EDITOR
+        if (ordered_ == false) {
+            return;
+        }
         Material mat = _sprite.material;
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
@@ -485,10 +506,13 @@ public class exLayer : MonoBehaviour
         int oldVertexCount = _sprite.vertexCount;
 #endif
         RemoveFromMesh(_sprite, _src);
+#if EX_DEBUG
         exDebug.Assert (_sprite.vertexCount == oldVertexCount);
-
+#endif
         AddToMesh(_sprite, _dst);
+#if EX_DEBUG
         exDebug.Assert (_sprite.vertexCount == oldVertexCount);
+#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -653,7 +677,7 @@ public class exLayer : MonoBehaviour
 
             exSpriteBase top = mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1];
             bool aboveTopSprite = _sprite >= top;
-            if (aboveTopSprite) {   // 在这个mesh之上层
+            if (aboveTopSprite) {   // 在这个mesh之上层 TODO: 如果是unordered，还可以优化成检查同一个depth的mesh后面是否有相同材质的mesh
                 if (ReferenceEquals(mesh.material, mat) && mesh.vertices.Count <= restVertexCount) {
                     return mesh;
                 }
@@ -727,14 +751,14 @@ public class exLayer : MonoBehaviour
             
             // set sprite id
             CheckDuplicated(childSprite);
-            if (_newSprite || childSprite.spriteIdInLayer == -1) {
+            if (ordered_ && _newSprite || childSprite.spriteIdInLayer == -1) {
                 childSprite.spriteIdInLayer = nextSpriteUniqueId;
                 ++nextSpriteUniqueId;
             }
             else {
-                nextSpriteUniqueId = Mathf.Max(childSprite.spriteIdInLayer + 1, nextSpriteUniqueId);
+                nextSpriteUniqueId = Mathf.Max (childSprite.spriteIdInLayer + 1, nextSpriteUniqueId);
             }
-            
+
             // find available mesh
             exMesh mesh = GetMeshToAdd(childSprite);
             exDebug.Assert(mesh.vertices.Count + childSprite.vertexCount <= (layerType_ == exLayerType.Dynamic ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT), "Invalid mesh vertex count");
