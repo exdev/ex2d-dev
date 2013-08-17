@@ -366,18 +366,52 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         }
     }
 
-#endif    
+#endif
 
     // ------------------------------------------------------------------ 
-    /// Compare sprites by depth and index
+    /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
+    // ------------------------------------------------------------------ 
+    
+    public static bool operator > (exSpriteBase _lhs, exSpriteBase _rhs) {
+        return _lhs.depth_ > _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer > _rhs.spriteIdInLayer);
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
+    /// 如果他们在同一个layer，则当layer是unordered时这个比较才有可能相等
+    // ------------------------------------------------------------------ 
+    
+    public static bool operator >= (exSpriteBase _lhs, exSpriteBase _rhs) {
+        return _lhs.depth_ > _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer >= _rhs.spriteIdInLayer);
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
+    // ------------------------------------------------------------------ 
+    
+    public static bool operator < (exSpriteBase _lhs, exSpriteBase _rhs) {
+        return _lhs.depth_ < _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer < _rhs.spriteIdInLayer);
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
+    /// 如果他们在同一个layer，则当layer是unordered时这个比较才有可能相等
+    // ------------------------------------------------------------------ 
+    
+    public static bool operator <= (exSpriteBase _lhs, exSpriteBase _rhs) {
+        return _lhs.depth_ < _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer <= _rhs.spriteIdInLayer);
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
     // ------------------------------------------------------------------ 
     
     public int CompareTo(exSpriteBase _other) {
-        if (depth_ < _other.depth)
+        if (depth_ < _other.depth_)
         {
             return -1;
         }
-        if (depth_ > _other.depth)
+        if (depth_ > _other.depth_)
         {
             return 1;
         }
