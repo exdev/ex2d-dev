@@ -38,7 +38,7 @@ class ex2DAboutWindow : ScriptableWizard {
         GUILayout.Label("Build:");
         string version = "v2.0.1 (beta)";
         string date = "08/18/2013";
-        string commit = "";
+        string commit = "6887d74e67629c4a5d8bb4efbdd11e00869ea3cf";
         string text = version 
             + '\n' + date 
             + '\n' + commit;
