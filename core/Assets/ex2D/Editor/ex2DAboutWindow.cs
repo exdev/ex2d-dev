@@ -1,7 +1,7 @@
 // ======================================================================================
 // File         : ex2DAboutWindow.cs
 // Author       : Wu Jie 
-// Last Change  : 06/19/2013 | 22:46:46 PM | Wednesday,June
+// Last Change  : 08/18/2013 | 15:38:52 PM | Sunday,August
 // Description  : 
 // ======================================================================================
 
@@ -33,16 +33,28 @@ class ex2DAboutWindow : ScriptableWizard {
                          (Texture2D)AssetDatabase.LoadAssetAtPath( logoPath, typeof(Texture2D) ) );
         GUILayoutUtility.GetRect ( logoWidth, logoHeight );
 
-        string version = "ex2D v2.0.1 (beta)";
-        GUILayout.Space (10);
-        GUILayout.BeginHorizontal();
-            GUILayout.Space (10);
-            GUILayout.Label(version);
-        GUILayout.EndHorizontal();
+        //
+        EditorGUILayout.Space ();
+        GUILayout.Label("Build:");
+        string version = "v2.0.1 (beta)";
+        string date = "08/18/2013";
+        string commit = "";
+        string text = version 
+            + '\n' + date 
+            + '\n' + commit;
 
         GUILayout.BeginHorizontal();
             GUILayout.Space (10);
-            GUILayout.Label("Develop by: exDev Studio (www.ex-dev.com)");
+            // EditorGUILayout.SelectableLabel(version);
+            EditorGUILayout.TextArea(text);
+        GUILayout.EndHorizontal();
+
+        //
+        EditorGUILayout.Space ();
+        GUILayout.Label("Develop by:");
+        GUILayout.BeginHorizontal();
+            GUILayout.Space (10);
+            EditorGUILayout.SelectableLabel("exDev Studio (ex-dev.com)");
         GUILayout.EndHorizontal();
     }
 }
