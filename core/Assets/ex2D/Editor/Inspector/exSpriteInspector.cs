@@ -25,6 +25,7 @@ class exSpriteInspector : exSpriteBaseInspector {
 
     SerializedProperty textureInfoProp;
     SerializedProperty useTextureOffsetProp;
+    SerializedProperty spriteTypeProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -71,6 +72,19 @@ class exSpriteInspector : exSpriteBaseInspector {
                 }
             }
         }
+        
+        // type
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( spriteTypeProp, new GUIContent("Sprite Type") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSprite sp = obj as exSprite;
+                if ( sp ) {
+                    sp.spriteType = (exSpriteType)spriteTypeProp.intValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
 
         EditorGUILayout.Space();
         GUILayout.BeginHorizontal();
@@ -90,6 +104,7 @@ class exSpriteInspector : exSpriteBaseInspector {
         base.InitProperties();
         textureInfoProp = serializedObject.FindProperty("textureInfo_");
         useTextureOffsetProp = serializedObject.FindProperty("useTextureOffset_");
+        spriteTypeProp = serializedObject.FindProperty("spriteType_");
     }
 }
 

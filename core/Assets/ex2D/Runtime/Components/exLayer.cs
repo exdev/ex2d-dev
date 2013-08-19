@@ -39,7 +39,7 @@ public enum exLayerType
 [ExecuteInEditMode]
 public class exLayer : MonoBehaviour
 {
-    public static int maxDynamicMeshVertex = 900;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
+    public static int maxDynamicMeshVertex = 90000;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
     
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -374,7 +374,7 @@ public class exLayer : MonoBehaviour
         
     public void GenerateMeshes () {
         nextSpriteUniqueId = 0;
-        exSpriteBase[] spriteList = GetComponentsInChildren<exSpriteBase>();
+        exSpriteBase[] spriteList = GetComponentsInChildren<exSpriteBase>(true);
         foreach (exSpriteBase sprite in spriteList) {
             Add(sprite, false);
         }
@@ -761,7 +761,8 @@ public class exLayer : MonoBehaviour
 
             // find available mesh
             exMesh mesh = GetMeshToAdd(childSprite);
-            exDebug.Assert(mesh.vertices.Count + childSprite.vertexCount <= (layerType_ == exLayerType.Dynamic ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT), "Invalid mesh vertex count");
+            exDebug.Assert(mesh.vertices.Count + childSprite.vertexCount <= (layerType_ == exLayerType.Dynamic ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT), 
+                string.Format("Invalid mesh vertex count : {0}", (mesh.vertices.Count + childSprite.vertexCount)));
             AddToMesh(childSprite, mesh);
         }
         if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {

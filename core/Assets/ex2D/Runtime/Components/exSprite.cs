@@ -18,9 +18,10 @@ using System.Collections.Generic;
 // ------------------------------------------------------------------ 
 
 public enum exSpriteType {
-    Simple,
+    Simple = 0,
     Sliced,
     Tiled,
+    Diced,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -123,21 +124,38 @@ public class exSprite : exSpriteBase {
         set {
             if ( spriteType_ != value ) {
                 spriteType_ = value;
-                updateFlags |= exUpdateFlags.All;   // TODO: implement sprite type
+                if (layer_ != null) {
+                    int newVertexCount, newIndexCount;
+                    GetVertexAndIndexCount(value, out newVertexCount, out newIndexCount);
+                    if (currentVertexCount != newVertexCount || currentIndexCount != newIndexCount) {
+                        // rebuild geometry
+                        exLayer myLayer = layer_;
+                        myLayer.Remove(this);
+                        myLayer.Add(this);
+                        exDebug.Assert(currentVertexCount == newVertexCount && currentIndexCount == newIndexCount);
+                    }
+                }
             }
         }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    // non-serialized properties
+    // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
+    [System.NonSerialized] private int currentVertexCount = -1;
+    [System.NonSerialized] private int currentIndexCount = -1;
+
     public override int vertexCount {
-        get { return exMesh.QUAD_VERTEX_COUNT; }
+        get {
+            return currentVertexCount;
+        }
     }
 
     public override int indexCount {
-        get { return exMesh.QUAD_INDEX_COUNT; }
+        get {
+            return currentIndexCount;
+        }
     }
 
     protected override Texture texture {
@@ -288,6 +306,17 @@ public class exSprite : exSpriteBase {
         vertices.AddRange(vertexCount);
         UpdateVertexBuffer(vertices, 0, ref _spriteMatrix);
         return vertices.ToArray();
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    protected override void OnPreAddToLayer () {
+        exDebug.Assert(layer_ == null);
+        if (layer_ == null) {
+            GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -446,5 +475,30 @@ public class exSprite : exSpriteBase {
         _vertices.buffer[_startIndex + 3] = v3;
         
         // TODO: pixel-perfect
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    public void GetVertexAndIndexCount (exSpriteType _spriteType, out int _vertexCount, out int _indexCount) {
+        switch (spriteType_) {
+        case exSpriteType.Simple:
+            _vertexCount = exMesh.QUAD_VERTEX_COUNT;
+            _indexCount = exMesh.QUAD_INDEX_COUNT;
+            break;
+        case exSpriteType.Sliced:
+            _vertexCount = 4 * 4;
+            _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
+            break;
+        //case exSpriteType.Tiled:
+        //    break;
+        //case exSpriteType.Diced:
+        //    break;
+        default:
+            _vertexCount = exMesh.QUAD_VERTEX_COUNT;
+            _indexCount = exMesh.QUAD_INDEX_COUNT;
+            break;
+        }
     }
 }

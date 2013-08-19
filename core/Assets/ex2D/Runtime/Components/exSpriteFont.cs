@@ -113,6 +113,11 @@ public class exSpriteFont : exSpriteBase {
                     UpdateCapacity();   // TODO: 如果在一帧内反复修改文本，会造成多余的layer改动，考虑留到update时再处理
                 }
                 updateFlags |= exUpdateFlags.Text;
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -143,6 +148,11 @@ public class exSpriteFont : exSpriteBase {
             if (textAlign_ != value) {
                 textAlign_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -159,6 +169,11 @@ public class exSpriteFont : exSpriteBase {
             if (useKerning_ != value) {
                 useKerning_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -175,6 +190,11 @@ public class exSpriteFont : exSpriteBase {
             if (spacing_ != value) {
                 spacing_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -193,6 +213,11 @@ public class exSpriteFont : exSpriteBase {
             if (topColor_ != value) {
                 topColor_ = value;
                 updateFlags |= exUpdateFlags.Color;
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -208,6 +233,11 @@ public class exSpriteFont : exSpriteBase {
             if (botColor_ != value) {
                 botColor_ = value;
                 updateFlags |= exUpdateFlags.Color;
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -225,6 +255,11 @@ public class exSpriteFont : exSpriteBase {
             if (useOutline_ != value) {
                 useOutline_ = value;
                 updateFlags |= exUpdateFlags.Text; 
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -242,6 +277,11 @@ public class exSpriteFont : exSpriteBase {
                 if (useOutline_) {
                     updateFlags |= exUpdateFlags.Vertex;
                 }
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -259,6 +299,11 @@ public class exSpriteFont : exSpriteBase {
                 if (useOutline_) {
                     updateFlags |= exUpdateFlags.Color;
                 }
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -276,6 +321,11 @@ public class exSpriteFont : exSpriteBase {
             if (useShadow_ != value) {
                 useShadow_ = value;
                 updateFlags |= exUpdateFlags.Text; 
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -292,6 +342,11 @@ public class exSpriteFont : exSpriteBase {
                 shadowBias_ = value;
                 if (useShadow_) {
                     updateFlags |= exUpdateFlags.Vertex;
+#if UNITY_EDITOR
+                    if (layer_ != null) {
+                        layer_.UpdateNowInEditMode();
+                    }
+#endif
                 }
             }
         }
@@ -309,6 +364,11 @@ public class exSpriteFont : exSpriteBase {
                 shadowColor_ = value;
                 if (useShadow_) {
                     updateFlags |= exUpdateFlags.Color;
+#if UNITY_EDITOR
+                    if (layer_ != null) {
+                        layer_.UpdateNowInEditMode();
+                    }
+#endif
                 }
             }
         }
@@ -324,9 +384,9 @@ public class exSpriteFont : exSpriteBase {
 
     public override int vertexCount {
         get {
-            if (layer_ == null) {
-                UpdateCapacity();
-            }
+            //if (layer_ == null) {
+            //    UpdateCapacity();
+            //}
             return vertexCountCapacity;
         }
     }
@@ -404,6 +464,7 @@ public class exSpriteFont : exSpriteBase {
         if ((updateFlags & exUpdateFlags.Text) != 0) {
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
             BuildText(_vertices, vertexBufferIndex, ref cachedWorldMatrix, _uvs);
+            updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV | exUpdateFlags.Color);
         }
         else if ((updateFlags & exUpdateFlags.Vertex) != 0) {
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
@@ -687,23 +748,133 @@ public class exSpriteFont : exSpriteBase {
     void BuildText (exList<Vector3> _vertices, int _vbIndex, ref Matrix4x4 _spriteMatrix, exList<Vector2> _uvs = null) {
         width_ = 0.0f;    // 和SpriteBase一致，用于表示实际宽度
         height_ = 0.0f;   // 和SpriteBase一致，用于表示实际高度
-
-        int vbEnd = _vbIndex + text_.Length * 4;
-
-        if (font_ == null) {
-            for (int i = _vbIndex; i < vbEnd; ++i) {
-                _vertices.buffer[i] = new Vector3();
-            }
-            return;
+        int invisibleVertexStart = -1;
+        int visibleVertexCount;
+        if (font_ != null) {
+            BuildTextInLocalSpace(_vertices, _vbIndex, _uvs);
+            visibleVertexCount = text_.Length * 4;
         }
-        
+        else {
+            //System.Array.Clear(_vertices.buffer, _vbIndex, visibleVertexCount);
+            visibleVertexCount = 0;
+        }
+        if (vertexCountCapacity > visibleVertexCount) {
+            invisibleVertexStart = visibleVertexCount;
+            _vertices.buffer[invisibleVertexStart + 0] = new Vector3();
+            _vertices.buffer[invisibleVertexStart + 1] = new Vector3();
+            _vertices.buffer[invisibleVertexStart + 2] = new Vector3();
+            _vertices.buffer[invisibleVertexStart + 3] = new Vector3();
+        }
+
+        // calculate anchor and offset
+        float anchorOffsetX = 0.0f;
+        float anchorOffsetY;
+        // convert to top left
+        switch (textAlign_) {
+        case TextAlignment.Left:
+            break;
+        case TextAlignment.Center:
+            anchorOffsetX = width_ * 0.5f;
+            break;
+        case TextAlignment.Right:
+            anchorOffsetX = width_;
+            break;
+        }
+        // convert anchor from top center to user defined
+        switch ( anchor_ ) {
+        case Anchor.TopLeft   :                                   anchorOffsetY = 0.0f;           break;
+        case Anchor.TopCenter : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = 0.0f;           break;
+        case Anchor.TopRight  : anchorOffsetX -= width_;          anchorOffsetY = 0.0f;           break;
+        case Anchor.MidLeft   :                                   anchorOffsetY = height_ * 0.5f; break;
+        case Anchor.MidCenter : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = height_ * 0.5f; break;
+        case Anchor.MidRight  : anchorOffsetX -= width_;          anchorOffsetY = height_ * 0.5f; break;
+        case Anchor.BotLeft   :                                   anchorOffsetY = height_;        break;
+        case Anchor.BotCenter : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = height_;        break;
+        case Anchor.BotRight  : anchorOffsetX -= width_;          anchorOffsetY = height_;        break;
+        default               : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = height_ * 0.5f; break;
+        }
+        // offset
+        anchorOffsetX += offset_.x;
+        anchorOffsetY += offset_.y;
+
+        float shearOffsetX = 0.0f;
+        float shearOffsetY = 0.0f;
+        if (shear_.x != 0) {
+            float worldScaleY = (new Vector3(_spriteMatrix.m01, _spriteMatrix.m11, _spriteMatrix.m21)).magnitude;
+            shearOffsetX = worldScaleY * shear_.x;
+        }
+        if (shear_.y != 0) {
+            float worldScaleX = (new Vector3(_spriteMatrix.m00, _spriteMatrix.m10, _spriteMatrix.m20)).magnitude;
+            shearOffsetY = worldScaleX * shear_.y;
+        }
+        int vbEnd = _vbIndex + vertexCountCapacity;
+        for (int i = _vbIndex; i < vbEnd; i += 4) {
+            if (invisibleVertexStart == -1 || i <= invisibleVertexStart) {
+                Vector3 v0 = _vertices.buffer[i + 0];
+                Vector3 v1 = _vertices.buffer[i + 1];
+                Vector3 v2 = _vertices.buffer[i + 2];
+                Vector3 v3 = _vertices.buffer[i + 3];
+                // apply anchor and offset
+                v0.x += anchorOffsetX; v0.y += anchorOffsetY;
+                v1.x += anchorOffsetX; v1.y += anchorOffsetY;
+                v2.x += anchorOffsetX; v2.y += anchorOffsetY;
+                v3.x += anchorOffsetX; v3.y += anchorOffsetY;
+                // apply transform
+                v0 = _spriteMatrix.MultiplyPoint3x4(v0);
+                v1 = _spriteMatrix.MultiplyPoint3x4(v1);
+                v2 = _spriteMatrix.MultiplyPoint3x4(v2);
+                v3 = _spriteMatrix.MultiplyPoint3x4(v3);
+
+                v0.z = 0; v1.z = 0; v2.z = 0; v3.z = 0;
+                // shear
+                if (shear_.x != 0) {
+                    float halfCharHeight = (v1.y - v0.y) * 0.5f;
+                    float topOffset = shearOffsetX * (halfCharHeight + anchorOffsetY);
+                    float botOffset = shearOffsetX * (-halfCharHeight + anchorOffsetY);
+                    v0.x += botOffset;
+                    v1.x += topOffset;
+                    v2.x += topOffset;
+                    v3.x += botOffset;
+                }
+                if (shear_.y != 0) {
+                    float halfCharWidth = (v2.y - v0.y) * 0.5f;
+                    float leftOffset = shearOffsetY * (-halfCharWidth + anchorOffsetX);
+                    float rightOffset = shearOffsetY * (halfCharWidth + anchorOffsetX);
+                    v0.y += leftOffset;
+                    v1.y += leftOffset;
+                    v2.y += rightOffset;
+                    v3.y += rightOffset;
+                }
+                _vertices.buffer[i + 0] = v0;
+                _vertices.buffer[i + 1] = v1;
+                _vertices.buffer[i + 2] = v2;
+                _vertices.buffer[i + 3] = v3;
+            }
+            else if (invisibleVertexStart != -1) {
+                if (i >= _vertices.buffer.Length) {
+                    Debug.Log(string.Format("[BuildText|exSpriteFont] i: {0} vbEnd: " + vbEnd + " _vertices: " + _vertices.buffer.Length, i));
+                }
+                _vertices.buffer[i + 0] = _vertices.buffer[invisibleVertexStart];
+                _vertices.buffer[i + 1] = _vertices.buffer[invisibleVertexStart];
+                _vertices.buffer[i + 2] = _vertices.buffer[invisibleVertexStart];
+                _vertices.buffer[i + 3] = _vertices.buffer[invisibleVertexStart];
+            }
+        }
+        // TODO: pixel-perfect
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    private void BuildTextInLocalSpace (exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs) {
         Vector2 texelSize = new Vector2();
         if (_uvs != null && font_.texture != null) {
             texelSize = font_.texture.texelSize;
         }
 
         int parsedVBIndex = _vbIndex;
-        for (int charIndex = 0; charIndex < text_.Length;) {
+        for (int charIndex = 0; charIndex < text_.Length; ) {
             int lineStart = parsedVBIndex;
             // build line
             float lineWidth = BuildLine(_vertices, _uvs, ref charIndex, ref parsedVBIndex, texelSize, -height_);
@@ -722,7 +893,7 @@ public class exSpriteFont : exSpriteBase {
             case TextAlignment.Right:
                 // convert to top right
                 for (int i = lineStart; i < parsedVBIndex; ++i) {
-                    _vertices.buffer[i].x -=lineWidth;
+                    _vertices.buffer[i].x -= lineWidth;
                 }
                 break;
             }
@@ -735,84 +906,6 @@ public class exSpriteFont : exSpriteBase {
                 height_ += spacing_.y;
             }
         }
-
-        float anchorOffsetX = 0.0f;
-        float anchorOffsetY;
-
-        // convert to top left
-        switch (textAlign_) {
-        case TextAlignment.Left:
-            break;
-        case TextAlignment.Center:
-            anchorOffsetX = width_ * 0.5f;
-            break;
-        case TextAlignment.Right:
-            anchorOffsetX = width_;
-            break;
-        }
-
-        // convert anchor from top center to user defined
-        switch ( anchor_ ) {
-        case Anchor.TopLeft   :                                   anchorOffsetY = 0.0f;           break;
-        case Anchor.TopCenter : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = 0.0f;           break;
-        case Anchor.TopRight  : anchorOffsetX -= width_;          anchorOffsetY = 0.0f;           break;
-        case Anchor.MidLeft   :                                   anchorOffsetY = height_ * 0.5f; break;
-        case Anchor.MidCenter : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = height_ * 0.5f; break;
-        case Anchor.MidRight  : anchorOffsetX -= width_;          anchorOffsetY = height_ * 0.5f; break;
-        case Anchor.BotLeft   :                                   anchorOffsetY = height_;        break;
-        case Anchor.BotCenter : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = height_;        break;
-        case Anchor.BotRight  : anchorOffsetX -= width_;          anchorOffsetY = height_;        break;
-        default               : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = height_ * 0.5f; break;
-        }
-
-        // offset
-        anchorOffsetX += offset_.x;
-        anchorOffsetY += offset_.y;
-
-        for (int i = _vbIndex; i < vbEnd; i += 4) {
-            Vector3 v0 = _vertices.buffer[i + 0];
-            Vector3 v1 = _vertices.buffer[i + 1];
-            Vector3 v2 = _vertices.buffer[i + 2];
-            Vector3 v3 = _vertices.buffer[i + 3];
-            // apply anchor and offset
-            v0.x += anchorOffsetX; v0.y += anchorOffsetY;
-            v1.x += anchorOffsetX; v1.y += anchorOffsetY;
-            v2.x += anchorOffsetX; v2.y += anchorOffsetY;
-            v3.x += anchorOffsetX; v3.y += anchorOffsetY;
-            // apply transform
-            v0 = _spriteMatrix.MultiplyPoint3x4(v0);
-            v1 = _spriteMatrix.MultiplyPoint3x4(v1);
-            v2 = _spriteMatrix.MultiplyPoint3x4(v2);
-            v3 = _spriteMatrix.MultiplyPoint3x4(v3);
-
-            v0.z = 0; v1.z = 0; v2.z = 0; v3.z = 0;
-            // shear
-            if (shear_.x != 0) {
-                float worldScaleY = (new Vector3(_spriteMatrix.m01, _spriteMatrix.m11, _spriteMatrix.m21)).magnitude;
-                float offsetX = worldScaleY * shear_.x;
-                float topOffset = offsetX * (height_ * 0.5f + anchorOffsetY);
-                float botOffset = offsetX * (-height_ * 0.5f + anchorOffsetY);
-                v0.x += botOffset;
-                v1.x += topOffset;
-                v2.x += topOffset;
-                v3.x += botOffset;
-            }
-            if (shear_.y != 0) {
-                float worldScaleX = (new Vector3(_spriteMatrix.m00, _spriteMatrix.m10, _spriteMatrix.m20)).magnitude;
-                float offsetY = worldScaleX * shear_.y;
-                float leftOffset = offsetY * (-width_ * 0.5f + anchorOffsetX);
-                float rightOffset = offsetY * (width_ * 0.5f + anchorOffsetX);
-                v0.y += leftOffset;
-                v1.y += leftOffset;
-                v2.y += rightOffset;
-                v3.y += rightOffset;
-            }
-            _vertices.buffer[i + 0] = v0;
-            _vertices.buffer[i + 1] = v1;
-            _vertices.buffer[i + 2] = v2;
-            _vertices.buffer[i + 3] = v3;
-        }
-        // TODO: pixel-perfect
     }
 
     // ------------------------------------------------------------------ 
