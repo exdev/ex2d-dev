@@ -230,7 +230,48 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
+        switch (spriteType_) {
+            case exSpriteType.Simple:
+                SimpleUpdateBuffers (_vertices, _uvs, _indices);
+                break;
+            case exSpriteType.Sliced:
+                SlicedUpdateBuffers (_vertices, _uvs, _indices);
+                break;
+            case exSpriteType.Tiled:
+                break;
+            case exSpriteType.Diced:
+                break;
+        }
+        if ((updateFlags & exUpdateFlags.Color) != 0) {
+            exDebug.Assert(layer_ != null);
+            Color32 color32;
+            if (transparent_ == false) {
+                color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
+            }
+            else {
+                color32 = new Color32 ();
+            }
+            for (int i = 0; i < currentVertexCount; ++i) {
+                _colors32.buffer[vertexBufferIndex + i] = color32;
+            }
+        }
+        //if (transparent_ == false) {
+        exUpdateFlags applyedFlags = updateFlags;
+        updateFlags = exUpdateFlags.None;
+        return applyedFlags;
+        //}
+        //else {
+        //    exUpdateFlags applyedFlags = (updateFlags & exUpdateFlags.Color);
+        //    updateFlags &= ~exUpdateFlags.Color;
+        //    return applyedFlags;
+        //}
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
 
+    private void SimpleUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
         if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Vertex) != 0) {
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
             UpdateVertexBuffer(_vertices, vertexBufferIndex, ref cachedWorldMatrix);
@@ -269,30 +310,60 @@ public class exSprite : exSpriteBase {
                 _uvs.buffer[vertexBufferIndex + 3] = new Vector2(end.x, start.y);
             }
         }
-        if ((updateFlags & exUpdateFlags.Color) != 0) {
-            exDebug.Assert(layer_ != null);
-            Color32 color32;
-            if (transparent_ == false) {
-                color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
-            }
-            else {
-                color32 = new Color32 ();
-            }
-            _colors32.buffer[vertexBufferIndex + 0] = color32;
-            _colors32.buffer[vertexBufferIndex + 1] = color32;
-            _colors32.buffer[vertexBufferIndex + 2] = color32;
-            _colors32.buffer[vertexBufferIndex + 3] = color32;
-        }
-        //if (transparent_ == false) {
-            exUpdateFlags applyedFlags = updateFlags;
-            updateFlags = exUpdateFlags.None;
-            return applyedFlags;
-        //}
-        //else {
-        //    exUpdateFlags applyedFlags = (updateFlags & exUpdateFlags.Color);
-        //    updateFlags &= ~exUpdateFlags.Color;
-        //    return applyedFlags;
-        //}
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private void SlicedUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
+//        SimpleUpdateBuffers (_vertices, _uvs, _indices);
+//        if (textureInfo_ == null || (textureInfo_.borderLeft == 0 && textureInfo_.borderRight == 0 && textureInfo_.borderTop == 0 && textureInfo_.borderBottom == 0)) {
+//            for (int i = 4; i < indexCount; --i) {
+//                _indices.buffer[indexBufferIndex + i] = vertexBufferIndex;  // hide unused triangle
+//            }
+//            return;
+//        }
+//        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Vertex) != 0) {
+//            Vector3 vbl = _vertices.buffer[vertexBufferIndex + 0];
+//            Vector3 vtl = _vertices.buffer[vertexBufferIndex + 1];
+//            Vector3 vtr = _vertices.buffer[vertexBufferIndex + 2];
+//            Vector3 vbr = _vertices.buffer[vertexBufferIndex + 3];
+//            float trimmedBorderLeft = textureInfo_.borderLeft - textureInfo_.trim_x;
+//            float trimmedBorderRight = textureInfo_.borderRight - (textureInfo_.x + textureInfo_.rawWidth - (textureInfo_.trim_x + textureInfo_.width));
+//            float step = trimmedBorderLeft / width_;
+//            _vertices.buffer[vertexBufferIndex + 1] = vbl + (vbr - vbl) * textureInfo_.borderLeft;
+//            _vertices.buffer[vertexBufferIndex + 1];
+//            (from + ((to - from) * Clamp01(t)));
+//        }
+//        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+//            _indices.buffer[indexBufferIndex]     = vertexBufferIndex;
+//            _indices.buffer[indexBufferIndex + 1] = vertexBufferIndex + 1;
+//            _indices.buffer[indexBufferIndex + 2] = vertexBufferIndex + 2;
+//            _indices.buffer[indexBufferIndex + 3] = vertexBufferIndex + 2;
+//            _indices.buffer[indexBufferIndex + 4] = vertexBufferIndex + 3;
+//            _indices.buffer[indexBufferIndex + 5] = vertexBufferIndex;
+//        }
+//        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.UV) != 0 && textureInfo_ != null) {
+//            Vector2 uvbl = _uvs.buffer[vertexBufferIndex + 0];
+//            Vector2 uvtr = _uvs.buffer[vertexBufferIndex + 2];
+//            Vector2 start = new Vector2((float)textureInfo_.x * texelSize.x, 
+//                                        (float)textureInfo_.y * texelSize.y);
+//            Vector2 end = new Vector2((float)(textureInfo_.x + textureInfo_.rotatedWidth) * texelSize.x, 
+//                                      (float)(textureInfo_.y + textureInfo_.rotatedHeight) * texelSize.y);
+//            if ( textureInfo_.rotated ) {
+//                _uvs.buffer[vertexBufferIndex + 0] = new Vector2(end.x, start.y);
+//                _uvs.buffer[vertexBufferIndex + 1] = start;
+//                _uvs.buffer[vertexBufferIndex + 2] = new Vector2(start.x, end.y);
+//                _uvs.buffer[vertexBufferIndex + 3] = end;
+//            }
+//            else {
+//                _uvs.buffer[vertexBufferIndex + 0] = start;
+//                _uvs.buffer[vertexBufferIndex + 1] = new Vector2(start.x, end.y);
+//                _uvs.buffer[vertexBufferIndex + 2] = end;
+//                _uvs.buffer[vertexBufferIndex + 3] = new Vector2(end.x, start.y);
+//            }
+//        }
     }
 
     #endregion // Functions used to update geometry buffer
