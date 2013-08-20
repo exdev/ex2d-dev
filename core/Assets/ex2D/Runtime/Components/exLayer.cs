@@ -187,7 +187,7 @@ public class exLayer : MonoBehaviour
             bool meshDestroyed = (mesh == null);
             if (meshDestroyed || mesh.spriteList.Count == 0) {
                 if (meshDestroyed == false) {
-                    mesh.gameObject.DestroyImmediate ();
+                    mesh.gameObject.Destroy ();
                 }
                 meshList.RemoveAt (m);
 
@@ -401,7 +401,7 @@ public class exLayer : MonoBehaviour
                         sprite.ResetLayerProperties();
                     }
                 }
-                mesh.gameObject.DestroyImmediate(); //dont save GO will auto destroy
+                mesh.gameObject.Destroy(); //dont save GO will auto destroy
             }
         }
         meshList.Clear();
