@@ -401,7 +401,8 @@ public class exLayer : MonoBehaviour
                         sprite.ResetLayerProperties();
                     }
                 }
-                mesh.gameObject.Destroy(); //dont save GO will auto destroy
+                // 这里不应该使用Destroy，因为当停止执行editor的当时，Destroy不会根据editor下的行为自动使用DestroyImmediate，会导致layer的mesh无法被销毁的情况出现
+                mesh.gameObject.DestroyImmediate();
             }
         }
         meshList.Clear();
