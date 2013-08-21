@@ -135,6 +135,7 @@ class exSceneEditor : EditorWindow {
         title = "2D Scene Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = true;
+        minSize = new Vector2(500f, 500f);
 
         rectSelection = new exRectSelection<Object>( PickObject,
                                                      PickRectObjects,
@@ -199,6 +200,8 @@ class exSceneEditor : EditorWindow {
             Layout_SceneViewField ( Mathf.FloorToInt(position.width - 250 - 40 - 10 - margin),
                                     Mathf.FloorToInt(position.height - toolbarHeight - 40 - margin) );
         EditorGUILayout.EndHorizontal();
+
+        GUILayout.FlexibleSpace();
 
         // debug info
         DebugInfos ();
@@ -556,36 +559,14 @@ class exSceneEditor : EditorWindow {
         case EventType.Repaint:
             sceneViewRect = new Rect( _rect.x + 2, _rect.y + 2, _rect.width - 4, _rect.height - 4 );
 
-            float half_w = sceneViewRect.width/2.0f;
-            float half_h = sceneViewRect.height/2.0f;
-
-            Color old = GUI.color;
-            GUI.color = background;
-                Texture2D checker = exEditorUtility.CheckerboardTexture();
-                // background
-                GUI.DrawTextureWithTexCoords ( sceneViewRect, checker, 
-                                               new Rect( (-half_w/scale + editCamera.transform.position.x)/checker.width,
-                                                         (-half_h/scale + editCamera.transform.position.y)/checker.height,
-                                                         sceneViewRect.width/(checker.width * scale), 
-                                                         sceneViewRect.height/(checker.height * scale) ) );
-            GUI.color = old;
-
-            // center line
-            float center_x = -editCamera.transform.position.x * scale + sceneViewRect.x + half_w;
-            float center_y =  editCamera.transform.position.y * scale + sceneViewRect.y + half_h;
-            if ( center_y >= sceneViewRect.y && center_y <= sceneViewRect.yMax )
-                exEditorUtility.DrawLine ( sceneViewRect.x, center_y, sceneViewRect.xMax, center_y, Color.white, 1 );
-            if ( center_x >= sceneViewRect.x && center_x <= sceneViewRect.xMax )
-                exEditorUtility.DrawLine ( center_x, sceneViewRect.y, center_x, sceneViewRect.yMax, Color.white, 1 );
-
             // draw scene
             DoCulling (sceneViewRect);
             DrawScene (sceneViewRect);
 
-            // border
-            exEditorUtility.DrawRect( _rect,
-                                      new Color( 1,1,1,0 ), 
-                                      EditorStyles.label.normal.textColor );
+            // // border
+            // exEditorUtility.DrawRect( _rect,
+            //                           new Color( 1,1,1,0 ), 
+            //                           EditorStyles.label.normal.textColor );
             break;
 
         case EventType.ScrollWheel:
@@ -726,10 +707,44 @@ class exSceneEditor : EditorWindow {
                                        position.height - _rect.yMax,
                                        _rect.width, 
                                        _rect.height );
-
         GL.Viewport(viewportRect);
 
         GL.PushMatrix();
+
+            //
+            GL.LoadPixelMatrix ( 0.0f, _rect.width, 0.0f, _rect.height );
+
+            // background
+            float half_w = sceneViewRect.width/2.0f;
+            float half_h = sceneViewRect.height/2.0f;
+            Texture2D checker = exEditorUtility.CheckerboardTexture();
+            Vector2 center = new Vector2( half_w, half_h );
+            Vector2 size = new Vector2 ( sceneViewRect.width, sceneViewRect.height ); 
+            DrawTexture ( center, 
+                          size, 
+                          checker, 
+                          new Rect( (-half_w/scale + editCamera.transform.position.x)/checker.width,
+                                    (-half_h/scale + editCamera.transform.position.y)/checker.height,
+                                    sceneViewRect.width/(checker.width * scale), 
+                                    sceneViewRect.height/(checker.height * scale) ),
+                          background );
+
+
+            // center line
+            float center_x = half_w - editCamera.transform.position.x * scale;
+            float center_y = half_h - editCamera.transform.position.y * scale;
+            DrawLine ( 0.0f,
+                       center_y, 
+                       sceneViewRect.width,
+                       center_y, 
+                       Color.white );
+            DrawLine ( center_x, 
+                       0.0f,
+                       center_x, 
+                       sceneViewRect.height,
+                       Color.white );
+
+            //
             GL.LoadPixelMatrix( editCamera.transform.position.x - (_rect.width  * 0.5f) / scale, 
                                 editCamera.transform.position.x + (_rect.width  * 0.5f) / scale, 
                                 editCamera.transform.position.y - (_rect.height * 0.5f) / scale,
@@ -777,8 +792,64 @@ class exSceneEditor : EditorWindow {
                 }
             }
 
+            // draw border line
+            GL.LoadPixelMatrix ( 0.0f, _rect.width, _rect.height, 0.0f );
+            exEditorUtility.DrawRectLine ( new Vector3[] {
+                                               new Vector3 ( 1.0f,        1.0f,         0.0f ),
+                                               new Vector3 ( _rect.width, 1.0f,         0.0f ),
+                                               new Vector3 ( _rect.width, _rect.height, 0.0f ),
+                                               new Vector3 ( 1.0f,        _rect.height, 0.0f ),
+                                           },
+                                           Color.white );
+
         GL.PopMatrix();
         GL.Viewport(oldViewport);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawTexture ( Vector2 _center, Vector2 _size, Texture2D _texture, Rect _uv, Color _color ) {
+
+        float s0 = _uv.xMin;
+        float s1 = _uv.xMax;
+        float t0 = _uv.yMin;
+        float t1 = _uv.yMax;
+        float half_w = _size.x * 0.5f;
+        float half_h = _size.y * 0.5f;
+
+        exEditorUtility.AlphaBlendedMaterial().mainTexture = _texture;
+        exEditorUtility.AlphaBlendedMaterial().SetPass(0);
+
+        GL.Begin(GL.QUADS);
+            GL.Color(_color);
+
+            GL.TexCoord2 ( s0, t0 );
+            GL.Vertex3 ( -half_w + _center.x, -half_h + _center.y, 0.0f );
+
+            GL.TexCoord2 ( s0, t1 );
+            GL.Vertex3 ( -half_w + _center.x,  half_h + _center.y, 0.0f );
+
+            GL.TexCoord2 ( s1, t1 );
+            GL.Vertex3 (  half_w + _center.x,  half_h + _center.y, 0.0f );
+
+            GL.TexCoord2 ( s1, t0 );
+            GL.Vertex3 (  half_w + _center.x, -half_h + _center.y, 0.0f );
+        GL.End();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawLine ( float _start_x, float _start_y, float _end_x, float _end_y, Color _color ) {
+        exEditorUtility.LineMaterial().SetPass(0);
+        GL.Begin(GL.LINES);
+            GL.Color(_color);
+            GL.Vertex3( _start_x, _start_y, 0.0f );
+            GL.Vertex3( _end_x, _end_y, 0.0f );
+        GL.End();
     }
 
     // ------------------------------------------------------------------ 
@@ -981,7 +1052,7 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DebugInfos () {
-        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.BeginHorizontal( EditorStyles.toolbar );
             string text = "";
             int width = -1;
             
@@ -1002,6 +1073,8 @@ class exSceneEditor : EditorWindow {
             text = "Mouse: " + SceneField_MapToWorld( sceneViewRect, Event.current.mousePosition);
             width = 300;
             EditorGUILayout.LabelField ( text, GUILayout.Width(width) );
+
+            GUILayout.FlexibleSpace();
         EditorGUILayout.EndHorizontal();
     }
 
