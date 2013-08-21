@@ -576,7 +576,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // ======================================================== 
 
             if ( GUILayout.Button( exEditorUtility.HelpTexture(), EditorStyles.toolbarButton ) ) {
-                Help.BrowseURL("http://www.ex-dev.com/ex2d/wiki/doku.php?id=manual:sprite_animation_editor");
+                Help.BrowseURL("http://ex-dev.com/ex2d/docs/");
             }
 
         EditorGUILayout.EndHorizontal ();

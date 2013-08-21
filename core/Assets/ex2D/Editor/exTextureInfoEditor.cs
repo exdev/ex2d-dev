@@ -29,6 +29,18 @@ class exTextureInfoEditor : EditorWindow {
 
     exTextureInfo curEdit = null;
 
+    float scale_ = 1.0f;
+    float scale {
+        get { return scale_; }
+        set {
+            if ( scale_ != value ) {
+                scale_ = value;
+                scale_ = Mathf.Clamp( scale_, 0.1f, 10.0f );
+                scale_ = Mathf.Round( scale_ * 100.0f ) / 100.0f;
+            }
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
     ///////////////////////////////////////////////////////////////////////////////
@@ -55,6 +67,22 @@ class exTextureInfoEditor : EditorWindow {
         // UpdateEditObject ();
     }
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnGUI () {
+
+        if ( curEdit == null ) {
+            EditorGUILayout.Space();
+            GUILayout.Label ( "Please select a TextureInfo" );
+            return;
+        }
+
+        // toolbar
+        Toolbar ();
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -79,5 +107,52 @@ class exTextureInfoEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void Reset () {
+        scale = 1.0f;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void Toolbar () {
+        EditorGUILayout.BeginHorizontal ( EditorStyles.toolbar );
+
+            GUILayout.FlexibleSpace();
+
+            // ======================================================== 
+            // zoom in/out button & slider 
+            // ======================================================== 
+
+            // button 
+            if ( GUILayout.Button( "Zoom", EditorStyles.toolbarButton ) ) {
+                scale = 1.0f;
+            }
+
+            EditorGUILayout.Space();
+
+            // slider
+            scale = GUILayout.HorizontalSlider ( scale, 
+                                                 0.1f, 
+                                                 10.0f, 
+                                                 new GUILayoutOption[] {
+                                                 GUILayout.MinWidth(50),
+                                                 GUILayout.MaxWidth(150)
+                                                 } );
+            EditorGUILayout.Space();
+            scale = EditorGUILayout.FloatField( scale,
+                                                EditorStyles.toolbarTextField,
+                                                new GUILayoutOption[] {
+                                                GUILayout.Width(30)
+                                                } );
+
+            // ======================================================== 
+            // Help
+            // ======================================================== 
+
+            if ( GUILayout.Button( exEditorUtility.HelpTexture(), EditorStyles.toolbarButton ) ) {
+                Help.BrowseURL("http://ex-dev.com/ex2d/docs/");
+            }
+
+        EditorGUILayout.EndHorizontal ();
     }
 }
