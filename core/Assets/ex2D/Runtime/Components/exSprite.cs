@@ -358,14 +358,15 @@ public class exSprite : exSpriteBase {
         //}
         //if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
         //    int index = -1;
-        //    for (int row = 0; row <= 8; row += 4) {
-        //        for (int quadBottomLeft = row; quadBottomLeft <= row + 2; ++quadBottomLeft) {
-        //            _indices.buffer[++index] = quadBottomLeft;
-        //            _indices.buffer[++index] = quadBottomLeft + 4;
-        //            _indices.buffer[++index] = quadBottomLeft + 5;
-        //            _indices.buffer[++index] = quadBottomLeft + 5;
-        //            _indices.buffer[++index] = quadBottomLeft + 1;
-        //            _indices.buffer[++index] = quadBottomLeft;
+        //    for (int i = 0; i <= 10; ++i) {
+        //        if (i != 3 || i != 7) {
+        //            // 0 1 2 4 5 6 8 9 10
+        //            _indices.buffer[++index] = i;
+        //            _indices.buffer[++index] = i + 4;
+        //            _indices.buffer[++index] = i + 5;
+        //            _indices.buffer[++index] = i + 5;
+        //            _indices.buffer[++index] = i + 1;
+        //            _indices.buffer[++index] = i;
         //        }
         //    }
         //}
