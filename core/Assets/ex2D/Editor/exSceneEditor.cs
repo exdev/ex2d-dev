@@ -737,12 +737,12 @@ class exSceneEditor : EditorWindow {
                        center_y, 
                        sceneViewRect.width,
                        center_y, 
-                       Color.white );
+                       new Color( 0.6f, 0.6f, 0.6f ) );
             DrawLine ( center_x, 
                        0.0f,
                        center_x, 
                        sceneViewRect.height,
-                       Color.white );
+                       new Color( 0.6f, 0.6f, 0.6f ) );
 
             //
             GL.LoadPixelMatrix( editCamera.transform.position.x - (_rect.width  * 0.5f) / scale, 
@@ -800,7 +800,7 @@ class exSceneEditor : EditorWindow {
                                                new Vector3 ( _rect.width, _rect.height, 0.0f ),
                                                new Vector3 ( 1.0f,        _rect.height, 0.0f ),
                                            },
-                                           Color.white );
+                                           new Color( 0.7f, 0.7f, 0.7f ) );
 
         GL.PopMatrix();
         GL.Viewport(oldViewport);
