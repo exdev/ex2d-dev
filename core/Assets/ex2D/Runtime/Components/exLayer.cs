@@ -238,6 +238,15 @@ public class exLayer : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
+    /// 将一个Go及所有子物体中的sprite添加到layer中
+    /// NOTE: 如果Go及其父物体都不是layer的子物体，Go的父物体将被设置为layer
+    // ------------------------------------------------------------------ 
+
+    public void Add (exSpriteBase _sprite) {
+        Add(_sprite, true);
+    }
+
+    // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
 
@@ -630,7 +639,7 @@ public class exLayer : MonoBehaviour
         	exSpriteBase aboveSprite = mesh.sortedSpriteList[i];
             belowVertexCount -= aboveSprite.vertexCount;
             if (belowVertexCount + newSpriteVertexCount <= _maxVertexCount) {
-                ShiftSpritesUp(_meshIndex, belowVertexCount + newSpriteVertexCount, _maxVertexCount); // 上移
+                ShiftSpritesUp(_meshIndex, belowVertexCount, _maxVertexCount); // 上移
                 return mesh;
             }
         }
