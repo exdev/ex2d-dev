@@ -317,53 +317,78 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     private void SlicedUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
-//        SimpleUpdateBuffers (_vertices, _uvs, _indices);
-//        if (textureInfo_ == null || (textureInfo_.borderLeft == 0 && textureInfo_.borderRight == 0 && textureInfo_.borderTop == 0 && textureInfo_.borderBottom == 0)) {
-//            for (int i = 4; i < indexCount; --i) {
-//                _indices.buffer[indexBufferIndex + i] = vertexBufferIndex;  // hide unused triangle
-//            }
-//            return;
-//        }
-//        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Vertex) != 0) {
-//            Vector3 vbl = _vertices.buffer[vertexBufferIndex + 0];
-//            Vector3 vtl = _vertices.buffer[vertexBufferIndex + 1];
-//            Vector3 vtr = _vertices.buffer[vertexBufferIndex + 2];
-//            Vector3 vbr = _vertices.buffer[vertexBufferIndex + 3];
-//            float trimmedBorderLeft = textureInfo_.borderLeft - textureInfo_.trim_x;
-//            float trimmedBorderRight = textureInfo_.borderRight - (textureInfo_.x + textureInfo_.rawWidth - (textureInfo_.trim_x + textureInfo_.width));
-//            float step = trimmedBorderLeft / width_;
-//            _vertices.buffer[vertexBufferIndex + 1] = vbl + (vbr - vbl) * textureInfo_.borderLeft;
-//            _vertices.buffer[vertexBufferIndex + 1];
-//            (from + ((to - from) * Clamp01(t)));
-//        }
-//        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
-//            _indices.buffer[indexBufferIndex]     = vertexBufferIndex;
-//            _indices.buffer[indexBufferIndex + 1] = vertexBufferIndex + 1;
-//            _indices.buffer[indexBufferIndex + 2] = vertexBufferIndex + 2;
-//            _indices.buffer[indexBufferIndex + 3] = vertexBufferIndex + 2;
-//            _indices.buffer[indexBufferIndex + 4] = vertexBufferIndex + 3;
-//            _indices.buffer[indexBufferIndex + 5] = vertexBufferIndex;
-//        }
-//        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.UV) != 0 && textureInfo_ != null) {
-//            Vector2 uvbl = _uvs.buffer[vertexBufferIndex + 0];
-//            Vector2 uvtr = _uvs.buffer[vertexBufferIndex + 2];
-//            Vector2 start = new Vector2((float)textureInfo_.x * texelSize.x, 
-//                                        (float)textureInfo_.y * texelSize.y);
-//            Vector2 end = new Vector2((float)(textureInfo_.x + textureInfo_.rotatedWidth) * texelSize.x, 
-//                                      (float)(textureInfo_.y + textureInfo_.rotatedHeight) * texelSize.y);
-//            if ( textureInfo_.rotated ) {
-//                _uvs.buffer[vertexBufferIndex + 0] = new Vector2(end.x, start.y);
-//                _uvs.buffer[vertexBufferIndex + 1] = start;
-//                _uvs.buffer[vertexBufferIndex + 2] = new Vector2(start.x, end.y);
-//                _uvs.buffer[vertexBufferIndex + 3] = end;
-//            }
-//            else {
-//                _uvs.buffer[vertexBufferIndex + 0] = start;
-//                _uvs.buffer[vertexBufferIndex + 1] = new Vector2(start.x, end.y);
-//                _uvs.buffer[vertexBufferIndex + 2] = end;
-//                _uvs.buffer[vertexBufferIndex + 3] = new Vector2(end.x, start.y);
-//            }
-//        }
+        //SimpleUpdateBuffers (_vertices, _uvs, _indices);
+        //if (textureInfo_ == null || (textureInfo_.borderLeft == 0 && textureInfo_.borderRight == 0 && textureInfo_.borderTop == 0 && textureInfo_.borderBottom == 0)) {
+        //    for (int i = 4; i < indexCount; --i) {
+        //        _indices.buffer[indexBufferIndex + i] = vertexBufferIndex;  // hide unused triangle
+        //    }
+        //    return;
+        //}
+        //if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Vertex) != 0) {
+        //    /* vertex index:
+        //        12 13 14 15
+        //        8  9  10 11
+        //        4  5  6  7 
+        //        0  1  2  3 
+        //     */
+        //    // left right columns
+        //    Vector3 v0 = _vertices.buffer[vertexBufferIndex + 0];
+        //    Vector3 v12 = _vertices.buffer[vertexBufferIndex + 1];
+        //    Vector3 v15 = _vertices.buffer[vertexBufferIndex + 2];
+        //    Vector3 v3 = _vertices.buffer[vertexBufferIndex + 3];
+        //    float trimmedBorderTop = textureInfo_.borderTop - textureInfo_.trim_y;
+        //    float trimmedBorderBottom = textureInfo_.borderBottom - (textureInfo_.rawHeight - textureInfo_.trim_y - textureInfo_.height);
+        //    float yStep1 = trimmedBorderTop / height_;
+        //    float yStep2 = (height_ - trimmedBorderBottom) / height_;
+        //    _vertices.buffer[vertexBufferIndex + 4] = v0 + (v12 - v0) * yStep1;
+        //    _vertices.buffer[vertexBufferIndex + 7] = v3 + (v15 - v3) * yStep1;
+        //    _vertices.buffer[vertexBufferIndex + 8] = v0 + (v12 - v0) * yStep2;
+        //    _vertices.buffer[vertexBufferIndex + 11] = v3 + (v15 - v3) * yStep2;
+        //    // mid columns
+        //    float trimmedBorderLeft = textureInfo_.borderLeft - textureInfo_.trim_x;
+        //    float trimmedBorderRight = textureInfo_.borderRight - (textureInfo_.rawWidth - textureInfo_.trim_x - textureInfo_.width);
+        //    float xStep1 = trimmedBorderLeft / width_;
+        //    float xStep2 = (width_ - trimmedBorderRight) / width_;
+        //    for (int i = 0; i <= 12; i += 4) {
+        //        Vector3 left = _vertices.buffer[vertexBufferIndex + i];
+        //        Vector3 right = _vertices.buffer[vertexBufferIndex + i + 3];
+        //        _vertices.buffer[vertexBufferIndex + i + 1] = left + (right - left) * xStep1;
+        //        _vertices.buffer[vertexBufferIndex + i + 2] = left + (right - left) * xStep2;
+        //    }
+        //}
+        //if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+        //    int index = -1;
+        //    for (int row = 0; row <= 8; row += 4) {
+        //        for (int quadBottomLeft = row; quadBottomLeft <= row + 2; ++quadBottomLeft) {
+        //            _indices.buffer[++index] = quadBottomLeft;
+        //            _indices.buffer[++index] = quadBottomLeft + 4;
+        //            _indices.buffer[++index] = quadBottomLeft + 5;
+        //            _indices.buffer[++index] = quadBottomLeft + 5;
+        //            _indices.buffer[++index] = quadBottomLeft + 1;
+        //            _indices.buffer[++index] = quadBottomLeft;
+        //        }
+        //    }
+        //}
+        //if (/*transparent_ == false && */(updateFlags & exUpdateFlags.UV) != 0 && textureInfo_ != null) {
+        //    Vector2 uvbl = _uvs.buffer[vertexBufferIndex + 0];
+        //    Vector2 uvtr = _uvs.buffer[vertexBufferIndex + 2];
+        //    Vector2 start = new Vector2((float)textureInfo_.x * texelSize.x, 
+        //                                (float)textureInfo_.y * texelSize.y);
+        //    Vector2 end = new Vector2((float)(textureInfo_.x + textureInfo_.rotatedWidth) * texelSize.x, 
+        //                              (float)(textureInfo_.y + textureInfo_.rotatedHeight) * texelSize.y);
+        //    if ( textureInfo_.rotated ) {
+        //        _uvs.buffer[vertexBufferIndex + 0] = new Vector2(end.x, start.y);
+        //        _uvs.buffer[vertexBufferIndex + 1] = start;
+        //        _uvs.buffer[vertexBufferIndex + 2] = new Vector2(start.x, end.y);
+        //        _uvs.buffer[vertexBufferIndex + 3] = end;
+        //    }
+        //    else {
+        //        _uvs.buffer[vertexBufferIndex + 0] = start;
+        //        _uvs.buffer[vertexBufferIndex + 1] = new Vector2(start.x, end.y);
+        //        _uvs.buffer[vertexBufferIndex + 2] = end;
+        //        _uvs.buffer[vertexBufferIndex + 3] = new Vector2(end.x, start.y);
+        //    }
+        //}
     }
 
     #endregion // Functions used to update geometry buffer
