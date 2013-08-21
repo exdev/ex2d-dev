@@ -247,6 +247,20 @@ public class ex2DRenderer : MonoBehaviour {
     }
     
     // ------------------------------------------------------------------ 
+    /// Find the layer by name, if not existed, return null
+    // ------------------------------------------------------------------ 
+
+    public exLayer GetLayer (string _layerName) {
+        for (int i = 0; i < layerList.Count; ++i) {
+            exLayer layer = layerList[i];
+        	if (layer != null && layer.name == _layerName) {
+                return layer;
+        	}
+        }
+        return null;
+    }
+  
+    // ------------------------------------------------------------------ 
     /// 重新排列所有layer的Z轴，使在LayerList越前端的layer能渲染在越上层。
     // ------------------------------------------------------------------ 
 
