@@ -809,19 +809,21 @@ class exSceneEditor : EditorWindow {
         Material material = _node.material;
         material.SetPass(0);
 
-        exList<Vector3> vertices = new exList<Vector3>();
-        exList<Vector2> uvs = new exList<Vector2>();
-        _node.GetBuffers(vertices, uvs);
+        exList<Vector3> vertices = exList<Vector3>.GetTempList();
+        exList<Vector2> uvs = exList<Vector2>.GetTempList();
+        exList<int> indices = exList<int>.GetTempList();
+        _node.GetBuffers(vertices, uvs, indices);
         exDebug.Assert(uvs.Count == vertices.Count);
 
         //GL.PushMatrix();
         //GL.MultMatrix( _node.transform.localToWorldMatrix );
-        GL.Begin(GL.QUADS);
-            GL.Color( new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
-            for (int i = 0; i < vertices.Count; ++i) {
-                GL.TexCoord2 ( uvs.buffer[i].x, uvs.buffer[i].y );
-                GL.Vertex ( vertices.buffer[i] );
-            }
+        GL.Begin(GL.TRIANGLES);
+        GL.Color( new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
+        for (int i = 0; i < indices.Count; ++i) {
+            int vertexIndex = indices.buffer[i];
+            GL.TexCoord2 ( uvs.buffer[vertexIndex].x, uvs.buffer[vertexIndex].y );
+            GL.Vertex ( vertices.buffer[vertexIndex] );
+        }
         GL.End();
         //GL.PopMatrix();
     }
