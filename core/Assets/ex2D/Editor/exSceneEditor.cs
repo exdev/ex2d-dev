@@ -336,7 +336,7 @@ class exSceneEditor : EditorWindow {
             // Help
             // ======================================================== 
 
-            if ( GUILayout.Button( exEditorUtility.HelpTexture(), EditorStyles.toolbarButton ) ) {
+            if ( GUILayout.Button( exEditorUtility.textureHelp, EditorStyles.toolbarButton ) ) {
                 Help.BrowseURL("http://ex-dev.com/ex2d/docs/");
             }
 
@@ -564,7 +564,7 @@ class exSceneEditor : EditorWindow {
             DrawScene (sceneViewRect);
 
             // // border
-            // exEditorUtility.DrawRect( _rect,
+            // exEditorUtility.GUI_DrawRect( _rect,
             //                           new Color( 1,1,1,0 ), 
             //                           EditorStyles.label.normal.textColor );
             break;
@@ -717,32 +717,32 @@ class exSceneEditor : EditorWindow {
             // background
             float half_w = sceneViewRect.width/2.0f;
             float half_h = sceneViewRect.height/2.0f;
-            Texture2D checker = exEditorUtility.CheckerboardTexture();
+            Texture2D checker = exEditorUtility.textureCheckerboard;
             Vector2 center = new Vector2( half_w, half_h );
             Vector2 size = new Vector2 ( sceneViewRect.width, sceneViewRect.height ); 
-            DrawTexture ( center, 
-                          size, 
-                          checker, 
-                          new Rect( (-half_w/scale + editCamera.transform.position.x)/checker.width,
-                                    (-half_h/scale + editCamera.transform.position.y)/checker.height,
-                                    sceneViewRect.width/(checker.width * scale), 
-                                    sceneViewRect.height/(checker.height * scale) ),
-                          background );
+            exEditorUtility.GL_DrawTexture ( center, 
+                                             size, 
+                                             checker, 
+                                             new Rect( (-half_w/scale + editCamera.transform.position.x)/checker.width,
+                                                       (-half_h/scale + editCamera.transform.position.y)/checker.height,
+                                                       sceneViewRect.width/(checker.width * scale), 
+                                                       sceneViewRect.height/(checker.height * scale) ),
+                                             background );
 
 
             // center line
             float center_x = half_w - editCamera.transform.position.x * scale;
             float center_y = half_h - editCamera.transform.position.y * scale;
-            DrawLine ( 0.0f,
-                       center_y, 
-                       sceneViewRect.width,
-                       center_y, 
-                       new Color( 0.6f, 0.6f, 0.6f ) );
-            DrawLine ( center_x, 
-                       0.0f,
-                       center_x, 
-                       sceneViewRect.height,
-                       new Color( 0.6f, 0.6f, 0.6f ) );
+            exEditorUtility.GL_DrawLine ( 0.0f,
+                                          center_y, 
+                                          sceneViewRect.width,
+                                          center_y, 
+                                          new Color( 0.6f, 0.6f, 0.6f ) );
+            exEditorUtility.GL_DrawLine ( center_x, 
+                                          0.0f,
+                                          center_x, 
+                                          sceneViewRect.height,
+                                          new Color( 0.6f, 0.6f, 0.6f ) );
 
             //
             GL.LoadPixelMatrix( editCamera.transform.position.x - (_rect.width  * 0.5f) / scale, 
@@ -776,8 +776,8 @@ class exSceneEditor : EditorWindow {
             if ( DragAndDrop.visualMode == DragAndDropVisualMode.Copy ) {
                 foreach ( Object o in draggingObjects ) {
                     if ( o is exTextureInfo ) {
-                        DrawTextureInfoPreview ( o as exTextureInfo, 
-                                                 SceneField_MapToWorld( _rect, Event.current.mousePosition) );
+                        exEditorUtility.GL_DrawTextureInfo ( o as exTextureInfo, 
+                                                             SceneField_MapToWorld( _rect, Event.current.mousePosition) );
                     }
                     else if ( o is exBitmapFont ) {
                         // TODO:
@@ -785,8 +785,8 @@ class exSceneEditor : EditorWindow {
                     else if ( o is exSpriteAnimationClip ) {
                         exSpriteAnimationClip clip = o as exSpriteAnimationClip;
                         if ( clip.frameInfos.Count > 0 ) {
-                            DrawTextureInfoPreview ( clip.frameInfos[0].textureInfo, 
-                                                     SceneField_MapToWorld( _rect, Event.current.mousePosition) );
+                            exEditorUtility.GL_DrawTextureInfo ( clip.frameInfos[0].textureInfo, 
+                                                                 SceneField_MapToWorld( _rect, Event.current.mousePosition) );
                         } 
                     }
                 }
@@ -794,62 +794,16 @@ class exSceneEditor : EditorWindow {
 
             // draw border line
             GL.LoadPixelMatrix ( 0.0f, _rect.width, _rect.height, 0.0f );
-            exEditorUtility.DrawRectLine ( new Vector3[] {
-                                               new Vector3 ( 1.0f,        1.0f,         0.0f ),
-                                               new Vector3 ( _rect.width, 1.0f,         0.0f ),
-                                               new Vector3 ( _rect.width, _rect.height, 0.0f ),
-                                               new Vector3 ( 1.0f,        _rect.height, 0.0f ),
-                                           },
-                                           new Color( 0.7f, 0.7f, 0.7f ) );
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( 1.0f,        1.0f,         0.0f ),
+                                              new Vector3 ( _rect.width, 1.0f,         0.0f ),
+                                              new Vector3 ( _rect.width, _rect.height, 0.0f ),
+                                              new Vector3 ( 1.0f,        _rect.height, 0.0f ),
+                                              },
+                                              new Color( 0.7f, 0.7f, 0.7f ) );
 
         GL.PopMatrix();
         GL.Viewport(oldViewport);
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void DrawTexture ( Vector2 _center, Vector2 _size, Texture2D _texture, Rect _uv, Color _color ) {
-
-        float s0 = _uv.xMin;
-        float s1 = _uv.xMax;
-        float t0 = _uv.yMin;
-        float t1 = _uv.yMax;
-        float half_w = _size.x * 0.5f;
-        float half_h = _size.y * 0.5f;
-
-        exEditorUtility.AlphaBlendedMaterial().mainTexture = _texture;
-        exEditorUtility.AlphaBlendedMaterial().SetPass(0);
-
-        GL.Begin(GL.QUADS);
-            GL.Color(_color);
-
-            GL.TexCoord2 ( s0, t0 );
-            GL.Vertex3 ( -half_w + _center.x, -half_h + _center.y, 0.0f );
-
-            GL.TexCoord2 ( s0, t1 );
-            GL.Vertex3 ( -half_w + _center.x,  half_h + _center.y, 0.0f );
-
-            GL.TexCoord2 ( s1, t1 );
-            GL.Vertex3 (  half_w + _center.x,  half_h + _center.y, 0.0f );
-
-            GL.TexCoord2 ( s1, t0 );
-            GL.Vertex3 (  half_w + _center.x, -half_h + _center.y, 0.0f );
-        GL.End();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void DrawLine ( float _start_x, float _start_y, float _end_x, float _end_y, Color _color ) {
-        exEditorUtility.LineMaterial().SetPass(0);
-        GL.Begin(GL.LINES);
-            GL.Color(_color);
-            GL.Vertex3( _start_x, _start_y, 0.0f );
-            GL.Vertex3( _end_x, _end_y, 0.0f );
-        GL.End();
     }
 
     // ------------------------------------------------------------------ 
@@ -881,67 +835,15 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DrawTextureInfoPreview ( exTextureInfo _textureInfo, Vector3 _pos ) {
-        if (_textureInfo.texture == null) {
-            return;
-        }
-
-        Vector2 halfSize = new Vector2( _textureInfo.width * 0.5f,
-                                        _textureInfo.height * 0.5f );
-
-        float s0 = (float) _textureInfo.x / (float) _textureInfo.texture.width;
-        float s1 = (float) (_textureInfo.x+_textureInfo.rotatedWidth)  / (float) _textureInfo.texture.width;
-        float t0 = (float) _textureInfo.y / (float) _textureInfo.texture.height;
-        float t1 = (float) (_textureInfo.y+_textureInfo.rotatedHeight) / (float) _textureInfo.texture.height;
-
-        exEditorUtility.AlphaBlendedMaterial().mainTexture = _textureInfo.texture;
-        exEditorUtility.AlphaBlendedMaterial().SetPass(0);
-        GL.Begin(GL.QUADS);
-            GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
-
-            if ( _textureInfo.rotated == false ) {
-                GL.TexCoord2 ( s0, t0 );
-                GL.Vertex3 ( -halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
-
-                GL.TexCoord2 ( s0, t1 );
-                GL.Vertex3 ( -halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
-
-                GL.TexCoord2 ( s1, t1 );
-                GL.Vertex3 (  halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
-
-                GL.TexCoord2 ( s1, t0 );
-                GL.Vertex3 (  halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
-            }
-            else {
-                GL.TexCoord2 ( s1, t0 );
-                GL.Vertex3 ( -halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
-
-                GL.TexCoord2 ( s0, t0 );
-                GL.Vertex3 ( -halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
-
-                GL.TexCoord2 ( s0, t1 );
-                GL.Vertex3 (  halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
-
-                GL.TexCoord2 ( s1, t1 );
-                GL.Vertex3 (  halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
-            }
-
-        GL.End();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
     void DrawAABoundingRect ( exSpriteBase _node ) {
         Rect boundingRect = _node.GetAABoundingRect();
 
-        exEditorUtility.DrawRectLine ( new Vector3[] {
-                                            new Vector3 ( boundingRect.xMin, boundingRect.yMin, 0.0f ),
-                                            new Vector3 ( boundingRect.xMin, boundingRect.yMax, 0.0f ),
-                                            new Vector3 ( boundingRect.xMax, boundingRect.yMax, 0.0f ),
-                                            new Vector3 ( boundingRect.xMax, boundingRect.yMin, 0.0f ),
-                                       }, Color.white );
+        exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                          new Vector3 ( boundingRect.xMin, boundingRect.yMin, 0.0f ),
+                                          new Vector3 ( boundingRect.xMin, boundingRect.yMax, 0.0f ),
+                                          new Vector3 ( boundingRect.xMax, boundingRect.yMax, 0.0f ),
+                                          new Vector3 ( boundingRect.xMax, boundingRect.yMin, 0.0f ),
+                                          }, Color.white );
     }
 
     // ------------------------------------------------------------------ 
@@ -951,7 +853,7 @@ class exSceneEditor : EditorWindow {
     void DrawBoundingRect ( exSpriteBase _node ) {
         Vector3[] vertices = _node.GetWorldVertices();
         if ( _node is exSprite || _node is exSpriteFont ) {
-            exEditorUtility.DrawRectLine ( vertices, Color.white );
+            exEditorUtility.GL_DrawRectLine ( vertices, Color.white );
         }
     }
 
@@ -974,75 +876,75 @@ class exSceneEditor : EditorWindow {
             break;
 
         case 1:
-            exEditorUtility.DrawRectLine ( new Vector3[] {
-                                           new Vector3 ( -160.0f, -240.0f, 0.0f ),
-                                           new Vector3 ( -160.0f,  240.0f, 0.0f ),
-                                           new Vector3 (  160.0f,  240.0f, 0.0f ),
-                                           new Vector3 (  160.0f, -240.0f, 0.0f ),
-                                           }, _color );
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( -160.0f, -240.0f, 0.0f ),
+                                              new Vector3 ( -160.0f,  240.0f, 0.0f ),
+                                              new Vector3 (  160.0f,  240.0f, 0.0f ),
+                                              new Vector3 (  160.0f, -240.0f, 0.0f ),
+                                              }, _color );
             break;
 
         case 2:
-            exEditorUtility.DrawRectLine ( new Vector3[] {
-                                           new Vector3 ( -240.0f, -160.0f, 0.0f ),
-                                           new Vector3 ( -240.0f,  160.0f, 0.0f ),
-                                           new Vector3 (  240.0f,  160.0f, 0.0f ),
-                                           new Vector3 (  240.0f, -160.0f, 0.0f ),
-                                           }, _color );
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( -240.0f, -160.0f, 0.0f ),
+                                              new Vector3 ( -240.0f,  160.0f, 0.0f ),
+                                              new Vector3 (  240.0f,  160.0f, 0.0f ),
+                                              new Vector3 (  240.0f, -160.0f, 0.0f ),
+                                              }, _color );
             break;
 
         case 3:
-            exEditorUtility.DrawRectLine ( new Vector3[] {
-                                           new Vector3 ( -320.0f, -480.0f, 0.0f ),
-                                           new Vector3 ( -320.0f,  480.0f, 0.0f ),
-                                           new Vector3 (  320.0f,  480.0f, 0.0f ),
-                                           new Vector3 (  320.0f, -480.0f, 0.0f ),
-                                           }, _color );
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( -320.0f, -480.0f, 0.0f ),
+                                              new Vector3 ( -320.0f,  480.0f, 0.0f ),
+                                              new Vector3 (  320.0f,  480.0f, 0.0f ),
+                                              new Vector3 (  320.0f, -480.0f, 0.0f ),
+                                              }, _color );
             break;
 
         case 4:
-            exEditorUtility.DrawRectLine ( new Vector3[] {
-                                           new Vector3 ( -480.0f, -320.0f, 0.0f ),
-                                           new Vector3 ( -480.0f,  320.0f, 0.0f ),
-                                           new Vector3 (  480.0f,  320.0f, 0.0f ),
-                                           new Vector3 (  480.0f, -320.0f, 0.0f ),
-                                           }, _color );
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( -480.0f, -320.0f, 0.0f ),
+                                              new Vector3 ( -480.0f,  320.0f, 0.0f ),
+                                              new Vector3 (  480.0f,  320.0f, 0.0f ),
+                                              new Vector3 (  480.0f, -320.0f, 0.0f ),
+                                              }, _color );
             break;
 
         case 5:
-            exEditorUtility.DrawRectLine ( new Vector3[] {
-                                           new Vector3 ( -320.0f, -568.0f, 0.0f ),
-                                           new Vector3 ( -320.0f,  568.0f, 0.0f ),
-                                           new Vector3 (  320.0f,  568.0f, 0.0f ),
-                                           new Vector3 (  320.0f, -568.0f, 0.0f ),
-                                           }, _color );
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( -320.0f, -568.0f, 0.0f ),
+                                              new Vector3 ( -320.0f,  568.0f, 0.0f ),
+                                              new Vector3 (  320.0f,  568.0f, 0.0f ),
+                                              new Vector3 (  320.0f, -568.0f, 0.0f ),
+                                              }, _color );
             break;
 
         case 6:
-            exEditorUtility.DrawRectLine ( new Vector3[] {
-                                           new Vector3 ( -568.0f, -320.0f, 0.0f ),
-                                           new Vector3 ( -568.0f,  320.0f, 0.0f ),
-                                           new Vector3 (  568.0f,  320.0f, 0.0f ),
-                                           new Vector3 (  568.0f, -320.0f, 0.0f ),
-                                           }, _color );
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( -568.0f, -320.0f, 0.0f ),
+                                              new Vector3 ( -568.0f,  320.0f, 0.0f ),
+                                              new Vector3 (  568.0f,  320.0f, 0.0f ),
+                                              new Vector3 (  568.0f, -320.0f, 0.0f ),
+                                              }, _color );
             break;
 
         case 7:
-            exEditorUtility.DrawRectLine ( new Vector3[] {
-                                           new Vector3 ( -384.0f, -512.0f, 0.0f ),
-                                           new Vector3 ( -384.0f,  512.0f, 0.0f ),
-                                           new Vector3 (  384.0f,  512.0f, 0.0f ),
-                                           new Vector3 (  384.0f, -512.0f, 0.0f ),
-                                           }, _color );
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( -384.0f, -512.0f, 0.0f ),
+                                              new Vector3 ( -384.0f,  512.0f, 0.0f ),
+                                              new Vector3 (  384.0f,  512.0f, 0.0f ),
+                                              new Vector3 (  384.0f, -512.0f, 0.0f ),
+                                              }, _color );
             break;
 
         case 8:
-            exEditorUtility.DrawRectLine ( new Vector3[] {
-                                           new Vector3 ( -512.0f, -384.0f, 0.0f ),
-                                           new Vector3 ( -512.0f,  384.0f, 0.0f ),
-                                           new Vector3 (  512.0f,  384.0f, 0.0f ),
-                                           new Vector3 (  512.0f, -384.0f, 0.0f ),
-                                           }, _color );
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( -512.0f, -384.0f, 0.0f ),
+                                              new Vector3 ( -512.0f,  384.0f, 0.0f ),
+                                              new Vector3 (  512.0f,  384.0f, 0.0f ),
+                                              new Vector3 (  512.0f, -384.0f, 0.0f ),
+                                              }, _color );
             break;
         }
     }

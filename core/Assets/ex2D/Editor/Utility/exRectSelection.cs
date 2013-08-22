@@ -86,7 +86,7 @@ public class exRectSelection<T> {
             // draw select rect 
             if ( isRectSelecting ) {
                 Rect selectRect = cb_UpdateRect( selectStartPoint, e.mousePosition );
-                exEditorUtility.DrawRect( selectRect, new Color( 0.0f, 0.5f, 1.0f, 0.2f ), new Color( 0.0f, 0.5f, 1.0f, 1.0f ) );
+                exEditorUtility.GUI_DrawRect( selectRect, new Color( 0.0f, 0.5f, 1.0f, 0.2f ), new Color( 0.0f, 0.5f, 1.0f, 1.0f ) );
                 // DISABLE { 
                 // GUIStyle selectionRectStyle = "SelectionRect";
                 // selectionRectStyle.Draw(selectRect, GUIContent.none, false, false, false, false);

@@ -33,6 +33,8 @@ public static class ex2DEditor {
         // TODO: you can load texture_to_textureinfo table here
         // EditorApplication.hierarchyWindowItemOnGUI += HierarchyItemCB
         // EditorApplication.projectWindowItemOnGUI += ProjectWindowItemOnGUI
+
+        exEditorUtility.Init();
     } 
 
     // ------------------------------------------------------------------ 

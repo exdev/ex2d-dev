@@ -64,7 +64,23 @@ class exTextureInfoEditor : EditorWindow {
         //                                              PickRectObjects,
         //                                              ConfirmRectSelection );
 
-        // UpdateEditObject ();
+        UpdateEditObject ();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnFocus () {
+        UpdateEditObject ();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnSelectionChange () {
+        UpdateEditObject ();
     }
 
     // ------------------------------------------------------------------ 
@@ -88,6 +104,27 @@ class exTextureInfoEditor : EditorWindow {
     ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void UpdateEditObject () {
+        if ( curEdit == null ) {
+            exTextureInfo info = Selection.activeObject as exTextureInfo;
+            if ( info != null && info != curEdit ) {
+                Edit (info);
+            }
+        }
+    } 
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void Reset () {
+        scale = 1.0f;
+    }
+
+    // ------------------------------------------------------------------ 
     /// \param _obj
     /// Check if the object is valid atlas and open it in atlas editor.
     // ------------------------------------------------------------------ 
@@ -100,14 +137,6 @@ class exTextureInfoEditor : EditorWindow {
 
         Reset ();
         Repaint ();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public void Reset () {
-        scale = 1.0f;
     }
 
     // ------------------------------------------------------------------ 
@@ -149,7 +178,7 @@ class exTextureInfoEditor : EditorWindow {
             // Help
             // ======================================================== 
 
-            if ( GUILayout.Button( exEditorUtility.HelpTexture(), EditorStyles.toolbarButton ) ) {
+            if ( GUILayout.Button( exEditorUtility.textureHelp, EditorStyles.toolbarButton ) ) {
                 Help.BrowseURL("http://ex-dev.com/ex2d/docs/");
             }
 
