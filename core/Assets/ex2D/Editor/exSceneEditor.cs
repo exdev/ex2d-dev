@@ -772,7 +772,8 @@ class exSceneEditor : EditorWindow {
                 foreach ( Object o in draggingObjects ) {
                     if ( o is exTextureInfo ) {
                         exEditorUtility.GL_DrawTextureInfo ( o as exTextureInfo, 
-                                                             SceneField_MapToWorld( _rect, Event.current.mousePosition) );
+                                                             SceneField_MapToWorld( _rect, Event.current.mousePosition),
+                                                             new Color(1.0f, 1.0f, 1.0f, 0.5f) );
                     }
                     else if ( o is exBitmapFont ) {
                         // TODO:
@@ -781,7 +782,8 @@ class exSceneEditor : EditorWindow {
                         exSpriteAnimationClip clip = o as exSpriteAnimationClip;
                         if ( clip.frameInfos.Count > 0 ) {
                             exEditorUtility.GL_DrawTextureInfo ( clip.frameInfos[0].textureInfo, 
-                                                                 SceneField_MapToWorld( _rect, Event.current.mousePosition) );
+                                                                 SceneField_MapToWorld( _rect, Event.current.mousePosition),
+                                                                 new Color(1.0f, 1.0f, 1.0f, 0.5f) );
                         } 
                     }
                 }

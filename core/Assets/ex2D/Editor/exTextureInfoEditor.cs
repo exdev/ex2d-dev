@@ -47,6 +47,11 @@ class exTextureInfoEditor : EditorWindow {
     Color background = Color.gray;
     Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
 
+    int editModeIndex = 0;
+
+    // sliced
+    Color slicedColor = new Color ( 0.0f, 0.8f, 0.0f );
+
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
     ///////////////////////////////////////////////////////////////////////////////
@@ -154,11 +159,9 @@ class exTextureInfoEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void UpdateEditObject () {
-        if ( curEdit == null ) {
-            exTextureInfo info = Selection.activeObject as exTextureInfo;
-            if ( info != null && info != curEdit ) {
-                Edit (info);
-            }
+        exTextureInfo info = Selection.activeObject as exTextureInfo;
+        if ( info != null && info != curEdit ) {
+            Edit (info);
         }
     } 
 
@@ -192,7 +195,18 @@ class exTextureInfoEditor : EditorWindow {
     void Toolbar () {
         EditorGUILayout.BeginHorizontal ( EditorStyles.toolbar );
 
+            string[] toolbarStrings = new string[] {"Attach Points", "Collision", "Sliced", "Diced" };
+            editModeIndex = GUILayout.Toolbar( editModeIndex, toolbarStrings, EditorStyles.toolbarButton );
+
             GUILayout.FlexibleSpace();
+
+            // ======================================================== 
+            // Reset 
+            // ======================================================== 
+
+            if ( GUILayout.Button( "Reset", EditorStyles.toolbarButton ) ) {
+                editCamera.transform.position = Vector3.zero;
+            }
 
             // ======================================================== 
             // zoom in/out button & slider 
@@ -244,12 +258,55 @@ class exTextureInfoEditor : EditorWindow {
                                        } );
         GUILayout.Space(10);
 
-        // Settings 
+        // TODO: show trim rect
+        // TODO: show raw rect
+        // TODO: show pixel grid
+
         EditorGUILayout.BeginVertical();
 
-            // TODO:
+        switch ( editModeIndex ) {
+            // attach pionts
+        case 0:
+            if ( GUILayout.Button("Add...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
+                // TODO:
+            }
+
+            break;
+
+            // collision
+        case 1:
+            GUILayout.Label ( "Coming Soon..." );
+            break;
+
+            // sliced
+        case 2:
+            slicedColor = EditorGUILayout.ColorField ( "Color", slicedColor );
+            EditorGUI.BeginChangeCheck();
+                int result = EditorGUILayout.IntField ( "Left", curEdit.borderLeft );
+                curEdit.borderLeft = System.Math.Min ( System.Math.Max ( 0, result ), curEdit.width - curEdit.borderRight );
+
+                result = EditorGUILayout.IntField ( "Right", curEdit.borderRight );
+                curEdit.borderRight = System.Math.Min ( System.Math.Max ( 0, result ), curEdit.width - curEdit.borderLeft );
+
+                result = EditorGUILayout.IntField ( "Top", curEdit.borderTop );
+                curEdit.borderTop = System.Math.Min ( System.Math.Max ( 0, result ), curEdit.height - curEdit.borderBottom );
+
+                result = EditorGUILayout.IntField ( "Bottom", curEdit.borderBottom );
+                curEdit.borderBottom = System.Math.Min ( System.Math.Max ( 0, result ), curEdit.height - curEdit.borderTop );
+
+            if ( EditorGUI.EndChangeCheck() ) {
+                EditorUtility.SetDirty(curEdit);
+            }
+            break;
+
+            // diced
+        case 3:
+            GUILayout.Label ( "Coming Soon..." );
+            break;
+        }
 
         EditorGUILayout.EndVertical();
+
         EditorGUILayout.EndHorizontal();
     }
 
@@ -373,7 +430,45 @@ class exTextureInfoEditor : EditorWindow {
                                 editCamera.transform.position.y - (_rect.height * 0.5f) / scale,
                                 editCamera.transform.position.y + (_rect.height * 0.5f) / scale );
 
-            // TODO:
+            // draw texture info
+            exEditorUtility.GL_DrawTextureInfo ( curEdit, Vector2.zero, Color.white );
+            
+            // draw raw-texture bounding 
+            float half_width = curEdit.width * 0.5f;
+            float half_height = curEdit.height * 0.5f;
+            int trim_left  = curEdit.trim_x;
+            int trim_right = curEdit.rawWidth - curEdit.trim_x - curEdit.width;
+            int trim_top   = curEdit.rawHeight - curEdit.trim_y - curEdit.height;
+            int trim_bot   = curEdit.trim_y;
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( -half_width - trim_left,  -half_height - trim_bot, 0.0f ),
+                                              new Vector3 ( -half_width - trim_left,   half_height + trim_top, 0.0f ),
+                                              new Vector3 (  half_width + trim_right,  half_height + trim_top, 0.0f ),
+                                              new Vector3 (  half_width + trim_right, -half_height - trim_bot, 0.0f ),
+                                              }, 
+                                              new Color( 0.8f, 0.0f, 0.0f ) );
+
+            // draw trimed bounding 
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( -half_width, -half_height, 0.0f ),
+                                              new Vector3 ( -half_width,  half_height, 0.0f ),
+                                              new Vector3 (  half_width,  half_height, 0.0f ),
+                                              new Vector3 (  half_width, -half_height, 0.0f ),
+                                              }, 
+                                              new Color( 0.8f, 0.8f, 0.0f ) );
+
+            // draw sliced line
+            if ( editModeIndex == 2 ) {
+                float left   = -half_width  + curEdit.borderLeft;
+                float right  =  half_width  - curEdit.borderRight;
+                float top    =  half_height - curEdit.borderTop;
+                float bottom = -half_height + curEdit.borderBottom;
+
+                exEditorUtility.GL_DrawLine ( left, -half_height, left, half_height, slicedColor );
+                exEditorUtility.GL_DrawLine ( right, -half_height, right, half_height, slicedColor );
+                exEditorUtility.GL_DrawLine ( -half_width, top, half_width, top, slicedColor );
+                exEditorUtility.GL_DrawLine ( -half_width, bottom, half_width, bottom, slicedColor );
+            }
 
             // draw border line
             GL.LoadPixelMatrix ( 0.0f, _rect.width, _rect.height, 0.0f );

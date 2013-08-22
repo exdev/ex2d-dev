@@ -725,6 +725,7 @@ public static class exAtlasUtility {
             }
         }
 
+        _atlas.needLayout = true;
         _atlas.needRebuild = true;
         EditorUtility.SetDirty(_atlas);
     }

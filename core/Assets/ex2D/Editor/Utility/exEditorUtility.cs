@@ -242,7 +242,7 @@ public static class exEditorUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void GL_DrawTextureInfo ( exTextureInfo _textureInfo, Vector3 _pos ) {
+    public static void GL_DrawTextureInfo ( exTextureInfo _textureInfo, Vector2 _pos, Color _color ) {
         if (_textureInfo.texture == null) {
             return;
         }
@@ -258,7 +258,7 @@ public static class exEditorUtility {
         materialAlphaBlended.mainTexture = _textureInfo.texture;
         materialAlphaBlended.SetPass(0);
         GL.Begin(GL.QUADS);
-            GL.Color( new Color( 1.0f, 1.0f, 1.0f, 0.5f ) );
+            GL.Color(_color);
 
             if ( _textureInfo.rotated == false ) {
                 GL.TexCoord2 ( s0, t0 );
