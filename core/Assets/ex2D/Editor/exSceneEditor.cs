@@ -639,9 +639,8 @@ class exSceneEditor : EditorWindow {
                     if ( o is exTextureInfo ) {
                         newGO = new GameObject(o.name);
                         exSprite sprite = newGO.AddComponent<exSprite>();
-                        if ( sprite.shader == null )
-                            sprite.shader = Shader.Find("ex2D/Alpha Blended");
                         sprite.textureInfo = o as exTextureInfo;
+                        InitSprite(sprite);
                     }
                     else if ( o is exBitmapFont ) {
                         newGO = new GameObject(o.name);
@@ -663,6 +662,7 @@ class exSceneEditor : EditorWindow {
                         if ( clip.frameInfos.Count > 0 ) {
                             sprite.textureInfo = clip.frameInfos[0].textureInfo;
                         }
+                        InitSprite(sprite);
                     }
 
                     if ( newGO != null && activeLayer != null ) {
@@ -690,6 +690,17 @@ class exSceneEditor : EditorWindow {
             Repaint();
             break;
         }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    static void InitSprite ( exSprite _sprite ) { 
+        if ( _sprite.shader == null )
+            _sprite.shader = Shader.Find("ex2D/Alpha Blended");
+        if ( _sprite.textureInfo != null && _sprite.textureInfo.hasBorder )
+            _sprite.spriteType = exSpriteType.Sliced;
     }
 
     // ------------------------------------------------------------------ 
@@ -849,9 +860,28 @@ class exSceneEditor : EditorWindow {
 
     void DrawBoundingRect ( exSpriteBase _node ) {
         Vector3[] vertices = _node.GetWorldVertices();
-        if ( _node is exSprite || _node is exSpriteFont ) {
-            exEditorUtility.GL_DrawRectLine ( vertices, Color.white );
+        exSprite sprite = _node as exSprite;
+        if ( sprite != null && sprite.spriteType == exSpriteType.Sliced) {
+            Vector3[] rectVertices = new Vector3[16];
+            rectVertices[0] = vertices[0];
+            rectVertices[1] = vertices[4];
+            rectVertices[2] = vertices[7];
+            rectVertices[3] = vertices[3];
+            rectVertices[4] = vertices[8];
+            rectVertices[5] = vertices[12];
+            rectVertices[6] = vertices[15];
+            rectVertices[7] = vertices[11];
+            rectVertices[8] = vertices[0];
+            rectVertices[9] = vertices[12];
+            rectVertices[10] = vertices[13];
+            rectVertices[11] = vertices[1];
+            rectVertices[12] = vertices[2];
+            rectVertices[13] = vertices[14];
+            rectVertices[14] = vertices[15];
+            rectVertices[15] = vertices[3];
+            vertices = rectVertices;
         }
+        exEditorUtility.GL_DrawRectLine ( vertices, Color.white );
     }
 
     // ------------------------------------------------------------------ 
@@ -1016,20 +1046,8 @@ class exSceneEditor : EditorWindow {
                 // } TODO end 
 
                 Vector3[] vertices = spriteBase.GetLocalVertices();
-                Vector3 min = new Vector3 ( float.MaxValue, float.MaxValue, 0.0f );
-                Vector3 max = new Vector3 ( float.MinValue, float.MinValue, 0.0f );
-                foreach ( Vector3 vertex in vertices ) {
-                    if ( vertex.x > max.x )
-                        max.x = vertex.x;
-                    if ( vertex.x < min.x )
-                        min.x = vertex.x;
-
-                    if ( vertex.y > max.y )
-                        max.y = vertex.y;
-                    if ( vertex.y < min.y )
-                        min.y = vertex.y;
-                }
-                Vector3 center = (max + min) * 0.5f;
+                Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
+                Vector3 center = aabb.center;
                 Vector3 size = new Vector3( spriteBase.width, spriteBase.height, 0.0f );
 
                 Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f, center.y + size.y * 0.5f, 0.0f ) );

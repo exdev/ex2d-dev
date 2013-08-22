@@ -54,4 +54,9 @@ public class exTextureInfo : ScriptableObject {
             return height;
         }
     }
+    public bool hasBorder {
+        get {
+            return borderLeft != 0 || borderRight != 0 || borderTop != 0 || borderBottom != 0;
+        }
+    }
 }

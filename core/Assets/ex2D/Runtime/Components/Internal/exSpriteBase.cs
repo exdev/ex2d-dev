@@ -510,7 +510,9 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     internal virtual void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
         vertexBufferIndex = _vertices.Count;
         _vertices.AddRange(vertexCount);
-        _colors32.AddRange(vertexCount);
+        if (_colors32 != null) {
+            _colors32.AddRange(vertexCount);
+        }
         _uvs.AddRange(vertexCount);
         updateFlags |= exUpdateFlags.AllExcludeIndex;
     }
@@ -562,17 +564,16 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             _indices.AddRange(indexCount);
         }
         if (visible) {
-            exList<Color32> colors = new exList<Color32>(vertexCount);
             exUpdateFlags originalFlags = updateFlags;
             int originalVertexBufferIndex = vertexBufferIndex;
             int originalIndexBufferIndex = indexBufferIndex;
 
-            FillBuffers(_vertices, _uvs, colors);
+            FillBuffers(_vertices, _uvs, null);
             UpdateTransform();
 
             indexBufferIndex = 0;
             updateFlags |= exUpdateFlags.Index;
-            UpdateBuffers(_vertices, _uvs, colors, _indices);
+            UpdateBuffers(_vertices, _uvs, null, _indices);
 
             vertexBufferIndex = originalVertexBufferIndex;
             indexBufferIndex = originalIndexBufferIndex;

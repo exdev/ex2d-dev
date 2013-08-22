@@ -482,7 +482,7 @@ public class exSpriteFont : exSpriteBase {
                 _indices.buffer[i + 5] = v;
             }
         }
-        if ((updateFlags & exUpdateFlags.Color) != 0) {
+        if ((updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null) {
             Color32 top, bot;
             if (transparent_ == false) {
                 top = new Color (topColor_.r, topColor_.g, topColor_.b, topColor_.a * layer_.alpha);
