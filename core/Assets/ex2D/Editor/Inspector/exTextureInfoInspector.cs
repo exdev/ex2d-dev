@@ -74,6 +74,11 @@ class exTextureInfoInspector : Editor {
 
                 if ( propTrim.boolValue ) {
                     Rect trimRect = exTextureUtility.GetTrimTextureRect(rawTexture,textureInfo.trimThreshold);
+                    if ( trimRect.width <= 0 || trimRect.height <= 0 ) {
+                        Debug.LogWarning ( "Can't not trim texture " + obj.name + ", empty pixel in it" );
+                        trimRect = new Rect ( 0, 0, rawTexture.width, rawTexture.height );
+                        textureInfo.trim = false;
+                    }
                     textureInfo.trim_x = (int)trimRect.x;
                     textureInfo.trim_y = (int)trimRect.y;
                     textureInfo.width = (int)trimRect.width;

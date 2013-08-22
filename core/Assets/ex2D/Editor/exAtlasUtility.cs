@@ -639,9 +639,17 @@ public static class exAtlasUtility {
                     continue;
                 }
 
+                bool trimmed = false;
                 Rect trimRect = new Rect ( 0, 0, rawTexture.width, rawTexture.height );
                 if ( _atlas.trimElements ) {
-                    trimRect = exTextureUtility.GetTrimTextureRect(rawTexture,_atlas.trimThreshold);
+                    Rect trimResult = exTextureUtility.GetTrimTextureRect(rawTexture,_atlas.trimThreshold);
+                    if ( trimResult.width > 0 && trimResult.height > 0 ) {
+                        trimmed = true;
+                        trimRect = trimResult;
+                    }
+                    else {
+                        Debug.LogWarning ( "Can't not trim texture " + o.name + ", empty pixel in it" );
+                    }
                 }
 
                 //
@@ -675,7 +683,7 @@ public static class exAtlasUtility {
                     textureInfo.trim_y = (int)trimRect.y;
                     textureInfo.width = (int)trimRect.width;
                     textureInfo.height = (int)trimRect.height;
-                    textureInfo.trim = _atlas.trimElements;
+                    textureInfo.trim = trimmed;
                     textureInfo.trimThreshold = _atlas.trimThreshold;
                     EditorUtility.SetDirty(textureInfo);
                 }
