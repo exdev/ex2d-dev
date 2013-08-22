@@ -49,6 +49,15 @@ class exTextureInfoEditor : EditorWindow {
 
     int editModeIndex = 0;
 
+    bool showTrimRect = true;
+    Color trimRectColor = new Color ( 0.8f, 0.8f, 0.0f );
+
+    bool showRawRect = false;
+    Color rawRectColor = new Color ( 0.8f, 0.0f, 0.0f );
+
+    bool showPixelGrid = false;
+    Color pixelGridColor = new Color ( 1.0f, 1.0f, 1.0f );
+
     // sliced
     Color slicedColor = new Color ( 0.0f, 0.8f, 0.0f );
 
@@ -250,19 +259,29 @@ class exTextureInfoEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void Settings () {
+
         EditorGUILayout.BeginHorizontal( new GUILayoutOption [] {
                                            GUILayout.Width(250), 
                                            GUILayout.MinWidth(250), 
                                            GUILayout.MaxWidth(250),
                                            GUILayout.ExpandWidth(false),
                                        } );
+
         GUILayout.Space(10);
 
-        // TODO: show trim rect
-        // TODO: show raw rect
-        // TODO: show pixel grid
-
         EditorGUILayout.BeginVertical();
+
+        showTrimRect = EditorGUILayout.Toggle ( "Show Trimed Rect", showTrimRect );
+        trimRectColor = EditorGUILayout.ColorField ( "Trimed Rect Color", trimRectColor );
+
+        showRawRect = EditorGUILayout.Toggle ( "Show Raw Rect", showRawRect );
+        rawRectColor = EditorGUILayout.ColorField ( "Raw Rect Color", rawRectColor );
+        
+        showPixelGrid = EditorGUILayout.Toggle ( "Show Pixel Grid", showPixelGrid );
+        pixelGridColor = EditorGUILayout.ColorField ( "Pixel Grid Color", pixelGridColor );
+
+        EditorGUILayout.Space();
+        EditorGUILayout.Space();
 
         switch ( editModeIndex ) {
             // attach pionts
@@ -433,29 +452,34 @@ class exTextureInfoEditor : EditorWindow {
             // draw texture info
             exEditorUtility.GL_DrawTextureInfo ( curEdit, Vector2.zero, Color.white );
             
-            // draw raw-texture bounding 
             float half_width = curEdit.width * 0.5f;
             float half_height = curEdit.height * 0.5f;
             int trim_left  = curEdit.trim_x;
             int trim_right = curEdit.rawWidth - curEdit.trim_x - curEdit.width;
             int trim_top   = curEdit.rawHeight - curEdit.trim_y - curEdit.height;
             int trim_bot   = curEdit.trim_y;
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( -half_width - trim_left,  -half_height - trim_bot, 0.0f ),
-                                              new Vector3 ( -half_width - trim_left,   half_height + trim_top, 0.0f ),
-                                              new Vector3 (  half_width + trim_right,  half_height + trim_top, 0.0f ),
-                                              new Vector3 (  half_width + trim_right, -half_height - trim_bot, 0.0f ),
-                                              }, 
-                                              new Color( 0.8f, 0.0f, 0.0f ) );
+
+            // draw raw-texture bounding 
+            if ( showRawRect ) {
+                exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                                  new Vector3 ( -half_width - trim_left,  -half_height - trim_bot, 0.0f ),
+                                                  new Vector3 ( -half_width - trim_left,   half_height + trim_top, 0.0f ),
+                                                  new Vector3 (  half_width + trim_right,  half_height + trim_top, 0.0f ),
+                                                  new Vector3 (  half_width + trim_right, -half_height - trim_bot, 0.0f ),
+                                                  }, 
+                                                  rawRectColor );
+            }
 
             // draw trimed bounding 
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( -half_width, -half_height, 0.0f ),
-                                              new Vector3 ( -half_width,  half_height, 0.0f ),
-                                              new Vector3 (  half_width,  half_height, 0.0f ),
-                                              new Vector3 (  half_width, -half_height, 0.0f ),
-                                              }, 
-                                              new Color( 0.8f, 0.8f, 0.0f ) );
+            if ( showTrimRect ) {
+                exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                                  new Vector3 ( -half_width, -half_height, 0.0f ),
+                                                  new Vector3 ( -half_width,  half_height, 0.0f ),
+                                                  new Vector3 (  half_width,  half_height, 0.0f ),
+                                                  new Vector3 (  half_width, -half_height, 0.0f ),
+                                                  }, 
+                                                  trimRectColor );
+            }
 
             // draw sliced line
             if ( editModeIndex == 2 ) {
