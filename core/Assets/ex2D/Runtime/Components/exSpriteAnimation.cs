@@ -392,12 +392,12 @@ public class exSpriteAnimation : MonoBehaviour {
     /// exSpriteAnimState.stopAction 
     // ------------------------------------------------------------------ 
 
-    public void Stop () {
-        if ( curAnimation != null ) {
-            exSpriteAnimationClip.StopAction stopAction = curAnimation.stopAction;
+    public void Stop (exSpriteAnimationState _animState) {
+        if ( _animState != null ) {
+            exSpriteAnimationClip.StopAction stopAction = _animState.stopAction;
 
-            curAnimation.time = 0.0f;
-            curAnimation = null;
+            _animState.time = 0.0f;
+            _animState = null;
 
             switch ( stopAction ) {
             case exSpriteAnimationClip.StopAction.DoNothing:
@@ -654,15 +654,17 @@ public class exSpriteAnimation : MonoBehaviour {
                 }
             }
 
+            exSpriteAnimationState backupAnimBeforeEvent = curAnimation;
+
             // trigger events
             if (eventStartIndex <= curAnimation.frame) {
                 curAnimation.TriggerEvents(this, eventStartIndex, curAnimation.frame);
-                lastFrameIndex = curAnimation.frame;
+                lastFrameIndex = backupAnimBeforeEvent.frame;
             }
             
             // do stop
             if (stop) {
-                Stop();
+                Stop(backupAnimBeforeEvent);
             }
         }
         else {
