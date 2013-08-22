@@ -747,9 +747,7 @@ class exSceneEditor : EditorWindow {
 
             // draw culled sprite nodes
             for ( int i = 0; i < spriteNodes.Count; ++i ) {
-                if (spriteNodes[i].visible) {
-                    DrawNode ( spriteNodes[i] );
-                }
+                DrawNode ( spriteNodes[i] );
             }
 
             // draw selected objects
@@ -1312,7 +1310,7 @@ class exSceneEditor : EditorWindow {
                 exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
                 System.Array.Sort<exSpriteBase>(spriteList);
                 foreach ( exSpriteBase node in spriteList ) {
-                    if ( node.enabled && node.layer != null ) {
+                    if ( node.visible && node.layer != null ) {
                         Rect boundingRect = MapBoundingRect ( _rect, node );
                         if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||
                              exGeometryUtility.RectRect_Intersect( _rect, boundingRect ) )
