@@ -18,9 +18,10 @@ using System.Collections.Generic;
 // ------------------------------------------------------------------ 
 
 public enum exSpriteType {
-    Simple,
+    Simple = 0,
     Sliced,
     Tiled,
+    Diced,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -123,21 +124,38 @@ public class exSprite : exSpriteBase {
         set {
             if ( spriteType_ != value ) {
                 spriteType_ = value;
-                updateFlags |= exUpdateFlags.All;   // TODO: implement sprite type
+                if (layer_ != null) {
+                    int newVertexCount, newIndexCount;
+                    GetVertexAndIndexCount(value, out newVertexCount, out newIndexCount);
+                    if (currentVertexCount != newVertexCount || currentIndexCount != newIndexCount) {
+                        // rebuild geometry
+                        exLayer myLayer = layer_;
+                        myLayer.Remove(this);
+                        myLayer.Add(this);
+                        exDebug.Assert(currentVertexCount == newVertexCount && currentIndexCount == newIndexCount);
+                    }
+                }
             }
         }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    // non-serialized properties
+    // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
+    [System.NonSerialized] private int currentVertexCount = -1;
+    [System.NonSerialized] private int currentIndexCount = -1;
+
     public override int vertexCount {
-        get { return exMesh.QUAD_VERTEX_COUNT; }
+        get {
+            return currentVertexCount;
+        }
     }
 
     public override int indexCount {
-        get { return exMesh.QUAD_INDEX_COUNT; }
+        get {
+            return currentIndexCount;
+        }
     }
 
     protected override Texture texture {
@@ -212,7 +230,48 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
+        switch (spriteType_) {
+            case exSpriteType.Simple:
+                SimpleUpdateBuffers (_vertices, _uvs, _indices);
+                break;
+            case exSpriteType.Sliced:
+                SlicedUpdateBuffers (_vertices, _uvs, _indices);
+                break;
+            case exSpriteType.Tiled:
+                break;
+            case exSpriteType.Diced:
+                break;
+        }
+        if ((updateFlags & exUpdateFlags.Color) != 0) {
+            exDebug.Assert(layer_ != null);
+            Color32 color32;
+            if (transparent_ == false) {
+                color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
+            }
+            else {
+                color32 = new Color32 ();
+            }
+            for (int i = 0; i < currentVertexCount; ++i) {
+                _colors32.buffer[vertexBufferIndex + i] = color32;
+            }
+        }
+        //if (transparent_ == false) {
+        exUpdateFlags applyedFlags = updateFlags;
+        updateFlags = exUpdateFlags.None;
+        return applyedFlags;
+        //}
+        //else {
+        //    exUpdateFlags applyedFlags = (updateFlags & exUpdateFlags.Color);
+        //    updateFlags &= ~exUpdateFlags.Color;
+        //    return applyedFlags;
+        //}
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
 
+    private void SimpleUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
         if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Vertex) != 0) {
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
             UpdateVertexBuffer(_vertices, vertexBufferIndex, ref cachedWorldMatrix);
@@ -251,29 +310,85 @@ public class exSprite : exSpriteBase {
                 _uvs.buffer[vertexBufferIndex + 3] = new Vector2(end.x, start.y);
             }
         }
-        if ((updateFlags & exUpdateFlags.Color) != 0) {
-            exDebug.Assert(layer_ != null);
-            Color32 color32;
-            if (transparent_ == false) {
-                color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
-            }
-            else {
-                color32 = new Color32 ();
-            }
-            _colors32.buffer[vertexBufferIndex + 0] = color32;
-            _colors32.buffer[vertexBufferIndex + 1] = color32;
-            _colors32.buffer[vertexBufferIndex + 2] = color32;
-            _colors32.buffer[vertexBufferIndex + 3] = color32;
-        }
-        //if (transparent_ == false) {
-            exUpdateFlags applyedFlags = updateFlags;
-            updateFlags = exUpdateFlags.None;
-            return applyedFlags;
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private void SlicedUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
+        //SimpleUpdateBuffers (_vertices, _uvs, _indices);
+        //if (textureInfo_ == null || (textureInfo_.borderLeft == 0 && textureInfo_.borderRight == 0 && textureInfo_.borderTop == 0 && textureInfo_.borderBottom == 0)) {
+        //    for (int i = 4; i < indexCount; --i) {
+        //        _indices.buffer[indexBufferIndex + i] = vertexBufferIndex;  // hide unused triangle
+        //    }
+        //    return;
         //}
-        //else {
-        //    exUpdateFlags applyedFlags = (updateFlags & exUpdateFlags.Color);
-        //    updateFlags &= ~exUpdateFlags.Color;
-        //    return applyedFlags;
+        //if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Vertex) != 0) {
+        //    /* vertex index:
+        //        12 13 14 15
+        //        8  9  10 11
+        //        4  5  6  7 
+        //        0  1  2  3 
+        //     */
+        //    // left right columns
+        //    Vector3 v0 = _vertices.buffer[vertexBufferIndex + 0];
+        //    Vector3 v12 = _vertices.buffer[vertexBufferIndex + 1];
+        //    Vector3 v15 = _vertices.buffer[vertexBufferIndex + 2];
+        //    Vector3 v3 = _vertices.buffer[vertexBufferIndex + 3];
+        //    float trimmedBorderTop = textureInfo_.borderTop - textureInfo_.trim_y;
+        //    float trimmedBorderBottom = textureInfo_.borderBottom - (textureInfo_.rawHeight - textureInfo_.trim_y - textureInfo_.height);
+        //    float yStep1 = trimmedBorderTop / height_;
+        //    float yStep2 = (height_ - trimmedBorderBottom) / height_;
+        //    _vertices.buffer[vertexBufferIndex + 4] = v0 + (v12 - v0) * yStep1;
+        //    _vertices.buffer[vertexBufferIndex + 7] = v3 + (v15 - v3) * yStep1;
+        //    _vertices.buffer[vertexBufferIndex + 8] = v0 + (v12 - v0) * yStep2;
+        //    _vertices.buffer[vertexBufferIndex + 11] = v3 + (v15 - v3) * yStep2;
+        //    // mid columns
+        //    float trimmedBorderLeft = textureInfo_.borderLeft - textureInfo_.trim_x;
+        //    float trimmedBorderRight = textureInfo_.borderRight - (textureInfo_.rawWidth - textureInfo_.trim_x - textureInfo_.width);
+        //    float xStep1 = trimmedBorderLeft / width_;
+        //    float xStep2 = (width_ - trimmedBorderRight) / width_;
+        //    for (int i = 0; i <= 12; i += 4) {
+        //        Vector3 left = _vertices.buffer[vertexBufferIndex + i];
+        //        Vector3 right = _vertices.buffer[vertexBufferIndex + i + 3];
+        //        _vertices.buffer[vertexBufferIndex + i + 1] = left + (right - left) * xStep1;
+        //        _vertices.buffer[vertexBufferIndex + i + 2] = left + (right - left) * xStep2;
+        //    }
+        //}
+        //if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+        //    int index = -1;
+        //    for (int i = 0; i <= 10; ++i) {
+        //        if (i != 3 || i != 7) {
+        //            // 0 1 2 4 5 6 8 9 10
+        //            _indices.buffer[++index] = i;
+        //            _indices.buffer[++index] = i + 4;
+        //            _indices.buffer[++index] = i + 5;
+        //            _indices.buffer[++index] = i + 5;
+        //            _indices.buffer[++index] = i + 1;
+        //            _indices.buffer[++index] = i;
+        //        }
+        //    }
+        //}
+        //if (/*transparent_ == false && */(updateFlags & exUpdateFlags.UV) != 0 && textureInfo_ != null) {
+        //    Vector2 uvbl = _uvs.buffer[vertexBufferIndex + 0];
+        //    Vector2 uvtr = _uvs.buffer[vertexBufferIndex + 2];
+        //    Vector2 start = new Vector2((float)textureInfo_.x * texelSize.x, 
+        //                                (float)textureInfo_.y * texelSize.y);
+        //    Vector2 end = new Vector2((float)(textureInfo_.x + textureInfo_.rotatedWidth) * texelSize.x, 
+        //                              (float)(textureInfo_.y + textureInfo_.rotatedHeight) * texelSize.y);
+        //    if ( textureInfo_.rotated ) {
+        //        _uvs.buffer[vertexBufferIndex + 0] = new Vector2(end.x, start.y);
+        //        _uvs.buffer[vertexBufferIndex + 1] = start;
+        //        _uvs.buffer[vertexBufferIndex + 2] = new Vector2(start.x, end.y);
+        //        _uvs.buffer[vertexBufferIndex + 3] = end;
+        //    }
+        //    else {
+        //        _uvs.buffer[vertexBufferIndex + 0] = start;
+        //        _uvs.buffer[vertexBufferIndex + 1] = new Vector2(start.x, end.y);
+        //        _uvs.buffer[vertexBufferIndex + 2] = end;
+        //        _uvs.buffer[vertexBufferIndex + 3] = new Vector2(end.x, start.y);
+        //    }
         //}
     }
 
@@ -288,6 +403,17 @@ public class exSprite : exSpriteBase {
         vertices.AddRange(vertexCount);
         UpdateVertexBuffer(vertices, 0, ref _spriteMatrix);
         return vertices.ToArray();
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    protected override void OnPreAddToLayer () {
+        exDebug.Assert(layer_ == null);
+        if (layer_ == null) {
+            GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -446,5 +572,30 @@ public class exSprite : exSpriteBase {
         _vertices.buffer[_startIndex + 3] = v3;
         
         // TODO: pixel-perfect
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    public void GetVertexAndIndexCount (exSpriteType _spriteType, out int _vertexCount, out int _indexCount) {
+        switch (spriteType_) {
+        case exSpriteType.Simple:
+            _vertexCount = exMesh.QUAD_VERTEX_COUNT;
+            _indexCount = exMesh.QUAD_INDEX_COUNT;
+            break;
+        case exSpriteType.Sliced:
+            _vertexCount = 4 * 4;
+            _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
+            break;
+        //case exSpriteType.Tiled:
+        //    break;
+        //case exSpriteType.Diced:
+        //    break;
+        default:
+            _vertexCount = exMesh.QUAD_VERTEX_COUNT;
+            _indexCount = exMesh.QUAD_INDEX_COUNT;
+            break;
+        }
     }
 }

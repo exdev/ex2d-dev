@@ -31,6 +31,7 @@ public class exList<T> {
             tempList_ = new exList<T>();
         }
         tempList_.Clear();
+        // TODO: trim
         return tempList_;
     }
 

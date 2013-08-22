@@ -52,7 +52,14 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
 
     public virtual bool customSize {
         get { return customSize_; }
-        set { customSize_ = value; }
+        set {
+            customSize_ = value; 
+#if UNITY_EDITOR
+            if (layer_ != null) {
+                layer_.UpdateNowInEditMode();
+            }
+#endif
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -69,6 +76,11 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
                 if (width_ != value) {
                     width_ = value;
                     updateFlags |= exUpdateFlags.Vertex;
+#if UNITY_EDITOR
+                    if (layer_ != null) {
+                        layer_.UpdateNowInEditMode();
+                    }
+#endif
                 }
             }
             else {
@@ -91,6 +103,11 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
                 if (height_ != value) {
                     height_ = value;
                     updateFlags |= exUpdateFlags.Vertex;
+#if UNITY_EDITOR
+                    if (layer_ != null) {
+                        layer_.UpdateNowInEditMode();
+                    }
+#endif
                 }
             }
             else {
@@ -110,6 +127,11 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             if ( anchor_ != value ) {
                 anchor_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -144,6 +166,11 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             if ( color_ != value ) {
                 color_ = value;
                 updateFlags |= exUpdateFlags.Color;
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -159,6 +186,11 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             if ( offset_ != value ) {
                 offset_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -174,6 +206,11 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             if ( shear_ != value ) {
                 shear_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
+#if UNITY_EDITOR
+                if (layer_ != null) {
+                    layer_.UpdateNowInEditMode();
+                }
+#endif
             }
         }
     }
@@ -566,7 +603,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     protected void UpdateMaterial () {
         if (layer_ != null) {
             exLayer myLayer = layer_;
-            myLayer.Remove(this);
+            myLayer.Remove(this);   // TODO: do not need to re-add children
             material_ = null;   // set dirty, make material update.
             myLayer.Add(this);
         }

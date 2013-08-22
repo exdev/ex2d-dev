@@ -107,6 +107,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         title = "Sprite Animation Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
+        minSize = new Vector2(500f, 500f);
 
         frameRectSelection = new exRectSelection<FrameInfo>( PickObject_FrameInfo,
                                                              PickRectObjects_FrameInfo,
@@ -575,7 +576,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // ======================================================== 
 
             if ( GUILayout.Button( exEditorUtility.HelpTexture(), EditorStyles.toolbarButton ) ) {
-                Help.BrowseURL("http://www.ex-dev.com/ex2d/wiki/doku.php?id=manual:sprite_animation_editor");
+                Help.BrowseURL("http://ex-dev.com/ex2d/docs/");
             }
 
         EditorGUILayout.EndHorizontal ();

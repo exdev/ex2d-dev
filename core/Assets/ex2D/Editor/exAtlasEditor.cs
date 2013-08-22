@@ -76,6 +76,7 @@ partial class exAtlasEditor : EditorWindow {
         title = "Atlas Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
+        minSize = new Vector2(500f, 500f);
 
         quadMaterial = new Material( Shader.Find("ex2D/Alpha Blended") );
         quadMaterial.hideFlags = HideFlags.DontSave;
@@ -156,7 +157,6 @@ partial class exAtlasEditor : EditorWindow {
             GUILayout.Label ( "Please select an Atlas" );
             return;
         }
-
 
         // toolbar
         Toolbar ();
@@ -396,7 +396,7 @@ partial class exAtlasEditor : EditorWindow {
             // ======================================================== 
 
             if ( GUILayout.Button( exEditorUtility.HelpTexture(), EditorStyles.toolbarButton ) ) {
-                Help.BrowseURL("http://www.ex-dev.com/ex2d/wiki/doku.php?id=manual:atlas_editor");
+                Help.BrowseURL("http://ex-dev.com/ex2d/docs/");
             }
 
         EditorGUILayout.EndHorizontal ();
