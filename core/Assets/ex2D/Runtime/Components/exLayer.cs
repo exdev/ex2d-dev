@@ -234,7 +234,22 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void Add (exSpriteBase _sprite) {
-        Add(_sprite, true);
+        exLayer oldLayer = _sprite.layer;
+        if (ReferenceEquals(oldLayer, this)) {
+            return;
+        }
+        if (oldLayer != null) {
+            oldLayer.Remove(_sprite);
+        }
+
+        exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase>(true);
+        for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
+            AddChildSprite(spritesToAdd[spriteIndex], true);
+        }
+        if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
+            _sprite.cachedTransform.parent = cachedTransform_;
+        }
+        UpdateNowInEditMode();
     }
 
     // ------------------------------------------------------------------ 
@@ -242,8 +257,15 @@ public class exLayer : MonoBehaviour
     /// NOTE: 如果Go及其父物体都不是layer的子物体，Go的父物体将被设置为layer
     // ------------------------------------------------------------------ 
 
-    public void Add (exSpriteBase _sprite) {
-        Add(_sprite, true);
+    public void Add (GameObject _gameObject) {
+        exSpriteBase[] spritesToAdd = _gameObject.GetComponentsInChildren<exSpriteBase>(true);
+        for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
+            AddChildSprite(spritesToAdd[spriteIndex], true);
+        }
+        if (_gameObject.transform.IsChildOf(cachedTransform) == false) {
+            _gameObject.transform.parent = cachedTransform_;
+        }
+        UpdateNowInEditMode();
     }
 
     // ------------------------------------------------------------------ 
@@ -251,7 +273,15 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void Remove (exSpriteBase _sprite) {
-        exSpriteBase[] spritesToRemove = _sprite.GetComponentsInChildren<exSpriteBase>(true);
+        Remove(_sprite.gameObject);
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    public void Remove (GameObject _gameObject) {
+        exSpriteBase[] spritesToRemove = _gameObject.GetComponentsInChildren<exSpriteBase>(true);
         for (int i = 0; i < spritesToRemove.Length; ++i) {
             exSpriteBase sprite = spritesToRemove[i];
             if (sprite.layer != this) {
@@ -385,7 +415,7 @@ public class exLayer : MonoBehaviour
         nextSpriteUniqueId = 0;
         exSpriteBase[] spriteList = GetComponentsInChildren<exSpriteBase>(true);
         foreach (exSpriteBase sprite in spriteList) {
-            Add(sprite, false);
+            AddChildSprite(sprite, false);
         }
     }
 
@@ -735,50 +765,34 @@ public class exLayer : MonoBehaviour
     }
     
     // ------------------------------------------------------------------ 
+    /// Do add the sprite to the layer
     /// \param _newSprite 如果为true，则将sprite渲染到其它相同depth的sprite上面
     // ------------------------------------------------------------------ 
     
-    private void Add (exSpriteBase _sprite, bool _newSprite) {
-        exLayer oldLayer = _sprite.layer;
-        if (oldLayer == this) {
+    private void AddChildSprite (exSpriteBase _sprite, bool _newSprite) {
+        Material mat = _sprite.material;
+        if (mat == null) {
+            Debug.LogError("no material assigned in sprite", _sprite);
             return;
         }
-        if (oldLayer != null) {
-            oldLayer.Remove(_sprite);
+
+        _sprite.layer = this;
+
+        // set sprite id
+        CheckDuplicated(_sprite);
+        if (ordered_ && _newSprite || _sprite.spriteIdInLayer == -1) {
+            _sprite.spriteIdInLayer = nextSpriteUniqueId;
+            ++nextSpriteUniqueId;
+        }
+        else {
+            nextSpriteUniqueId = Mathf.Max(_sprite.spriteIdInLayer + 1, nextSpriteUniqueId);
         }
 
-        exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase>(true);
-        for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
-            exSpriteBase childSprite = spritesToAdd[spriteIndex];
-            
-            Material mat = childSprite.material;
-            if (mat == null) {
-                Debug.LogError("no material assigned in sprite", childSprite);
-                continue;
-            }
-            
-            childSprite.layer = this;
-            
-            // set sprite id
-            CheckDuplicated(childSprite);
-            if (ordered_ && _newSprite || childSprite.spriteIdInLayer == -1) {
-                childSprite.spriteIdInLayer = nextSpriteUniqueId;
-                ++nextSpriteUniqueId;
-            }
-            else {
-                nextSpriteUniqueId = Mathf.Max (childSprite.spriteIdInLayer + 1, nextSpriteUniqueId);
-            }
-
-            // find available mesh
-            exMesh mesh = GetMeshToAdd(childSprite);
-            exDebug.Assert(mesh.vertices.Count + childSprite.vertexCount <= (layerType_ == exLayerType.Dynamic ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT), 
-                string.Format("Invalid mesh vertex count : {0}", (mesh.vertices.Count + childSprite.vertexCount)));
-            AddToMesh(childSprite, mesh);
-        }
-        if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
-            _sprite.cachedTransform.parent = cachedTransform_;
-        }
-        UpdateNowInEditMode();
+        // find available mesh
+        exMesh mesh = GetMeshToAdd(_sprite);
+        exDebug.Assert(mesh.vertices.Count + _sprite.vertexCount <= (layerType_ == exLayerType.Dynamic ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT),
+            string.Format("Invalid mesh vertex count : {0}", (mesh.vertices.Count + _sprite.vertexCount)));
+        AddToMesh(_sprite, mesh);
     }
 
     // ------------------------------------------------------------------ 
