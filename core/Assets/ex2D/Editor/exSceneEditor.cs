@@ -135,7 +135,6 @@ class exSceneEditor : EditorWindow {
         title = "2D Scene Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = true;
-        minSize = new Vector2(500f, 500f);
 
         rectSelection = new exRectSelection<Object>( PickObject,
                                                      PickRectObjects,
@@ -563,10 +562,6 @@ class exSceneEditor : EditorWindow {
             DoCulling (sceneViewRect);
             DrawScene (sceneViewRect);
 
-            // // border
-            // exEditorUtility.GUI_DrawRect( _rect,
-            //                           new Color( 1,1,1,0 ), 
-            //                           EditorStyles.label.normal.textColor );
             break;
 
         case EventType.ScrollWheel:
@@ -715,18 +710,18 @@ class exSceneEditor : EditorWindow {
             GL.LoadPixelMatrix ( 0.0f, _rect.width, 0.0f, _rect.height );
 
             // background
-            float half_w = sceneViewRect.width/2.0f;
-            float half_h = sceneViewRect.height/2.0f;
+            float half_w = _rect.width/2.0f;
+            float half_h = _rect.height/2.0f;
             Texture2D checker = exEditorUtility.textureCheckerboard;
             Vector2 center = new Vector2( half_w, half_h );
-            Vector2 size = new Vector2 ( sceneViewRect.width, sceneViewRect.height ); 
+            Vector2 size = new Vector2 ( _rect.width, _rect.height ); 
             exEditorUtility.GL_DrawTexture ( center, 
                                              size, 
                                              checker, 
                                              new Rect( (-half_w/scale + editCamera.transform.position.x)/checker.width,
                                                        (-half_h/scale + editCamera.transform.position.y)/checker.height,
-                                                       sceneViewRect.width/(checker.width * scale), 
-                                                       sceneViewRect.height/(checker.height * scale) ),
+                                                       _rect.width/(checker.width * scale), 
+                                                       _rect.height/(checker.height * scale) ),
                                              background );
 
 
@@ -735,13 +730,13 @@ class exSceneEditor : EditorWindow {
             float center_y = half_h - editCamera.transform.position.y * scale;
             exEditorUtility.GL_DrawLine ( 0.0f,
                                           center_y, 
-                                          sceneViewRect.width,
+                                          _rect.width,
                                           center_y, 
                                           new Color( 0.6f, 0.6f, 0.6f ) );
             exEditorUtility.GL_DrawLine ( center_x, 
                                           0.0f,
                                           center_x, 
-                                          sceneViewRect.height,
+                                          _rect.height,
                                           new Color( 0.6f, 0.6f, 0.6f ) );
 
             //

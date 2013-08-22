@@ -73,7 +73,6 @@ partial class exAtlasEditor : EditorWindow {
         title = "Atlas Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
-        minSize = new Vector2(500f, 500f);
 
         rectSelection = new exRectSelection<Object>( PickObject,
                                                      PickRectObjects,

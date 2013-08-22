@@ -107,7 +107,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
         title = "Sprite Animation Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
-        minSize = new Vector2(500f, 500f);
 
         frameRectSelection = new exRectSelection<FrameInfo>( PickObject_FrameInfo,
                                                              PickRectObjects_FrameInfo,
