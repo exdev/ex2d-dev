@@ -15,13 +15,13 @@ using System.Collections;
 
 ///////////////////////////////////////////////////////////////////////////////
 // 
-/// 自定义的list，仅供内部使用，在大多数情况下，推荐使用List<T>。
+/// 自定义的list，只能用于值类型，仅供内部使用，在大多数情况下，推荐使用List<T>。
 /// 相比起List<T>，能够调用FastToArray直接拿到里面的array，节省了某些情况下的GC。
 /// 并且直接访问buffer可以简化对struct的修改。此外某些平台上，直接访问buffer可能会有一定的性能优势。
 // 
 ///////////////////////////////////////////////////////////////////////////////
 
-public class exList<T> {
+public class exList<T> where T : struct {
 
     static readonly T[] emptyArray = new T[0];
 
@@ -92,7 +92,7 @@ public class exList<T> {
     }
     
     public void Clear () {
-        Count = 0;
+        Count = 0;  // 如果用的是引用类型，这边需要调用Array.Clear()
     }
     
     public void TrimExcess () {

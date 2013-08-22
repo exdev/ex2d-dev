@@ -554,19 +554,28 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// Get sprite's geometry data
     // ------------------------------------------------------------------ 
 
-    public void GetBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs) {
+    public void GetBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices = null) {
         _vertices.Clear();
         _uvs.Clear();
+        if (_indices != null) {
+            _indices.Clear();
+            _indices.AddRange(indexCount);
+        }
         if (visible) {
-            exUpdateFlags originalFlags = updateFlags;
             exList<Color32> colors = new exList<Color32>(vertexCount);
-
+            exUpdateFlags originalFlags = updateFlags;
             int originalVertexBufferIndex = vertexBufferIndex;
+            int originalIndexBufferIndex = indexBufferIndex;
+
             FillBuffers(_vertices, _uvs, colors);
             UpdateTransform();
-            UpdateBuffers(_vertices, _uvs, colors);
-            vertexBufferIndex = originalVertexBufferIndex;
 
+            indexBufferIndex = 0;
+            updateFlags |= exUpdateFlags.Index;
+            UpdateBuffers(_vertices, _uvs, colors, _indices);
+
+            vertexBufferIndex = originalVertexBufferIndex;
+            indexBufferIndex = originalIndexBufferIndex;
             updateFlags = originalFlags;
         }
     }

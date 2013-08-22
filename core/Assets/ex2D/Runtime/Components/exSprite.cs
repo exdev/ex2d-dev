@@ -20,8 +20,8 @@ using System.Collections.Generic;
 public enum exSpriteType {
     Simple = 0,
     Sliced,
-    Tiled,
-    Diced,
+    //Tiled,
+    //Diced,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -237,10 +237,10 @@ public class exSprite : exSpriteBase {
             case exSpriteType.Sliced:
                 SlicedUpdateBuffers (_vertices, _uvs, _indices);
                 break;
-            case exSpriteType.Tiled:
-                break;
-            case exSpriteType.Diced:
-                break;
+            //case exSpriteType.Tiled:
+            //    break;
+            //case exSpriteType.Diced:
+            //    break;
         }
         if ((updateFlags & exUpdateFlags.Color) != 0) {
             exDebug.Assert(layer_ != null);
