@@ -1003,15 +1003,17 @@ class exSceneEditor : EditorWindow {
             exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
             if ( spriteBase && spriteBase.customSize ) {
 
-                float minWidth = float.MinValue;
-                float minHeight = float.MinValue;
-                if ( spriteBase is exSprite ) {
-                    exSprite sp = spriteBase as exSprite;
-                    if ( sp.spriteType == exSpriteType.Sliced ) {
-                        minWidth = sp.textureInfo.borderLeft + sp.textureInfo.borderRight;
-                        minHeight = sp.textureInfo.borderTop + sp.textureInfo.borderBottom;
-                    }
-                }
+                // TODO: limit the size { 
+                // float minWidth = float.MinValue;
+                // float minHeight = float.MinValue;
+                // if ( spriteBase is exSprite ) {
+                //     exSprite sp = spriteBase as exSprite;
+                //     if ( sp.spriteType == exSpriteType.Sliced ) {
+                //         minWidth = sp.textureInfo.borderLeft + sp.textureInfo.borderRight;
+                //         minHeight = sp.textureInfo.borderTop + sp.textureInfo.borderBottom;
+                //     }
+                // }
+                // } TODO end 
 
                 Vector3[] vertices = spriteBase.GetLocalVertices();
                 Vector3 min = new Vector3 ( float.MaxValue, float.MaxValue, 0.0f );
