@@ -317,7 +317,7 @@ public class exSprite : exSpriteBase {
 
     private void SlicedUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
         SimpleUpdateBuffers (_vertices, _uvs, _indices);
-        if (false && textureInfo_ == null || (textureInfo_.borderLeft == 0 && textureInfo_.borderRight == 0 && textureInfo_.borderTop == 0 && textureInfo_.borderBottom == 0)) {
+        if (textureInfo_ == null || (textureInfo_.borderLeft == 0 && textureInfo_.borderRight == 0 && textureInfo_.borderTop == 0 && textureInfo_.borderBottom == 0)) {
             if (_indices != null) {
                 for (int i = 6; i < indexCount; ++i) {
                     _indices.buffer[indexBufferIndex + i] = vertexBufferIndex;  // hide unused triangle
@@ -341,19 +341,15 @@ public class exSprite : exSpriteBase {
             //_vertices.buffer[vertexBufferIndex + 3] = v3;
             _vertices.buffer[vertexBufferIndex + 12] = v12;
             _vertices.buffer[vertexBufferIndex + 15] = v15;
-            float trimmedBorderTop = textureInfo_.borderTop - textureInfo_.trim_y;
-            float trimmedBorderBottom = textureInfo_.borderBottom - (textureInfo_.rawHeight - textureInfo_.trim_y - textureInfo_.height);
-            float yStep1 = trimmedBorderBottom / height_;                  // position step, not uv step
-            float yStep2 = (height_ - trimmedBorderTop) / height_;
+            float yStep1 = (float)textureInfo_.borderBottom / height_;                  // position step, not uv step
+            float yStep2 = (height_ - textureInfo_.borderTop) / height_;
             _vertices.buffer[vertexBufferIndex + 4] = v0 + (v12 - v0) * yStep1;
             _vertices.buffer[vertexBufferIndex + 7] = v3 + (v15 - v3) * yStep1;
             _vertices.buffer[vertexBufferIndex + 8] = v0 + (v12 - v0) * yStep2;
             _vertices.buffer[vertexBufferIndex + 11] = v3 + (v15 - v3) * yStep2;
             // mid columns
-            float trimmedBorderLeft = textureInfo_.borderLeft - textureInfo_.trim_x;
-            float trimmedBorderRight = textureInfo_.borderRight - (textureInfo_.rawWidth - textureInfo_.trim_x - textureInfo_.width);
-            float xStep1 = trimmedBorderLeft / width_;
-            float xStep2 = (width_ - trimmedBorderRight) / width_;
+            float xStep1 = (float)textureInfo_.borderLeft / width_;
+            float xStep2 = (width_ - textureInfo_.borderRight) / width_;
             for (int i = 0; i <= 12; i += 4) {
                 Vector3 left = _vertices.buffer[vertexBufferIndex + i];
                 Vector3 right = _vertices.buffer[vertexBufferIndex + i + 3];
@@ -376,22 +372,18 @@ public class exSprite : exSpriteBase {
             }
         }
         if (/*transparent_ == false && */(updateFlags & exUpdateFlags.UV) != 0 && textureInfo_ != null) {
-            float trimmedBorderTop = textureInfo_.borderTop - textureInfo_.trim_y;
-            float trimmedBorderBottom = textureInfo_.borderBottom - (textureInfo_.rawHeight - textureInfo_.trim_y - textureInfo_.height);
-            float trimmedBorderLeft = textureInfo_.borderLeft - textureInfo_.trim_x;
-            float trimmedBorderRight = textureInfo_.borderRight - (textureInfo_.rawWidth - textureInfo_.trim_x - textureInfo_.width);
             float xStep1, xStep2, yStep1, yStep2;
             if (textureInfo_.rotated == false) {
-                yStep1 = trimmedBorderBottom / textureInfo_.height;  // uv step, not position step
-                yStep2 = (textureInfo_.height - trimmedBorderTop) / textureInfo_.height;
-                xStep1 = trimmedBorderLeft / textureInfo_.width;
-                xStep2 = (textureInfo_.width - trimmedBorderRight) / textureInfo_.width;
+                yStep1 = (float)textureInfo_.borderBottom / textureInfo_.height;  // uv step, not position step
+                yStep2 = (float)(textureInfo_.height - textureInfo_.borderTop) / textureInfo_.height;
+                xStep1 = (float)textureInfo_.borderLeft / textureInfo_.width;
+                xStep2 = (float)(textureInfo_.width - textureInfo_.borderRight) / textureInfo_.width;
             }
             else {
-                xStep1 = trimmedBorderBottom / textureInfo_.height;  // uv step, not position step
-                xStep2 = (textureInfo_.height - trimmedBorderTop) / textureInfo_.height;
-                yStep1 = trimmedBorderLeft / textureInfo_.width;
-                yStep2 = (textureInfo_.width - trimmedBorderRight) / textureInfo_.width;
+                xStep1 = (float)textureInfo_.borderBottom / textureInfo_.height;  // uv step, not position step
+                xStep2 = (float)(textureInfo_.height - textureInfo_.borderTop) / textureInfo_.height;
+                yStep1 = (float)textureInfo_.borderLeft / textureInfo_.width;
+                yStep2 = (float)(textureInfo_.width - textureInfo_.borderRight) / textureInfo_.width;
             }
             Vector2 uv0, uv15;
             uv0 = _uvs.buffer[vertexBufferIndex + 0];
