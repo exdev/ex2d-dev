@@ -679,8 +679,8 @@ public class exSprite : exSpriteBase {
             _vertexCount = 4 * 4;
             _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
             break;
-        case exSpriteType.Tiled:
-            break;
+        //case exSpriteType.Tiled:
+        //    break;
         //case exSpriteType.Diced:
         //    break;
         default:
