@@ -130,6 +130,17 @@ class exTextureInfoEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void OnInspectorUpdate () {
+        if ( curEdit == null )
+            return;
+
+        Repaint();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void OnGUI () {
 
         if ( curEdit == null ) {
