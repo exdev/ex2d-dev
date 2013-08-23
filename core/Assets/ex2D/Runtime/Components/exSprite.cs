@@ -348,7 +348,7 @@ public class exSprite : exSpriteBase {
 
     private void SlicedUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
         SimpleUpdateBuffers (_vertices, _uvs, _indices);
-        if (textureInfo_ == null || textureInfo_.hasBorder == false) {
+        if (textureInfo_.hasBorder == false) {
             if (_indices != null) {
                 for (int i = 6; i < indexCount; ++i) {
                     _indices.buffer[indexBufferIndex + i] = vertexBufferIndex;  // hide unused triangle
@@ -446,6 +446,10 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     protected override Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix) {
+        if (textureInfo_ == null) {
+            return new Vector3[0];
+        }
+
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
         UpdateVertexAndIndexCount();
         vertices.AddRange(vertexCount);
@@ -500,14 +504,8 @@ public class exSprite : exSpriteBase {
         float halfHeight;
         float halfWidth;
         if (customSize_ == false) {
-            if (textureInfo_ != null) {
-                halfHeight = textureInfo_.height * 0.5f;
-                halfWidth = textureInfo_.width * 0.5f;
-            }
-            else {
-                halfHeight = 0;
-                halfWidth = 0;
-            }
+            halfHeight = textureInfo_.height * 0.5f;
+            halfWidth = textureInfo_.width * 0.5f;
         }
         else {
             halfHeight = height_ * 0.5f;
