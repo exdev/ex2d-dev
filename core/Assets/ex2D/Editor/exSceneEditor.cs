@@ -863,6 +863,9 @@ class exSceneEditor : EditorWindow {
 
     void DrawBoundingRect ( exSpriteBase _node ) {
         Vector3[] vertices = _node.GetWorldVertices();
+        if (vertices.Length == 0) {
+            return;
+        }
         exSprite sprite = _node as exSprite;
         if ( sprite != null && sprite.spriteType == exSpriteType.Sliced) {
             Vector3[] rectVertices = new Vector3[16];

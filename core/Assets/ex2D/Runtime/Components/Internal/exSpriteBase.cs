@@ -533,7 +533,8 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     protected abstract Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix);
         
     // ------------------------------------------------------------------ 
-    // Desc: 
+	/// Get vertices of the sprite
+	/// NOTE: This function returns an empty array If sprite is invisible
     // ------------------------------------------------------------------ 
 
     public Vector3[] GetLocalVertices () {
@@ -541,9 +542,10 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         return GetVertices(ref scaleMatrix);
     }
     
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
+	// ------------------------------------------------------------------ 
+	/// Get vertices of the sprite
+	/// NOTE: This function returns an empty array If sprite is invisible
+	// ------------------------------------------------------------------ 
 
     public Vector3[] GetWorldVertices () {
         Matrix4x4 l2w = cachedTransform.localToWorldMatrix;
