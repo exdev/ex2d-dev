@@ -1387,9 +1387,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
     public void EventInfoHandle ( Rect _rect ) {
         // GUI.BeginGroup(_rect);
         eventInfoRects.Clear();
-        Rect myEventInfoViewRect = new Rect( _rect.x + eventInfoViewRect.x, 
+        Rect myEventInfoViewRect = new Rect( _rect.x,
                                              _rect.y + eventInfoViewRect.y,
-                                             eventInfoViewRect.width,
+                                             _rect.width,
                                              eventInfoViewRect.height );
 
         List<int> selectedIdxList = new List<int>();
