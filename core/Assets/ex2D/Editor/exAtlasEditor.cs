@@ -61,9 +61,6 @@ partial class exAtlasEditor : EditorWindow {
 
     exRectSelection<Object> rectSelection = null;
 
-    Material quadMaterial = null;
-    Mesh quadMesh = null;
-
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
     ///////////////////////////////////////////////////////////////////////////////
@@ -76,12 +73,6 @@ partial class exAtlasEditor : EditorWindow {
         title = "Atlas Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
-        minSize = new Vector2(500f, 500f);
-
-        quadMaterial = new Material( Shader.Find("ex2D/Alpha Blended") );
-        quadMaterial.hideFlags = HideFlags.DontSave;
-        quadMesh = new Mesh();
-        quadMesh.hideFlags = HideFlags.DontSave;
 
         rectSelection = new exRectSelection<Object>( PickObject,
                                                      PickRectObjects,
@@ -89,15 +80,6 @@ partial class exAtlasEditor : EditorWindow {
 
         UpdateEditObject ();
     }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void OnDestroy () {
-        Object.DestroyImmediate(quadMaterial);
-        Object.DestroyImmediate(quadMesh);
-    } 
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -395,7 +377,7 @@ partial class exAtlasEditor : EditorWindow {
             // Help
             // ======================================================== 
 
-            if ( GUILayout.Button( exEditorUtility.HelpTexture(), EditorStyles.toolbarButton ) ) {
+            if ( GUILayout.Button( exEditorUtility.textureHelp, EditorStyles.toolbarButton ) ) {
                 Help.BrowseURL("http://ex-dev.com/ex2d/docs/");
             }
 
@@ -638,7 +620,7 @@ partial class exAtlasEditor : EditorWindow {
             Color old = GUI.color;
             GUI.color = curEdit.bgColor;
                 if ( curEdit.showCheckerboard ) {
-                    Texture2D checker = exEditorUtility.CheckerboardTexture();
+                    Texture2D checker = exEditorUtility.textureCheckerboard;
                     GUI.DrawTextureWithTexCoords ( atlasRect, checker, 
                                                    new Rect( 0.0f, 0.0f, atlasRect.width/(checker.width * curEdit.scale), atlasRect.height/(checker.height * curEdit.scale)) );
                 }
@@ -685,9 +667,9 @@ partial class exAtlasEditor : EditorWindow {
             GUI.EndGroup();
 
             // border
-            exEditorUtility.DrawRect( _rect,
-                                      new Color( 1,1,1,0 ), 
-                                      EditorStyles.label.normal.textColor );
+            exEditorUtility.GUI_DrawRect( _rect,
+                                          new Color( 1,1,1,0 ), 
+                                          EditorStyles.label.normal.textColor );
             break;
 
         case EventType.MouseDown:
@@ -853,34 +835,34 @@ partial class exAtlasEditor : EditorWindow {
                 float yStart = trim_y/(float)_rawTexture.height;
                 float yEnd = yStart + trim_height/(float)_rawTexture.height;
 
-                quadMaterial.mainTexture = _rawTexture;
-                quadMaterial.SetPass(0);
+                exEditorUtility.materialQuad.mainTexture = _rawTexture;
+                exEditorUtility.materialQuad.SetPass(0);
 
-                quadMesh.hideFlags = HideFlags.DontSave;
-                quadMesh.vertices = new Vector3[] {
+                exEditorUtility.meshQuad.hideFlags = HideFlags.DontSave;
+                exEditorUtility.meshQuad.vertices = new Vector3[] {
                     new Vector3 ( clippedRect.x, clippedRect.y, 0.0f ),
                     new Vector3 ( clippedRect.x, clippedRect.y + clippedRect.height, 0.0f ),
                     new Vector3 ( clippedRect.x + clippedRect.width, clippedRect.y + clippedRect.height, 0.0f ),
                     new Vector3 ( clippedRect.x + clippedRect.width, clippedRect.y, 0.0f ),
                 };
-                quadMesh.uv = new Vector2[] {
+                exEditorUtility.meshQuad.uv = new Vector2[] {
                     new Vector2 ( xEnd, yEnd ),
                     new Vector2 ( xStart, yEnd ),
                     new Vector2 ( xStart, yStart ),
                     new Vector2 ( xEnd, yStart ),
                 };
-                quadMesh.colors32 = new Color32[] {
+                exEditorUtility.meshQuad.colors32 = new Color32[] {
                     new Color32 ( 255, 255, 255, 255 ),
                     new Color32 ( 255, 255, 255, 255 ),
                     new Color32 ( 255, 255, 255, 255 ),
                     new Color32 ( 255, 255, 255, 255 ),
                 };
-                quadMesh.triangles = new int[] {
+                exEditorUtility.meshQuad.triangles = new int[] {
                     0, 1, 2,
                     0, 2, 3
                 };
 
-                Graphics.DrawMeshNow ( quadMesh, Vector3.zero, Quaternion.identity );
+                Graphics.DrawMeshNow ( exEditorUtility.meshQuad, Vector3.zero, Quaternion.identity );
             }
             else {
                 GUI.DrawTextureWithTexCoords( _rect, 
@@ -893,7 +875,7 @@ partial class exAtlasEditor : EditorWindow {
         }
 
         if ( _selected ) {
-            exEditorUtility.DrawRectBorder( _rect, curEdit.elementSelectColor );
+            exEditorUtility.GUI_DrawRectBorder( _rect, curEdit.elementSelectColor );
         }
     }
 

@@ -107,7 +107,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
         title = "Sprite Animation Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
-        minSize = new Vector2(500f, 500f);
 
         frameRectSelection = new exRectSelection<FrameInfo>( PickObject_FrameInfo,
                                                              PickRectObjects_FrameInfo,
@@ -473,7 +472,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
             EditorGUI.BeginChangeCheck();
             isPlaying = GUILayout.Toggle ( isPlaying, 
-                                           exEditorUtility.AnimationPlayTexture(),
+                                           exEditorUtility.textureAnimationPlay,
                                            EditorStyles.toolbarButton );
             //
             if ( EditorGUI.EndChangeCheck() ) {
@@ -487,7 +486,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // prev frame 
             // ======================================================== 
 
-            if ( GUILayout.Button ( exEditorUtility.AnimationPrevTexture(), EditorStyles.toolbarButton ) ) {
+            if ( GUILayout.Button ( exEditorUtility.textureAnimationPrev, EditorStyles.toolbarButton ) ) {
                 curFrame = System.Math.Max ( curFrame - 1, 0 );
             }
 
@@ -495,7 +494,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // next frame 
             // ======================================================== 
 
-            if ( GUILayout.Button ( exEditorUtility.AnimationNextTexture(), EditorStyles.toolbarButton ) ) {
+            if ( GUILayout.Button ( exEditorUtility.textureAnimationNext, EditorStyles.toolbarButton ) ) {
                 curFrame = System.Math.Min ( curFrame + 1, totalFrames );
             }
 
@@ -505,7 +504,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // add event 
             // ======================================================== 
 
-            if ( GUILayout.Button ( exEditorUtility.AddEventTexture(), EditorStyles.toolbarButton ) ) {
+            if ( GUILayout.Button ( exEditorUtility.textureAddEvent, EditorStyles.toolbarButton ) ) {
                 curEdit.AddEmptyEvent( curFrame );
                 curEdit.StableSortEvents();
                 EditorUtility.SetDirty(curEdit);
@@ -575,7 +574,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             // Help
             // ======================================================== 
 
-            if ( GUILayout.Button( exEditorUtility.HelpTexture(), EditorStyles.toolbarButton ) ) {
+            if ( GUILayout.Button( exEditorUtility.textureHelp, EditorStyles.toolbarButton ) ) {
                 Help.BrowseURL("http://ex-dev.com/ex2d/docs/");
             }
 
@@ -840,26 +839,26 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
                         // draw scalar
                         if ( heightRatio >= 1.0f ) {
-                            exEditorUtility.DrawLine ( x, yStart,
-                                                       x, yStart - scalarHeight, 
-                                                       Color.gray, 
-                                                       1 );
-                            exEditorUtility.DrawLine ( x, yStart,
-                                                       x+1, yStart - scalarHeight,
-                                                       Color.gray, 
-                                                       1 );
+                            exEditorUtility.GL_DrawLineAA ( x, yStart,
+                                                            x, yStart - scalarHeight, 
+                                                            Color.gray, 
+                                                            1 );
+                            exEditorUtility.GL_DrawLineAA ( x, yStart,
+                                                            x+1, yStart - scalarHeight,
+                                                            Color.gray, 
+                                                            1 );
                         }
                         else if ( heightRatio >= 0.5f ) {
-                            exEditorUtility.DrawLine ( x, yStart,
-                                                       x, yStart - scalarHeight * heightRatio,
-                                                       Color.gray, 
-                                                       1 );
+                            exEditorUtility.GL_DrawLineAA ( x, yStart,
+                                                            x, yStart - scalarHeight * heightRatio,
+                                                            Color.gray, 
+                                                            1 );
                         }
                         else {
-                            exEditorUtility.DrawLine ( x, yStart,
-                                                       x, yStart - scalarHeight * heightRatio,
-                                                       Color.gray, 
-                                                       1 );
+                            exEditorUtility.GL_DrawLineAA ( x, yStart,
+                                                            x, yStart - scalarHeight * heightRatio,
+                                                            Color.gray, 
+                                                            1 );
                         }
 
                         // draw lable
@@ -895,10 +894,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 while ( idx >= 0) {
                     if ( i % lodIntervalList[idx] == 0 ) {
                         float ratio = lodWidthList[idx] / maxWidth;
-                        exEditorUtility.DrawLine ( x, yStart,
-                                                   x, yStart + boxHeight, 
-                                                   new Color( 0.4f, 0.4f, 0.4f, ratio - 0.3f ),
-                                                   1 );
+                        exEditorUtility.GL_DrawLineAA ( x, yStart,
+                                                        x, yStart + boxHeight, 
+                                                        new Color( 0.4f, 0.4f, 0.4f, ratio - 0.3f ),
+                                                        1 );
                         break;
                     }
                     --idx;
@@ -918,7 +917,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     solidColor = new Color( 0.2f, 0.85f, 0.0f, 0.2f );
                 }
 
-                exEditorUtility.DrawRect ( frameRect, solidColor, borderColor );
+                exEditorUtility.GUI_DrawRect ( frameRect, solidColor, borderColor );
                 Rect rect = new Rect ( frameRect.x + 5.0f,
                                        frameRect.y + 5.0f,
                                        frameRect.width - 10.0f,
@@ -931,16 +930,16 @@ partial class exSpriteAnimationEditor : EditorWindow {
             }
 
             // draw unused block
-            exEditorUtility.DrawLine ( 0, yStart + eventViewHeight,
-                                       boxWidth, yStart + eventViewHeight,
-                                       new Color( 0.8f, 0.8f, 0.8f, 1.0f ),
-                                       1 );
+            exEditorUtility.GL_DrawLineAA ( 0, yStart + eventViewHeight,
+                                            boxWidth, yStart + eventViewHeight,
+                                            new Color( 0.8f, 0.8f, 0.8f, 1.0f ),
+                                            1 );
 
             if ( boxWidth > offset + totalWidth ) {
-                exEditorUtility.DrawRect( new Rect ( offset + totalWidth,
-                                                     yStart,
-                                                     boxWidth - (offset + totalWidth),
-                                                     boxHeight ),
+                exEditorUtility.GUI_DrawRect( new Rect ( offset + totalWidth,
+                                                         yStart,
+                                                         boxWidth - (offset + totalWidth),
+                                                         boxHeight ),
                                           new Color(0.7f, 0.7f, 0.7f, 1.0f),
                                           new Color(0.8f, 0.8f, 0.8f, 0.0f) );
             }
@@ -1016,7 +1015,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         // draw border
         switch ( e.type ) {
         case EventType.Repaint:
-            exEditorUtility.DrawRectBorder ( new Rect( _rect.x-1, _rect.y + topHeight - 1, boxWidth+2, boxHeight+2 ), Color.black );
+            exEditorUtility.GUI_DrawRectBorder ( new Rect( _rect.x-1, _rect.y + topHeight - 1, boxWidth+2, boxHeight+2 ), Color.black );
             break;
         }
 
@@ -1044,7 +1043,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         switch ( e.type ) {
         case EventType.Repaint:
             // checker box
-            Texture2D checker = exEditorUtility.CheckerboardTexture();
+            Texture2D checker = exEditorUtility.textureCheckerboard;
             GUI.DrawTextureWithTexCoords ( _rect, checker, 
                                            new Rect( 0.0f, 0.0f, _rect.width/checker.width, _rect.height/checker.height) );
 
@@ -1057,9 +1056,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
             }
 
             // border
-            exEditorUtility.DrawRect( new Rect(_rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4),
-                                      new Color( 1,1,1,0 ), 
-                                      EditorStyles.label.normal.textColor );
+            exEditorUtility.GUI_DrawRect( new Rect(_rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4),
+                                          new Color( 1,1,1,0 ), 
+                                          EditorStyles.label.normal.textColor );
 
             break;
         }
@@ -1377,7 +1376,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         GUI.color = old;
 
         // DEBUG { 
-        // exEditorUtility.DrawRectBorder ( _rect, Color.white );
+        // exEditorUtility.GUI_DrawRectBorder ( _rect, Color.white );
         // } DEBUG end 
     }
 
@@ -1397,8 +1396,8 @@ partial class exSpriteAnimationEditor : EditorWindow {
 
         float curX = _rect.x + offset;
         float yStart = _rect.y + eventInfoViewRect.y;
-        float markerWidth = exEditorUtility.EventMarkerTexture().width; 
-        float markerHeight = exEditorUtility.EventMarkerTexture().height + 2.0f; 
+        float markerWidth = exEditorUtility.textureEventMarker.width; 
+        float markerHeight = exEditorUtility.textureEventMarker.height + 2.0f; 
         int lastFrame = -1;
         int sameFrameCount = 0;
         float unitFrameWidth = totalWidth/(float)totalFrames;
@@ -1477,7 +1476,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                 else {
                     GUI.color = new Color(0.9f, 0.9f, 0.9f, 1f);
                 }
-                GUI.DrawTexture ( eventInfoRect, exEditorUtility.EventMarkerTexture() ); 
+                GUI.DrawTexture ( eventInfoRect, exEditorUtility.textureEventMarker ); 
             }
             GUI.color = old;
 
@@ -1643,7 +1642,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
         case EventType.Repaint:
             if ( inDraggingFrameInfoState ) {
                 for ( int i = 0; i < selectedFrameRects.Count; ++i ) {
-                    exEditorUtility.DrawRectBorder ( selectedFrameRects[i], Color.yellow );
+                    exEditorUtility.GUI_DrawRectBorder ( selectedFrameRects[i], Color.yellow );
                 }
 
                 if ( insertAt != -1 ) {
@@ -1651,14 +1650,14 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     float playOffset = (float)frames/(float)totalFrames * totalWidth;
                     float xPos = offset + playOffset;
 
-                    exEditorUtility.DrawRect ( new Rect ( xPos-3.0f, 20.0f + 25.0f, 6.0f, frameInfoViewRect.height ), 
-                                               new Color( 0.0f, 0.2f, 1.0f, 0.8f ),
-                                               new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
+                    exEditorUtility.GUI_DrawRect ( new Rect ( xPos-3.0f, 20.0f + 25.0f, 6.0f, frameInfoViewRect.height ), 
+                                                   new Color( 0.0f, 0.2f, 1.0f, 0.8f ),
+                                                   new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
                 }
             }
             else {
                 for ( int i = 0; i < selectedFrameRects.Count; ++i ) {
-                    exEditorUtility.DrawRectBorder ( selectedFrameRects[i], Color.white );
+                    exEditorUtility.GUI_DrawRectBorder ( selectedFrameRects[i], Color.white );
                 }
 
                 for ( int i = 0; i < resizeFrameRects.Count; ++i ) {
@@ -1666,9 +1665,9 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     if ( resizeIdx == i ) {
                         continue;
                     }
-                    exEditorUtility.DrawRect ( resizeFrameRects[i], 
-                                               new Color( 1.0f, 0.0f, 0.0f, 1.0f ),
-                                               borderColor );
+                    exEditorUtility.GUI_DrawRect ( resizeFrameRects[i], 
+                                                   new Color( 1.0f, 0.0f, 0.0f, 1.0f ),
+                                                   borderColor );
                 }
 
                 if ( inResizeFrameInfoState ) {
@@ -1677,17 +1676,17 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     float playOffset = (float)frames/(float)totalFrames * totalWidth;
                     float xPos = offset + playOffset;
 
-                    exEditorUtility.DrawRect ( new Rect( xPos, yStart,
-                                                         e.mousePosition.x - xPos,
-                                                         frameInfoViewRect.height-20.0f ), 
-                                               new Color( 1.0f, 1.0f, 0.0f, 0.2f ),
-                                               Color.yellow );
+                    exEditorUtility.GUI_DrawRect ( new Rect( xPos, yStart,
+                                                             e.mousePosition.x - xPos,
+                                                             frameInfoViewRect.height-20.0f ), 
+                                                   new Color( 1.0f, 1.0f, 0.0f, 0.2f ),
+                                                   Color.yellow );
 
                     Rect resizeFrameRect = resizeFrameRects[resizeIdx];
                     resizeFrameRect.x = e.mousePosition.x-3.0f;
-                    exEditorUtility.DrawRect ( resizeFrameRect, 
-                                               new Color( 1.0f, 0.0f, 0.0f, 1.0f ),
-                                               Color.yellow );
+                    exEditorUtility.GUI_DrawRect ( resizeFrameRect, 
+                                                   new Color( 1.0f, 0.0f, 0.0f, 1.0f ),
+                                                   Color.yellow );
                 }
             }
             break;
@@ -1881,14 +1880,14 @@ partial class exSpriteAnimationEditor : EditorWindow {
                     lineColor = Color.yellow;
                 }
 
-                exEditorUtility.DrawRect( needleRect,
-                                          new Color( 1.0f, 0.0f, 0.0f, 0.5f ),
-                                          lineColor );
+                exEditorUtility.GUI_DrawRect( needleRect,
+                                              new Color( 1.0f, 0.0f, 0.0f, 0.5f ),
+                                              lineColor );
 
-                exEditorUtility.DrawLine ( xPos, needleRect.yMax,
-                                           xPos, yMax,
-                                          lineColor,
-                                          1 );
+                exEditorUtility.GL_DrawLineAA ( xPos, needleRect.yMax,
+                                                xPos, yMax,
+                                                lineColor,
+                                                1 );
                 // show label
                 GUI.Label ( new Rect( xPos - 15.0f, yMax, 30.0f, 20.0f ),
                             ToString_FramesInSeconds( (float)curFrame/(float)curEdit.frameRate, curEdit.frameRate ) );

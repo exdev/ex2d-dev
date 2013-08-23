@@ -510,7 +510,9 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     internal virtual void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
         vertexBufferIndex = _vertices.Count;
         _vertices.AddRange(vertexCount);
-        _colors32.AddRange(vertexCount);
+        if (_colors32 != null) {
+            _colors32.AddRange(vertexCount);
+        }
         _uvs.AddRange(vertexCount);
         updateFlags |= exUpdateFlags.AllExcludeIndex;
     }
@@ -554,19 +556,27 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// Get sprite's geometry data
     // ------------------------------------------------------------------ 
 
-    public void GetBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs) {
+    public void GetBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices = null) {
         _vertices.Clear();
         _uvs.Clear();
+        if (_indices != null) {
+            _indices.Clear();
+            _indices.AddRange(indexCount);
+        }
         if (visible) {
             exUpdateFlags originalFlags = updateFlags;
-            exList<Color32> colors = new exList<Color32>(vertexCount);
-
             int originalVertexBufferIndex = vertexBufferIndex;
-            FillBuffers(_vertices, _uvs, colors);
-            UpdateTransform();
-            UpdateBuffers(_vertices, _uvs, colors);
-            vertexBufferIndex = originalVertexBufferIndex;
+            int originalIndexBufferIndex = indexBufferIndex;
 
+            FillBuffers(_vertices, _uvs, null);
+            UpdateTransform();
+
+            indexBufferIndex = 0;
+            updateFlags |= exUpdateFlags.Index;
+            UpdateBuffers(_vertices, _uvs, null, _indices);
+
+            vertexBufferIndex = originalVertexBufferIndex;
+            indexBufferIndex = originalIndexBufferIndex;
             updateFlags = originalFlags;
         }
     }
