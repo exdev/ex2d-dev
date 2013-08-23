@@ -167,19 +167,6 @@ public class ex2DRenderer : MonoBehaviour {
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
-    
-    void OnPreRender () {
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            return;
-        }
-#endif
-        UpdateLayers();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
 
     void OnDestroy () {
         instance = null;
@@ -187,7 +174,7 @@ public class ex2DRenderer : MonoBehaviour {
     }
 
     // ------------------------------------------------------------------ 
-    // Desc: 
+    /// Main update
     // ------------------------------------------------------------------ 
 
     void LateUpdate () {
@@ -195,6 +182,12 @@ public class ex2DRenderer : MonoBehaviour {
             if ( layerList[i] == null )
                 layerList.RemoveAt(i);
         }
+#if UNITY_EDITOR
+        if (!UnityEditor.EditorApplication.isPlaying) {
+            return;
+        }
+#endif
+        UpdateLayers();
     }
 
 #if EX_DEBUG

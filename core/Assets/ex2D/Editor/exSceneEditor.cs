@@ -1151,6 +1151,12 @@ class exSceneEditor : EditorWindow {
                 }
 
                 if ( changed ) {
+                    exSprite sprite = spriteBase as exSprite;
+                    if (sprite != null && sprite.spriteType == exSpriteType.Sliced && sprite.textureInfo != null && sprite.textureInfo.hasBorder) {
+                        size.x = Mathf.Max(size.x, sprite.textureInfo.borderLeft + sprite.textureInfo.borderRight);
+                        size.y = Mathf.Max(size.y, sprite.textureInfo.borderBottom + sprite.textureInfo.borderTop);
+                    }
+                    
                     spriteBase.width = size.x;
                     spriteBase.height = size.y;
 
