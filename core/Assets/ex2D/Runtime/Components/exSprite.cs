@@ -20,7 +20,7 @@ using System.Collections.Generic;
 public enum exSpriteType {
     Simple = 0,
     Sliced,
-    //Tiled,
+    Tiled,
     //Diced,
 }
 
@@ -38,11 +38,10 @@ public class exSprite : exSpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
     
     // ------------------------------------------------------------------ 
+    [SerializeField] private exTextureInfo textureInfo_ = null;
     /// The texture info used in this sprite. If it's null, sprite will become invisible.
     // ------------------------------------------------------------------ 
 
-    [SerializeField]
-    private exTextureInfo textureInfo_ = null;
     public exTextureInfo textureInfo {
         get { return textureInfo_; }
         set {
@@ -134,10 +133,40 @@ public class exSprite : exSpriteBase {
                         myLayer.Add(this);
                         exDebug.Assert(currentVertexCount == newVertexCount && currentIndexCount == newIndexCount);
                     }
+                    else {
+                        updateFlags |= exUpdateFlags.All;
+                    }
                 }
             }
         }
     }
+
+    //// ------------------------------------------------------------------ 
+    //[SerializeField] protected Vector2 tilling_ = new Vector2(10.0f, 10.0f);
+    //// ------------------------------------------------------------------ 
+
+    //public Vector2 tilling {
+    //    get { return tilling_; }
+    //    set {
+    //        if ( tilling_ != value ) {
+    //            tilling_ = value;
+    //            if (layer_ != null) {
+    //                int newVertexCount, newIndexCount;
+    //                GetVertexAndIndexCount(spriteType_, out newVertexCount, out newIndexCount);
+    //                if (currentVertexCount != newVertexCount || currentIndexCount != newIndexCount) {
+    //                    // rebuild geometry
+    //                    exLayer myLayer = layer_;
+    //                    myLayer.Remove(this);
+    //                    myLayer.Add(this);
+    //                    exDebug.Assert(currentVertexCount == newVertexCount && currentIndexCount == newIndexCount);
+    //                }
+    //                else {
+    //                    updateFlags |= exUpdateFlags.All;
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -650,8 +679,8 @@ public class exSprite : exSpriteBase {
             _vertexCount = 4 * 4;
             _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
             break;
-        //case exSpriteType.Tiled:
-        //    break;
+        case exSpriteType.Tiled:
+            break;
         //case exSpriteType.Diced:
         //    break;
         default:

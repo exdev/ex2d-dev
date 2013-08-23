@@ -809,9 +809,7 @@ public class exLayer : MonoBehaviour
         _sprite.FillBuffers(_mesh.vertices, _mesh.uvs, _mesh.colors32);
         if (exSpriteBase.enableFastShowHide) {
             AddIndices(_mesh, _sprite);
-            if (_sprite.visible == false) {
-                FastHideSprite(_sprite);
-            }
+            _sprite.transparent = !_sprite.visible;
         }
         else if (_sprite.visible) {
             AddIndices(_mesh, _sprite);
