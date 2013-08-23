@@ -180,7 +180,33 @@ public static class exEditorUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public static void GL_DrawLines ( Vector2[] _points, Color _color ) {
+        if ( _points.Length < 2 ) {
+            Debug.LogWarning ("Failed to call GL_DrawLines, not enough points");
+            return;
+        }
+
+        materialLine.SetPass(0);
+        GL.Begin( GL.LINES );
+            GL.Color(_color);
+
+            for ( int i = 0; i < _points.Length; i += 2 ) {
+                GL.Vertex3( _points[i+0].x, _points[i+0].y, 0.0f );
+                GL.Vertex3( _points[i+1].x, _points[i+1].y, 0.0f );
+            }
+        GL.End();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public static void GL_DrawRectLine ( Vector3[] _points, Color _color ) {
+        if ( _points.Length < 4 ) {
+            Debug.LogWarning ("Failed to call GL_DrawRectLine, not enough points");
+            return;
+        }
+
         materialLine.SetPass(0);
         GL.Begin( GL.LINES );
             GL.Color(_color);

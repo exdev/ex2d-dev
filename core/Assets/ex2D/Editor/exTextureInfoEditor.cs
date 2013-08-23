@@ -56,7 +56,7 @@ class exTextureInfoEditor : EditorWindow {
     Color rawRectColor = new Color ( 0.8f, 0.0f, 0.0f );
 
     bool showPixelGrid = false;
-    Color pixelGridColor = new Color ( 1.0f, 1.0f, 1.0f );
+    Color pixelGridColor = new Color ( 1.0f, 1.0f, 1.0f, 0.3f );
 
     // sliced
     Color slicedColor = new Color ( 0.0f, 0.8f, 0.0f );
@@ -179,7 +179,6 @@ class exTextureInfoEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void Reset () {
-        scale = 1.0f;
     }
 
     // ------------------------------------------------------------------ 
@@ -458,6 +457,24 @@ class exTextureInfoEditor : EditorWindow {
             int trim_right = curEdit.rawWidth - curEdit.trim_x - curEdit.width;
             int trim_top   = curEdit.rawHeight - curEdit.trim_y - curEdit.height;
             int trim_bot   = curEdit.trim_y;
+
+            // draw pixel grid
+            if ( showPixelGrid ) {
+                Vector2[] points = new Vector2[(curEdit.width + curEdit.height) * 2];
+                int idx = 0;
+                for ( int x = 0; x < curEdit.width; ++x ) {
+                    points[idx]   = new Vector2( -half_width + x, -half_height );
+                    points[idx+1] = new Vector2( -half_width + x,  half_height );
+                    idx += 2;
+                }
+                for ( int y = 0; y < curEdit.height; ++y ) {
+                    points[idx]   = new Vector2( -half_width, -half_height + y );
+                    points[idx+1] = new Vector2(  half_width, -half_height + y );
+                    idx += 2;
+                }
+
+                exEditorUtility.GL_DrawLines ( points, pixelGridColor );
+            }
 
             // draw raw-texture bounding 
             if ( showRawRect ) {
