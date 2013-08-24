@@ -826,15 +826,16 @@ class exSceneEditor : EditorWindow {
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
         exList<Vector2> uvs = exList<Vector2>.GetTempList();
         exList<int> indices = exList<int>.GetTempList();
-        _node.GetBuffers(vertices, uvs, indices);
+        exList<Color32> colors = exList<Color32>.GetTempList();
+        _node.GetBuffers(vertices, uvs, colors, indices);
         exDebug.Assert(uvs.Count == vertices.Count);
 
         //GL.PushMatrix();
         //GL.MultMatrix( _node.transform.localToWorldMatrix );
         GL.Begin(GL.TRIANGLES);
-        GL.Color( new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
         for (int i = 0; i < indices.Count; ++i) {
             int vertexIndex = indices.buffer[i];
+            GL.Color ( colors.buffer[vertexIndex] );
             GL.TexCoord2 ( uvs.buffer[vertexIndex].x, uvs.buffer[vertexIndex].y );
             GL.Vertex ( vertices.buffer[vertexIndex] );
         }
