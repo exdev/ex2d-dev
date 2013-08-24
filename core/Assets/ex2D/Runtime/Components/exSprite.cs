@@ -278,14 +278,14 @@ public class exSprite : exSpriteBase {
                 for (int i = indexBufferIndex; i < indexBufferIndex + indexCount; ++i) {
                     _indices.buffer[i] = vertexBufferIndex;
                 }
-                return exUpdateFlags.Index;
+                return exUpdateFlags.All;   // TODO: remove from layer if no material
             }
             else {
                 Vector3 pos = cachedTransform.position;
                 for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount; ++i) {
                     _vertices.buffer[i] = pos;
                 }
-                return exUpdateFlags.Vertex;
+                return exUpdateFlags.All;   // TODO: remove from layer if no material
             }
         }
     }
@@ -353,16 +353,16 @@ public class exSprite : exSpriteBase {
             SlicedUpdateVertexBuffer(_vertices, vertexBufferIndex, ref cachedWorldMatrix);
         }
         if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
-            int index = -1;
+            int index = indexBufferIndex - 1;
             for (int i = 0; i <= 10; ++i) {
-                if (i != 3 && i != 7) {
-                    // 0 1 2 4 5 6 8 9 10
-                    _indices.buffer[++index] = i;
-                    _indices.buffer[++index] = i + 4;
-                    _indices.buffer[++index] = i + 5;
-                    _indices.buffer[++index] = i + 5;
-                    _indices.buffer[++index] = i + 1;
-                    _indices.buffer[++index] = i;
+                if (i != 3 && i != 7) {     // 0 1 2 4 5 6 8 9 10
+                    int blVertexIndex = vertexBufferIndex + i;
+                    _indices.buffer[++index] = blVertexIndex;
+                    _indices.buffer[++index] = blVertexIndex + 4;
+                    _indices.buffer[++index] = blVertexIndex + 5;
+                    _indices.buffer[++index] = blVertexIndex + 5;
+                    _indices.buffer[++index] = blVertexIndex + 1;
+                    _indices.buffer[++index] = blVertexIndex;
                 }
             }
         }
