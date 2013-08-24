@@ -558,7 +558,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     /// Get sprite's geometry data
     // ------------------------------------------------------------------ 
 
-    public void GetBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices = null) {
+    public void GetBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors, exList<int> _indices = null) {
         _vertices.Clear();
         _uvs.Clear();
         if (_indices != null) {
@@ -570,12 +570,12 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             int originalVertexBufferIndex = vertexBufferIndex;
             int originalIndexBufferIndex = indexBufferIndex;
 
-            FillBuffers(_vertices, _uvs, null);
+            FillBuffers(_vertices, _uvs, _colors);
             UpdateTransform();
 
             indexBufferIndex = 0;
             updateFlags |= exUpdateFlags.Index;
-            UpdateBuffers(_vertices, _uvs, null, _indices);
+            UpdateBuffers(_vertices, _uvs, _colors, _indices);
 
             vertexBufferIndex = originalVertexBufferIndex;
             indexBufferIndex = originalIndexBufferIndex;

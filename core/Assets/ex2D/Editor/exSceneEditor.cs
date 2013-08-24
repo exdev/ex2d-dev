@@ -826,15 +826,16 @@ class exSceneEditor : EditorWindow {
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
         exList<Vector2> uvs = exList<Vector2>.GetTempList();
         exList<int> indices = exList<int>.GetTempList();
-        _node.GetBuffers(vertices, uvs, indices);
+        exList<Color32> colors = exList<Color32>.GetTempList();
+        _node.GetBuffers(vertices, uvs, colors, indices);
         exDebug.Assert(uvs.Count == vertices.Count);
 
         //GL.PushMatrix();
         //GL.MultMatrix( _node.transform.localToWorldMatrix );
         GL.Begin(GL.TRIANGLES);
-        GL.Color( new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
         for (int i = 0; i < indices.Count; ++i) {
             int vertexIndex = indices.buffer[i];
+            GL.Color ( colors.buffer[vertexIndex] );
             GL.TexCoord2 ( uvs.buffer[vertexIndex].x, uvs.buffer[vertexIndex].y );
             GL.Vertex ( vertices.buffer[vertexIndex] );
         }
@@ -1184,15 +1185,15 @@ class exSceneEditor : EditorWindow {
                     spriteBase.height = size.y;
 
                     switch (spriteBase.anchor) {
-                    case Anchor.TopLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*0.5f,  size.y*0.5f, 0.0f ); break;
-                    case Anchor.TopCenter:  trans.position = center + trans.rotation * new Vector3(         0.0f,  size.y*0.5f, 0.0f ); break;
-                    case Anchor.TopRight:   trans.position = center + trans.rotation * new Vector3(  size.x*0.5f,  size.y*0.5f, 0.0f ); break;
-                    case Anchor.MidLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*0.5f,         0.0f, 0.0f ); break;
-                    case Anchor.MidCenter:  trans.position = center;                                                                    break;
-                    case Anchor.MidRight:   trans.position = center + trans.rotation * new Vector3(  size.x*0.5f,         0.0f, 0.0f ); break;
-                    case Anchor.BotLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*0.5f, -size.y*0.5f, 0.0f ); break;
-                    case Anchor.BotCenter:  trans.position = center + trans.rotation * new Vector3(         0.0f, -size.y*0.5f, 0.0f ); break;
-                    case Anchor.BotRight:   trans.position = center + trans.rotation * new Vector3(  size.x*0.5f, -size.y*0.5f, 0.0f ); break;
+                    case Anchor.TopLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.TopCenter:  trans.position = center + trans.rotation * new Vector3(                            0.0f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.TopRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.MidLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f,                            0.0f, 0.0f ); break;
+                    case Anchor.MidCenter:  trans.position = center;                                                                                                          break;
+                    case Anchor.MidRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f,                            0.0f, 0.0f ); break;
+                    case Anchor.BotLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f, -size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.BotCenter:  trans.position = center + trans.rotation * new Vector3(                            0.0f, -size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.BotRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f, -size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
                     }
                 }
             }
