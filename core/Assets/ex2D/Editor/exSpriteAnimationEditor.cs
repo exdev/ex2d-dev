@@ -922,10 +922,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
                                        frameRect.y + 5.0f,
                                        frameRect.width - 10.0f,
                                        frameRect.height - 10.0f );
-                DrawTextureInfo ( rect, 
-                                  fi.textureInfo, 
-                                  Color.white,
-                                  CalculateTextureInfoScale(rect,fi.textureInfo) );
+                exEditorUtility.GUI_DrawRawTextureInfo ( rect, 
+                                                         fi.textureInfo, 
+                                                         Color.white,
+                                                         exEditorUtility.CalculateTextureInfoScale(rect,fi.textureInfo) );
                 curX += frameWidth;
             }
 
@@ -1052,7 +1052,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
             int idx = GetFrameInfoIndexByFrame(curFrame);
             if ( idx != -1 ) {
                 FrameInfo fi = curEdit.frameInfos[idx];
-                DrawTextureInfo ( _rect, fi.textureInfo, Color.white, previewScale, true );
+                exEditorUtility.GUI_DrawRawTextureInfo ( _rect, fi.textureInfo, Color.white, previewScale, true );
             }
 
             // border
@@ -1105,32 +1105,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
         }
         return scale;
     } 
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    float CalculateTextureInfoScale ( Rect _rect, exTextureInfo _textureInfo ) {
-        float scale = 1.0f;
-        if ( _textureInfo == null )
-            return scale;
-
-        float width = _textureInfo.width;
-        float height = _textureInfo.height;
-
-        // confirm the scale, width and height
-        if ( width > _rect.width && height > _rect.height ) {
-            scale = Mathf.Min( _rect.width / width, 
-                               _rect.height / height );
-        }
-        else if ( width > _rect.width ) {
-            scale = _rect.width / width;
-        }
-        else if ( height > _rect.height ) {
-            scale = _rect.height / height;
-        }
-        return scale;
-    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -1327,57 +1301,6 @@ partial class exSpriteAnimationEditor : EditorWindow {
             dd *= 10;
         }
         return sec1 + ":" + sec2.ToString("d"+d);
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void DrawTextureInfo ( Rect _rect, 
-                           exTextureInfo _textureInfo, 
-                           Color _color, 
-                           float _scale = 1.0f,
-                           bool _useTextureOffset = false ) {
-        if ( _textureInfo == null )
-            return;
-
-        Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( _textureInfo.rawTextureGUID );
-        if ( rawTexture == null )
-            return;
-
-        float width = _textureInfo.width * _scale;
-        float height = _textureInfo.height * _scale;
-
-        float offsetX = 0.0f;
-        float offsetY = 0.0f;
-
-        if ( _useTextureOffset ) {
-            offsetX = (_textureInfo.rawWidth - _textureInfo.width) * 0.5f - _textureInfo.trim_x;
-            offsetX *= _scale;
-
-            offsetY = (_textureInfo.rawHeight - _textureInfo.height) * 0.5f - _textureInfo.trim_y;
-            offsetY *= _scale;
-        }
-
-        //
-        Rect pos = new Rect( _rect.center.x - width * 0.5f - offsetX,
-                             _rect.center.y - height * 0.5f + offsetY,
-                             width, 
-                             height );
-
-        // draw the texture
-        Color old = GUI.color;
-        GUI.color = _color;
-        GUI.DrawTextureWithTexCoords( pos, rawTexture,
-                                      new Rect( (float)_textureInfo.trim_x / (float)rawTexture.width,
-                                                (float)_textureInfo.trim_y / (float)rawTexture.height,
-                                                (float)_textureInfo.width  / (float)rawTexture.width,
-                                                (float)_textureInfo.height / (float)rawTexture.height ) );
-        GUI.color = old;
-
-        // DEBUG { 
-        // exEditorUtility.GUI_DrawRectBorder ( _rect, Color.white );
-        // } DEBUG end 
     }
 
     // ------------------------------------------------------------------ 
@@ -1948,10 +1871,10 @@ partial class exSpriteAnimationEditor : EditorWindow {
                                                e.mousePosition.y + 30.0f,
                                                size, 
                                                size );
-                        DrawTextureInfo ( rect,
-                                          textureInfo,
-                                          new Color( 1.0f, 1.0f, 1.0f, 0.7f ),
-                                          CalculateTextureInfoScale(rect,textureInfo) );
+                        exEditorUtility.GUI_DrawRawTextureInfo ( rect,
+                                                                 textureInfo,
+                                                                 new Color( 1.0f, 1.0f, 1.0f, 0.7f ),
+                                                                 exEditorUtility.CalculateTextureInfoScale(rect,textureInfo) );
                     }
                 }
             }

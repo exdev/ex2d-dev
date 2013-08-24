@@ -124,6 +124,117 @@ public static class exEditorUtility {
         GUI.backgroundColor = old;
     }
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void GUI_DrawRawTextureInfo ( Rect _rect, 
+                                                exTextureInfo _textureInfo, 
+                                                Color _color, 
+                                                float _scale = 1.0f,
+                                                bool _useTextureOffset = false ) 
+    {
+        // check texture info 
+        if ( _textureInfo == null )
+            return;
+
+        // check raw/atlas texture
+        Texture2D texture = exEditorUtility.LoadAssetFromGUID<Texture2D>( _textureInfo.rawTextureGUID );
+        if ( texture == null )
+            return;
+
+        // calculate uv
+        Rect uv = new Rect ( (float)_textureInfo.trim_x/(float)texture.width,
+                             (float)_textureInfo.trim_y/(float)texture.height,
+                             (float)_textureInfo.width/(float)texture.width,
+                             (float)_textureInfo.height/(float)texture.height );
+
+        float width = _textureInfo.width * _scale;
+        float height = _textureInfo.height * _scale;
+
+        float offsetX = 0.0f;
+        float offsetY = 0.0f;
+
+        if ( _useTextureOffset ) {
+            offsetX = (_textureInfo.rawWidth - _textureInfo.width) * 0.5f - _textureInfo.trim_x;
+            offsetX *= _scale;
+
+            offsetY = (_textureInfo.rawHeight - _textureInfo.height) * 0.5f - _textureInfo.trim_y;
+            offsetY *= _scale;
+        }
+
+        //
+        Rect pos = new Rect( _rect.center.x - width * 0.5f - offsetX,
+                             _rect.center.y - height * 0.5f + offsetY,
+                             width, 
+                             height );
+
+        // draw the texture
+        Color old = GUI.color;
+        GUI.color = _color;
+        GUI.DrawTextureWithTexCoords( pos, texture, uv );
+        GUI.color = old;
+
+        // DEBUG { 
+        // exEditorUtility.GUI_DrawRectBorder ( _rect, Color.white );
+        // } DEBUG end 
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void GUI_DrawTextureInfo ( Rect _rect,
+                                             exTextureInfo _textureInfo, 
+                                             Color _color,
+                                             bool _useTextureOffset = false ) {
+        if (_textureInfo == null) {
+            return;
+        }
+        if (_textureInfo.texture == null) {
+            return;
+        }
+
+        float s0 = (float) _textureInfo.x / (float) _textureInfo.texture.width;
+        float s1 = (float) (_textureInfo.x+_textureInfo.rotatedWidth)  / (float) _textureInfo.texture.width;
+        float t0 = (float) _textureInfo.y / (float) _textureInfo.texture.height;
+        float t1 = (float) (_textureInfo.y+_textureInfo.rotatedHeight) / (float) _textureInfo.texture.height;
+
+        materialAlphaBlended.mainTexture = _textureInfo.texture;
+        materialAlphaBlended.SetPass(0);
+        GL.Begin(GL.QUADS);
+            GL.Color(_color);
+
+            if ( _textureInfo.rotated == false ) {
+                GL.TexCoord2 ( s0, t0 );
+                GL.Vertex3 ( _rect.x, _rect.yMax, 0.0f );
+
+                GL.TexCoord2 ( s0, t1 );
+                GL.Vertex3 ( _rect.x, _rect.y, 0.0f );
+
+                GL.TexCoord2 ( s1, t1 );
+                GL.Vertex3 ( _rect.xMax, _rect.y, 0.0f );
+
+                GL.TexCoord2 ( s1, t0 );
+                GL.Vertex3 ( _rect.xMax, _rect.yMax, 0.0f );
+            }
+            else {
+                GL.TexCoord2 ( s1, t0 );
+                GL.Vertex3 ( _rect.x, _rect.yMax, 0.0f );
+
+                GL.TexCoord2 ( s0, t0 );
+                GL.Vertex3 ( _rect.x, _rect.y, 0.0f );
+
+                GL.TexCoord2 ( s0, t1 );
+                GL.Vertex3 ( _rect.xMax, _rect.y, 0.0f );
+
+                GL.TexCoord2 ( s1, t1 );
+                GL.Vertex3 ( _rect.xMax, _rect.yMax, 0.0f );
+            }
+
+        GL.End();
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // GL Draw Helper
     ///////////////////////////////////////////////////////////////////////////////
@@ -390,7 +501,33 @@ public static class exEditorUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    static Texture2D FindBuiltinTexture ( ref Texture2D _texture, string _name ) {
+    public static float CalculateTextureInfoScale ( Rect _rect, exTextureInfo _textureInfo ) {
+        float scale = 1.0f;
+        if ( _textureInfo == null )
+            return scale;
+
+        float width = _textureInfo.width;
+        float height = _textureInfo.height;
+
+        // confirm the scale, width and height
+        if ( width > _rect.width && height > _rect.height ) {
+            scale = Mathf.Min( _rect.width / width, 
+                               _rect.height / height );
+        }
+        else if ( width > _rect.width ) {
+            scale = _rect.width / width;
+        }
+        else if ( height > _rect.height ) {
+            scale = _rect.height / height;
+        }
+        return scale;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static Texture2D FindBuiltinTexture ( ref Texture2D _texture, string _name ) {
         // NOTE: hack from "unity editor resources" in Unity3D Contents
         if ( _texture == null ) {
             _texture = EditorGUIUtility.FindTexture(_name);

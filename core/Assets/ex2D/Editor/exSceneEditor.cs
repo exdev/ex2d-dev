@@ -1054,7 +1054,7 @@ class exSceneEditor : EditorWindow {
                 Vector3[] vertices = spriteBase.GetLocalVertices();
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
                 Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
-                Vector3 offset = aabb.center;
+                // Vector3 offset = aabb.center;
                 Vector3 size = new Vector3( spriteBase.width, spriteBase.height, 0.0f );
 
                 Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f, center.y + size.y * 0.5f, 0.0f ) );

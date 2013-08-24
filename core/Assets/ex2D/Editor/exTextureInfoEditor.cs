@@ -45,7 +45,7 @@ class exTextureInfoEditor : EditorWindow {
 
     Camera editCamera;
     Color background = Color.gray;
-    Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
+    // Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
 
     int editModeIndex = 0;
 
@@ -358,7 +358,7 @@ class exTextureInfoEditor : EditorWindow {
 
         switch ( e.type ) {
         case EventType.Repaint:
-            sceneViewRect = new Rect( _rect.x + 2, _rect.y + 2, _rect.width - 4, _rect.height - 4 );
+            // sceneViewRect = new Rect( _rect.x + 2, _rect.y + 2, _rect.width - 4, _rect.height - 4 );
 
             // draw scene view
             DrawSceneView (_rect);
