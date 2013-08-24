@@ -182,11 +182,7 @@ public class ex2DRenderer : MonoBehaviour {
             if ( layerList[i] == null )
                 layerList.RemoveAt(i);
         }
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            return;
-        }
-#endif
+        
         UpdateLayers();
     }
 
