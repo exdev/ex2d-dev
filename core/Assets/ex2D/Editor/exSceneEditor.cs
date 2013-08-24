@@ -1185,15 +1185,15 @@ class exSceneEditor : EditorWindow {
                     spriteBase.height = size.y;
 
                     switch (spriteBase.anchor) {
-                    case Anchor.TopLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*0.5f,  size.y*0.5f, 0.0f ); break;
-                    case Anchor.TopCenter:  trans.position = center + trans.rotation * new Vector3(         0.0f,  size.y*0.5f, 0.0f ); break;
-                    case Anchor.TopRight:   trans.position = center + trans.rotation * new Vector3(  size.x*0.5f,  size.y*0.5f, 0.0f ); break;
-                    case Anchor.MidLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*0.5f,         0.0f, 0.0f ); break;
-                    case Anchor.MidCenter:  trans.position = center;                                                                    break;
-                    case Anchor.MidRight:   trans.position = center + trans.rotation * new Vector3(  size.x*0.5f,         0.0f, 0.0f ); break;
-                    case Anchor.BotLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*0.5f, -size.y*0.5f, 0.0f ); break;
-                    case Anchor.BotCenter:  trans.position = center + trans.rotation * new Vector3(         0.0f, -size.y*0.5f, 0.0f ); break;
-                    case Anchor.BotRight:   trans.position = center + trans.rotation * new Vector3(  size.x*0.5f, -size.y*0.5f, 0.0f ); break;
+                    case Anchor.TopLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.TopCenter:  trans.position = center + trans.rotation * new Vector3(                            0.0f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.TopRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.MidLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f,                            0.0f, 0.0f ); break;
+                    case Anchor.MidCenter:  trans.position = center;                                                                                                          break;
+                    case Anchor.MidRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f,                            0.0f, 0.0f ); break;
+                    case Anchor.BotLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f, -size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.BotCenter:  trans.position = center + trans.rotation * new Vector3(                            0.0f, -size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.BotRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f, -size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
                     }
                 }
             }
