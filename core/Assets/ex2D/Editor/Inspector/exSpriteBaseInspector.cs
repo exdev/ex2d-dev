@@ -30,6 +30,7 @@ class exSpriteBaseInspector : Editor {
     SerializedProperty offsetProp;
     SerializedProperty depthProp;
     SerializedProperty shearProp;
+    SerializedProperty colorProp;
     SerializedProperty shaderProp;
 
     // ------------------------------------------------------------------ 
@@ -156,6 +157,19 @@ class exSpriteBaseInspector : Editor {
                 }
             }
         }
+
+        // color
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( colorProp, new GUIContent("Color"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteBase sp = obj as exSpriteBase;
+                if ( sp ) {
+                    sp.color = colorProp.colorValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
         
         // shader
         EditorGUI.BeginChangeCheck();
@@ -183,6 +197,7 @@ class exSpriteBaseInspector : Editor {
         offsetProp = serializedObject.FindProperty("offset_");
         depthProp = serializedObject.FindProperty("depth_");
         shearProp = serializedObject.FindProperty("shear_");
+        colorProp = serializedObject.FindProperty("color_");
         shaderProp = serializedObject.FindProperty("shader_");
     }
 }
