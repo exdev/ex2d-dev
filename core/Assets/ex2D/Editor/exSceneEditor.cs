@@ -1053,14 +1053,15 @@ class exSceneEditor : EditorWindow {
 
                 Vector3[] vertices = spriteBase.GetLocalVertices();
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
-                Vector3 center = aabb.center;
+                Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
+                Vector3 offset = aabb.center;
                 Vector3 size = new Vector3( spriteBase.width, spriteBase.height, 0.0f );
 
                 Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f, center.y + size.y * 0.5f, 0.0f ) );
                 Vector3 tc = trans.TransformPoint ( new Vector3 (                 center.x, center.y + size.y * 0.5f, 0.0f ) );
                 Vector3 tr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f, center.y + size.y * 0.5f, 0.0f ) );
                 Vector3 ml = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,                 center.y, 0.0f ) );
-                // Vector3 mc = trans.TransformPoint ( new Vector3 (                     center.x,                 center.y, 0.0f ) );
+                // Vector3 mc = trans.TransformPoint ( new Vector3 (                 center.x,                 center.y, 0.0f ) );
                 Vector3 mr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f,                 center.y, 0.0f ) );
                 Vector3 bl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f, center.y - size.y * 0.5f, 0.0f ) );
                 Vector3 bc = trans.TransformPoint ( new Vector3 (                 center.x, center.y - size.y * 0.5f, 0.0f ) );
@@ -1077,6 +1078,8 @@ class exSceneEditor : EditorWindow {
                     delta = ml2 - ml;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
                     delta = -delta;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (ml2 + mr) * 0.5f;
                     changed = true;
@@ -1087,6 +1090,8 @@ class exSceneEditor : EditorWindow {
                 if ( EditorGUI.EndChangeCheck() ) {
                     delta = mr2 - mr;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (mr2 + ml) * 0.5f;
                     changed = true;
@@ -1097,6 +1102,8 @@ class exSceneEditor : EditorWindow {
                 if ( EditorGUI.EndChangeCheck() ) {
                     delta = tc2 - tc;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (tc2 + bc) * 0.5f;
                     changed = true;
@@ -1108,6 +1115,8 @@ class exSceneEditor : EditorWindow {
                     delta = bc2 - bc;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
                     delta = -delta;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (bc2 + tc) * 0.5f;
                     changed = true;
@@ -1118,6 +1127,8 @@ class exSceneEditor : EditorWindow {
                 if ( EditorGUI.EndChangeCheck() ) {
                     delta = tr2 - tr;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (tr2 + bl) * 0.5f;
                     changed = true;
@@ -1129,6 +1140,8 @@ class exSceneEditor : EditorWindow {
                     delta = tl2 - tl;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
                     delta.x = -delta.x;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (tl2 + br) * 0.5f;
                     changed = true;
@@ -1140,6 +1153,8 @@ class exSceneEditor : EditorWindow {
                     delta = br2 - br;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
                     delta.y = -delta.y;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (br2 + tl) * 0.5f;
                     changed = true;
@@ -1151,6 +1166,8 @@ class exSceneEditor : EditorWindow {
                     delta = bl2 - bl;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
                     delta = -delta;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (bl2 + tr) * 0.5f;
                     changed = true;
