@@ -538,8 +538,8 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // ------------------------------------------------------------------ 
 
     public Vector3[] GetLocalVertices () {
-        Matrix4x4 scaleMatrix = Matrix4x4.Scale(cachedTransform.localScale);
-        return GetVertices(ref scaleMatrix);
+        Matrix4x4 identity = Matrix4x4.identity;
+        return GetVertices(ref identity);
     }
     
 	// ------------------------------------------------------------------ 

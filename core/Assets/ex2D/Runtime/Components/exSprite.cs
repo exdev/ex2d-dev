@@ -45,9 +45,8 @@ public class exSprite : exSpriteBase {
     public exTextureInfo textureInfo {
         get { return textureInfo_; }
         set {
-            if (ReferenceEquals(textureInfo_, value)) {
-                return;
-            }
+            // 如果用户在运行时改变了textureInfo，则这里需要重新赋值
+            // 假定不论textureInfo如何，都不改变index数量
             if (value != null) {
                 if (value.texture == null) {
                     Debug.LogWarning("invalid textureInfo");
@@ -65,10 +64,11 @@ public class exSprite : exSpriteBase {
                 if (textureInfo_ == null || ReferenceEquals(textureInfo_.texture, value.texture) == false) {
                     // texture changed
                     textureInfo_ = value;
+                    updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV);
                     UpdateMaterial();
                     return;
                 }
-                else if (textureInfo_ == null && isOnEnabled_ && layer_ != null) {
+                else if (isOnEnabled_ && layer_ != null) {
                     // become visible
                     if (enableFastShowHide) {
                         layer_.FastShowSprite(this);
@@ -123,50 +123,24 @@ public class exSprite : exSpriteBase {
         set {
             if ( spriteType_ != value ) {
                 spriteType_ = value;
-                if (layer_ != null) {
-                    int newVertexCount, newIndexCount;
-                    GetVertexAndIndexCount(value, out newVertexCount, out newIndexCount);
-                    if (currentVertexCount != newVertexCount || currentIndexCount != newIndexCount) {
-                        // rebuild geometry
-                        exLayer myLayer = layer_;
-                        myLayer.Remove(this);
-                        myLayer.Add(this);
-                        exDebug.Assert(currentVertexCount == newVertexCount && currentIndexCount == newIndexCount);
-                    }
-                    else {
-                        updateFlags |= exUpdateFlags.All;
-                    }
-                }
+                CheckBufferSize ();
             }
         }
     }
 
-    //// ------------------------------------------------------------------ 
-    //[SerializeField] protected Vector2 tilling_ = new Vector2(10.0f, 10.0f);
-    //// ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Vector2 tilling_ = new Vector2(10.0f, 10.0f);
+    // ------------------------------------------------------------------ 
 
-    //public Vector2 tilling {
-    //    get { return tilling_; }
-    //    set {
-    //        if ( tilling_ != value ) {
-    //            tilling_ = value;
-    //            if (layer_ != null) {
-    //                int newVertexCount, newIndexCount;
-    //                GetVertexAndIndexCount(spriteType_, out newVertexCount, out newIndexCount);
-    //                if (currentVertexCount != newVertexCount || currentIndexCount != newIndexCount) {
-    //                    // rebuild geometry
-    //                    exLayer myLayer = layer_;
-    //                    myLayer.Remove(this);
-    //                    myLayer.Add(this);
-    //                    exDebug.Assert(currentVertexCount == newVertexCount && currentIndexCount == newIndexCount);
-    //                }
-    //                else {
-    //                    updateFlags |= exUpdateFlags.All;
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
+    public Vector2 tilling {
+        get { return tilling_; }
+        set {
+            if ( tilling_ != value ) {
+                tilling_ = value;
+                CheckBufferSize ();
+            }
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -261,41 +235,59 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
-        switch (spriteType_) {
+        if (textureInfo_ != null) {
+            switch (spriteType_) {
             case exSpriteType.Simple:
                 SimpleUpdateBuffers (_vertices, _uvs, _indices);
                 break;
             case exSpriteType.Sliced:
                 SlicedUpdateBuffers (_vertices, _uvs, _indices);
                 break;
-            //case exSpriteType.Tiled:
-            //    break;
+            case exSpriteType.Tiled:
+                TiledUpdateBuffers (_vertices, _uvs, _indices);
+                break;
             //case exSpriteType.Diced:
             //    break;
+            }
+            if ((updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null) {
+                exDebug.Assert (layer_ != null);
+                Color32 color32;
+                if (transparent_ == false) {
+                    color32 = new Color (color_.r, color_.g, color_.b, color_.a * layer_.alpha);
+                } else {
+                    color32 = new Color32 ();
+                }
+                for (int i = 0; i < currentVertexCount; ++i) {
+                    _colors32.buffer [vertexBufferIndex + i] = color32;
+                }
+            }
+            //if (transparent_ == false) {
+            exUpdateFlags applyedFlags = updateFlags;
+            updateFlags = exUpdateFlags.None;
+            return applyedFlags;
+            //}
+            //else {
+            //    exUpdateFlags applyedFlags = (updateFlags & exUpdateFlags.Color);
+            //    updateFlags &= ~exUpdateFlags.Color;
+            //    return applyedFlags;
+            //}
         }
-        if ((updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null) {
-            exDebug.Assert(layer_ != null);
-            Color32 color32;
-            if (transparent_ == false) {
-                color32 = new Color(color_.r, color_.g, color_.b, color_.a * layer_.alpha);
+        else {
+            if (_indices != null) {
+                _vertices.buffer[vertexBufferIndex] = cachedTransform.position;
+                for (int i = indexBufferIndex; i < indexBufferIndex + indexCount; ++i) {
+                    _indices.buffer[i] = vertexBufferIndex;
+                }
+                return exUpdateFlags.Index;
             }
             else {
-                color32 = new Color32 ();
-            }
-            for (int i = 0; i < currentVertexCount; ++i) {
-                _colors32.buffer[vertexBufferIndex + i] = color32;
+                Vector3 pos = cachedTransform.position;
+                for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount; ++i) {
+                    _vertices.buffer[i] = pos;
+                }
+                return exUpdateFlags.Vertex;
             }
         }
-        //if (transparent_ == false) {
-        exUpdateFlags applyedFlags = updateFlags;
-        updateFlags = exUpdateFlags.None;
-        return applyedFlags;
-        //}
-        //else {
-        //    exUpdateFlags applyedFlags = (updateFlags & exUpdateFlags.Color);
-        //    updateFlags &= ~exUpdateFlags.Color;
-        //    return applyedFlags;
-        //}
     }
     
     // ------------------------------------------------------------------ 
@@ -438,7 +430,15 @@ public class exSprite : exSpriteBase {
             }
         }
     }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
 
+    private void TiledUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
+        
+    }
+    
     #endregion // Functions used to update geometry buffer
     
     // ------------------------------------------------------------------ 
@@ -493,6 +493,27 @@ public class exSprite : exSpriteBase {
             GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
         }
     }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+	void CheckBufferSize () {
+		if (layer_ != null) {
+			int newVertexCount, newIndexCount;
+			GetVertexAndIndexCount (spriteType_, out newVertexCount, out newIndexCount);
+			if (currentVertexCount != newVertexCount || currentIndexCount != newIndexCount) {
+				// rebuild geometry
+				exLayer myLayer = layer_;
+				myLayer.Remove (this);
+				myLayer.Add (this);
+				exDebug.Assert (currentVertexCount == newVertexCount && currentIndexCount == newIndexCount);
+			}
+			else {
+				updateFlags |= exUpdateFlags.All;
+			}
+		}
+	}
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -668,6 +689,7 @@ public class exSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
     
     public void GetVertexAndIndexCount (exSpriteType _spriteType, out int _vertexCount, out int _indexCount) {
+        // 假定bu论textureInfo如何，都不改变index, vertex数量
         switch (spriteType_) {
         case exSpriteType.Simple:
             _vertexCount = exMesh.QUAD_VERTEX_COUNT;
@@ -677,9 +699,15 @@ public class exSprite : exSpriteBase {
             _vertexCount = 4 * 4;
             _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
             break;
-        //case exSpriteType.Tiled:
-        //    break;
-        //case exSpriteType.Diced:
+        case exSpriteType.Tiled:
+            int quadCount = (int)Mathf.Ceil (tilling_.x) * (int)Mathf.Ceil (tilling_.y);
+            if (textureInfo_ .trim) {
+                
+            }
+            _vertexCount = 4 * (int)Mathf.Ceil(tilling_.x) * (int)Mathf.Ceil(tilling_.y);
+            _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
+            break;
+        //exSpriteType.Diced:
         //    break;
         default:
             _vertexCount = exMesh.QUAD_VERTEX_COUNT;
