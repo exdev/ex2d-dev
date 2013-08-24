@@ -524,16 +524,18 @@ public class exSprite : exSpriteBase {
         float anchorOffsetY;
         float halfHeight;
         float halfWidth;
+        halfHeight = textureInfo_.height * 0.5f;
+        halfWidth = textureInfo_.width * 0.5f;
+        
+        Vector2 customSizeScale;
         if (customSize_ == false) {
-            halfHeight = textureInfo_.height * 0.5f;
-            halfWidth = textureInfo_.width * 0.5f;
+            customSizeScale = new Vector2 (1, 1);
         }
         else {
-            halfHeight = height_ * 0.5f;
-            halfWidth = width_ * 0.5f;
+            customSizeScale = new Vector2 (width_ / textureInfo_.width, height_ / textureInfo_.height);
         }
 
-        exDebug.Assert(halfWidth == width * 0.5f && halfHeight == height * 0.5f);
+        //exDebug.Assert(halfWidth == width * 0.5f && halfHeight == height * 0.5f);
 
         if (useTextureOffset_) {
             switch (anchor_) {
@@ -605,10 +607,10 @@ public class exSprite : exSpriteBase {
 
         //v1 v2
         //v0 v3
-        Vector3 v0 = _spriteMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
-        Vector3 v1 = _spriteMatrix.MultiplyPoint3x4(new Vector3(-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
-        Vector3 v2 = _spriteMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f));
-        Vector3 v3 = _spriteMatrix.MultiplyPoint3x4(new Vector3(halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f));
+        Vector3 v0 = _spriteMatrix.MultiplyPoint3x4(new Vector3((-halfWidth + anchorOffsetX) * customSizeScale.x, (-halfHeight + anchorOffsetY) * customSizeScale.y, 0.0f));
+        Vector3 v1 = _spriteMatrix.MultiplyPoint3x4(new Vector3((-halfWidth + anchorOffsetX) * customSizeScale.x, (halfHeight + anchorOffsetY) * customSizeScale.y, 0.0f));
+        Vector3 v2 = _spriteMatrix.MultiplyPoint3x4(new Vector3((halfWidth + anchorOffsetX) * customSizeScale.x, (halfHeight + anchorOffsetY) * customSizeScale.y, 0.0f));
+        Vector3 v3 = _spriteMatrix.MultiplyPoint3x4(new Vector3((halfWidth + anchorOffsetX) * customSizeScale.x, (-halfHeight + anchorOffsetY) * customSizeScale.y, 0.0f));
 
         // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
         v0.z = 0;
