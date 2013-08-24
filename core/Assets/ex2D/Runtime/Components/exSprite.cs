@@ -540,28 +540,28 @@ public class exSprite : exSpriteBase {
             //
             case Anchor.TopLeft:
                 anchorOffsetX = halfWidth + textureInfo_.trim_x;
-                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight;
+                anchorOffsetY = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
                 break;
             case Anchor.TopCenter:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth * 0.5f;
-                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight;
+                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
+                anchorOffsetY = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
                 break;
             case Anchor.TopRight:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth;;
-                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight;
+                anchorOffsetX = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
+                anchorOffsetY = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
                 break;
             //
             case Anchor.MidLeft:
                 anchorOffsetX = halfWidth + textureInfo_.trim_x;
-                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight * 0.5f;
+                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
                 break;
             case Anchor.MidCenter:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth * 0.5f;
-                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight * 0.5f;
+                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
+                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
                 break;
             case Anchor.MidRight:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth;;
-                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight * 0.5f;
+                anchorOffsetX = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
+                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
                 break;
             //
             case Anchor.BotLeft:
@@ -569,16 +569,16 @@ public class exSprite : exSpriteBase {
                 anchorOffsetY = halfHeight + textureInfo_.trim_y;
                 break;
             case Anchor.BotCenter:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth * 0.5f;
+                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
                 anchorOffsetY = halfHeight + textureInfo_.trim_y;
                 break;
             case Anchor.BotRight:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth;
+                anchorOffsetX = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
                 anchorOffsetY = halfHeight + textureInfo_.trim_y;
                 break;
             default:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x - textureInfo_.rawWidth * 0.5f;
-                anchorOffsetY = halfHeight + textureInfo_.trim_y - textureInfo_.rawHeight * 0.5f;
+                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
+                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
                 break;
             }
         }

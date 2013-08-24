@@ -486,7 +486,9 @@ public class exSpriteFont : exSpriteBase {
             Color32 top, bot;
             if (transparent_ == false) {
                 top = new Color (topColor_.r, topColor_.g, topColor_.b, topColor_.a * layer_.alpha);
+                top *= color_;
                 bot = new Color (botColor_.r, botColor_.g, botColor_.b, botColor_.a * layer_.alpha);
+                bot *= color_;
             }
             else {
                 top = new Color32 ();
