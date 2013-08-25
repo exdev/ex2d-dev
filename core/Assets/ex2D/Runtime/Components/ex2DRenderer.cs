@@ -279,7 +279,7 @@ public class ex2DRenderer : MonoBehaviour {
         if (_shader == null) {
             _shader = Shader.Find("ex2D/Alpha Blended");
             if (_shader == null) {
-                _shader = new Shader();
+                return null;
             }
         }
         MaterialTableKey key = new MaterialTableKey(_shader, _texture);

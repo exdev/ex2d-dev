@@ -147,9 +147,11 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             if ( depth_ != value ) {
                 depth_ = value;
                 // 先直接重加到layer里，以后再做优化
-                exLayer originalLayer = layer_;
-                SetLayer(null);
-                SetLayer(originalLayer);
+                if (layer_ != null) {
+                    exLayer originalLayer = layer_;
+                    originalLayer.Remove(this, false);
+                    originalLayer.Add(this, false);
+                }
                 //updateFlags |= exUpdateFlags.Index;
             }
         }
@@ -367,7 +369,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
 
     void OnDestroy () {
         if (layer_ != null) {
-            layer_.Remove(this);
+            layer_.Remove(this, false);
         }
         exDebug.Assert(visible == false);
         exDebug.Assert(isInIndexBuffer == false);
@@ -615,9 +617,11 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     protected void UpdateMaterial () {
         if (layer_ != null) {
             exLayer myLayer = layer_;
-            myLayer.Remove(this);   // TODO: do not need to re-add children
+            myLayer.Remove(this, false);
             material_ = null;   // set dirty, make material update.
-            myLayer.Add(this);
+            if (ReferenceEquals(material, null) == false) {
+                myLayer.Add(this, false);
+            }
         }
         else {
             material_ = null;   // set dirty, make material update.

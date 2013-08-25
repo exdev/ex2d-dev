@@ -1050,13 +1050,13 @@ public class exSpriteFont : exSpriteBase {
             if (layer_ != null) {
                 // remove from layer
                 exLayer myLayer = layer_;
-                myLayer.Remove(this);
+                myLayer.Remove(this, false);
                 // change capacity
                 vertexCountCapacity = textCapacity * exMesh.QUAD_VERTEX_COUNT;
                 indexCountCapacity = textCapacity * exMesh.QUAD_INDEX_COUNT;
                 // re-add to layer
                 lockCapacity = true;
-                myLayer.Add(this);
+                myLayer.Add(this, false);
                 //Debug.Log("Update Capacity");
                 lockCapacity = false;
             }

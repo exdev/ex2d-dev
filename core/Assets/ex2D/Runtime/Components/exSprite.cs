@@ -1,4 +1,4 @@
-﻿// ======================================================================================
+// ======================================================================================
 // File         : exSprite.cs
 // Author       : 
 // Last Change  : 06/15/2013 | 09:49:04 AM | Saturday,June
@@ -20,7 +20,7 @@ using System.Collections.Generic;
 public enum exSpriteType {
     Simple = 0,
     Sliced,
-    Tiled,
+    //Tiled,
     //Diced,
 }
 
@@ -228,7 +228,7 @@ public class exSprite : exSpriteBase {
 
     // TODO: check border change if sliced
 
-    #region Functions used to update geometry buffer
+#region Functions used to update geometry buffer
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -243,9 +243,9 @@ public class exSprite : exSpriteBase {
             case exSpriteType.Sliced:
                 SlicedUpdateBuffers (_vertices, _uvs, _indices);
                 break;
-            case exSpriteType.Tiled:
-                TiledUpdateBuffers (_vertices, _uvs, _indices);
-                break;
+            //case exSpriteType.Tiled:
+            //    TiledUpdateBuffers (_vertices, _uvs, _indices);
+            //    break;
             //case exSpriteType.Diced:
             //    break;
             }
@@ -432,6 +432,175 @@ public class exSprite : exSpriteBase {
     }
     
     // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    private void SimpleUpdateVertexBuffer (exList<Vector3> _vertices, int _startIndex, ref Matrix4x4 _spriteMatrix) {
+        float anchorOffsetX;
+        float anchorOffsetY;
+        float halfHeight = textureInfo_.height * 0.5f;
+        float halfWidth = textureInfo_.width * 0.5f;
+
+        if (useTextureOffset_) {
+            switch (anchor_) {
+            case Anchor.TopLeft:
+                anchorOffsetX = halfWidth + textureInfo_.trim_x;
+                anchorOffsetY = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
+                break;
+            case Anchor.TopCenter:
+                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
+                anchorOffsetY = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
+                break;
+            case Anchor.TopRight:
+                anchorOffsetX = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
+                anchorOffsetY = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
+                break;
+            //
+            case Anchor.MidLeft:
+                anchorOffsetX = halfWidth + textureInfo_.trim_x;
+                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
+                break;
+            case Anchor.MidCenter:
+                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
+                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
+                break;
+            case Anchor.MidRight:
+                anchorOffsetX = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
+                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
+                break;
+            //
+            case Anchor.BotLeft:
+                anchorOffsetX = halfWidth + textureInfo_.trim_x;
+                anchorOffsetY = halfHeight + textureInfo_.trim_y;
+                break;
+            case Anchor.BotCenter:
+                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
+                anchorOffsetY = halfHeight + textureInfo_.trim_y;
+                break;
+            case Anchor.BotRight:
+                anchorOffsetX = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
+                anchorOffsetY = halfHeight + textureInfo_.trim_y;
+                break;
+            //
+            default:
+                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
+                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
+                break;
+            }
+        }
+        else {
+            switch ( anchor_ ) {
+            case Anchor.TopLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = -halfHeight;  break;
+            case Anchor.TopCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = -halfHeight;  break;
+            case Anchor.TopRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = -halfHeight;  break;
+
+            case Anchor.MidLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = 0.0f;         break;
+            case Anchor.MidCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
+            case Anchor.MidRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = 0.0f;         break;
+
+            case Anchor.BotLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = halfHeight;   break;
+            case Anchor.BotCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = halfHeight;   break;
+            case Anchor.BotRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = halfHeight;   break;
+
+            default                 : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
+            }
+        }
+
+        anchorOffsetX += offset_.x;
+        anchorOffsetY += offset_.y;
+
+        //v1 v2
+        //v0 v3
+        Vector3 v0 = new Vector3 (-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f);
+        Vector3 v1 = new Vector3 (-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f);
+        Vector3 v2 = new Vector3 (halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f);
+        Vector3 v3 = new Vector3 (halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f);
+        if (customSize_) {
+            Vector2 customSizeScale = new Vector2 (width_ / textureInfo_.width, height_ / textureInfo_.height);
+            v0.x *= customSizeScale.x;  v0.y *= customSizeScale.y;
+            v1.x *= customSizeScale.x;  v1.y *= customSizeScale.y;
+            v2.x *= customSizeScale.x;  v2.y *= customSizeScale.y;
+            v3.x *= customSizeScale.x;  v3.y *= customSizeScale.y;
+        }
+        v0 = _spriteMatrix.MultiplyPoint3x4 (v0);
+        v1 = _spriteMatrix.MultiplyPoint3x4 (v1);
+        v2 = _spriteMatrix.MultiplyPoint3x4 (v2);
+        v3 = _spriteMatrix.MultiplyPoint3x4 (v3);
+        // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
+        v0.z = 0;
+        v1.z = 0;
+        v2.z = 0;
+        v3.z = 0;
+
+        if (shear_.x != 0) {
+            // 这里直接从matrix拿未计入rotation影响的scale，在已知matrix的情况下，速度比较快lossyScale了6倍。
+            // 在有rotation时，shear本来就会有冲突，所以这里不需要lossyScale。
+            float worldScaleY = (new Vector3(_spriteMatrix.m01, _spriteMatrix.m11, _spriteMatrix.m21)).magnitude;
+            float offsetX = worldScaleY * shear_.x;
+            float topOffset = offsetX * (halfHeight + anchorOffsetY);
+            float botOffset = offsetX * (-halfHeight + anchorOffsetY);
+            v0.x += botOffset;
+            v1.x += topOffset;
+            v2.x += topOffset;
+            v3.x += botOffset;
+        }
+        if (shear_.y != 0) {
+            float worldScaleX = (new Vector3(_spriteMatrix.m00, _spriteMatrix.m10, _spriteMatrix.m20)).magnitude;
+            float offsetY = worldScaleX * shear_.y;
+            float leftOffset = offsetY * (-halfWidth + anchorOffsetX);
+            float rightOffset = offsetY * (halfWidth + anchorOffsetX);
+            v0.y += leftOffset;
+            v1.y += leftOffset;
+            v2.y += rightOffset;
+            v3.y += rightOffset;
+        }
+
+        _vertices.buffer[_startIndex + 0] = v0;
+        _vertices.buffer[_startIndex + 1] = v1;
+        _vertices.buffer[_startIndex + 2] = v2;
+        _vertices.buffer[_startIndex + 3] = v3;
+
+        // TODO: pixel-perfect
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    private void SlicedUpdateVertexBuffer (exList<Vector3> _vertices, int _startIndex, ref Matrix4x4 _spriteMatrix) {
+        /* vertex index:
+            12 13 14 15
+            8  9  10 11
+            4  5  6  7 
+            0  1  2  3 
+            */
+        // left right columns
+        Vector3 v0 = _vertices.buffer[_startIndex + 0];
+        Vector3 v12 = _vertices.buffer[_startIndex + 1];
+        Vector3 v15 = _vertices.buffer[_startIndex + 2];
+        Vector3 v3 = _vertices.buffer[_startIndex + 3];
+        //_vertices.buffer[_startIndex + 0] = v0;
+        //_vertices.buffer[_startIndex + 3] = v3;
+        _vertices.buffer[_startIndex + 12] = v12;
+        _vertices.buffer[_startIndex + 15] = v15;
+        float yStep1 = (float)textureInfo_.borderBottom / height_;        // position step, not uv step
+        float yStep2 = (height_ - textureInfo_.borderTop) / height_;
+        _vertices.buffer[_startIndex + 4] = v0 + (v12 - v0) * yStep1;
+        _vertices.buffer[_startIndex + 7] = v3 + (v15 - v3) * yStep1;
+        _vertices.buffer[_startIndex + 8] = v0 + (v12 - v0) * yStep2;
+        _vertices.buffer[_startIndex + 11] = v3 + (v15 - v3) * yStep2;
+        // mid columns
+        float xStep1 = (float)textureInfo_.borderLeft / width_;
+        float xStep2 = (width_ - textureInfo_.borderRight) / width_;
+        for (int i = 0; i <= 12; i += 4) {
+            Vector3 left = _vertices.buffer[_startIndex + i];
+            Vector3 right = _vertices.buffer[_startIndex + i + 3];
+            _vertices.buffer[_startIndex + i + 1] = left + (right - left) * xStep1;
+            _vertices.buffer[_startIndex + i + 2] = left + (right - left) * xStep2;
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
 
@@ -439,7 +608,7 @@ public class exSprite : exSpriteBase {
         
     }
     
-    #endregion // Functions used to update geometry buffer
+#endregion // Functions used to update geometry buffer
     
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -505,8 +674,8 @@ public class exSprite : exSpriteBase {
 			if (currentVertexCount != newVertexCount || currentIndexCount != newIndexCount) {
 				// rebuild geometry
 				exLayer myLayer = layer_;
-				myLayer.Remove (this);
-				myLayer.Add (this);
+				myLayer.Remove (this, false);
+				myLayer.Add (this, false);
 				exDebug.Assert (currentVertexCount == newVertexCount && currentIndexCount == newIndexCount);
 			}
 			else {
@@ -514,184 +683,13 @@ public class exSprite : exSpriteBase {
 			}
 		}
 	}
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-    
-    void SimpleUpdateVertexBuffer (exList<Vector3> _vertices, int _startIndex, ref Matrix4x4 _spriteMatrix) {
-        float anchorOffsetX;
-        float anchorOffsetY;
-        float halfHeight;
-        float halfWidth;
-        halfHeight = textureInfo_.height * 0.5f;
-        halfWidth = textureInfo_.width * 0.5f;
-        
-        Vector2 customSizeScale;
-        if (customSize_ == false) {
-            customSizeScale = new Vector2 (1, 1);
-        }
-        else {
-            customSizeScale = new Vector2 (width_ / textureInfo_.width, height_ / textureInfo_.height);
-        }
-
-        //exDebug.Assert(halfWidth == width * 0.5f && halfHeight == height * 0.5f);
-
-        if (useTextureOffset_) {
-            switch (anchor_) {
-            //
-            case Anchor.TopLeft:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x;
-                anchorOffsetY = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
-                break;
-            case Anchor.TopCenter:
-                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffsetY = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
-                break;
-            case Anchor.TopRight:
-                anchorOffsetX = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffsetY = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
-                break;
-            //
-            case Anchor.MidLeft:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x;
-                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
-                break;
-            case Anchor.MidCenter:
-                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
-                break;
-            case Anchor.MidRight:
-                anchorOffsetX = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
-                break;
-            //
-            case Anchor.BotLeft:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x;
-                anchorOffsetY = halfHeight + textureInfo_.trim_y;
-                break;
-            case Anchor.BotCenter:
-                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffsetY = halfHeight + textureInfo_.trim_y;
-                break;
-            case Anchor.BotRight:
-                anchorOffsetX = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffsetY = halfHeight + textureInfo_.trim_y;
-                break;
-            default:
-                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
-                break;
-            }
-        }
-        else {
-            switch ( anchor_ ) {
-            case Anchor.TopLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = -halfHeight;  break;
-            case Anchor.TopCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = -halfHeight;  break;
-            case Anchor.TopRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = -halfHeight;  break;
-
-            case Anchor.MidLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = 0.0f;         break;
-            case Anchor.MidCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
-            case Anchor.MidRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = 0.0f;         break;
-
-            case Anchor.BotLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = halfHeight;   break;
-            case Anchor.BotCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = halfHeight;   break;
-            case Anchor.BotRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = halfHeight;   break;
-
-            default                 : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
-            }
-        }
-
-        anchorOffsetX += offset_.x;
-        anchorOffsetY += offset_.y;
-
-        //v1 v2
-        //v0 v3
-        Vector3 v0 = _spriteMatrix.MultiplyPoint3x4(new Vector3((-halfWidth + anchorOffsetX) * customSizeScale.x, (-halfHeight + anchorOffsetY) * customSizeScale.y, 0.0f));
-        Vector3 v1 = _spriteMatrix.MultiplyPoint3x4(new Vector3((-halfWidth + anchorOffsetX) * customSizeScale.x, (halfHeight + anchorOffsetY) * customSizeScale.y, 0.0f));
-        Vector3 v2 = _spriteMatrix.MultiplyPoint3x4(new Vector3((halfWidth + anchorOffsetX) * customSizeScale.x, (halfHeight + anchorOffsetY) * customSizeScale.y, 0.0f));
-        Vector3 v3 = _spriteMatrix.MultiplyPoint3x4(new Vector3((halfWidth + anchorOffsetX) * customSizeScale.x, (-halfHeight + anchorOffsetY) * customSizeScale.y, 0.0f));
-
-        // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
-        v0.z = 0;
-        v1.z = 0;
-        v2.z = 0;
-        v3.z = 0;
-
-        if (shear_.x != 0) {
-            // 这里直接从matrix拿未计入rotation影响的scale，在已知matrix的情况下，速度比较快lossyScale了6倍。
-            // 在有rotation时，shear本来就会有冲突，所以这里不需要lossyScale。
-            float worldScaleY = (new Vector3(_spriteMatrix.m01, _spriteMatrix.m11, _spriteMatrix.m21)).magnitude;
-            float offsetX = worldScaleY * shear_.x;
-            float topOffset = offsetX * (halfHeight + anchorOffsetY);
-            float botOffset = offsetX * (-halfHeight + anchorOffsetY);
-            v0.x += botOffset;
-            v1.x += topOffset;
-            v2.x += topOffset;
-            v3.x += botOffset;
-        }
-        if (shear_.y != 0) {
-            float worldScaleX = (new Vector3(_spriteMatrix.m00, _spriteMatrix.m10, _spriteMatrix.m20)).magnitude;
-            float offsetY = worldScaleX * shear_.y;
-            float leftOffset = offsetY * (-halfWidth + anchorOffsetX);
-            float rightOffset = offsetY * (halfWidth + anchorOffsetX);
-            v0.y += leftOffset;
-            v1.y += leftOffset;
-            v2.y += rightOffset;
-            v3.y += rightOffset;
-        }
-
-        _vertices.buffer[_startIndex + 0] = v0;
-        _vertices.buffer[_startIndex + 1] = v1;
-        _vertices.buffer[_startIndex + 2] = v2;
-        _vertices.buffer[_startIndex + 3] = v3;
-        
-        // TODO: pixel-perfect
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-    
-    void SlicedUpdateVertexBuffer (exList<Vector3> _vertices, int _startIndex, ref Matrix4x4 _spriteMatrix) {
-        /* vertex index:
-            12 13 14 15
-            8  9  10 11
-            4  5  6  7 
-            0  1  2  3 
-            */
-        // left right columns
-        Vector3 v0 = _vertices.buffer[_startIndex + 0];
-        Vector3 v12 = _vertices.buffer[_startIndex + 1];
-        Vector3 v15 = _vertices.buffer[_startIndex + 2];
-        Vector3 v3 = _vertices.buffer[_startIndex + 3];
-        //_vertices.buffer[_startIndex + 0] = v0;
-        //_vertices.buffer[_startIndex + 3] = v3;
-        _vertices.buffer[_startIndex + 12] = v12;
-        _vertices.buffer[_startIndex + 15] = v15;
-        float yStep1 = (float)textureInfo_.borderBottom / height_;        // position step, not uv step
-        float yStep2 = (height_ - textureInfo_.borderTop) / height_;
-        _vertices.buffer[_startIndex + 4] = v0 + (v12 - v0) * yStep1;
-        _vertices.buffer[_startIndex + 7] = v3 + (v15 - v3) * yStep1;
-        _vertices.buffer[_startIndex + 8] = v0 + (v12 - v0) * yStep2;
-        _vertices.buffer[_startIndex + 11] = v3 + (v15 - v3) * yStep2;
-        // mid columns
-        float xStep1 = (float)textureInfo_.borderLeft / width_;
-        float xStep2 = (width_ - textureInfo_.borderRight) / width_;
-        for (int i = 0; i <= 12; i += 4) {
-            Vector3 left = _vertices.buffer[_startIndex + i];
-            Vector3 right = _vertices.buffer[_startIndex + i + 3];
-            _vertices.buffer[_startIndex + i + 1] = left + (right - left) * xStep1;
-            _vertices.buffer[_startIndex + i + 2] = left + (right - left) * xStep2;
-        }
-    }
     
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
     
     public void GetVertexAndIndexCount (exSpriteType _spriteType, out int _vertexCount, out int _indexCount) {
-        // 假定bu论textureInfo如何，都不改变index, vertex数量
+        // 假定不论textureInfo如何，都不改变index, vertex数量
         switch (spriteType_) {
         case exSpriteType.Simple:
             _vertexCount = exMesh.QUAD_VERTEX_COUNT;
@@ -701,14 +699,11 @@ public class exSprite : exSpriteBase {
             _vertexCount = 4 * 4;
             _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
             break;
-        case exSpriteType.Tiled:
-            int quadCount = (int)Mathf.Ceil (tilling_.x) * (int)Mathf.Ceil (tilling_.y);
-            if (textureInfo_ .trim) {
-                
-            }
-            _vertexCount = 4 * (int)Mathf.Ceil(tilling_.x) * (int)Mathf.Ceil(tilling_.y);
-            _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
-            break;
+        //case exSpriteType.Tiled:
+        //    int quadCount = (int)Mathf.Ceil (tilling_.x) * (int)Mathf.Ceil (tilling_.y);
+        //    _vertexCount = exMesh.QUAD_VERTEX_COUNT * quadCount;
+        //    _indexCount = exMesh.QUAD_INDEX_COUNT * quadCount;
+        //    break;
         //exSpriteType.Diced:
         //    break;
         default:

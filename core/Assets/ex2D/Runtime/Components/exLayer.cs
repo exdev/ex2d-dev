@@ -230,26 +230,32 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     /// Add an exSpriteBase to this layer. 
     /// If sprite is disabled, it will keep invisible until you enable it.
+    /// \param _recursively Also add all sprites in the hierarchy
     /// NOTE: You can also use exSpriteBase.SetLayer for convenience.
     // ------------------------------------------------------------------ 
 
-    public void Add (exSpriteBase _sprite) {
-        exLayer oldLayer = _sprite.layer;
-        if (ReferenceEquals(oldLayer, this)) {
-            return;
-        }
-        if (oldLayer != null) {
-            oldLayer.Remove(_sprite);
-        }
+    public void Add (exSpriteBase _sprite, bool _recursively = true) {
+        if (_recursively == true) {
+            exLayer oldLayer = _sprite.layer;
+            if (ReferenceEquals (oldLayer, this)) {
+                return;
+            }
+            if (oldLayer != null) {
+                oldLayer.Remove (_sprite, true);
+            }
 
-        exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase>(true);
-        for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
-            AddChildSprite(spritesToAdd[spriteIndex], true);
+            exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase> (true);
+            for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
+                AddChildSprite (spritesToAdd [spriteIndex], true);
+            }
+            if (_sprite.cachedTransform.IsChildOf (cachedTransform) == false) {
+                _sprite.cachedTransform.parent = cachedTransform_;
+            }
+            UpdateNowInEditMode ();
         }
-        if (_sprite.cachedTransform.IsChildOf(cachedTransform) == false) {
-            _sprite.cachedTransform.parent = cachedTransform_;
+        else {
+            AddChildSprite (_sprite, true);
         }
-        UpdateNowInEditMode();
     }
 
     // ------------------------------------------------------------------ 
@@ -269,39 +275,51 @@ public class exLayer : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    // Desc:
+    /// \param _recursively Also remove all sprites in the hierarchy
     // ------------------------------------------------------------------ 
 
-    public void Remove (exSpriteBase _sprite) {
-        Remove(_sprite.gameObject);
+    public void Remove (exSpriteBase _sprite, bool _recursively = true) {
+        if (_recursively) {
+            Remove(_sprite.gameObject, _recursively);
+        }
+        else {
+            if (_sprite.layer != this) {
+                Debug.LogWarning ("Sprite not in this layer.");
+                return;
+            }
+            int meshIndex = IndexOfMesh (_sprite);
+            if (meshIndex != -1) {
+                RemoveFromMesh (_sprite, meshList [meshIndex]);
+                _sprite.layer = null;
+            }
+            else {
+                _sprite.ResetLayerProperties ();  //if mesh has been destroyed, just reset sprite
+            }
+            if (_sprite.spriteIdInLayer == nextSpriteUniqueId - 1 && nextSpriteUniqueId > 0) {
+                --nextSpriteUniqueId;
+            }
+            _sprite.spriteIdInLayer = 0; 
+        }
     }
     
     // ------------------------------------------------------------------ 
-    // Desc:
+    /// \param _recursively Also remove all sprites in the hierarchy
     // ------------------------------------------------------------------ 
 
-    public void Remove (GameObject _gameObject) {
-        exSpriteBase[] spritesToRemove = _gameObject.GetComponentsInChildren<exSpriteBase>(true);
-        for (int i = 0; i < spritesToRemove.Length; ++i) {
-            exSpriteBase sprite = spritesToRemove[i];
-            if (sprite.layer != this) {
-                Debug.LogWarning("Sprite not in this layer.");
-                return;
+    public void Remove (GameObject _gameObject, bool _recursively = true) {
+        if (_recursively) {
+            exSpriteBase[] spritesToRemove = _gameObject.GetComponentsInChildren<exSpriteBase> (true);
+            for (int i = 0; i < spritesToRemove.Length; ++i) {
+                Remove (spritesToRemove [i], false);
             }
-            int meshIndex = IndexOfMesh(sprite);
-            if (meshIndex != -1) {
-                RemoveFromMesh(sprite, meshList[meshIndex]);
-                sprite.layer = null;
+            UpdateNowInEditMode ();
+        } 
+        else {
+            exSpriteBase sprite = _gameObject.GetComponent<exSpriteBase> ();
+            if (sprite != null) {
+                Remove (sprite, false);
             }
-            else {
-                sprite.ResetLayerProperties();  //if mesh has been destroyed, just reset sprite
-            }
-            if (sprite.spriteIdInLayer == nextSpriteUniqueId - 1 && nextSpriteUniqueId > 0) {
-                --nextSpriteUniqueId;
-            }
-            sprite.spriteIdInLayer = 0;	
         }
-        UpdateNowInEditMode();
     }
     
     // ------------------------------------------------------------------ 
@@ -772,7 +790,9 @@ public class exLayer : MonoBehaviour
     private void AddChildSprite (exSpriteBase _sprite, bool _newSprite) {
         Material mat = _sprite.material;
         if (mat == null) {
-            Debug.LogError("no material assigned in sprite", _sprite);
+#if EX_DEBUG
+            Debug.LogWarning("Ignore null material sprite", _sprite);
+#endif
             return;
         }
 
