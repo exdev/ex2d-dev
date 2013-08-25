@@ -416,11 +416,10 @@ class exTextureInfoEditor : EditorWindow {
                                        position.height - _rect.yMax,
                                        _rect.width, 
                                        _rect.height );
-        GL.Viewport(viewportRect);
-
         GL.PushMatrix();
 
             //
+            GL.Viewport(viewportRect);
             GL.LoadPixelMatrix ( 0.0f, _rect.width, 0.0f, _rect.height );
 
             // background
@@ -521,18 +520,26 @@ class exTextureInfoEditor : EditorWindow {
                 exEditorUtility.GL_DrawLine ( -half_width, top, half_width, top, slicedColor );
                 exEditorUtility.GL_DrawLine ( -half_width, bottom, half_width, bottom, slicedColor );
             }
-
-            // draw border line
-            GL.LoadPixelMatrix ( 0.0f, _rect.width, _rect.height, 0.0f );
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( 1.0f,        1.0f,         0.0f ),
-                                              new Vector3 ( _rect.width, 1.0f,         0.0f ),
-                                              new Vector3 ( _rect.width, _rect.height, 0.0f ),
-                                              new Vector3 ( 1.0f,        _rect.height, 0.0f ),
-                                              },
-                                              new Color( 0.7f, 0.7f, 0.7f ) );
-
         GL.PopMatrix();
+
+        // draw border line
+        GL.PushMatrix();
+            Rect rect2 = new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 );
+            Rect viewportRect2 = new Rect ( rect2.x,
+                                            position.height - rect2.yMax,
+                                            rect2.width, 
+                                            rect2.height );
+            GL.LoadPixelMatrix ( 0.0f, rect2.width, rect2.height, 0.0f );
+            GL.Viewport (viewportRect2);
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( 0.0f,        0.0f,         0.0f ),
+                                              new Vector3 ( rect2.width, 0.0f,         0.0f ),
+                                              new Vector3 ( rect2.width, rect2.height, 0.0f ),
+                                              new Vector3 ( 0.0f,        rect2.height, 0.0f ),
+                                              },
+                                              new Color( 0.0f, 0.0f, 0.0f ) );
+        GL.PopMatrix();
+
         GL.Viewport(oldViewport);
     }
 }
