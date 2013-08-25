@@ -25,7 +25,9 @@ using System.Reflection;
 public static class exEditorUtility {
 
     ///////////////////////////////////////////////////////////////////////////////
-    //
+    // NOTE: At the beginning, I try to do all resources initliazed in exEditorUtility.Init()
+    // and called it in ex2DEditor. However in this way, it will suffer some random crash
+    // in Unity. I have to shift the code to on-demand init to avoid crash.
     ///////////////////////////////////////////////////////////////////////////////
 
     // meshQuad
