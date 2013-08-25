@@ -79,21 +79,25 @@ class exSpriteInspector : exSpriteBaseInspector {
                                           lastRect.yMax,
                                           preview_width, 
                                           preview_height );
-            float scale = exEditorUtility.CalculateTextureInfoScale(previewRect,textureInfo);
-            Rect pos = new Rect ( previewRect.center.x - textureInfo.width * 0.5f * scale + 2.0f,
-                                  previewRect.center.y - textureInfo.height * 0.5f * scale + 2.0f,
-                                  textureInfo.width * scale - 4.0f,
-                                  textureInfo.height * scale - 4.0f );
 
             // draw Checker
             Texture2D checker = exEditorUtility.textureCheckerboard;
             GUI.DrawTextureWithTexCoords ( previewRect, 
                                            checker, 
                                            new Rect( 0.0f, 0.0f, 3.0f, 3.0f ) );
+
             // draw TextureInfo
-            exEditorUtility.GUI_DrawTextureInfo ( pos,
-                                                  textureInfo,
-                                                  Color.white );
+            if ( textureInfo != null ) {
+                float scale = exEditorUtility.CalculateTextureInfoScale(previewRect,textureInfo);
+                Rect pos = new Rect ( previewRect.center.x - textureInfo.width * 0.5f * scale + 2.0f,
+                                      previewRect.center.y - textureInfo.height * 0.5f * scale + 2.0f,
+                                      textureInfo.width * scale - 4.0f,
+                                      textureInfo.height * scale - 4.0f );
+                exEditorUtility.GUI_DrawTextureInfo ( pos,
+                                                      textureInfo,
+                                                      Color.white );
+            }
+
             // draw border
             exEditorUtility.GL_DrawRectLine ( new Vector3 [] {
                                               new Vector3 ( indent_space, lastRect.yMax, 0.0f ),

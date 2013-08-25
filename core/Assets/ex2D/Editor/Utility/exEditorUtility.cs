@@ -28,62 +28,150 @@ public static class exEditorUtility {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    public static Mesh meshQuad;
+    // meshQuad
+    static Mesh meshQuad_;
+    public static Mesh meshQuad {
+        get { 
+            if ( meshQuad_ == null ) {
+                meshQuad_ = new Mesh();
+                meshQuad_.hideFlags = HideFlags.HideAndDontSave;
+            }
+            return meshQuad_;
+        }
+    }
 
-    public static Material materialQuad;
-    public static Material materialLine;
-    public static Material materialAlphaBlended;
+    // materialQuad
+    static Material materialQuad_;
+    public static Material materialQuad {
+        get {
+            if ( materialQuad_ == null ) {
+                materialQuad_ = new Material( Shader.Find("ex2D/Alpha Blended") );
+                materialQuad_.hideFlags = HideFlags.HideAndDontSave;
+            }
+            return materialQuad_; 
+        }
+    } 
 
-    public static Texture2D textureCheckerboard;
-    public static Texture2D textureHelp;
-    public static Texture2D textureAnimationPlay;
-    public static Texture2D textureAnimationNext;
-    public static Texture2D textureAnimationPrev;
-    public static Texture2D textureAddEvent;
-    public static Texture2D textureEventMarker;
+    // materialLine
+    static Material materialLine_;
+    public static Material materialLine {
+        get {
+            if ( materialLine_ == null ) {
+                materialLine_ = new Material( "Shader \"Lines/Colored Blended\" {" +
+                                             "SubShader { Pass { " +
+                                             "    Blend SrcAlpha OneMinusSrcAlpha " +
+                                             "    ZWrite Off Cull Off Fog { Mode Off } " +
+                                             "    BindChannels {" +
+                                             "      Bind \"vertex\", vertex Bind \"color\", color }" +
+                                             "} } }" );
+                materialLine_.hideFlags = HideFlags.HideAndDontSave;
+                materialLine_.shader.hideFlags = HideFlags.HideAndDontSave;
+            }
+            return materialLine_;
+        }
+    }
 
-    public static GUIStyle styleRectBorder = null;
+    // materialAlphaBlended
+    static Material materialAlphaBlended_;
+    public static Material materialAlphaBlended {
+        get {
+            if ( materialAlphaBlended_ == null ) {
+                materialAlphaBlended_ = new Material( Shader.Find("ex2D/Alpha Blended") );
+                materialAlphaBlended_.hideFlags = HideFlags.HideAndDontSave;
+            }
+            return materialAlphaBlended_;
+        }
+    }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    //
-    ///////////////////////////////////////////////////////////////////////////////
-    
-    public static void Init () {
-        // meshes
-        meshQuad = new Mesh();
-        meshQuad.hideFlags = HideFlags.HideAndDontSave;
+    // textureCheckerboard
+    static Texture2D textureCheckerboard_;
+    public static Texture2D textureCheckerboard {
+        get {
+            if ( textureCheckerboard_ == null ) {
+                textureCheckerboard_ = FindTexture ( "checkerboard_64x64.png" ); 
+            }
+            return textureCheckerboard_;
+        }
+    }
 
-        // materials
-        materialQuad = new Material( Shader.Find("ex2D/Alpha Blended") );
-        materialQuad.hideFlags = HideFlags.HideAndDontSave;
+    // textureHelp
+    static Texture2D textureHelp_;
+    public static Texture2D textureHelp {
+        get {
+            if ( textureHelp_ == null ) {
+                FindBuiltinTexture( ref textureHelp_, "_help" );
+            }
+            return textureHelp_;
+        }
+    }
 
-        materialAlphaBlended = new Material( Shader.Find("ex2D/Alpha Blended") );
-        materialAlphaBlended.hideFlags = HideFlags.HideAndDontSave;
+    // textureAnimationPlay
+    static Texture2D textureAnimationPlay_;
+    public static Texture2D textureAnimationPlay {
+        get {
+            if ( textureAnimationPlay_ == null ) {
+                FindBuiltinTexture( ref textureAnimationPlay_, "Animation.Play" );
+            }
+            return textureAnimationPlay_; 
+        }
+    }
 
-        materialLine = new Material( "Shader \"Lines/Colored Blended\" {" +
-                                     "SubShader { Pass { " +
-                                     "    Blend SrcAlpha OneMinusSrcAlpha " +
-                                     "    ZWrite Off Cull Off Fog { Mode Off } " +
-                                     "    BindChannels {" +
-                                     "      Bind \"vertex\", vertex Bind \"color\", color }" +
-                                     "} } }" );
-        materialLine.hideFlags = HideFlags.HideAndDontSave;
-        materialLine.shader.hideFlags = HideFlags.HideAndDontSave;
+    // textureAnimationNext
+    static Texture2D textureAnimationNext_;
+    public static Texture2D textureAnimationNext {
+        get {
+            if ( textureAnimationNext_ == null ) {
+                FindBuiltinTexture( ref textureAnimationNext_, "Animation.NextKey" );
+            }
+            return textureAnimationNext_;
+        }
+    }
 
-        // textures
-        textureCheckerboard = FindTexture ( "checkerboard_64x64.png" ); 
-        FindBuiltinTexture( ref textureHelp, "_help" );
-        FindBuiltinTexture( ref textureAnimationPlay, "Animation.Play" );
-        FindBuiltinTexture( ref textureAnimationNext, "Animation.NextKey" );
-        FindBuiltinTexture( ref textureAnimationPrev, "Animation.PrevKey" );
-        FindBuiltinTexture( ref textureAddEvent, "Animation.AddEvent" );
-        FindBuiltinTexture( ref textureEventMarker, "Animation.EventMarker" );
+    // textureAnimationPrev
+    static Texture2D textureAnimationPrev_;
+    public static Texture2D textureAnimationPrev {
+        get {
+            if ( textureAnimationPrev_ == null ) {
+                FindBuiltinTexture( ref textureAnimationPrev_, "Animation.PrevKey" );
+            }
+            return textureAnimationPrev_;
+        }
+    }
 
-        // styles
-        styleRectBorder = new GUIStyle();
-        styleRectBorder.normal.background = FindTexture( "border.png" );
-        styleRectBorder.border = new RectOffset( 2, 2, 2, 2 );
-        styleRectBorder.alignment = TextAnchor.MiddleCenter;
+    // textureAddEvent
+    static Texture2D textureAddEvent_;
+    public static Texture2D textureAddEvent {
+        get {
+            if ( textureAddEvent_ == null ) {
+                FindBuiltinTexture( ref textureAddEvent_, "Animation.AddEvent" );
+            }
+            return textureAddEvent_;
+        }
+    }
+
+    // textureEventMarker
+    static Texture2D textureEventMarker_;
+    public static Texture2D textureEventMarker {
+        get {
+            if ( textureEventMarker_ == null ) {
+                FindBuiltinTexture( ref textureEventMarker_, "Animation.EventMarker" );
+            }
+            return textureEventMarker_;
+        }
+    }
+
+    // styleRectBorder
+    static GUIStyle styleRectBorder_ = null;
+    public static GUIStyle styleRectBorder {
+        get {
+            if ( styleRectBorder_ == null ) {
+                styleRectBorder_ = new GUIStyle();
+                styleRectBorder_.normal.background = FindTexture( "border.png" );
+                styleRectBorder_.border = new RectOffset( 2, 2, 2, 2 );
+                styleRectBorder_.alignment = TextAnchor.MiddleCenter;
+            }
+            return styleRectBorder_; 
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
