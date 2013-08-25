@@ -80,11 +80,11 @@ public class exMesh : MonoBehaviour
     }
 
     /// sprite序列，用于索引vertices。Only used by exLayer, just place here for convenience.
-    [System.NonSerialized] public List<exSpriteBase> spriteList = new List<exSpriteBase>();
+    [System.NonSerialized] public List<exLayeredSprite> spriteList = new List<exLayeredSprite>();
 
     /// sprite序列，用于索引indices，顺序和sprite在indices中的顺序一致，也就是按照深度值从小到大排序。Only used by exLayer, just place here for convenience.
     /// 可用此序列访问到所有在能在mesh显示的sprite
-    [System.NonSerialized] public List<exSpriteBase> sortedSpriteList = new List<exSpriteBase>();
+    [System.NonSerialized] public List<exLayeredSprite> sortedSpriteList = new List<exLayeredSprite>();
 
     [System.NonSerialized] private Mesh mesh0;    ///< first mesh buffer
     [System.NonSerialized] private Mesh mesh1;    ///< second mesh buffer, only used in dynamic mode

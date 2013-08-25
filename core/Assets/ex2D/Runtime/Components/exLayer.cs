@@ -210,7 +210,7 @@ public class exLayer : MonoBehaviour
             exMesh mesh = meshList[m];
             exUpdateFlags meshUpdateFlags = exUpdateFlags.None;
             for (int i = 0; i < mesh.spriteList.Count; ++i) {
-                exSpriteBase sprite = mesh.spriteList[i];
+                exLayeredSprite sprite = mesh.spriteList[i];
                 if (alphaHasChanged) {
                     sprite.updateFlags |= exUpdateFlags.Color;
                 }
@@ -228,13 +228,13 @@ public class exLayer : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    /// Add an exSpriteBase to this layer. 
+    /// Add an exLayeredSprite to this layer. 
     /// If sprite is disabled, it will keep invisible until you enable it.
     /// \param _recursively Also add all sprites in the hierarchy
-    /// NOTE: You can also use exSpriteBase.SetLayer for convenience.
+    /// NOTE: You can also use exLayeredSprite.SetLayer for convenience.
     // ------------------------------------------------------------------ 
 
-    public void Add (exSpriteBase _sprite, bool _recursively = true) {
+    public void Add (exLayeredSprite _sprite, bool _recursively = true) {
         if (_recursively == true) {
             exLayer oldLayer = _sprite.layer;
             if (ReferenceEquals (oldLayer, this)) {
@@ -244,7 +244,7 @@ public class exLayer : MonoBehaviour
                 oldLayer.Remove (_sprite, true);
             }
 
-            exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase> (true);
+            exLayeredSprite[] spritesToAdd = _sprite.GetComponentsInChildren<exLayeredSprite> (true);
             for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
                 AddChildSprite (spritesToAdd [spriteIndex], true);
             }
@@ -264,7 +264,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public void Add (GameObject _gameObject) {
-        exSpriteBase[] spritesToAdd = _gameObject.GetComponentsInChildren<exSpriteBase>(true);
+        exLayeredSprite[] spritesToAdd = _gameObject.GetComponentsInChildren<exLayeredSprite>(true);
         for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
             AddChildSprite(spritesToAdd[spriteIndex], true);
         }
@@ -278,7 +278,7 @@ public class exLayer : MonoBehaviour
     /// \param _recursively Also remove all sprites in the hierarchy
     // ------------------------------------------------------------------ 
 
-    public void Remove (exSpriteBase _sprite, bool _recursively = true) {
+    public void Remove (exLayeredSprite _sprite, bool _recursively = true) {
         if (_recursively) {
             Remove(_sprite.gameObject, _recursively);
         }
@@ -308,14 +308,14 @@ public class exLayer : MonoBehaviour
 
     public void Remove (GameObject _gameObject, bool _recursively = true) {
         if (_recursively) {
-            exSpriteBase[] spritesToRemove = _gameObject.GetComponentsInChildren<exSpriteBase> (true);
+            exLayeredSprite[] spritesToRemove = _gameObject.GetComponentsInChildren<exLayeredSprite> (true);
             for (int i = 0; i < spritesToRemove.Length; ++i) {
                 Remove (spritesToRemove [i], false);
             }
             UpdateNowInEditMode ();
         } 
         else {
-            exSpriteBase sprite = _gameObject.GetComponent<exSpriteBase> ();
+            exLayeredSprite sprite = _gameObject.GetComponent<exLayeredSprite> ();
             if (sprite != null) {
                 Remove (sprite, false);
             }
@@ -323,11 +323,11 @@ public class exLayer : MonoBehaviour
     }
     
     // ------------------------------------------------------------------ 
-    /// Show an exSpriteBase
-    /// NOTE: This function should only be called by exSpriteBase
+    /// Show an exLayeredSprite
+    /// NOTE: This function should only be called by exLayeredSprite
     // ------------------------------------------------------------------ 
 
-    internal void ShowSprite (exSpriteBase _sprite) {
+    internal void ShowSprite (exLayeredSprite _sprite) {
         if (_sprite.isInIndexBuffer == false) {
             int meshIndex = IndexOfMesh(_sprite);
             if (meshIndex != -1) {
@@ -345,7 +345,7 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
     
-    internal void HideSprite (exSpriteBase _sprite) {
+    internal void HideSprite (exLayeredSprite _sprite) {
         exDebug.Assert(false, "GetMeshToAdd要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中");
         if (_sprite.isInIndexBuffer) {
             int meshIndex = IndexOfMesh(_sprite);
@@ -361,7 +361,7 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    internal void FastShowSprite (exSpriteBase _sprite) {
+    internal void FastShowSprite (exLayeredSprite _sprite) {
         if (_sprite.isInIndexBuffer == false) {
             ShowSprite (_sprite);
         }
@@ -375,7 +375,7 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    internal void FastHideSprite (exSpriteBase _sprite) {
+    internal void FastHideSprite (exLayeredSprite _sprite) {
         _sprite.transparent = true;
         UpdateNowInEditMode();
     }
@@ -431,8 +431,8 @@ public class exLayer : MonoBehaviour
         
     public void GenerateMeshes () {
         nextSpriteUniqueId = 0;
-        exSpriteBase[] spriteList = GetComponentsInChildren<exSpriteBase>(true);
-        foreach (exSpriteBase sprite in spriteList) {
+        exLayeredSprite[] spriteList = GetComponentsInChildren<exLayeredSprite>(true);
+        foreach (exLayeredSprite sprite in spriteList) {
             AddChildSprite(sprite, false);
         }
     }
@@ -442,8 +442,8 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
         
     public void DestroyMeshes () {
-        //exSpriteBase[] spriteList = GetComponentsInChildren<exSpriteBase>();
-        //foreach (exSpriteBase sprite in spriteList) {
+        //exLayeredSprite[] spriteList = GetComponentsInChildren<exLayeredSprite>();
+        //foreach (exLayeredSprite sprite in spriteList) {
         //    // reset sprite
         //    sprite.indexBufferIndex = -1;
         //    sprite.layer = null;
@@ -452,7 +452,7 @@ public class exLayer : MonoBehaviour
             exMesh mesh = meshList[i];
             if (mesh != null) {
                 for (int s = 0; s < mesh.spriteList.Count; ++s) {
-                    exSpriteBase sprite = mesh.spriteList[s];
+                    exLayeredSprite sprite = mesh.spriteList[s];
                     exDebug.Assert(sprite != null);
                     if (sprite != null) {
                         sprite.ResetLayerProperties();
@@ -488,7 +488,7 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private int IndexOfMesh (exSpriteBase _sprite) {
+    private int IndexOfMesh (exLayeredSprite _sprite) {
         Material mat = _sprite.material;
         for (int i = 0; i < meshList.Count; ++i) {
             exMesh mesh = meshList[i];
@@ -539,7 +539,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     [System.Diagnostics.Conditional("UNITY_EDITOR")]
-    public void CheckDuplicated (exSpriteBase _sprite) {
+    public void CheckDuplicated (exLayeredSprite _sprite) {
 #if UNITY_EDITOR
         if (ordered_ == false) {
             return;
@@ -559,7 +559,7 @@ public class exLayer : MonoBehaviour
 #endif
     }
 
-    private void ShiftSprite (exMesh _src, exMesh _dst, exSpriteBase _sprite) {
+    private void ShiftSprite (exMesh _src, exMesh _dst, exLayeredSprite _sprite) {
 #if EX_DEBUG
         int oldVertexCount = _sprite.vertexCount;
 #endif
@@ -589,7 +589,7 @@ public class exLayer : MonoBehaviour
         int delta = mesh.vertices.Count - _newVertexCount;
         int realDelta = 0;
         for (int i = mesh.sortedSpriteList.Count - 1; i >= 0; --i) {
-    	    exSpriteBase aboveSprite = mesh.sortedSpriteList[i];
+    	    exLayeredSprite aboveSprite = mesh.sortedSpriteList[i];
             realDelta += aboveSprite.vertexCount;
             if (realDelta >= delta) {
                 exMesh dstMesh;
@@ -633,7 +633,7 @@ public class exLayer : MonoBehaviour
             }
             int dstVertexCount = (i == _meshIndex + 1 ? _newVertexCount : _maxVertexCount);
             while (srcMesh.sortedSpriteList.Count > 0) {
-                exSpriteBase sprite = srcMesh.sortedSpriteList[0];
+                exLayeredSprite sprite = srcMesh.sortedSpriteList[0];
                 if (dstMesh.vertices.Count + sprite.vertexCount <= dstVertexCount) {
                     ShiftSprite (srcMesh, dstMesh, sprite);
                 }
@@ -648,7 +648,7 @@ public class exLayer : MonoBehaviour
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    private int GetBelowVertexCountInMesh (int _meshIndex, exSpriteBase _sprite, int _maxVertexCount, out int _aboveSpriteIndex) {
+    private int GetBelowVertexCountInMesh (int _meshIndex, exLayeredSprite _sprite, int _maxVertexCount, out int _aboveSpriteIndex) {
         exMesh mesh = meshList[_meshIndex];
         _aboveSpriteIndex = mesh.sortedSpriteList.BinarySearch(_sprite);
         if (_aboveSpriteIndex < 0) {
@@ -677,14 +677,14 @@ public class exLayer : MonoBehaviour
     /// \return The mesh to insert
     // ------------------------------------------------------------------ 
 
-    private exMesh GetShiftedMesh (int _meshIndex, exSpriteBase _sprite, int _maxVertexCount) {
+    private exMesh GetShiftedMesh (int _meshIndex, exLayeredSprite _sprite, int _maxVertexCount) {
         exMesh mesh = meshList[_meshIndex];
         int newSpriteVertexCount = _sprite.vertexCount;
         int aboveSpriteIndex;
         GetBelowVertexCountInMesh(_meshIndex, _sprite, _maxVertexCount, out aboveSpriteIndex);
         int belowVertexCount = mesh.vertices.Count;
         for (int i = mesh.sortedSpriteList.Count - 1; i >= aboveSpriteIndex; --i) {
-        	exSpriteBase aboveSprite = mesh.sortedSpriteList[i];
+        	exLayeredSprite aboveSprite = mesh.sortedSpriteList[i];
             belowVertexCount -= aboveSprite.vertexCount;
             if (belowVertexCount + newSpriteVertexCount <= _maxVertexCount) {
                 ShiftSpritesUp(_meshIndex, belowVertexCount, _maxVertexCount); // 上移
@@ -709,7 +709,7 @@ public class exLayer : MonoBehaviour
     /// \param _maxVertexCount The max vertex count of meshes in layer
     // ------------------------------------------------------------------ 
 
-    private void SplitMesh (int _meshIndex, exSpriteBase _seperatorSprite, int _maxVertexCount) {
+    private void SplitMesh (int _meshIndex, exLayeredSprite _seperatorSprite, int _maxVertexCount) {
         int t;
         int belowVertexCount = GetBelowVertexCountInMesh(_meshIndex, _seperatorSprite, _maxVertexCount, out t);
         ShiftSpritesUp(_meshIndex, belowVertexCount, _maxVertexCount);    // 上移
@@ -720,7 +720,7 @@ public class exLayer : MonoBehaviour
     /// 这个算法保证mesh不产生零散的碎片，效率应该还有优化的余地。
     // ------------------------------------------------------------------ 
 
-    private exMesh GetMeshToAdd (exSpriteBase _sprite) {
+    private exMesh GetMeshToAdd (exLayeredSprite _sprite) {
         Material mat = _sprite.material;
         int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT;
         // TODO: 如果sprite的vertex count大于maxVertexCount
@@ -730,10 +730,10 @@ public class exLayer : MonoBehaviour
             if (mesh == null) continue;
             
             //split mesh if batch failed
-            exDebug.Assert(exSpriteBase.enableFastShowHide);    // 要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中
+            exDebug.Assert(exLayeredSprite.enableFastShowHide);    // 要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中
             if (mesh.sortedSpriteList.Count == 0) continue;
 
-            exSpriteBase top = mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1];
+            exLayeredSprite top = mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1];
             bool aboveTopSprite = _sprite >= top;
             if (aboveTopSprite) {   // 在这个mesh之上层 TODO: 如果是unordered，还可以优化成检查同一个depth的mesh后面是否有相同材质的mesh
                 if (ReferenceEquals(mesh.material, mat) && mesh.vertices.Count <= restVertexCount) {
@@ -744,7 +744,7 @@ public class exLayer : MonoBehaviour
                 }
             }
             else {
-                exSpriteBase bot = mesh.sortedSpriteList[0];
+                exLayeredSprite bot = mesh.sortedSpriteList[0];
                 bool aboveBottomSprite = _sprite > bot;
                 if (aboveBottomSprite) {   // 在这个mesh的depth内
                     if (ReferenceEquals(mesh.material, mat)) {
@@ -787,7 +787,7 @@ public class exLayer : MonoBehaviour
     /// \param _newSprite 如果为true，则将sprite渲染到其它相同depth的sprite上面
     // ------------------------------------------------------------------ 
     
-    private void AddChildSprite (exSpriteBase _sprite, bool _newSprite) {
+    private void AddChildSprite (exLayeredSprite _sprite, bool _newSprite) {
         Material mat = _sprite.material;
         if (mat == null) {
 #if EX_DEBUG
@@ -816,10 +816,10 @@ public class exLayer : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    /// Add an exSpriteBase to the mesh. 
+    /// Add an exLayeredSprite to the mesh. 
     // ------------------------------------------------------------------ 
 
-    private void AddToMesh (exSpriteBase _sprite, exMesh _mesh) {
+    private void AddToMesh (exLayeredSprite _sprite, exMesh _mesh) {
         exDebug.Assert(_mesh.spriteList.Contains(_sprite) == false, "Can't add duplicated sprite");
 
         _sprite.updateFlags = exUpdateFlags.None;
@@ -827,7 +827,7 @@ public class exLayer : MonoBehaviour
         _mesh.spriteList.Add(_sprite);
 
         _sprite.FillBuffers(_mesh.vertices, _mesh.uvs, _mesh.colors32);
-        if (exSpriteBase.enableFastShowHide) {
+        if (exLayeredSprite.enableFastShowHide) {
             AddIndices(_mesh, _sprite);
             _sprite.transparent = !_sprite.visible;
         }
@@ -843,10 +843,10 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private void RemoveFromMesh (exSpriteBase _sprite, exMesh _mesh) {
+    private void RemoveFromMesh (exLayeredSprite _sprite, exMesh _mesh) {
         _mesh.spriteList.RemoveAt(_sprite.spriteIndexInMesh);
         for (int i = _sprite.spriteIndexInMesh; i < _mesh.spriteList.Count; ++i) {
-            exSpriteBase sprite = _mesh.spriteList[i];
+            exLayeredSprite sprite = _mesh.spriteList[i];
             // update sprite and vertic index after removed sprite
             sprite.spriteIndexInMesh = i;
             sprite.vertexBufferIndex -= _sprite.vertexCount;
@@ -886,7 +886,7 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private void AddIndices (exMesh _mesh, exSpriteBase _sprite) {
+    private void AddIndices (exMesh _mesh, exLayeredSprite _sprite) {
         exDebug.Assert(!_sprite.isInIndexBuffer);
         if (!_sprite.isInIndexBuffer) {
             int sortedSpriteIndex;
@@ -900,7 +900,7 @@ public class exLayer : MonoBehaviour
                     // this sprite's depth is biggest
                     _sprite.indexBufferIndex = _mesh.indices.Count;
 #if EX_DEBUG
-                    exSpriteBase lastSprite = _mesh.sortedSpriteList[_mesh.sortedSpriteList.Count - 1];
+                    exLayeredSprite lastSprite = _mesh.sortedSpriteList[_mesh.sortedSpriteList.Count - 1];
                     exDebug.Assert(_sprite.indexBufferIndex == lastSprite.indexBufferIndex + lastSprite.indexCount);
 #endif
                 }
@@ -921,7 +921,7 @@ public class exLayer : MonoBehaviour
             _sprite.updateFlags |= exUpdateFlags.Index;
             // update other sprites indexBufferIndex
             for (int i = sortedSpriteIndex; i < _mesh.sortedSpriteList.Count; ++i) {
-                exSpriteBase otherSprite = _mesh.sortedSpriteList[i];
+                exLayeredSprite otherSprite = _mesh.sortedSpriteList[i];
                 otherSprite.indexBufferIndex += indexCount;
             }
             // insert into _sortedSpriteList
@@ -933,7 +933,7 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private void RemoveIndices (exMesh _mesh, exSpriteBase _sprite) {
+    private void RemoveIndices (exMesh _mesh, exLayeredSprite _sprite) {
         exDebug.Assert(_sprite.isInIndexBuffer);
         if (_sprite.isInIndexBuffer) {
             // update indices
@@ -942,7 +942,7 @@ public class exLayer : MonoBehaviour
             
             // update indexBufferIndex and sortedSpriteList
             for (int i = _mesh.sortedSpriteList.Count - 1; i >= 0; --i) {
-                exSpriteBase otherSprite = _mesh.sortedSpriteList[i];
+                exLayeredSprite otherSprite = _mesh.sortedSpriteList[i];
                 if (otherSprite.indexBufferIndex > _sprite.indexBufferIndex) {
                     otherSprite.indexBufferIndex -= _sprite.indexCount;
                     exDebug.Assert(otherSprite.indexBufferIndex >= _sprite.indexBufferIndex);

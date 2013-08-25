@@ -21,7 +21,7 @@ using System.Collections.Generic;
 ///////////////////////////////////////////////////////////////////////////////
 
 [AddComponentMenu("ex2D/ex2D Sprite Font")]
-public class exSpriteFont : exSpriteBase {
+public class exSpriteFont : exLayeredSprite {
     
     // ------------------------------------------------------------------ 
     /// The type of font effect

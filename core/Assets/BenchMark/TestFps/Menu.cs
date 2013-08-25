@@ -107,7 +107,7 @@ public class Menu : MonoBehaviour {
             }
             GUILayout.EndHorizontal();
             OnGuiSlider("ex2D: DB Vertex:", ref exLayer.maxDynamicMeshVertex, 4, 4096, ref inputVertexCount);
-            exSpriteBase.enableFastShowHide = GUILayout.Toggle(exSpriteBase.enableFastShowHide, "ex2D: Enable FastShowHide", toggleStyle);
+            exLayeredSprite.enableFastShowHide = GUILayout.Toggle(exLayeredSprite.enableFastShowHide, "ex2D: Enable FastShowHide", toggleStyle);
 
             OnGuiSlider("Sprite Count:", ref count, 0, 10000, ref inputCount);
             OnGuiSlider("Sprite Speed:", ref speed, 0, 1000, ref inputSpeed);

@@ -87,7 +87,7 @@ class exSceneEditor : EditorWindow {
     exRectSelection<Object> rectSelection = null;
 
     // 
-    List<exSpriteBase> spriteNodes = new List<exSpriteBase>();
+    List<exLayeredSprite> spriteNodes = new List<exLayeredSprite>();
 
     int firstResolutionIdx = 0;
     int secondResolutionIdx = 0;
@@ -670,7 +670,7 @@ class exSceneEditor : EditorWindow {
                         newGO.transform.localScale = Vector3.one;
                         newGO.transform.rotation = Quaternion.identity;
 
-                        exSpriteBase sp = newGO.GetComponent<exSpriteBase>();
+                        exLayeredSprite sp = newGO.GetComponent<exLayeredSprite>();
                         activeLayer.Add(sp);
 
                         EditorUtility.SetDirty(activeLayer);
@@ -767,7 +767,7 @@ class exSceneEditor : EditorWindow {
             Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
             for ( int i = 0; i < selection.Length; ++i ) {
                 Transform trans = selection[i];
-                exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
+                exLayeredSprite spriteBase = trans.GetComponent<exLayeredSprite>();
                 if ( spriteBase ) {
                     // DrawAABoundingRect (spriteBase);
                     DrawBoundingRect (spriteBase);
@@ -827,7 +827,7 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DrawNode ( exSpriteBase _node ) {
+    void DrawNode ( exLayeredSprite _node ) {
         Material material = _node.material;
         material.SetPass(0);
 
@@ -855,7 +855,7 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DrawAABoundingRect ( exSpriteBase _node ) {
+    void DrawAABoundingRect ( exLayeredSprite _node ) {
         Rect boundingRect = _node.GetAABoundingRect();
 
         exEditorUtility.GL_DrawRectLine ( new Vector3[] {
@@ -870,7 +870,7 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DrawBoundingRect ( exSpriteBase _node ) {
+    void DrawBoundingRect ( exLayeredSprite _node ) {
         Vector3[] vertices = _node.GetWorldVertices();
         if (vertices.Length == 0) {
             return;
@@ -1045,7 +1045,7 @@ class exSceneEditor : EditorWindow {
             float handleSize = HandleUtility.GetHandleSize(trans_position);
 
             // resize
-            exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
+            exLayeredSprite spriteBase = trans.GetComponent<exLayeredSprite>();
             if ( spriteBase && spriteBase.customSize ) {
 
                 // TODO: limit the size { 
@@ -1303,7 +1303,7 @@ class exSceneEditor : EditorWindow {
     Object[] PickRectObjects ( Rect _rect ) {
         List<Object> objects = new List<Object>();
         for ( int i = spriteNodes.Count-1; i >= 0; --i ) {
-            exSpriteBase node = spriteNodes[i];
+            exLayeredSprite node = spriteNodes[i];
             Rect boundingRect = MapBoundingRect ( sceneViewRect, node );
             if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||
                  exGeometryUtility.RectRect_Intersect( _rect, boundingRect ) )
@@ -1344,8 +1344,8 @@ class exSceneEditor : EditorWindow {
                             -(_worldPos.y - editCamera.transform.position.y) * scale + _rect.y + _rect.height/2.0f  );
     }
 
-    Rect MapBoundingRect ( Rect _rect, exSpriteBase _node ) {
-        exSpriteBase spriteBase = _node as exSpriteBase;
+    Rect MapBoundingRect ( Rect _rect, exLayeredSprite _node ) {
+        exLayeredSprite spriteBase = _node as exLayeredSprite;
         Vector2 screenPos = Vector2.zero;
 
         if ( spriteBase ) {
@@ -1378,9 +1378,9 @@ class exSceneEditor : EditorWindow {
         for ( int i = ex2DRenderer.instance.layerList.Count-1; i >= 0; --i ) {
             exLayer layer = ex2DRenderer.instance.layerList[i];
             if ( layer != null && layer.show ) {
-                exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
-                System.Array.Sort<exSpriteBase>(spriteList);
-                foreach ( exSpriteBase node in spriteList ) {
+                exLayeredSprite[] spriteList = layer.GetComponentsInChildren<exLayeredSprite>();
+                System.Array.Sort<exLayeredSprite>(spriteList);
+                foreach ( exLayeredSprite node in spriteList ) {
                     if ( node.visible && node.layer != null ) {
                         Rect boundingRect = MapBoundingRect ( _rect, node );
                         if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||

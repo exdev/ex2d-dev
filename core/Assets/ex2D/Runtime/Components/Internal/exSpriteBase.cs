@@ -14,7 +14,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 // ------------------------------------------------------------------ 
-/// The anchor position of the exSpriteBase in 2D space
+/// The anchor position of the exSpriteBase
 // ------------------------------------------------------------------ 
 
 public enum Anchor {
@@ -36,9 +36,7 @@ public enum Anchor {
 ///////////////////////////////////////////////////////////////////////////////
 
 [ExecuteInEditMode]
-public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteBase> {
-
-    public static bool enableFastShowHide = true;
+public abstract class exSpriteBase : MonoBehaviour {
 
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -54,11 +52,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         get { return customSize_; }
         set {
             customSize_ = value; 
-#if UNITY_EDITOR
-            if (layer_ != null) {
-                layer_.UpdateNowInEditMode();
-            }
-#endif
+            updateFlags |= exUpdateFlags.Vertex;
         }
     }
 
@@ -76,11 +70,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
                 if (width_ != value) {
                     width_ = value;
                     updateFlags |= exUpdateFlags.Vertex;
-#if UNITY_EDITOR
-                    if (layer_ != null) {
-                        layer_.UpdateNowInEditMode();
-                    }
-#endif
                 }
             }
             else {
@@ -103,11 +92,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
                 if (height_ != value) {
                     height_ = value;
                     updateFlags |= exUpdateFlags.Vertex;
-#if UNITY_EDITOR
-                    if (layer_ != null) {
-                        layer_.UpdateNowInEditMode();
-                    }
-#endif
                 }
             }
             else {
@@ -127,32 +111,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             if ( anchor_ != value ) {
                 anchor_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
-#if UNITY_EDITOR
-                if (layer_ != null) {
-                    layer_.UpdateNowInEditMode();
-                }
-#endif
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected float depth_ = 0;
-    /// The sorting depth of this sprite in its layer. Sprite with lower depth are rendered before sprites with higher depth.
-    // ------------------------------------------------------------------ 
-
-    public float depth {
-        get { return depth_; }
-        set {
-            if ( depth_ != value ) {
-                depth_ = value;
-                // 先直接重加到layer里，以后再做优化
-                if (layer_ != null) {
-                    exLayer originalLayer = layer_;
-                    originalLayer.Remove(this, false);
-                    originalLayer.Add(this, false);
-                }
-                //updateFlags |= exUpdateFlags.Index;
             }
         }
     }
@@ -168,11 +126,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             if ( color_ != value ) {
                 color_ = value;
                 updateFlags |= exUpdateFlags.Color;
-#if UNITY_EDITOR
-                if (layer_ != null) {
-                    layer_.UpdateNowInEditMode();
-                }
-#endif
             }
         }
     }
@@ -188,11 +141,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             if ( offset_ != value ) {
                 offset_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
-#if UNITY_EDITOR
-                if (layer_ != null) {
-                    layer_.UpdateNowInEditMode();
-                }
-#endif
             }
         }
     }
@@ -208,11 +156,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
             if ( shear_ != value ) {
                 shear_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
-#if UNITY_EDITOR
-                if (layer_ != null) {
-                    layer_.UpdateNowInEditMode();
-                }
-#endif
             }
         }
     }
@@ -233,39 +176,12 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         }
     }
 
-    /// 用于相同depth的sprite之间的排序
-#if !EX_DEBUG
-    [HideInInspector]
-#endif
-    public int spriteIdInLayer = -1;
-
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
     
-    // cached for geometry buffers
-    [System.NonSerialized] internal int spriteIndexInMesh = -1;
-    [System.NonSerialized] internal int vertexBufferIndex = -1;
-    [System.NonSerialized] internal int indexBufferIndex = -1;
-    
     /// If OnEnable, isOnEnabled_ is true. If OnDisable, isOnEnabled_ is false.
     [System.NonSerialized] protected bool isOnEnabled_;
-
-    /// fast show hide
-    [System.NonSerialized] protected bool transparent_ = false;
-    public bool transparent {
-        get { return transparent_; }
-        set {
-            if ( transparent_ != value ) {
-                transparent_ = value;
-                updateFlags |= exUpdateFlags.Color;
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    /// The current updateFlags
-    // ------------------------------------------------------------------ 
 
     [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
 
@@ -276,22 +192,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     public abstract int vertexCount { get; }
     public abstract int indexCount { get; }
 
-    [System.NonSerialized]
-    protected exLayer layer_ = null;
-    public exLayer layer {
-        get {
-            return layer_;
-        }
-        internal set {
-            if (value != null) {
-                exDebug.Assert(layer_ == null, "Sprite should remove from last layer before add to new one");
-                OnPreAddToLayer();
-            }
-            layer_ = value;
-        }
-    }
-
-    [System.NonSerialized] private Material material_;
+    [System.NonSerialized] protected Material material_;
     public Material material {
         get {
             if (material_ != null) {
@@ -311,21 +212,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
         }
     }
     
-    ///如果从layer中隐藏，isInIndexBuffer必须设为false
-    public bool isInIndexBuffer {
-        get {
-            return indexBufferIndex != -1;
-        }
-        set {
-            if (value == false) {
-                indexBufferIndex = -1;
-            }
-            else {
-                Debug.LogError("isInIndexBuffer can not set to true, use SetLayer instead.");
-            }
-        }
-    }
-
     [System.NonSerialized] protected Transform cachedTransform_ = null;    
     public Transform cachedTransform {
         get {
@@ -345,163 +231,19 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
 
     void OnEnable () {
         isOnEnabled_ = true;
-        if (layer_ != null && visible) {
-            if (enableFastShowHide) {
-                layer_.FastShowSprite (this);
-            }
-            else {
-                layer_.ShowSprite (this);
-            }
-        }
     }
 
     void OnDisable () {
         isOnEnabled_ = false;
-        if (layer_ != null) {
-            if (enableFastShowHide) {
-                layer_.FastHideSprite (this);
-            }
-            else {
-                layer_.HideSprite (this);
-            }
-        }
     }
 
     void OnDestroy () {
-        if (layer_ != null) {
-            layer_.Remove(this, false);
-        }
         exDebug.Assert(visible == false);
-        exDebug.Assert(isInIndexBuffer == false);
-    }
-
-#if UNITY_EDITOR
-    
-    // Allows drag & dropping of this sprite onto layer in the editor
-    void LateUpdate () {
-        if (UnityEditor.EditorApplication.isPlaying == false) {
-            // Run through the parents and see if this sprite attached to a layer
-            Transform parentTransform = cachedTransform.parent;
-            while (parentTransform != null) {
-                exLayer parentLayer = parentTransform.GetComponent<exLayer>();
-                if (parentLayer != null) {
-                    // Checks to ensure that the sprite is still parented to the right layer
-                    SetLayer(parentLayer);
-                    return;
-                }
-                else {
-                    exSpriteBase parentSprite = parentTransform.GetComponent<exSpriteBase>();
-                    if (parentSprite != null) {
-                        SetLayer(parentSprite.layer_);
-                        return;
-                    }
-                    else {
-                        parentTransform = parentTransform.parent;
-                    }
-                }
-            }
-            // No parent
-            SetLayer(null);
-        }
-    }
-
-#endif
-
-    // ------------------------------------------------------------------ 
-    /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
-    // ------------------------------------------------------------------ 
-    
-    public static bool operator > (exSpriteBase _lhs, exSpriteBase _rhs) {
-        return _lhs.depth_ > _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer > _rhs.spriteIdInLayer);
-    }
-    
-    // ------------------------------------------------------------------ 
-    /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
-    /// 如果他们在同一个layer，则当layer是unordered时这个比较才有可能相等
-    // ------------------------------------------------------------------ 
-    
-    public static bool operator >= (exSpriteBase _lhs, exSpriteBase _rhs) {
-        return _lhs.depth_ > _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer >= _rhs.spriteIdInLayer);
-    }
-    
-    // ------------------------------------------------------------------ 
-    /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
-    // ------------------------------------------------------------------ 
-    
-    public static bool operator < (exSpriteBase _lhs, exSpriteBase _rhs) {
-        return _lhs.depth_ < _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer < _rhs.spriteIdInLayer);
-    }
-    
-    // ------------------------------------------------------------------ 
-    /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
-    /// 如果他们在同一个layer，则当layer是unordered时这个比较才有可能相等
-    // ------------------------------------------------------------------ 
-    
-    public static bool operator <= (exSpriteBase _lhs, exSpriteBase _rhs) {
-        return _lhs.depth_ < _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer <= _rhs.spriteIdInLayer);
-    }
-    
-    // ------------------------------------------------------------------ 
-    /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
-    // ------------------------------------------------------------------ 
-    
-    public int CompareTo(exSpriteBase _other) {
-        if (depth_ < _other.depth_)
-        {
-            return -1;
-        }
-        if (depth_ > _other.depth_)
-        {
-            return 1;
-        }
-        if (spriteIdInLayer < _other.spriteIdInLayer)
-        {
-            return -1;
-        }
-        if (spriteIdInLayer > _other.spriteIdInLayer)
-        {
-            return 1;
-        }
-        return 0;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
-
-    // ------------------------------------------------------------------ 
-    /// 只重设layer相关属性，但不真的从layer或mesh中删除。
-    // ------------------------------------------------------------------ 
-    
-    internal void ResetLayerProperties () {
-        layer_ = null;
-        isInIndexBuffer = false;
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-    
-    public void SetLayer (exLayer _layer = null) {
-        if (ReferenceEquals(layer_, _layer)) {
-            return;
-        }
-        //bool isInited = (cachedTransform != null);
-        //if (isInited) {
-        if (_layer != null) {
-            _layer.Add(this);
-        }
-        else if (layer_ != null) {
-            layer_.Remove(this);
-        }
-        //}
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
-    protected virtual void OnPreAddToLayer () { }
 
 #region Functions used to update geometry buffer.
 
@@ -510,7 +252,6 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // ------------------------------------------------------------------ 
 
     internal virtual void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
-        vertexBufferIndex = _vertices.Count;
         _vertices.AddRange(vertexCount);
         if (_colors32 != null) {
             _colors32.AddRange(vertexCount);
@@ -528,75 +269,13 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
 
     internal abstract exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices = null);
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected abstract Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix);
-        
-    // ------------------------------------------------------------------ 
-	/// Get vertices of the sprite
-	/// NOTE: This function returns an empty array If sprite is invisible
-    // ------------------------------------------------------------------ 
-
-    public Vector3[] GetLocalVertices () {
-        Matrix4x4 identity = Matrix4x4.identity;
-        return GetVertices(ref identity);
-    }
-    
-	// ------------------------------------------------------------------ 
-	/// Get vertices of the sprite
-	/// NOTE: This function returns an empty array If sprite is invisible
-	// ------------------------------------------------------------------ 
-
-    public Vector3[] GetWorldVertices () {
-        Matrix4x4 l2w = cachedTransform.localToWorldMatrix;
-        return GetVertices(ref l2w);
-    }
-
-#if UNITY_EDITOR
-
-    // ------------------------------------------------------------------ 
-    /// Get sprite's geometry data
-    // ------------------------------------------------------------------ 
-
-    public void GetBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors, exList<int> _indices = null) {
-        _vertices.Clear();
-        _uvs.Clear();
-        if (_indices != null) {
-            _indices.Clear();
-            _indices.AddRange(indexCount);
-        }
-        if (visible) {
-            exUpdateFlags originalFlags = updateFlags;
-            int originalVertexBufferIndex = vertexBufferIndex;
-            int originalIndexBufferIndex = indexBufferIndex;
-
-            FillBuffers(_vertices, _uvs, _colors);
-            UpdateTransform();
-
-            indexBufferIndex = 0;
-            updateFlags |= exUpdateFlags.Index;
-            UpdateBuffers(_vertices, _uvs, _colors, _indices);
-
-            vertexBufferIndex = originalVertexBufferIndex;
-            indexBufferIndex = originalIndexBufferIndex;
-            updateFlags = originalFlags;
-        }
-    }
-
-#endif
-
 #endregion
 
     // ------------------------------------------------------------------ 
     /// Calculate the world AA bounding rect of the sprite
     // ------------------------------------------------------------------ 
 
-    public Rect GetAABoundingRect () {
-        Vector3[] vertices = GetWorldVertices();
-        return exGeometryUtility.GetAABoundingRect(vertices);
-    }
+    public abstract Rect GetAABoundingRect ();
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -614,17 +293,7 @@ public abstract class exSpriteBase : MonoBehaviour, System.IComparable<exSpriteB
     // Desc: 
     // ------------------------------------------------------------------ 
     
-    protected void UpdateMaterial () {
-        if (layer_ != null) {
-            exLayer myLayer = layer_;
-            myLayer.Remove(this, false);
-            material_ = null;   // set dirty, make material update.
-            if (ReferenceEquals(material, null) == false) {
-                myLayer.Add(this, false);
-            }
-        }
-        else {
-            material_ = null;   // set dirty, make material update.
-        }
+    protected virtual void UpdateMaterial () {
+        material_ = null;   // set dirty, make material update.
     }
 }
