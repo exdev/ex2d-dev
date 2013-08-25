@@ -246,7 +246,7 @@ public class exLayer : MonoBehaviour
 
             exLayeredSprite[] spritesToAdd = _sprite.GetComponentsInChildren<exLayeredSprite> (true);
             for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
-                AddChildSprite (spritesToAdd [spriteIndex], true);
+                DoAddSprite (spritesToAdd [spriteIndex], true);
             }
             if (_sprite.cachedTransform.IsChildOf (cachedTransform) == false) {
                 _sprite.cachedTransform.parent = cachedTransform_;
@@ -254,7 +254,7 @@ public class exLayer : MonoBehaviour
             UpdateNowInEditMode ();
         }
         else {
-            AddChildSprite (_sprite, true);
+            DoAddSprite (_sprite, true);
         }
     }
 
@@ -266,7 +266,7 @@ public class exLayer : MonoBehaviour
     public void Add (GameObject _gameObject) {
         exLayeredSprite[] spritesToAdd = _gameObject.GetComponentsInChildren<exLayeredSprite>(true);
         for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
-            AddChildSprite(spritesToAdd[spriteIndex], true);
+            DoAddSprite(spritesToAdd[spriteIndex], true);
         }
         if (_gameObject.transform.IsChildOf(cachedTransform) == false) {
             _gameObject.transform.parent = cachedTransform_;
@@ -433,7 +433,7 @@ public class exLayer : MonoBehaviour
         nextSpriteUniqueId = 0;
         exLayeredSprite[] spriteList = GetComponentsInChildren<exLayeredSprite>(true);
         foreach (exLayeredSprite sprite in spriteList) {
-            AddChildSprite(sprite, false);
+            DoAddSprite(sprite, false);
         }
     }
 
@@ -787,7 +787,7 @@ public class exLayer : MonoBehaviour
     /// \param _newSprite 如果为true，则将sprite渲染到其它相同depth的sprite上面
     // ------------------------------------------------------------------ 
     
-    private void AddChildSprite (exLayeredSprite _sprite, bool _newSprite) {
+    private void DoAddSprite (exLayeredSprite _sprite, bool _newSprite) {
         Material mat = _sprite.material;
         if (mat == null) {
 #if EX_DEBUG

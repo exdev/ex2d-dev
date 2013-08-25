@@ -211,19 +211,6 @@ public abstract class exSpriteBase : MonoBehaviour {
             return isOnEnabled_;
         }
     }
-    
-    [System.NonSerialized] protected Transform cachedTransform_ = null;    
-    public Transform cachedTransform {
-        get {
-            if (ReferenceEquals(cachedTransform_, null)) {
-                cachedTransform_ = transform;
-                cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
-            }
-            return cachedTransform_;
-        }
-    }
-
-    [System.NonSerialized] protected Matrix4x4 cachedWorldMatrix;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
@@ -271,24 +258,6 @@ public abstract class exSpriteBase : MonoBehaviour {
 
 #endregion
 
-    // ------------------------------------------------------------------ 
-    /// Calculate the world AA bounding rect of the sprite
-    // ------------------------------------------------------------------ 
-
-    public abstract Rect GetAABoundingRect ();
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-    
-    public void UpdateTransform () {
-        if (cachedTransform.hasChanged) {
-            cachedTransform_.hasChanged = false;
-            cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
-            updateFlags |= exUpdateFlags.Vertex;
-        }
-    }
-    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 

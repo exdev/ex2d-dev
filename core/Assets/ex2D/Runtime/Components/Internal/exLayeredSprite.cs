@@ -15,7 +15,7 @@ using System.Collections.Generic;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
-/// The sprite base component
+/// The sprite component used in layer
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -74,6 +74,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             }
         }
     }
+    
+    [System.NonSerialized] protected Matrix4x4 cachedWorldMatrix;
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
@@ -109,6 +111,17 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         }
     }
 
+    [System.NonSerialized] protected Transform cachedTransform_ = null;    
+    public Transform cachedTransform {
+        get {
+            if (ReferenceEquals(cachedTransform_, null)) {
+                cachedTransform_ = transform;
+                cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
+            }
+            return cachedTransform_;
+        }
+    }
+    
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -321,7 +334,6 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         _uvs.Clear();
         if (_indices != null) {
             _indices.Clear();
-            _indices.AddRange(indexCount);
         }
         if (visible) {
             exUpdateFlags originalFlags = updateFlags;
@@ -331,6 +343,9 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             FillBuffers(_vertices, _uvs, _colors);
             UpdateTransform();
 
+            if (_indices != null) {
+                _indices.AddRange(indexCount);
+            }
             indexBufferIndex = 0;
             updateFlags |= exUpdateFlags.Index;
             UpdateBuffers(_vertices, _uvs, _colors, _indices);
@@ -344,12 +359,24 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
 #endif
 
 #endregion
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
 
+    public void UpdateTransform () {
+        if (cachedTransform.hasChanged) {
+            cachedTransform_.hasChanged = false;
+            cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
+            updateFlags |= exUpdateFlags.Vertex;
+        }
+    }
+    
     // ------------------------------------------------------------------ 
     /// Calculate the world AA bounding rect of the sprite
     // ------------------------------------------------------------------ 
 
-    public override Rect GetAABoundingRect () {
+    public Rect GetAABoundingRect () {
         Vector3[] vertices = GetWorldVertices();
         return exGeometryUtility.GetAABoundingRect(vertices);
     }

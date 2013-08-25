@@ -14,7 +14,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 // ------------------------------------------------------------------ 
-/// The type of update for mesh
+/// The type of update for mesh and sprite
 // ------------------------------------------------------------------ 
 
 [System.FlagsAttribute]
@@ -423,7 +423,7 @@ public class exMesh : MonoBehaviour
 
     private Mesh CreateMesh () {
         Mesh mesh = new Mesh();
-        mesh.name = "ex2D mesh";
+        mesh.name = "ex2D Mesh";
         mesh.hideFlags = HideFlags.DontSave;
         return mesh;
     }
