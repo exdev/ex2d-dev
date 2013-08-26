@@ -1,8 +1,8 @@
 ## Links
 
 * [Web Site](http://ex-dev.com/ex2d) 
-* [Documentation (English)](https://ex-dev.com/ex2d/docs)
-* [Documentation (Chinese)](https://ex-dev.com/ex2d/docs/zh)
+* [Documentation (English)](http://ex-dev.com/ex2d/docs)
+* [Documentation (Chinese)](http://ex-dev.com/ex2d/docs/zh)
 * [Script Reference (Coming Soon...)](TODO)
 * [Download in Unity3D Asset Store](http://u3d.as/content/ex-dev-team/ex2d-v1-0-0/2eJ)
 
