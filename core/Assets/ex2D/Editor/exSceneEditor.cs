@@ -767,10 +767,10 @@ class exSceneEditor : EditorWindow {
             Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
             for ( int i = 0; i < selection.Length; ++i ) {
                 Transform trans = selection[i];
-                exLayeredSprite spriteBase = trans.GetComponent<exLayeredSprite>();
-                if ( spriteBase ) {
-                    // DrawAABoundingRect (spriteBase);
-                    DrawBoundingRect (spriteBase);
+                exLayeredSprite layeredSprite = trans.GetComponent<exLayeredSprite>();
+                if ( layeredSprite ) {
+                    // DrawAABoundingRect (layeredSprite);
+                    DrawBoundingRect (layeredSprite);
                 }
             }
 
@@ -1045,14 +1045,14 @@ class exSceneEditor : EditorWindow {
             float handleSize = HandleUtility.GetHandleSize(trans_position);
 
             // resize
-            exLayeredSprite spriteBase = trans.GetComponent<exLayeredSprite>();
-            if ( spriteBase && spriteBase.customSize ) {
+            exLayeredSprite layeredSprite = trans.GetComponent<exLayeredSprite>();
+            if ( layeredSprite && layeredSprite.customSize ) {
 
                 // TODO: limit the size { 
                 // float minWidth = float.MinValue;
                 // float minHeight = float.MinValue;
-                // if ( spriteBase is exSprite ) {
-                //     exSprite sp = spriteBase as exSprite;
+                // if ( layeredSprite is exSprite ) {
+                //     exSprite sp = layeredSprite as exSprite;
                 //     if ( sp.spriteType == exSpriteType.Sliced ) {
                 //         minWidth = sp.textureInfo.borderLeft + sp.textureInfo.borderRight;
                 //         minHeight = sp.textureInfo.borderTop + sp.textureInfo.borderBottom;
@@ -1060,11 +1060,11 @@ class exSceneEditor : EditorWindow {
                 // }
                 // } TODO end 
 
-                Vector3[] vertices = spriteBase.GetLocalVertices();
+                Vector3[] vertices = layeredSprite.GetLocalVertices();
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
                 Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
                 // Vector3 offset = aabb.center;
-                Vector3 size = new Vector3( spriteBase.width, spriteBase.height, 0.0f );
+                Vector3 size = new Vector3( layeredSprite.width, layeredSprite.height, 0.0f );
 
                 Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f, center.y + size.y * 0.5f, 0.0f ) );
                 Vector3 tc = trans.TransformPoint ( new Vector3 (                 center.x, center.y + size.y * 0.5f, 0.0f ) );
@@ -1183,16 +1183,16 @@ class exSceneEditor : EditorWindow {
                 }
 
                 if ( changed ) {
-                    exSprite sprite = spriteBase as exSprite;
+                    exSprite sprite = layeredSprite as exSprite;
                     if (sprite != null && sprite.spriteType == exSpriteType.Sliced && sprite.textureInfo != null && sprite.textureInfo.hasBorder) {
                         size.x = Mathf.Max(size.x, sprite.textureInfo.borderLeft + sprite.textureInfo.borderRight);
                         size.y = Mathf.Max(size.y, sprite.textureInfo.borderBottom + sprite.textureInfo.borderTop);
                     }
                     
-                    spriteBase.width = size.x;
-                    spriteBase.height = size.y;
+                    layeredSprite.width = size.x;
+                    layeredSprite.height = size.y;
 
-                    switch (spriteBase.anchor) {
+                    switch (layeredSprite.anchor) {
                     case Anchor.TopLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
                     case Anchor.TopCenter:  trans.position = center + trans.rotation * new Vector3(                            0.0f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
                     case Anchor.TopRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
@@ -1246,9 +1246,9 @@ class exSceneEditor : EditorWindow {
                 }
             }
 
-            if ( spriteBase ) {
-                spriteBase.UpdateTransform ();
-                if ( spriteBase.updateFlags != exUpdateFlags.None ) {
+            if ( layeredSprite ) {
+                layeredSprite.UpdateTransform ();
+                if ( layeredSprite.updateFlags != exUpdateFlags.None ) {
                     ex2DRenderer.instance.ResortLayerDepth();
                     ex2DRenderer.instance.UpdateLayers();
                 }
@@ -1345,11 +1345,11 @@ class exSceneEditor : EditorWindow {
     }
 
     Rect MapBoundingRect ( Rect _rect, exLayeredSprite _node ) {
-        exLayeredSprite spriteBase = _node as exLayeredSprite;
+        exLayeredSprite layeredSprite = _node as exLayeredSprite;
         Vector2 screenPos = Vector2.zero;
 
-        if ( spriteBase ) {
-            Rect boundingRect = spriteBase.GetAABoundingRect();
+        if ( layeredSprite ) {
+            Rect boundingRect = layeredSprite.GetAABoundingRect();
             screenPos = SceneField_WorldToScreen ( _rect, boundingRect.center );
             boundingRect = new Rect ( screenPos.x - boundingRect.width * scale / 2.0f,
                                       screenPos.y - boundingRect.height * scale / 2.0f,
