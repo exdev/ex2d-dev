@@ -120,6 +120,13 @@ public class exList<T> where T : struct {
         return array;
     }
 
+    /// 调用完该方法后，外部不能再对传入的array进行操作
+    public void FromArray (ref T[] _array) {
+        buffer = _array;
+        Count = _array.Length;
+        _array = null;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Internal Functions
     ///////////////////////////////////////////////////////////////////////////////

@@ -218,14 +218,24 @@ public abstract class exSpriteBase : MonoBehaviour {
 
     void OnEnable () {
         isOnEnabled_ = true;
+        if (visible) {
+            Show();
+        }
     }
 
     void OnDisable () {
         isOnEnabled_ = false;
+        Hide();
     }
 
     void OnDestroy () {
         exDebug.Assert(visible == false);
+    }
+
+    protected virtual void Show () {
+    }
+
+    protected virtual void Hide () {
     }
 
     ///////////////////////////////////////////////////////////////////////////////

@@ -126,9 +126,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
-    void OnEnable () {
-        isOnEnabled_ = true;
-        if (layer_ != null && visible) {
+    protected override void Show () {
+        if (layer_ != null) {
             if (enableFastShowHide) {
                 layer_.FastShowSprite (this);
             }
@@ -138,8 +137,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         }
     }
 
-    void OnDisable () {
-        isOnEnabled_ = false;
+    protected override void Hide () {
         if (layer_ != null) {
             if (enableFastShowHide) {
                 layer_.FastHideSprite (this);

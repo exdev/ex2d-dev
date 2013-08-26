@@ -4,7 +4,7 @@
 // Last Change  : 06/15/2013 | 09:49:04 AM | Saturday,June
 // Description  : 
 // ======================================================================================
-
+#if STASH
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
@@ -13,25 +13,14 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-// ------------------------------------------------------------------ 
-/// The type of sprite
-// ------------------------------------------------------------------ 
-
-public enum exSpriteType {
-    Simple = 0,
-    Sliced,
-    //Tiled,
-    //Diced,
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 ///
 /// The sprite component
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-[AddComponentMenu("ex2D/2D Sprite")]
-public class exSprite : exLayeredSprite {
+[AddComponentMenu("ex2D/3D Sprite")]
+public class ex3DSprite : exStandaloneSprite {
 
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -696,3 +685,4 @@ public class exSprite : exLayeredSprite {
         }
     }
 }
+#endif

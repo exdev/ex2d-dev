@@ -173,12 +173,52 @@ public class exMesh : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    /// Actually apply all buffer changes
+    /// Actually apply all buffer changes to mesh.
+    // ------------------------------------------------------------------ 
+
+    public static void FlushBuffers (Mesh _mesh, exUpdateFlags _updateFlags, exList<Vector3> _vertices, exList<int> _indices, exList<Vector2> _uvs, exList<Color32> _colors32) {
+        if ((_updateFlags & exUpdateFlags.VertexAndIndex) == exUpdateFlags.VertexAndIndex) {
+            // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
+            _mesh.triangles = null;  //这里如果使用clear，那么uv和color就必须赋值，否则有时会出错
+        }
+        if ((_updateFlags & exUpdateFlags.Vertex) != 0 || 
+            (_updateFlags & exUpdateFlags.Index) != 0) {           // 如果要重设triangles，则必须同时重设vertices，否则mesh将显示不出来
+            _mesh.vertices = _vertices.FastToArray(); // 使用此方法会导致list的在需要变长时重新分配buffer，不过由于最终调用ToArray时本来就要分配新的buffer，所以没有影响。反而减少了当list尺寸不变时拿array的GC消耗。
+        }
+        if ((_updateFlags & exUpdateFlags.UV) != 0) {
+            _mesh.uv = _uvs.FastToArray();
+        }
+        if ((_updateFlags & exUpdateFlags.Color) != 0) {
+            _mesh.colors32 = _colors32.FastToArray();
+        }
+        if ((_updateFlags & exUpdateFlags.Index) != 0) {
+            _mesh.triangles = _indices.FastToArray();      // During runtime, assigning triangles will automatically Recalculate the bounding volume.
+#if UNITY_EDITOR
+            if (UnityEditor.EditorApplication.isPlaying == false) {
+                _mesh.RecalculateBounds();
+            }
+#endif
+        }
+        else if((_updateFlags & exUpdateFlags.Vertex) != 0) { 
+            // 如果没有更新triangles并且更新了vertex位置，则需要手动更新bbox
+            _mesh.RecalculateBounds();
+        }
+        if ((_updateFlags & exUpdateFlags.Normal) != 0) {
+            Vector3[] normals = new Vector3[_vertices.Count];
+            for (int i = 0; i < normals.Length; ++i) {
+                normals[i] = new Vector3(0, 0, -1);
+            }
+            _mesh.normals = normals;
+        }
+        _updateFlags = exUpdateFlags.None;
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// Apply all buffer changes
     // ------------------------------------------------------------------ 
 
     public void Apply (exUpdateFlags _additionalUpdateFlags = exUpdateFlags.None) {
         updateFlags |= _additionalUpdateFlags;
-
         Mesh mesh;
         if (isDynamic && updateFlags != exUpdateFlags.None) {
             mesh = SwapMeshBuffer();
@@ -186,45 +226,15 @@ public class exMesh : MonoBehaviour
         else {
             mesh = GetMeshBuffer();
         }
-        
-        if ((updateFlags & exUpdateFlags.VertexAndIndex) == exUpdateFlags.VertexAndIndex) {
-            // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
-            mesh.triangles = null;  //这里如果使用clear，那么uv和color就必须赋值，否则有时会出错
-        }
-        if ((updateFlags & exUpdateFlags.Vertex) != 0 || 
-            (updateFlags & exUpdateFlags.Index) != 0) {           // 如果要重设triangles，则必须同时重设vertices，否则mesh将显示不出来
-            mesh.vertices = vertices.FastToArray(); // 使用此方法会导致list的在需要变长时重新分配buffer，不过由于最终调用ToArray时本来就要分配新的buffer，所以没有影响。反而减少了当list尺寸不变时拿array的GC消耗。
-        }
-        if ((updateFlags & exUpdateFlags.UV) != 0) {
-            mesh.uv = uvs.FastToArray();
-        }
-        if ((updateFlags & exUpdateFlags.Color) != 0) {
-            mesh.colors32 = colors32.FastToArray();
-        }
+
+        FlushBuffers (mesh, updateFlags, vertices, indices, uvs, colors32);
+
         if ((updateFlags & exUpdateFlags.Index) != 0) {
-            mesh.triangles = indices.FastToArray();      // During runtime, assigning triangles will automatically Recalculate the bounding volume.
             bool visible = (indices.Count > 0);
             if (gameObject.activeSelf != visible) {
                 gameObject.SetActive(visible);
             }
-#if UNITY_EDITOR
-            if (UnityEditor.EditorApplication.isPlaying == false) {
-                mesh.RecalculateBounds();
-            }
-#endif
         }
-        else if((updateFlags & exUpdateFlags.Vertex) != 0) { 
-            // 如果没有更新triangles并且更新了vertex位置，则需要手动更新bbox
-            mesh.RecalculateBounds();
-        }
-        if ((updateFlags & exUpdateFlags.Normal) != 0) {
-            Vector3[] normals = new Vector3[vertices.Count];
-            for (int i = 0; i < normals.Length; ++i) {
-                normals[i] = new Vector3(0, 0, -1);
-            }
-            mesh.normals = normals;
-        }
-        updateFlags = exUpdateFlags.None;
     }
 
     // ------------------------------------------------------------------ 

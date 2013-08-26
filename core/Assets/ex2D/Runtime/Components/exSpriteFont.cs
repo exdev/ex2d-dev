@@ -57,30 +57,19 @@ public class exSpriteFont : exLayeredSprite {
                 if (font_ == null || ReferenceEquals(font_.texture, value.texture) == false) {
                     // texture changed
                     font_ = value;
-                    UpdateMaterial();
+                    UpdateMaterial();   // 前面update过text了
                     return;
                 }
                 if (layer_ != null && isOnEnabled_ && visible == false) {
                     font_ = value;
                     if (visible) {
-                        // become visible
-                        if (enableFastShowHide) {
-                            layer_.FastShowSprite(this);
-                        }
-                        else {
-                            layer_.ShowSprite(this);
-                        }
+                        Show();
                     }
                 }
             }
             else if (layer_ != null && visible) {
                 // become invisible
-                if (enableFastShowHide) {
-                    layer_.FastHideSprite(this);
-                }
-                else {
-                    layer_.HideSprite(this);
-                }
+                Hide();
             }
             font_ = value;
 
