@@ -54,7 +54,63 @@ public static class MenuItems {
     // ------------------------------------------------------------------ 
 
     [MenuItem ("Assets/Create/ex2D/Bitmap Font", false, 1003)]
-    static void ex2D_CreateBitmapFont () {
+    static void Create_BitmapFont () {
+        exGenericAssetUtility<exBitmapFont>.CreateInCurrentDirectory ("New BitmapFont");
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Create From Selected
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("Assets/Create/ex2D/TextureInfo From Selected", false, 2000)]
+    static void Create_TextureInfo_FromSelected () {
+        Texture2D rawTexture = Selection.activeObject as Texture2D;
+
+        // check if this is a font info
+        if ( rawTexture == null ) {
+            Debug.LogError ( "You can only create texture-info from selected texture" );
+            return;
+        }
+
+        string rawTexturePath = AssetDatabase.GetAssetPath(rawTexture);
+        string dirPath = Path.GetDirectoryName(rawTexturePath);
+
+        exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate ( dirPath, rawTexture.name );
+        textureInfo.rawTextureGUID = exEditorUtility.AssetToGUID(rawTexture);
+        textureInfo.rawAtlasGUID = exEditorUtility.AssetToGUID(rawTexture);
+        textureInfo.texture = rawTexture;
+        textureInfo.rotated = false;
+        textureInfo.trim = true;
+        textureInfo.trimThreshold = 1;
+        Rect trimRect = exTextureUtility.GetTrimTextureRect(rawTexture,1);
+        if ( trimRect.width <= 0 || trimRect.height <= 0 ) {
+            textureInfo.trim = false;
+            trimRect = new Rect ( 0, 0, rawTexture.width, rawTexture.height );
+        }
+        textureInfo.trim_x = (int)trimRect.x;
+        textureInfo.trim_y = (int)trimRect.y;
+        textureInfo.width = (int)trimRect.width;
+        textureInfo.height = (int)trimRect.height;
+        textureInfo.x = (int)trimRect.x;
+        textureInfo.y = (int)trimRect.y;
+        textureInfo.rawWidth = rawTexture.width;
+        textureInfo.rawHeight = rawTexture.height;
+
+
+        AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(textureInfo) );
+        Selection.activeObject = textureInfo;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("Assets/Create/ex2D/Bitmap Font From Selected", false, 2001)]
+    static void Create_BitmapFont_FromSelected () {
         Object fontInfo = Selection.activeObject; // font info is a ".txt" or ".fnt" text file
 
         // check if this is a font info

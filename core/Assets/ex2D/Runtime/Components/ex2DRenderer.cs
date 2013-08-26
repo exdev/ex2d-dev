@@ -22,7 +22,7 @@ using System.Collections.Generic;
 
 [ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
-[AddComponentMenu("ex2D/ex2D Renderer")]
+[AddComponentMenu("ex2D/2D Renderer")]
 public class ex2DRenderer : MonoBehaviour {
     
     ///////////////////////////////////////////////////////////////////////////////
@@ -167,19 +167,6 @@ public class ex2DRenderer : MonoBehaviour {
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
-    
-    void OnPreRender () {
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            return;
-        }
-#endif
-        UpdateLayers();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
 
     void OnDestroy () {
         instance = null;
@@ -187,7 +174,7 @@ public class ex2DRenderer : MonoBehaviour {
     }
 
     // ------------------------------------------------------------------ 
-    // Desc: 
+    /// Main update
     // ------------------------------------------------------------------ 
 
     void LateUpdate () {
@@ -195,6 +182,8 @@ public class ex2DRenderer : MonoBehaviour {
             if ( layerList[i] == null )
                 layerList.RemoveAt(i);
         }
+        
+        UpdateLayers();
     }
 
 #if EX_DEBUG
@@ -290,7 +279,7 @@ public class ex2DRenderer : MonoBehaviour {
         if (_shader == null) {
             _shader = Shader.Find("ex2D/Alpha Blended");
             if (_shader == null) {
-                _shader = new Shader();
+                return null;
             }
         }
         MaterialTableKey key = new MaterialTableKey(_shader, _texture);

@@ -28,8 +28,9 @@ class exSpriteBaseInspector : Editor {
     SerializedProperty heightProp;
     SerializedProperty anchorProp;
     SerializedProperty offsetProp;
-    SerializedProperty depthProp;
+    //SerializedProperty depthProp;
     SerializedProperty shearProp;
+    SerializedProperty colorProp;
     SerializedProperty shaderProp;
 
     // ------------------------------------------------------------------ 
@@ -118,18 +119,18 @@ class exSpriteBaseInspector : Editor {
             }
         }
 
-        // depth
-        EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( depthProp, new GUIContent("Depth") );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteBase sp = obj as exSpriteBase;
-                if ( sp ) {
-                    sp.depth = depthProp.floatValue;
-                    EditorUtility.SetDirty(sp);
-                }
-            }
-        }
+//        // depth
+//        EditorGUI.BeginChangeCheck();
+//        EditorGUILayout.PropertyField ( depthProp, new GUIContent("Depth") );
+//        if ( EditorGUI.EndChangeCheck() ) {
+//            foreach ( Object obj in serializedObject.targetObjects ) {
+//                exSpriteBase sp = obj as exSpriteBase;
+//                if ( sp ) {
+//                    sp.depth = depthProp.floatValue;
+//                    EditorUtility.SetDirty(sp);
+//                }
+//            }
+//        }
 
         // offset
         EditorGUI.BeginChangeCheck();
@@ -152,6 +153,19 @@ class exSpriteBaseInspector : Editor {
                 exSpriteBase sp = obj as exSpriteBase;
                 if ( sp ) {
                     sp.shear = shearProp.vector2Value;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
+        // color
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( colorProp, new GUIContent("Color"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSpriteBase sp = obj as exSpriteBase;
+                if ( sp ) {
+                    sp.color = colorProp.colorValue;
                     EditorUtility.SetDirty(sp);
                 }
             }
@@ -181,8 +195,9 @@ class exSpriteBaseInspector : Editor {
         heightProp = serializedObject.FindProperty("height_");
         anchorProp = serializedObject.FindProperty("anchor_");
         offsetProp = serializedObject.FindProperty("offset_");
-        depthProp = serializedObject.FindProperty("depth_");
+        //depthProp = serializedObject.FindProperty("depth_");
         shearProp = serializedObject.FindProperty("shear_");
+        colorProp = serializedObject.FindProperty("color_");
         shaderProp = serializedObject.FindProperty("shader_");
     }
 }

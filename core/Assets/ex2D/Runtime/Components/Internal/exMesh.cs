@@ -14,7 +14,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 // ------------------------------------------------------------------ 
-/// The type of update for mesh
+/// The type of update for mesh and sprite
 // ------------------------------------------------------------------ 
 
 [System.FlagsAttribute]
@@ -80,11 +80,11 @@ public class exMesh : MonoBehaviour
     }
 
     /// sprite序列，用于索引vertices。Only used by exLayer, just place here for convenience.
-    [System.NonSerialized] public List<exSpriteBase> spriteList = new List<exSpriteBase>();
+    [System.NonSerialized] public List<exLayeredSprite> spriteList = new List<exLayeredSprite>();
 
     /// sprite序列，用于索引indices，顺序和sprite在indices中的顺序一致，也就是按照深度值从小到大排序。Only used by exLayer, just place here for convenience.
     /// 可用此序列访问到所有在能在mesh显示的sprite
-    [System.NonSerialized] public List<exSpriteBase> sortedSpriteList = new List<exSpriteBase>();
+    [System.NonSerialized] public List<exLayeredSprite> sortedSpriteList = new List<exLayeredSprite>();
 
     [System.NonSerialized] private Mesh mesh0;    ///< first mesh buffer
     [System.NonSerialized] private Mesh mesh1;    ///< second mesh buffer, only used in dynamic mode
@@ -423,7 +423,7 @@ public class exMesh : MonoBehaviour
 
     private Mesh CreateMesh () {
         Mesh mesh = new Mesh();
-        mesh.name = "ex2D mesh";
+        mesh.name = "ex2D Mesh";
         mesh.hideFlags = HideFlags.DontSave;
         return mesh;
     }

@@ -87,7 +87,7 @@ class exSceneEditor : EditorWindow {
     exRectSelection<Object> rectSelection = null;
 
     // 
-    List<exSpriteBase> spriteNodes = new List<exSpriteBase>();
+    List<exLayeredSprite> spriteNodes = new List<exLayeredSprite>();
 
     int firstResolutionIdx = 0;
     int secondResolutionIdx = 0;
@@ -670,7 +670,7 @@ class exSceneEditor : EditorWindow {
                         newGO.transform.localScale = Vector3.one;
                         newGO.transform.rotation = Quaternion.identity;
 
-                        exSpriteBase sp = newGO.GetComponent<exSpriteBase>();
+                        exLayeredSprite sp = newGO.GetComponent<exLayeredSprite>();
                         activeLayer.Add(sp);
 
                         EditorUtility.SetDirty(activeLayer);
@@ -696,11 +696,14 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    static void InitSprite ( exSprite _sprite ) { 
+    void InitSprite ( exSprite _sprite ) { 
         if ( _sprite.shader == null )
             _sprite.shader = Shader.Find("ex2D/Alpha Blended");
-        if ( _sprite.textureInfo != null && _sprite.textureInfo.hasBorder )
+
+        if ( _sprite.textureInfo != null && _sprite.textureInfo.hasBorder ) {
             _sprite.spriteType = exSpriteType.Sliced;
+            _sprite.customSize = true;
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -713,11 +716,10 @@ class exSceneEditor : EditorWindow {
                                        position.height - _rect.yMax,
                                        _rect.width, 
                                        _rect.height );
-        GL.Viewport(viewportRect);
-
         GL.PushMatrix();
 
             //
+            GL.Viewport(viewportRect);
             GL.LoadPixelMatrix ( 0.0f, _rect.width, 0.0f, _rect.height );
 
             // background
@@ -765,7 +767,7 @@ class exSceneEditor : EditorWindow {
             Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
             for ( int i = 0; i < selection.Length; ++i ) {
                 Transform trans = selection[i];
-                exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
+                exLayeredSprite spriteBase = trans.GetComponent<exLayeredSprite>();
                 if ( spriteBase ) {
                     // DrawAABoundingRect (spriteBase);
                     DrawBoundingRect (spriteBase);
@@ -797,18 +799,27 @@ class exSceneEditor : EditorWindow {
                     }
                 }
             }
-
-            // draw border line
-            GL.LoadPixelMatrix ( 0.0f, _rect.width, _rect.height, 0.0f );
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( 1.0f,        1.0f,         0.0f ),
-                                              new Vector3 ( _rect.width, 1.0f,         0.0f ),
-                                              new Vector3 ( _rect.width, _rect.height, 0.0f ),
-                                              new Vector3 ( 1.0f,        _rect.height, 0.0f ),
-                                              },
-                                              new Color( 0.7f, 0.7f, 0.7f ) );
-
         GL.PopMatrix();
+
+        // draw border line
+        GL.PushMatrix();
+            Rect rect2 = new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 );
+            Rect viewportRect2 = new Rect ( rect2.x,
+                                            position.height - rect2.yMax,
+                                            rect2.width, 
+                                            rect2.height );
+            GL.LoadPixelMatrix ( 0.0f, rect2.width, rect2.height, 0.0f );
+            GL.Viewport (viewportRect2);
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( 0.0f,        0.0f,         0.0f ),
+                                              new Vector3 ( rect2.width, 0.0f,         0.0f ),
+                                              new Vector3 ( rect2.width, rect2.height, 0.0f ),
+                                              new Vector3 ( 0.0f,        rect2.height, 0.0f ),
+                                              },
+                                              new Color( 0.0f, 0.0f, 0.0f ) );
+        GL.PopMatrix();
+
+        // pop viewport
         GL.Viewport(oldViewport);
     }
 
@@ -816,22 +827,23 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DrawNode ( exSpriteBase _node ) {
+    void DrawNode ( exLayeredSprite _node ) {
         Material material = _node.material;
         material.SetPass(0);
 
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
         exList<Vector2> uvs = exList<Vector2>.GetTempList();
         exList<int> indices = exList<int>.GetTempList();
-        _node.GetBuffers(vertices, uvs, indices);
+        exList<Color32> colors = exList<Color32>.GetTempList();
+        _node.GetBuffers(vertices, uvs, colors, indices);
         exDebug.Assert(uvs.Count == vertices.Count);
 
         //GL.PushMatrix();
         //GL.MultMatrix( _node.transform.localToWorldMatrix );
         GL.Begin(GL.TRIANGLES);
-        GL.Color( new Color( 1.0f, 1.0f, 1.0f, 1.0f ) );
         for (int i = 0; i < indices.Count; ++i) {
             int vertexIndex = indices.buffer[i];
+            GL.Color ( colors.buffer[vertexIndex] );
             GL.TexCoord2 ( uvs.buffer[vertexIndex].x, uvs.buffer[vertexIndex].y );
             GL.Vertex ( vertices.buffer[vertexIndex] );
         }
@@ -843,7 +855,7 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DrawAABoundingRect ( exSpriteBase _node ) {
+    void DrawAABoundingRect ( exLayeredSprite _node ) {
         Rect boundingRect = _node.GetAABoundingRect();
 
         exEditorUtility.GL_DrawRectLine ( new Vector3[] {
@@ -858,8 +870,11 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DrawBoundingRect ( exSpriteBase _node ) {
+    void DrawBoundingRect ( exLayeredSprite _node ) {
         Vector3[] vertices = _node.GetWorldVertices();
+        if (vertices.Length == 0) {
+            return;
+        }
         exSprite sprite = _node as exSprite;
         if ( sprite != null && sprite.spriteType == exSpriteType.Sliced) {
             Vector3[] rectVertices = new Vector3[16];
@@ -1030,7 +1045,7 @@ class exSceneEditor : EditorWindow {
             float handleSize = HandleUtility.GetHandleSize(trans_position);
 
             // resize
-            exSpriteBase spriteBase = trans.GetComponent<exSpriteBase>();
+            exLayeredSprite spriteBase = trans.GetComponent<exLayeredSprite>();
             if ( spriteBase && spriteBase.customSize ) {
 
                 // TODO: limit the size { 
@@ -1047,14 +1062,15 @@ class exSceneEditor : EditorWindow {
 
                 Vector3[] vertices = spriteBase.GetLocalVertices();
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
-                Vector3 center = aabb.center;
+                Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
+                // Vector3 offset = aabb.center;
                 Vector3 size = new Vector3( spriteBase.width, spriteBase.height, 0.0f );
 
                 Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f, center.y + size.y * 0.5f, 0.0f ) );
                 Vector3 tc = trans.TransformPoint ( new Vector3 (                 center.x, center.y + size.y * 0.5f, 0.0f ) );
                 Vector3 tr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f, center.y + size.y * 0.5f, 0.0f ) );
                 Vector3 ml = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,                 center.y, 0.0f ) );
-                // Vector3 mc = trans.TransformPoint ( new Vector3 (                     center.x,                 center.y, 0.0f ) );
+                // Vector3 mc = trans.TransformPoint ( new Vector3 (                 center.x,                 center.y, 0.0f ) );
                 Vector3 mr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f,                 center.y, 0.0f ) );
                 Vector3 bl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f, center.y - size.y * 0.5f, 0.0f ) );
                 Vector3 bc = trans.TransformPoint ( new Vector3 (                 center.x, center.y - size.y * 0.5f, 0.0f ) );
@@ -1071,6 +1087,8 @@ class exSceneEditor : EditorWindow {
                     delta = ml2 - ml;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
                     delta = -delta;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (ml2 + mr) * 0.5f;
                     changed = true;
@@ -1081,6 +1099,8 @@ class exSceneEditor : EditorWindow {
                 if ( EditorGUI.EndChangeCheck() ) {
                     delta = mr2 - mr;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (mr2 + ml) * 0.5f;
                     changed = true;
@@ -1091,6 +1111,8 @@ class exSceneEditor : EditorWindow {
                 if ( EditorGUI.EndChangeCheck() ) {
                     delta = tc2 - tc;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (tc2 + bc) * 0.5f;
                     changed = true;
@@ -1102,6 +1124,8 @@ class exSceneEditor : EditorWindow {
                     delta = bc2 - bc;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
                     delta = -delta;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (bc2 + tc) * 0.5f;
                     changed = true;
@@ -1112,6 +1136,8 @@ class exSceneEditor : EditorWindow {
                 if ( EditorGUI.EndChangeCheck() ) {
                     delta = tr2 - tr;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (tr2 + bl) * 0.5f;
                     changed = true;
@@ -1123,6 +1149,8 @@ class exSceneEditor : EditorWindow {
                     delta = tl2 - tl;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
                     delta.x = -delta.x;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (tl2 + br) * 0.5f;
                     changed = true;
@@ -1134,6 +1162,8 @@ class exSceneEditor : EditorWindow {
                     delta = br2 - br;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
                     delta.y = -delta.y;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (br2 + tl) * 0.5f;
                     changed = true;
@@ -1145,25 +1175,33 @@ class exSceneEditor : EditorWindow {
                     delta = bl2 - bl;
                     delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
                     delta = -delta;
+                    delta.x /= trans.lossyScale.x;
+                    delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (bl2 + tr) * 0.5f;
                     changed = true;
                 }
 
                 if ( changed ) {
+                    exSprite sprite = spriteBase as exSprite;
+                    if (sprite != null && sprite.spriteType == exSpriteType.Sliced && sprite.textureInfo != null && sprite.textureInfo.hasBorder) {
+                        size.x = Mathf.Max(size.x, sprite.textureInfo.borderLeft + sprite.textureInfo.borderRight);
+                        size.y = Mathf.Max(size.y, sprite.textureInfo.borderBottom + sprite.textureInfo.borderTop);
+                    }
+                    
                     spriteBase.width = size.x;
                     spriteBase.height = size.y;
 
                     switch (spriteBase.anchor) {
-                    case Anchor.TopLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*0.5f,  size.y*0.5f, 0.0f ); break;
-                    case Anchor.TopCenter:  trans.position = center + trans.rotation * new Vector3(         0.0f,  size.y*0.5f, 0.0f ); break;
-                    case Anchor.TopRight:   trans.position = center + trans.rotation * new Vector3(  size.x*0.5f,  size.y*0.5f, 0.0f ); break;
-                    case Anchor.MidLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*0.5f,         0.0f, 0.0f ); break;
-                    case Anchor.MidCenter:  trans.position = center;                                                                    break;
-                    case Anchor.MidRight:   trans.position = center + trans.rotation * new Vector3(  size.x*0.5f,         0.0f, 0.0f ); break;
-                    case Anchor.BotLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*0.5f, -size.y*0.5f, 0.0f ); break;
-                    case Anchor.BotCenter:  trans.position = center + trans.rotation * new Vector3(         0.0f, -size.y*0.5f, 0.0f ); break;
-                    case Anchor.BotRight:   trans.position = center + trans.rotation * new Vector3(  size.x*0.5f, -size.y*0.5f, 0.0f ); break;
+                    case Anchor.TopLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.TopCenter:  trans.position = center + trans.rotation * new Vector3(                            0.0f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.TopRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.MidLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f,                            0.0f, 0.0f ); break;
+                    case Anchor.MidCenter:  trans.position = center;                                                                                                          break;
+                    case Anchor.MidRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f,                            0.0f, 0.0f ); break;
+                    case Anchor.BotLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f, -size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.BotCenter:  trans.position = center + trans.rotation * new Vector3(                            0.0f, -size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    case Anchor.BotRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f, -size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
                     }
                 }
             }
@@ -1265,7 +1303,7 @@ class exSceneEditor : EditorWindow {
     Object[] PickRectObjects ( Rect _rect ) {
         List<Object> objects = new List<Object>();
         for ( int i = spriteNodes.Count-1; i >= 0; --i ) {
-            exSpriteBase node = spriteNodes[i];
+            exLayeredSprite node = spriteNodes[i];
             Rect boundingRect = MapBoundingRect ( sceneViewRect, node );
             if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||
                  exGeometryUtility.RectRect_Intersect( _rect, boundingRect ) )
@@ -1306,8 +1344,8 @@ class exSceneEditor : EditorWindow {
                             -(_worldPos.y - editCamera.transform.position.y) * scale + _rect.y + _rect.height/2.0f  );
     }
 
-    Rect MapBoundingRect ( Rect _rect, exSpriteBase _node ) {
-        exSpriteBase spriteBase = _node as exSpriteBase;
+    Rect MapBoundingRect ( Rect _rect, exLayeredSprite _node ) {
+        exLayeredSprite spriteBase = _node as exLayeredSprite;
         Vector2 screenPos = Vector2.zero;
 
         if ( spriteBase ) {
@@ -1340,9 +1378,9 @@ class exSceneEditor : EditorWindow {
         for ( int i = ex2DRenderer.instance.layerList.Count-1; i >= 0; --i ) {
             exLayer layer = ex2DRenderer.instance.layerList[i];
             if ( layer != null && layer.show ) {
-                exSpriteBase[] spriteList = layer.GetComponentsInChildren<exSpriteBase>();
-                System.Array.Sort<exSpriteBase>(spriteList);
-                foreach ( exSpriteBase node in spriteList ) {
+                exLayeredSprite[] spriteList = layer.GetComponentsInChildren<exLayeredSprite>();
+                System.Array.Sort<exLayeredSprite>(spriteList);
+                foreach ( exLayeredSprite node in spriteList ) {
                     if ( node.visible && node.layer != null ) {
                         Rect boundingRect = MapBoundingRect ( _rect, node );
                         if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||

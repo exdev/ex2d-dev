@@ -25,65 +25,155 @@ using System.Reflection;
 public static class exEditorUtility {
 
     ///////////////////////////////////////////////////////////////////////////////
-    //
+    // NOTE: At the beginning, I try to do all resources initliazed in exEditorUtility.Init()
+    // and called it in ex2DEditor. However in this way, it will suffer some random crash
+    // in Unity. I have to shift the code to on-demand init to avoid crash.
     ///////////////////////////////////////////////////////////////////////////////
 
-    public static Mesh meshQuad;
+    // meshQuad
+    static Mesh meshQuad_;
+    public static Mesh meshQuad {
+        get { 
+            if ( meshQuad_ == null ) {
+                meshQuad_ = new Mesh();
+                meshQuad_.hideFlags = HideFlags.HideAndDontSave;
+            }
+            return meshQuad_;
+        }
+    }
 
-    public static Material materialQuad;
-    public static Material materialLine;
-    public static Material materialAlphaBlended;
+    // materialQuad
+    static Material materialQuad_;
+    public static Material materialQuad {
+        get {
+            if ( materialQuad_ == null ) {
+                materialQuad_ = new Material( Shader.Find("ex2D/Alpha Blended") );
+                materialQuad_.hideFlags = HideFlags.HideAndDontSave;
+            }
+            return materialQuad_; 
+        }
+    } 
 
-    public static Texture2D textureCheckerboard;
-    public static Texture2D textureHelp;
-    public static Texture2D textureAnimationPlay;
-    public static Texture2D textureAnimationNext;
-    public static Texture2D textureAnimationPrev;
-    public static Texture2D textureAddEvent;
-    public static Texture2D textureEventMarker;
+    // materialLine
+    static Material materialLine_;
+    public static Material materialLine {
+        get {
+            if ( materialLine_ == null ) {
+                materialLine_ = new Material( "Shader \"Lines/Colored Blended\" {" +
+                                             "SubShader { Pass { " +
+                                             "    Blend SrcAlpha OneMinusSrcAlpha " +
+                                             "    ZWrite Off Cull Off Fog { Mode Off } " +
+                                             "    BindChannels {" +
+                                             "      Bind \"vertex\", vertex Bind \"color\", color }" +
+                                             "} } }" );
+                materialLine_.hideFlags = HideFlags.HideAndDontSave;
+                materialLine_.shader.hideFlags = HideFlags.HideAndDontSave;
+            }
+            return materialLine_;
+        }
+    }
 
-    public static GUIStyle styleRectBorder = null;
+    // materialAlphaBlended
+    static Material materialAlphaBlended_;
+    public static Material materialAlphaBlended {
+        get {
+            if ( materialAlphaBlended_ == null ) {
+                materialAlphaBlended_ = new Material( Shader.Find("ex2D/Alpha Blended") );
+                materialAlphaBlended_.hideFlags = HideFlags.HideAndDontSave;
+            }
+            return materialAlphaBlended_;
+        }
+    }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    //
-    ///////////////////////////////////////////////////////////////////////////////
-    
-    public static void Init () {
-        // meshes
-        meshQuad = new Mesh();
-        meshQuad.hideFlags = HideFlags.HideAndDontSave;
+    // textureCheckerboard
+    static Texture2D textureCheckerboard_;
+    public static Texture2D textureCheckerboard {
+        get {
+            if ( textureCheckerboard_ == null ) {
+                textureCheckerboard_ = FindTexture ( "checkerboard_64x64.png" ); 
+            }
+            return textureCheckerboard_;
+        }
+    }
 
-        // materials
-        materialQuad = new Material( Shader.Find("ex2D/Alpha Blended") );
-        materialQuad.hideFlags = HideFlags.HideAndDontSave;
+    // textureHelp
+    static Texture2D textureHelp_;
+    public static Texture2D textureHelp {
+        get {
+            if ( textureHelp_ == null ) {
+                FindBuiltinTexture( ref textureHelp_, "_help" );
+            }
+            return textureHelp_;
+        }
+    }
 
-        materialAlphaBlended = new Material( Shader.Find("ex2D/Alpha Blended") );
-        materialAlphaBlended.hideFlags = HideFlags.HideAndDontSave;
+    // textureAnimationPlay
+    static Texture2D textureAnimationPlay_;
+    public static Texture2D textureAnimationPlay {
+        get {
+            if ( textureAnimationPlay_ == null ) {
+                FindBuiltinTexture( ref textureAnimationPlay_, "Animation.Play" );
+            }
+            return textureAnimationPlay_; 
+        }
+    }
 
-        materialLine = new Material( "Shader \"Lines/Colored Blended\" {" +
-                                     "SubShader { Pass { " +
-                                     "    Blend SrcAlpha OneMinusSrcAlpha " +
-                                     "    ZWrite Off Cull Off Fog { Mode Off } " +
-                                     "    BindChannels {" +
-                                     "      Bind \"vertex\", vertex Bind \"color\", color }" +
-                                     "} } }" );
-        materialLine.hideFlags = HideFlags.HideAndDontSave;
-        materialLine.shader.hideFlags = HideFlags.HideAndDontSave;
+    // textureAnimationNext
+    static Texture2D textureAnimationNext_;
+    public static Texture2D textureAnimationNext {
+        get {
+            if ( textureAnimationNext_ == null ) {
+                FindBuiltinTexture( ref textureAnimationNext_, "Animation.NextKey" );
+            }
+            return textureAnimationNext_;
+        }
+    }
 
-        // textures
-        textureCheckerboard = FindTexture ( "checkerboard_64x64.png" ); 
-        FindBuiltinTexture( ref textureHelp, "_help" );
-        FindBuiltinTexture( ref textureAnimationPlay, "Animation.Play" );
-        FindBuiltinTexture( ref textureAnimationNext, "Animation.NextKey" );
-        FindBuiltinTexture( ref textureAnimationPrev, "Animation.PrevKey" );
-        FindBuiltinTexture( ref textureAddEvent, "Animation.AddEvent" );
-        FindBuiltinTexture( ref textureEventMarker, "Animation.EventMarker" );
+    // textureAnimationPrev
+    static Texture2D textureAnimationPrev_;
+    public static Texture2D textureAnimationPrev {
+        get {
+            if ( textureAnimationPrev_ == null ) {
+                FindBuiltinTexture( ref textureAnimationPrev_, "Animation.PrevKey" );
+            }
+            return textureAnimationPrev_;
+        }
+    }
 
-        // styles
-        styleRectBorder = new GUIStyle();
-        styleRectBorder.normal.background = FindTexture( "border.png" );
-        styleRectBorder.border = new RectOffset( 2, 2, 2, 2 );
-        styleRectBorder.alignment = TextAnchor.MiddleCenter;
+    // textureAddEvent
+    static Texture2D textureAddEvent_;
+    public static Texture2D textureAddEvent {
+        get {
+            if ( textureAddEvent_ == null ) {
+                FindBuiltinTexture( ref textureAddEvent_, "Animation.AddEvent" );
+            }
+            return textureAddEvent_;
+        }
+    }
+
+    // textureEventMarker
+    static Texture2D textureEventMarker_;
+    public static Texture2D textureEventMarker {
+        get {
+            if ( textureEventMarker_ == null ) {
+                FindBuiltinTexture( ref textureEventMarker_, "Animation.EventMarker" );
+            }
+            return textureEventMarker_;
+        }
+    }
+
+    // styleRectBorder
+    static GUIStyle styleRectBorder_ = null;
+    public static GUIStyle styleRectBorder {
+        get {
+            if ( styleRectBorder_ == null ) {
+                styleRectBorder_ = new GUIStyle();
+                styleRectBorder_.normal.background = FindTexture( "border.png" );
+                styleRectBorder_.border = new RectOffset( 2, 2, 2, 2 );
+                styleRectBorder_.alignment = TextAnchor.MiddleCenter;
+            }
+            return styleRectBorder_; 
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -122,6 +212,117 @@ public static class exEditorUtility {
         GUI.backgroundColor = _borderColor;
             styleRectBorder.Draw( _rect, false, true, true, true );
         GUI.backgroundColor = old;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void GUI_DrawRawTextureInfo ( Rect _rect, 
+                                                exTextureInfo _textureInfo, 
+                                                Color _color, 
+                                                float _scale = 1.0f,
+                                                bool _useTextureOffset = false ) 
+    {
+        // check texture info 
+        if ( _textureInfo == null )
+            return;
+
+        // check raw/atlas texture
+        Texture2D texture = exEditorUtility.LoadAssetFromGUID<Texture2D>( _textureInfo.rawTextureGUID );
+        if ( texture == null )
+            return;
+
+        // calculate uv
+        Rect uv = new Rect ( (float)_textureInfo.trim_x/(float)texture.width,
+                             (float)_textureInfo.trim_y/(float)texture.height,
+                             (float)_textureInfo.width/(float)texture.width,
+                             (float)_textureInfo.height/(float)texture.height );
+
+        float width = _textureInfo.width * _scale;
+        float height = _textureInfo.height * _scale;
+
+        float offsetX = 0.0f;
+        float offsetY = 0.0f;
+
+        if ( _useTextureOffset ) {
+            offsetX = (_textureInfo.rawWidth - _textureInfo.width) * 0.5f - _textureInfo.trim_x;
+            offsetX *= _scale;
+
+            offsetY = (_textureInfo.rawHeight - _textureInfo.height) * 0.5f - _textureInfo.trim_y;
+            offsetY *= _scale;
+        }
+
+        //
+        Rect pos = new Rect( _rect.center.x - width * 0.5f - offsetX,
+                             _rect.center.y - height * 0.5f + offsetY,
+                             width, 
+                             height );
+
+        // draw the texture
+        Color old = GUI.color;
+        GUI.color = _color;
+        GUI.DrawTextureWithTexCoords( pos, texture, uv );
+        GUI.color = old;
+
+        // DEBUG { 
+        // exEditorUtility.GUI_DrawRectBorder ( _rect, Color.white );
+        // } DEBUG end 
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void GUI_DrawTextureInfo ( Rect _rect,
+                                             exTextureInfo _textureInfo, 
+                                             Color _color,
+                                             bool _useTextureOffset = false ) {
+        if (_textureInfo == null) {
+            return;
+        }
+        if (_textureInfo.texture == null) {
+            return;
+        }
+
+        float s0 = (float) _textureInfo.x / (float) _textureInfo.texture.width;
+        float s1 = (float) (_textureInfo.x+_textureInfo.rotatedWidth)  / (float) _textureInfo.texture.width;
+        float t0 = (float) _textureInfo.y / (float) _textureInfo.texture.height;
+        float t1 = (float) (_textureInfo.y+_textureInfo.rotatedHeight) / (float) _textureInfo.texture.height;
+
+        materialAlphaBlended.mainTexture = _textureInfo.texture;
+        materialAlphaBlended.SetPass(0);
+        GL.Begin(GL.QUADS);
+            GL.Color(_color);
+
+            if ( _textureInfo.rotated == false ) {
+                GL.TexCoord2 ( s0, t0 );
+                GL.Vertex3 ( _rect.x, _rect.yMax, 0.0f );
+
+                GL.TexCoord2 ( s0, t1 );
+                GL.Vertex3 ( _rect.x, _rect.y, 0.0f );
+
+                GL.TexCoord2 ( s1, t1 );
+                GL.Vertex3 ( _rect.xMax, _rect.y, 0.0f );
+
+                GL.TexCoord2 ( s1, t0 );
+                GL.Vertex3 ( _rect.xMax, _rect.yMax, 0.0f );
+            }
+            else {
+                GL.TexCoord2 ( s1, t0 );
+                GL.Vertex3 ( _rect.x, _rect.yMax, 0.0f );
+
+                GL.TexCoord2 ( s0, t0 );
+                GL.Vertex3 ( _rect.x, _rect.y, 0.0f );
+
+                GL.TexCoord2 ( s0, t1 );
+                GL.Vertex3 ( _rect.xMax, _rect.y, 0.0f );
+
+                GL.TexCoord2 ( s1, t1 );
+                GL.Vertex3 ( _rect.xMax, _rect.yMax, 0.0f );
+            }
+
+        GL.End();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -180,7 +381,33 @@ public static class exEditorUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public static void GL_DrawLines ( Vector2[] _points, Color _color ) {
+        if ( _points.Length < 2 ) {
+            Debug.LogWarning ("Failed to call GL_DrawLines, not enough points");
+            return;
+        }
+
+        materialLine.SetPass(0);
+        GL.Begin( GL.LINES );
+            GL.Color(_color);
+
+            for ( int i = 0; i < _points.Length; i += 2 ) {
+                GL.Vertex3( _points[i+0].x, _points[i+0].y, 0.0f );
+                GL.Vertex3( _points[i+1].x, _points[i+1].y, 0.0f );
+            }
+        GL.End();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public static void GL_DrawRectLine ( Vector3[] _points, Color _color ) {
+        if ( _points.Length < 4 ) {
+            Debug.LogWarning ("Failed to call GL_DrawRectLine, not enough points");
+            return;
+        }
+
         materialLine.SetPass(0);
         GL.Begin( GL.LINES );
             GL.Color(_color);
@@ -364,7 +591,33 @@ public static class exEditorUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    static Texture2D FindBuiltinTexture ( ref Texture2D _texture, string _name ) {
+    public static float CalculateTextureInfoScale ( Rect _rect, exTextureInfo _textureInfo ) {
+        float scale = 1.0f;
+        if ( _textureInfo == null )
+            return scale;
+
+        float width = _textureInfo.width;
+        float height = _textureInfo.height;
+
+        // confirm the scale, width and height
+        if ( width > _rect.width && height > _rect.height ) {
+            scale = Mathf.Min( _rect.width / width, 
+                               _rect.height / height );
+        }
+        else if ( width > _rect.width ) {
+            scale = _rect.width / width;
+        }
+        else if ( height > _rect.height ) {
+            scale = _rect.height / height;
+        }
+        return scale;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static Texture2D FindBuiltinTexture ( ref Texture2D _texture, string _name ) {
         // NOTE: hack from "unity editor resources" in Unity3D Contents
         if ( _texture == null ) {
             _texture = EditorGUIUtility.FindTexture(_name);

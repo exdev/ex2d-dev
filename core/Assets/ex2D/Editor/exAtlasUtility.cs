@@ -490,7 +490,7 @@ public static class exAtlasUtility {
                                      int _padding,
                                      bool _allowRotate ) {
         List<Rect> freeRects = new List<Rect>();
-        freeRects.Add ( new Rect( 0, 0, _atlasWidth, _atlasHeight ) );
+        freeRects.Add ( new Rect( 0, 0, _atlasWidth + _padding, _atlasHeight + _padding ) );
 
         List<Element> processElements = _elements.GetRange(0,_elements.Count);
         while ( processElements.Count > 0 ) {

@@ -45,7 +45,7 @@ class exTextureInfoEditor : EditorWindow {
 
     Camera editCamera;
     Color background = Color.gray;
-    Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
+    // Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
 
     int editModeIndex = 0;
 
@@ -56,7 +56,7 @@ class exTextureInfoEditor : EditorWindow {
     Color rawRectColor = new Color ( 0.8f, 0.0f, 0.0f );
 
     bool showPixelGrid = false;
-    Color pixelGridColor = new Color ( 1.0f, 1.0f, 1.0f );
+    Color pixelGridColor = new Color ( 1.0f, 1.0f, 1.0f, 0.3f );
 
     // sliced
     Color slicedColor = new Color ( 0.0f, 0.8f, 0.0f );
@@ -130,6 +130,17 @@ class exTextureInfoEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void OnInspectorUpdate () {
+        if ( curEdit == null )
+            return;
+
+        Repaint();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void OnGUI () {
 
         if ( curEdit == null ) {
@@ -179,7 +190,6 @@ class exTextureInfoEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void Reset () {
-        scale = 1.0f;
     }
 
     // ------------------------------------------------------------------ 
@@ -348,7 +358,7 @@ class exTextureInfoEditor : EditorWindow {
 
         switch ( e.type ) {
         case EventType.Repaint:
-            sceneViewRect = new Rect( _rect.x + 2, _rect.y + 2, _rect.width - 4, _rect.height - 4 );
+            // sceneViewRect = new Rect( _rect.x + 2, _rect.y + 2, _rect.width - 4, _rect.height - 4 );
 
             // draw scene view
             DrawSceneView (_rect);
@@ -406,11 +416,10 @@ class exTextureInfoEditor : EditorWindow {
                                        position.height - _rect.yMax,
                                        _rect.width, 
                                        _rect.height );
-        GL.Viewport(viewportRect);
-
         GL.PushMatrix();
 
             //
+            GL.Viewport(viewportRect);
             GL.LoadPixelMatrix ( 0.0f, _rect.width, 0.0f, _rect.height );
 
             // background
@@ -459,6 +468,24 @@ class exTextureInfoEditor : EditorWindow {
             int trim_top   = curEdit.rawHeight - curEdit.trim_y - curEdit.height;
             int trim_bot   = curEdit.trim_y;
 
+            // draw pixel grid
+            if ( showPixelGrid ) {
+                Vector2[] points = new Vector2[(curEdit.width + curEdit.height) * 2];
+                int idx = 0;
+                for ( int x = 0; x < curEdit.width; ++x ) {
+                    points[idx]   = new Vector2( -half_width + x, -half_height );
+                    points[idx+1] = new Vector2( -half_width + x,  half_height );
+                    idx += 2;
+                }
+                for ( int y = 0; y < curEdit.height; ++y ) {
+                    points[idx]   = new Vector2( -half_width, -half_height + y );
+                    points[idx+1] = new Vector2(  half_width, -half_height + y );
+                    idx += 2;
+                }
+
+                exEditorUtility.GL_DrawLines ( points, pixelGridColor );
+            }
+
             // draw raw-texture bounding 
             if ( showRawRect ) {
                 exEditorUtility.GL_DrawRectLine ( new Vector3[] {
@@ -493,18 +520,26 @@ class exTextureInfoEditor : EditorWindow {
                 exEditorUtility.GL_DrawLine ( -half_width, top, half_width, top, slicedColor );
                 exEditorUtility.GL_DrawLine ( -half_width, bottom, half_width, bottom, slicedColor );
             }
-
-            // draw border line
-            GL.LoadPixelMatrix ( 0.0f, _rect.width, _rect.height, 0.0f );
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( 1.0f,        1.0f,         0.0f ),
-                                              new Vector3 ( _rect.width, 1.0f,         0.0f ),
-                                              new Vector3 ( _rect.width, _rect.height, 0.0f ),
-                                              new Vector3 ( 1.0f,        _rect.height, 0.0f ),
-                                              },
-                                              new Color( 0.7f, 0.7f, 0.7f ) );
-
         GL.PopMatrix();
+
+        // draw border line
+        GL.PushMatrix();
+            Rect rect2 = new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 );
+            Rect viewportRect2 = new Rect ( rect2.x,
+                                            position.height - rect2.yMax,
+                                            rect2.width, 
+                                            rect2.height );
+            GL.LoadPixelMatrix ( 0.0f, rect2.width, rect2.height, 0.0f );
+            GL.Viewport (viewportRect2);
+            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                              new Vector3 ( 0.0f,        0.0f,         0.0f ),
+                                              new Vector3 ( rect2.width, 0.0f,         0.0f ),
+                                              new Vector3 ( rect2.width, rect2.height, 0.0f ),
+                                              new Vector3 ( 0.0f,        rect2.height, 0.0f ),
+                                              },
+                                              new Color( 0.0f, 0.0f, 0.0f ) );
+        GL.PopMatrix();
+
         GL.Viewport(oldViewport);
     }
 }

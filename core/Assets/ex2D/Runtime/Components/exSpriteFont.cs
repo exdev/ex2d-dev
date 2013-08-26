@@ -20,8 +20,8 @@ using System.Collections.Generic;
 /// 
 ///////////////////////////////////////////////////////////////////////////////
 
-[AddComponentMenu("ex2D/ex2D Sprite Font")]
-public class exSpriteFont : exSpriteBase {
+[AddComponentMenu("ex2D/2D Sprite Font")]
+public class exSpriteFont : exLayeredSprite {
     
     // ------------------------------------------------------------------ 
     /// The type of font effect
@@ -486,7 +486,9 @@ public class exSpriteFont : exSpriteBase {
             Color32 top, bot;
             if (transparent_ == false) {
                 top = new Color (topColor_.r, topColor_.g, topColor_.b, topColor_.a * layer_.alpha);
+                top *= color_;
                 bot = new Color (botColor_.r, botColor_.g, botColor_.b, botColor_.a * layer_.alpha);
+                bot *= color_;
             }
             else {
                 top = new Color32 ();
@@ -1048,13 +1050,13 @@ public class exSpriteFont : exSpriteBase {
             if (layer_ != null) {
                 // remove from layer
                 exLayer myLayer = layer_;
-                myLayer.Remove(this);
+                myLayer.Remove(this, false);
                 // change capacity
                 vertexCountCapacity = textCapacity * exMesh.QUAD_VERTEX_COUNT;
                 indexCountCapacity = textCapacity * exMesh.QUAD_INDEX_COUNT;
                 // re-add to layer
                 lockCapacity = true;
-                myLayer.Add(this);
+                myLayer.Add(this, false);
                 //Debug.Log("Update Capacity");
                 lockCapacity = false;
             }
