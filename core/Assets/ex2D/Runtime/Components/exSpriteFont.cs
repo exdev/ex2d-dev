@@ -785,8 +785,8 @@ public class exSpriteFont : exLayeredSprite {
         default               : anchorOffsetX -= (width_ * 0.5f); anchorOffsetY = height_ * 0.5f; break;
         }
         // offset
-        anchorOffsetX += offset_.x;
-        anchorOffsetY += offset_.y;
+        anchorOffsetX -= offset_.x;
+        anchorOffsetY -= offset_.y;
 
         float shearOffsetX = 0.0f;
         float shearOffsetY = 0.0f;

@@ -279,7 +279,7 @@ public class exSprite : exLayeredSprite {
     private void SimpleUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
         if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Vertex) != 0) {
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
-            SimpleUpdateVertexBuffer(_vertices, vertexBufferIndex, ref cachedWorldMatrix);
+            SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _vertices, vertexBufferIndex, ref cachedWorldMatrix);
         }
         if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
             _indices.buffer[indexBufferIndex]     = vertexBufferIndex;
@@ -412,116 +412,123 @@ public class exSprite : exLayeredSprite {
             }
         }
     }
-    
+
+    private void SimpleUpdateVertexBuffer (exList<Vector3> _vertices, int _startIndex, ref Matrix4x4 _spriteMatrix) {
+        SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _vertices, _startIndex, ref _spriteMatrix);
+    }
+
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    private void SimpleUpdateVertexBuffer (exList<Vector3> _vertices, int _startIndex, ref Matrix4x4 _spriteMatrix) {
-        float anchorOffsetX;
-        float anchorOffsetY;
+    private static void SimpleUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo textureInfo_, bool useTextureOffset_, exList<Vector3> _vertices, int _startIndex, ref Matrix4x4 _spriteMatrix) {
+        Vector2 anchorOffset;
         float halfHeight = textureInfo_.height * 0.5f;
         float halfWidth = textureInfo_.width * 0.5f;
 
         if (useTextureOffset_) {
-            switch (anchor_) {
+            switch (_sprite.anchor) {
             case Anchor.TopLeft:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x;
-                anchorOffsetY = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
+                anchorOffset.x = halfWidth + textureInfo_.trim_x;
+                anchorOffset.y = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
                 break;
             case Anchor.TopCenter:
-                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffsetY = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
+                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
+                anchorOffset.y = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
                 break;
             case Anchor.TopRight:
-                anchorOffsetX = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffsetY = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
+                anchorOffset.x = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
+                anchorOffset.y = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
                 break;
             //
             case Anchor.MidLeft:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x;
-                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
+                anchorOffset.x = halfWidth + textureInfo_.trim_x;
+                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
                 break;
             case Anchor.MidCenter:
-                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
+                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
+                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
                 break;
             case Anchor.MidRight:
-                anchorOffsetX = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
+                anchorOffset.x = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
+                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
                 break;
             //
             case Anchor.BotLeft:
-                anchorOffsetX = halfWidth + textureInfo_.trim_x;
-                anchorOffsetY = halfHeight + textureInfo_.trim_y;
+                anchorOffset.x = halfWidth + textureInfo_.trim_x;
+                anchorOffset.y = halfHeight + textureInfo_.trim_y;
                 break;
             case Anchor.BotCenter:
-                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffsetY = halfHeight + textureInfo_.trim_y;
+                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
+                anchorOffset.y = halfHeight + textureInfo_.trim_y;
                 break;
             case Anchor.BotRight:
-                anchorOffsetX = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffsetY = halfHeight + textureInfo_.trim_y;
+                anchorOffset.x = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
+                anchorOffset.y = halfHeight + textureInfo_.trim_y;
                 break;
             //
             default:
-                anchorOffsetX = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffsetY = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
+                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
+                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
                 break;
             }
         }
         else {
-            switch ( anchor_ ) {
-            case Anchor.TopLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = -halfHeight;  break;
-            case Anchor.TopCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = -halfHeight;  break;
-            case Anchor.TopRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = -halfHeight;  break;
+            switch ( _sprite.anchor ) {
+            case Anchor.TopLeft     : anchorOffset.x = halfWidth;   anchorOffset.y = -halfHeight;  break;
+            case Anchor.TopCenter   : anchorOffset.x = 0.0f;        anchorOffset.y = -halfHeight;  break;
+            case Anchor.TopRight    : anchorOffset.x = -halfWidth;  anchorOffset.y = -halfHeight;  break;
 
-            case Anchor.MidLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = 0.0f;         break;
-            case Anchor.MidCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
-            case Anchor.MidRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = 0.0f;         break;
+            case Anchor.MidLeft     : anchorOffset.x = halfWidth;   anchorOffset.y = 0.0f;         break;
+            case Anchor.MidCenter   : anchorOffset.x = 0.0f;        anchorOffset.y = 0.0f;         break;
+            case Anchor.MidRight    : anchorOffset.x = -halfWidth;  anchorOffset.y = 0.0f;         break;
 
-            case Anchor.BotLeft     : anchorOffsetX = halfWidth;   anchorOffsetY = halfHeight;   break;
-            case Anchor.BotCenter   : anchorOffsetX = 0.0f;        anchorOffsetY = halfHeight;   break;
-            case Anchor.BotRight    : anchorOffsetX = -halfWidth;  anchorOffsetY = halfHeight;   break;
+            case Anchor.BotLeft     : anchorOffset.x = halfWidth;   anchorOffset.y = halfHeight;   break;
+            case Anchor.BotCenter   : anchorOffset.x = 0.0f;        anchorOffset.y = halfHeight;   break;
+            case Anchor.BotRight    : anchorOffset.x = -halfWidth;  anchorOffset.y = halfHeight;   break;
 
-            default                 : anchorOffsetX = 0.0f;        anchorOffsetY = 0.0f;         break;
+            default                 : anchorOffset.x = 0.0f;        anchorOffset.y = 0.0f;         break;
             }
         }
 
-        anchorOffsetX += offset_.x;
-        anchorOffsetY += offset_.y;
-
         //v1 v2
         //v0 v3
-        Vector3 v0 = new Vector3 (-halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f);
-        Vector3 v1 = new Vector3 (-halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f);
-        Vector3 v2 = new Vector3 (halfWidth + anchorOffsetX, halfHeight + anchorOffsetY, 0.0f);
-        Vector3 v3 = new Vector3 (halfWidth + anchorOffsetX, -halfHeight + anchorOffsetY, 0.0f);
-        if (customSize_) {
-            Vector2 customSizeScale = new Vector2 (width_ / textureInfo_.width, height_ / textureInfo_.height);
+        Vector3 v0 = new Vector3 (-halfWidth + anchorOffset.x, -halfHeight + anchorOffset.y, 0.0f);
+        Vector3 v1 = new Vector3 (-halfWidth + anchorOffset.x, halfHeight + anchorOffset.y, 0.0f);
+        Vector3 v2 = new Vector3 (halfWidth + anchorOffset.x, halfHeight + anchorOffset.y, 0.0f);
+        Vector3 v3 = new Vector3 (halfWidth + anchorOffset.x, -halfHeight + anchorOffset.y, 0.0f);
+        if (_sprite.customSize) {
+            Vector2 customSizeScale = new Vector2 (_sprite.width / textureInfo_.width, _sprite.height / textureInfo_.height);
             v0.x *= customSizeScale.x;  v0.y *= customSizeScale.y;
             v1.x *= customSizeScale.x;  v1.y *= customSizeScale.y;
             v2.x *= customSizeScale.x;  v2.y *= customSizeScale.y;
             v3.x *= customSizeScale.x;  v3.y *= customSizeScale.y;
         }
 
-        if (shear_.x != 0) {
+        Vector3 offset = _sprite.offset;
+        v0 -= offset;
+        v1 -= offset;
+        v2 -= offset;
+        v3 -= offset;
+
+        Vector2 shear = _sprite.shear;
+        if (shear.x != 0) {
             // 这里直接从matrix拿未计入rotation影响的scale，在已知matrix的情况下，速度比较快lossyScale了6倍。
             // 在有rotation时，shear本来就会有冲突，所以这里不需要lossyScale。
             float worldScaleY = (new Vector3(_spriteMatrix.m01, _spriteMatrix.m11, _spriteMatrix.m21)).magnitude;
-            float offsetX = worldScaleY * shear_.x;
-            float topOffset = offsetX * (halfHeight + anchorOffsetY);
-            float botOffset = offsetX * (-halfHeight + anchorOffsetY);
+            float offsetX = worldScaleY * shear.x;
+            float topOffset = offsetX * (halfHeight + anchorOffset.y);
+            float botOffset = offsetX * (-halfHeight + anchorOffset.y);
             v0.x += botOffset;
             v1.x += topOffset;
             v2.x += topOffset;
             v3.x += botOffset;
         }
-        if (shear_.y != 0) {
+        if (shear.y != 0) {
             float worldScaleX = (new Vector3(_spriteMatrix.m00, _spriteMatrix.m10, _spriteMatrix.m20)).magnitude;
-            float offsetY = worldScaleX * shear_.y;
-            float leftOffset = offsetY * (-halfWidth + anchorOffsetX);
-            float rightOffset = offsetY * (halfWidth + anchorOffsetX);
+            float offsetY = worldScaleX * shear.y;
+            float leftOffset = offsetY * (-halfWidth + anchorOffset.x);
+            float rightOffset = offsetY * (halfWidth + anchorOffset.x);
             v0.y += leftOffset;
             v1.y += leftOffset;
             v2.y += rightOffset;
@@ -608,10 +615,10 @@ public class exSprite : exLayeredSprite {
         
         switch (spriteType_) {
             case exSpriteType.Simple:
-                SimpleUpdateVertexBuffer (vertices, 0, ref _spriteMatrix);
+                SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, ref _spriteMatrix);
                 break;
             case exSpriteType.Sliced:
-                SimpleUpdateVertexBuffer (vertices, 0, ref _spriteMatrix);
+                SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, ref _spriteMatrix);
                 SlicedUpdateVertexBuffer (vertices, 0, ref _spriteMatrix);
                 break;
             //case exSpriteType.Tiled:
