@@ -4,11 +4,11 @@
 // Last Change  : 06/15/2013 | 09:49:04 AM | Saturday,June
 // Description  : 
 // ======================================================================================
-#if STASH
+
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
-
+#if STASH
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -206,59 +206,29 @@ public class ex3DSprite : exStandaloneSprite {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
-        if (textureInfo_ != null) {
-            switch (spriteType_) {
-            case exSpriteType.Simple:
-                SimpleUpdateBuffers (_vertices, _uvs, _indices);
-                break;
-            case exSpriteType.Sliced:
-                SlicedUpdateBuffers (_vertices, _uvs, _indices);
-                break;
-            //case exSpriteType.Tiled:
-            //    TiledUpdateBuffers (_vertices, _uvs, _indices);
-            //    break;
-            //case exSpriteType.Diced:
-            //    break;
-            }
-            if ((updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null) {
-                exDebug.Assert (layer_ != null);
-                Color32 color32;
-                if (transparent_ == false) {
-                    color32 = new Color (color_.r, color_.g, color_.b, color_.a * layer_.alpha);
-                } else {
-                    color32 = new Color32 ();
-                }
-                for (int i = 0; i < currentVertexCount; ++i) {
-                    _colors32.buffer [vertexBufferIndex + i] = color32;
-                }
-            }
-            //if (transparent_ == false) {
-            exUpdateFlags applyedFlags = updateFlags;
-            updateFlags = exUpdateFlags.None;
-            return applyedFlags;
-            //}
-            //else {
-            //    exUpdateFlags applyedFlags = (updateFlags & exUpdateFlags.Color);
-            //    updateFlags &= ~exUpdateFlags.Color;
-            //    return applyedFlags;
-            //}
+        exDebug.Assert(textureInfo_ != null, "textureInfo_ == null");
+        switch (spriteType_) {
+        case exSpriteType.Simple:
+            SimpleUpdateBuffers (_vertices, _uvs, _indices);
+            break;
+        case exSpriteType.Sliced:
+            SlicedUpdateBuffers (_vertices, _uvs, _indices);
+            break;
+        //case exSpriteType.Tiled:
+        //    TiledUpdateBuffers (_vertices, _uvs, _indices);
+        //    break;
+        //case exSpriteType.Diced:
+        //    break;
         }
-        else {
-            if (_indices != null) {
-                _vertices.buffer[vertexBufferIndex] = cachedTransform.position;
-                for (int i = indexBufferIndex; i < indexBufferIndex + indexCount; ++i) {
-                    _indices.buffer[i] = vertexBufferIndex;
-                }
-                return exUpdateFlags.All;   // TODO: remove from layer if no material
-            }
-            else {
-                Vector3 pos = cachedTransform.position;
-                for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount; ++i) {
-                    _vertices.buffer[i] = pos;
-                }
-                return exUpdateFlags.All;   // TODO: remove from layer if no material
+        if ((updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null) {
+            Color32 color32 = new Color (color_.r, color_.g, color_.b, color_.a);
+            for (int i = 0; i < currentVertexCount; ++i) {
+                _colors32.buffer [i] = color32;
             }
         }
+        exUpdateFlags applyedFlags = updateFlags;
+        updateFlags = exUpdateFlags.None;
+        return applyedFlags;
     }
     
     // ------------------------------------------------------------------ 
