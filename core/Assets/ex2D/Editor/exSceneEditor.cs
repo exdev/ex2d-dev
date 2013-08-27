@@ -1064,16 +1064,32 @@ class exSceneEditor : EditorWindow {
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
                 Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
                 Vector3 size = new Vector3( layeredSprite.width, layeredSprite.height, 0.0f );
+                float halfHandleSize = handleSize * 0.05f * 0.5f;
 
-                Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f, center.y + size.y * 0.5f, 0.0f ) );
-                Vector3 tc = trans.TransformPoint ( new Vector3 (                 center.x, center.y + size.y * 0.5f, 0.0f ) );
-                Vector3 tr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f, center.y + size.y * 0.5f, 0.0f ) );
-                Vector3 ml = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,                 center.y, 0.0f ) );
-                // Vector3 mc = trans.TransformPoint ( new Vector3 (                 center.x,                 center.y, 0.0f ) );
-                Vector3 mr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f,                 center.y, 0.0f ) );
-                Vector3 bl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f, center.y - size.y * 0.5f, 0.0f ) );
-                Vector3 bc = trans.TransformPoint ( new Vector3 (                 center.x, center.y - size.y * 0.5f, 0.0f ) );
-                Vector3 br = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f, center.y - size.y * 0.5f, 0.0f ) );
+                Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f - halfHandleSize, 
+                                                                  center.y + size.y * 0.5f - halfHandleSize, 
+                                                                  0.0f ) );
+                Vector3 tc = trans.TransformPoint ( new Vector3 ( center.x - halfHandleSize, 
+                                                                  center.y + size.y * 0.5f - halfHandleSize, 
+                                                                  0.0f ) );
+                Vector3 tr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f - halfHandleSize, 
+                                                                  center.y + size.y * 0.5f - halfHandleSize, 
+                                                                  0.0f ) );
+                Vector3 ml = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f - halfHandleSize,                 
+                                                                  center.y - halfHandleSize, 
+                                                                  0.0f ) );
+                Vector3 mr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f - halfHandleSize, 
+                                                                  center.y - halfHandleSize, 
+                                                                  0.0f ) );
+                Vector3 bl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f - halfHandleSize, 
+                                                                  center.y - size.y * 0.5f - halfHandleSize, 
+                                                                  0.0f ) );
+                Vector3 bc = trans.TransformPoint ( new Vector3 ( center.x - halfHandleSize, 
+                                                                  center.y - size.y * 0.5f - halfHandleSize, 
+                                                                  0.0f ) );
+                Vector3 br = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f - halfHandleSize, 
+                                                                  center.y - size.y * 0.5f - halfHandleSize, 
+                                                                  0.0f ) );
 
                 Vector3 dir_up = trans.up;
                 Vector3 dir_right = trans.right;
@@ -1090,6 +1106,7 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (ml2 + mr) * 0.5f;
+                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1102,6 +1119,7 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (mr2 + ml) * 0.5f;
+                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1114,6 +1132,7 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (tc2 + bc) * 0.5f;
+                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1127,6 +1146,7 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (bc2 + tc) * 0.5f;
+                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1139,6 +1159,7 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (tr2 + bl) * 0.5f;
+                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1152,6 +1173,7 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (tl2 + br) * 0.5f;
+                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1165,6 +1187,7 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (br2 + tl) * 0.5f;
+                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1178,6 +1201,7 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (bl2 + tr) * 0.5f;
+                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
