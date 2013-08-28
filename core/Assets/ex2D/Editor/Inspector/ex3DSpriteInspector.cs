@@ -20,8 +20,8 @@ using System.IO;
 ///////////////////////////////////////////////////////////////////////////////
 
 [CanEditMultipleObjects]
-[CustomEditor(typeof(exSprite))]
-class exSpriteInspector : exLayeredSpriteInspector {
+[CustomEditor(typeof(ex3DSprite))]
+class ex3DSpriteInspector : exSpriteBaseInspector {
 
     SerializedProperty textureInfoProp;
     SerializedProperty useTextureOffsetProp;
@@ -135,15 +135,6 @@ class exSpriteInspector : exLayeredSpriteInspector {
                 }
             }
         }
-
-        EditorGUILayout.Space();
-        GUILayout.BeginHorizontal();
-        GUILayout.FlexibleSpace();
-            if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
-                EditorWindow.GetWindow<exSceneEditor>();
-            }
-        GUILayout.Space(5);
-        GUILayout.EndHorizontal();
     }
 
     // ------------------------------------------------------------------ 

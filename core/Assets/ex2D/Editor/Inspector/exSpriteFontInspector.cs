@@ -21,7 +21,7 @@ using System.IO;
 
 [CanEditMultipleObjects]
 [CustomEditor(typeof(exSpriteFont))]
-class exSpriteFontInspector : exSpriteBaseInspector {
+class exSpriteFontInspector : exLayeredSpriteInspector {
 
     SerializedProperty fontProp;
     SerializedProperty textProp;

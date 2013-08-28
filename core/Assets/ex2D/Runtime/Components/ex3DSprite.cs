@@ -203,6 +203,17 @@ public class ex3DSprite : exStandaloneSprite {
     // TODO: check border change if sliced
 
 #region Functions used to update geometry buffer
+        
+    // ------------------------------------------------------------------ 
+    /// Add sprite's geometry data to buffers
+    // ------------------------------------------------------------------ 
+
+    internal override void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
+        UpdateVertexAndIndexCount();
+        base.FillBuffers (_vertices, _uvs, _colors32);
+        indices.AddRange(indexCount);
+        updateFlags |= exUpdateFlags.Index;
+    }
 
     // ------------------------------------------------------------------ 
     // Desc:

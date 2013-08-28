@@ -122,19 +122,12 @@ public abstract class exStandaloneSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     protected void OnEnable () {
+        isOnEnabled_ = true;
         cachedRenderer.enabled = true;
-
         bool reloadNonSerialized = (vertices.Count == 0);
         if (reloadNonSerialized) {
+            cachedRenderer.sharedMaterial = material;
             FillBuffers(vertices, uvs, colors32);
-            //Vector3[] v = mesh.vertices;
-            //vertices.FromArray (ref v);
-            //int[] i = mesh.triangles;
-            //indices.FromArray(ref i);
-            //Vector2[] uv = mesh.uv;
-            //uvs.FromArray(ref uv);
-            //Color32[] c = mesh.colors32;
-            //colors32.FromArray(ref c);
         }
     }
 
@@ -148,6 +141,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     protected void OnDisable () {
+        isOnEnabled_ = false;
         cachedRenderer.enabled = false;
     }
 
