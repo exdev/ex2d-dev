@@ -1047,7 +1047,6 @@ class exSceneEditor : EditorWindow {
             // resize
             exLayeredSprite layeredSprite = trans.GetComponent<exLayeredSprite>();
             if ( layeredSprite && layeredSprite.customSize ) {
-
                 // TODO: limit the size { 
                 // float minWidth = float.MinValue;
                 // float minHeight = float.MinValue;
@@ -1064,31 +1063,30 @@ class exSceneEditor : EditorWindow {
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
                 Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
                 Vector3 size = new Vector3( layeredSprite.width, layeredSprite.height, 0.0f );
-                float halfHandleSize = handleSize * 0.05f * 0.5f;
 
-                Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f - halfHandleSize, 
-                                                                  center.y + size.y * 0.5f - halfHandleSize, 
+                Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,
+                                                                  center.y + size.y * 0.5f,
                                                                   0.0f ) );
-                Vector3 tc = trans.TransformPoint ( new Vector3 ( center.x - halfHandleSize, 
-                                                                  center.y + size.y * 0.5f - halfHandleSize, 
+                Vector3 tc = trans.TransformPoint ( new Vector3 ( center.x,
+                                                                  center.y + size.y * 0.5f,
                                                                   0.0f ) );
-                Vector3 tr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f - halfHandleSize, 
-                                                                  center.y + size.y * 0.5f - halfHandleSize, 
+                Vector3 tr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f,
+                                                                  center.y + size.y * 0.5f,
                                                                   0.0f ) );
-                Vector3 ml = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f - halfHandleSize,                 
-                                                                  center.y - halfHandleSize, 
+                Vector3 ml = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,
+                                                                  center.y,
                                                                   0.0f ) );
-                Vector3 mr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f - halfHandleSize, 
-                                                                  center.y - halfHandleSize, 
+                Vector3 mr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f,
+                                                                  center.y,
                                                                   0.0f ) );
-                Vector3 bl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f - halfHandleSize, 
-                                                                  center.y - size.y * 0.5f - halfHandleSize, 
+                Vector3 bl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,
+                                                                  center.y - size.y * 0.5f,
                                                                   0.0f ) );
-                Vector3 bc = trans.TransformPoint ( new Vector3 ( center.x - halfHandleSize, 
-                                                                  center.y - size.y * 0.5f - halfHandleSize, 
+                Vector3 bc = trans.TransformPoint ( new Vector3 ( center.x,
+                                                                  center.y - size.y * 0.5f,
                                                                   0.0f ) );
-                Vector3 br = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f - halfHandleSize, 
-                                                                  center.y - size.y * 0.5f - halfHandleSize, 
+                Vector3 br = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f,
+                                                                  center.y - size.y * 0.5f,
                                                                   0.0f ) );
 
                 Vector3 dir_up = trans.up;
@@ -1106,7 +1104,6 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (ml2 + mr) * 0.5f;
-                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1119,7 +1116,6 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (mr2 + ml) * 0.5f;
-                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1132,7 +1128,6 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (tc2 + bc) * 0.5f;
-                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1146,7 +1141,6 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (bc2 + tc) * 0.5f;
-                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1159,7 +1153,6 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (tr2 + bl) * 0.5f;
-                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1173,7 +1166,6 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (tl2 + br) * 0.5f;
-                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1187,7 +1179,6 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (br2 + tl) * 0.5f;
-                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1201,7 +1192,6 @@ class exSceneEditor : EditorWindow {
                     delta.y /= trans.lossyScale.y;
                     size += delta;
                     center = (bl2 + tr) * 0.5f;
-                    center += new Vector3 ( halfHandleSize, halfHandleSize, 0.0f );
                     changed = true;
                 }
 
@@ -1215,17 +1205,30 @@ class exSceneEditor : EditorWindow {
                     layeredSprite.width = size.x;
                     layeredSprite.height = size.y;
 
-                    switch (layeredSprite.anchor) {
-                    case Anchor.TopLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
-                    case Anchor.TopCenter:  trans.position = center + trans.rotation * new Vector3(                            0.0f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
-                    case Anchor.TopRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f,  size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
-                    case Anchor.MidLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f,                            0.0f, 0.0f ); break;
-                    case Anchor.MidCenter:  trans.position = center; break;
-                    case Anchor.MidRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f,                            0.0f, 0.0f ); break;
-                    case Anchor.BotLeft:    trans.position = center + trans.rotation * new Vector3( -size.x*trans.lossyScale.x*0.5f, -size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
-                    case Anchor.BotCenter:  trans.position = center + trans.rotation * new Vector3(                            0.0f, -size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
-                    case Anchor.BotRight:   trans.position = center + trans.rotation * new Vector3(  size.x*trans.lossyScale.x*0.5f, -size.y*trans.lossyScale.y*0.5f, 0.0f ); break;
+                    Vector3 offset = new Vector3( layeredSprite.offset.x, layeredSprite.offset.y, 0.0f );
+                    Vector3 anchorOffset = Vector3.zero;
+                    Vector3 textureOffset = Vector3.zero;
+                    if ( sprite != null ) {
+                        textureOffset = sprite.GetTextureOffset();
                     }
+
+                    switch (layeredSprite.anchor) {
+                    case Anchor.TopLeft:    anchorOffset = new Vector3( -size.x*0.5f,  size.y*0.5f, 0.0f ); break;
+                    case Anchor.TopCenter:  anchorOffset = new Vector3(         0.0f,  size.y*0.5f, 0.0f ); break;
+                    case Anchor.TopRight:   anchorOffset = new Vector3(  size.x*0.5f,  size.y*0.5f, 0.0f ); break;
+                    case Anchor.MidLeft:    anchorOffset = new Vector3( -size.x*0.5f,         0.0f, 0.0f ); break;
+                    case Anchor.MidCenter:  anchorOffset = new Vector3(         0.0f,         0.0f, 0.0f ); break;
+                    case Anchor.MidRight:   anchorOffset = new Vector3(  size.x*0.5f,         0.0f, 0.0f ); break;
+                    case Anchor.BotLeft:    anchorOffset = new Vector3( -size.x*0.5f, -size.y*0.5f, 0.0f ); break;
+                    case Anchor.BotCenter:  anchorOffset = new Vector3(         0.0f, -size.y*0.5f, 0.0f ); break;
+                    case Anchor.BotRight:   anchorOffset = new Vector3(  size.x*0.5f, -size.y*0.5f, 0.0f ); break;
+                    }
+
+                    Vector3 scaledOffset = offset + anchorOffset - textureOffset;
+                    scaledOffset.x *= trans.lossyScale.x;
+                    scaledOffset.y *= trans.lossyScale.y;
+
+                    trans.position = center + trans.rotation * scaledOffset;
                 }
             }
 
