@@ -124,7 +124,6 @@ public abstract class exStandaloneSprite : exSpriteBase {
     protected void OnEnable () {
         cachedRenderer.enabled = true;
 
-        exDebug.Assert(updateFlags == exUpdateFlags.None);
         bool reloadNonSerialized = (vertices.Count == 0);
         if (reloadNonSerialized) {
             FillBuffers(vertices, uvs, colors32);
@@ -150,7 +149,6 @@ public abstract class exStandaloneSprite : exSpriteBase {
 
     protected void OnDisable () {
         cachedRenderer.enabled = false;
-        exDebug.Assert(updateFlags == exUpdateFlags.None);
     }
 
     // ------------------------------------------------------------------ 
@@ -158,14 +156,14 @@ public abstract class exStandaloneSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
     
     void LateUpdate () {
-        exUpdateFlags meshUpdateFlags = UpdateBuffers (vertices, uvs, colors32, indices);
-        
-        exMesh.FlushBuffers (mesh, meshUpdateFlags, vertices, indices, uvs, colors32);
-
-        if ((meshUpdateFlags & exUpdateFlags.Index) != 0) {
-            bool visible = (indices.Count > 0);
-            if (cachedRenderer.enabled != visible) {
-                cachedRenderer.enabled = visible;
+        if (visible) {
+            exUpdateFlags meshUpdateFlags = UpdateBuffers (vertices, uvs, colors32, indices);
+            exMesh.FlushBuffers (mesh, meshUpdateFlags, vertices, indices, uvs, colors32);
+            if ((meshUpdateFlags & exUpdateFlags.Index) != 0) {
+                bool realVisible = (indices.Count > 0);
+                if (cachedRenderer.enabled != realVisible) {
+                    cachedRenderer.enabled = realVisible;
+                }
             }
         }
     }
