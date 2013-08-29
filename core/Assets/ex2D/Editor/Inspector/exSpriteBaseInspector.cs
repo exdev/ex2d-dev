@@ -162,7 +162,7 @@ class exSpriteBaseInspector : Editor {
         EditorGUILayout.PropertyField ( shaderProp, new GUIContent("Shader") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSprite sp = obj as exSprite;
+                exSpriteBase sp = obj as exSpriteBase;
                 if ( sp ) {
                     sp.shader = shaderProp.objectReferenceValue as Shader;
                     EditorUtility.SetDirty(sp);

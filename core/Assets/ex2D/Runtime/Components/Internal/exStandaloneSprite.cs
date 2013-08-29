@@ -109,6 +109,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
         cachedFilter.sharedMesh = null;
         cachedFilter_ = null;
         cachedRenderer.sharedMaterial = null;
+        Debug.Log("[OnDestroy|exStandaloneSprite] ");
         cachedRenderer_ = null;
     }
 
@@ -126,6 +127,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
         cachedRenderer.enabled = true;
         bool reloadNonSerialized = (vertices.Count == 0);
         if (reloadNonSerialized) {
+            Debug.Log("[OnEnable|exStandaloneSprite] ");
             cachedRenderer.sharedMaterial = material;
             FillBuffers(vertices, uvs, colors32);
         }

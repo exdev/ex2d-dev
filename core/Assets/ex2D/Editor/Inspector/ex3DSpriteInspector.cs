@@ -53,7 +53,7 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
         EditorGUILayout.PropertyField ( textureInfoProp, new GUIContent("Texture Info") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSprite sp = obj as exSprite;
+                ex3DSprite sp = obj as ex3DSprite;
                 if ( sp ) {
                     sp.textureInfo = textureInfoProp.objectReferenceValue as exTextureInfo;
                     EditorUtility.SetDirty(sp);
@@ -115,7 +115,7 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
         EditorGUILayout.PropertyField ( useTextureOffsetProp, new GUIContent("Use Texture Offset") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSprite sp = obj as exSprite;
+                ex3DSprite sp = obj as ex3DSprite;
                 if ( sp ) {
                     sp.useTextureOffset = useTextureOffsetProp.boolValue;
                     EditorUtility.SetDirty(sp);
@@ -128,7 +128,7 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
         EditorGUILayout.PropertyField ( spriteTypeProp, new GUIContent("Sprite Type") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSprite sp = obj as exSprite;
+                ex3DSprite sp = obj as ex3DSprite;
                 if ( sp ) {
                     sp.spriteType = (exSpriteType)spriteTypeProp.intValue;
                     EditorUtility.SetDirty(sp);

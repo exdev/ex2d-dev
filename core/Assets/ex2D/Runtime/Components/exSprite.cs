@@ -726,10 +726,10 @@ internal static class SpriteBuilder {
         }
 
         Vector3 offset = _sprite.offset;
-        v0 -= offset;
-        v1 -= offset;
-        v2 -= offset;
-        v3 -= offset;
+        v0 += offset;
+        v1 += offset;
+        v2 += offset;
+        v3 += offset;
 
         Vector2 shear = _sprite.shear;
         if (shear.x != 0) {
