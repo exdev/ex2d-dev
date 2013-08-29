@@ -51,24 +51,30 @@ Shader "ex2D/Alpha Blended" {
                 uniform sampler2D _MainTex;
                 uniform float4 _MainTex_ST;
 
-                struct fragInput {
-                    float4 pos        : SV_POSITION;
-                    float2 uv_MainTex : TEXCOORD0;
-                    float4 color      : COLOR;
+                struct appdata_t {
+                    float4 vertex   : POSITION;
+                    fixed4 color    : COLOR;
+                    float2 texcoord : TEXCOORD0;
                 };
 
-                fragInput vert( appdata_full v ) {
-                    fragInput o;
-                    o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
+                struct v2f {
+                    float4 pos        : SV_POSITION;
+                    fixed4 color      : COLOR;
+                    float2 uv0        : TEXCOORD0;
+                };
+
+                v2f vert ( appdata_t _in ) {
+                    v2f o;
+                    o.pos = mul (UNITY_MATRIX_MVP, _in.vertex);
                     // Texture offset - GOOD
-                    o.uv_MainTex = TRANSFORM_TEX(v.texcoord, _MainTex);
-                    o.color = v.color;
+                    o.uv0 = TRANSFORM_TEX(_in.texcoord, _MainTex);
+                    o.color = _in.color;
                     return o;
                 }
 
-                float4 frag(fragInput i) : COLOR {
-                    fixed4 main = tex2D(_MainTex, i.uv_MainTex);
-                    return float4(main * i.color);
+                fixed4 frag ( v2f _in ) : COLOR {
+                    fixed4 main = tex2D(_MainTex, _in.uv0);
+                    return fixed4(main * _in.color);
                 }
                 ENDCG
             }
