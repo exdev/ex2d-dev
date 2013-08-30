@@ -502,12 +502,13 @@ public class exSpriteFont : exLayeredSprite {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    protected override Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix) {
+    protected override Vector3[] GetVertices (Space _space) {
         // TODO: only return the rotated bounding box of the sprite font
         int visibleVertexCount = text_.Length * 4;
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
         vertices.AddRange(visibleVertexCount);
-        BuildText(vertices, 0, ref _spriteMatrix);
+        Matrix4x4 mat = _space == Space.World ? cachedWorldMatrix : Matrix4x4.identity;
+        BuildText(vertices, 0, ref mat);
         return vertices.ToArray();
     }
 
@@ -791,12 +792,10 @@ public class exSpriteFont : exLayeredSprite {
         float shearOffsetX = 0.0f;
         float shearOffsetY = 0.0f;
         if (shear_.x != 0) {
-            float worldScaleY = (new Vector3(_spriteMatrix.m01, _spriteMatrix.m11, _spriteMatrix.m21)).magnitude;
-            shearOffsetX = worldScaleY * shear_.x;
+            shearOffsetX = GetWorldScaleY() * shear_.x;
         }
         if (shear_.y != 0) {
-            float worldScaleX = (new Vector3(_spriteMatrix.m00, _spriteMatrix.m10, _spriteMatrix.m20)).magnitude;
-            shearOffsetY = worldScaleX * shear_.y;
+            shearOffsetY = GetWorldScaleX() * shear_.y;
         }
         int vbEnd = _vbIndex + vertexCountCapacity;
         for (int i = _vbIndex; i < vbEnd; i += 4) {
