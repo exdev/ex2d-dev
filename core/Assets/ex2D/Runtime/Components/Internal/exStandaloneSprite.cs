@@ -171,16 +171,26 @@ public abstract class exStandaloneSprite : exSpriteBase {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public override float GetWorldScaleX () {
-        return transform.lossyScale.x;
+    internal override float GetScaleX (Space _space) {
+        if (_space == Space.World) {
+            return transform.lossyScale.x;
+        }
+        else {
+            return transform.localScale.x;
+        }
     }
     
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public override float GetWorldScaleY () {
-        return transform.lossyScale.y;
+    internal override float GetScaleY (Space _space) {
+        if (_space == Space.World) {
+            return transform.lossyScale.y;
+        }
+        else {
+            return transform.localScale.y;
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////

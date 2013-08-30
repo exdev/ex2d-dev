@@ -210,7 +210,9 @@ public class ex3DSprite : exStandaloneSprite {
 
     internal override void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
         UpdateVertexAndIndexCount();
+        // fill vertex buffer
         base.FillBuffers (_vertices, _uvs, _colors32);
+        // fill index buffer
         indices.AddRange(indexCount);
         updateFlags |= exUpdateFlags.Index;
     }

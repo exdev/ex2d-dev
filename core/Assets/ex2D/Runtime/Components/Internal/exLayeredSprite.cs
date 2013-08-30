@@ -75,8 +75,6 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         }
     }
     
-    [System.NonSerialized] protected Matrix4x4 cachedWorldMatrix;
-
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
@@ -207,22 +205,33 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     }
 
     // ------------------------------------------------------------------ 
-    /// \NOTE: 这个方法比lossyScale快了6倍，但返回的scale不完全精确，因为不计入rotation的影响。
+    // Desc:
     // ------------------------------------------------------------------ 
 
-    public override float GetWorldScaleX () {
-        // 这里直接从matrix拿未计入rotation影响的scale，在已知matrix的情况下，速度比较快lossyScale了6倍。
-        exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
-        return (new Vector3(cachedWorldMatrix.m00, cachedWorldMatrix.m10, cachedWorldMatrix.m20)).magnitude;
+    internal override float GetScaleX (Space _space) {
+        if (_space == Space.World) {
+            // 在已知matrix的情况下，这个方法比lossyScale快了6倍，但返回的scale不完全精确，因为不计入rotation的影响。
+            exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
+            return (new Vector3(cachedWorldMatrix.m00, cachedWorldMatrix.m10, cachedWorldMatrix.m20)).magnitude;
+        }
+        else {
+            return cachedTransform.localScale.x;
+        }
     }
 
     // ------------------------------------------------------------------ 
-    /// \NOTE: 这个方法比lossyScale快了6倍，但返回的scale不完全精确，因为不计入rotation的影响。
+    // Desc:
     // ------------------------------------------------------------------ 
 
-    public override float GetWorldScaleY () {
-        exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
-        return (new Vector3(cachedWorldMatrix.m01, cachedWorldMatrix.m11, cachedWorldMatrix.m21)).magnitude;
+    internal override float GetScaleY (Space _space) {
+        if (_space == Space.World) {
+            // 在已知matrix的情况下，这个方法比lossyScale快了6倍，但返回的scale不完全精确，因为不计入rotation的影响。
+            exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
+            return (new Vector3(cachedWorldMatrix.m01, cachedWorldMatrix.m11, cachedWorldMatrix.m21)).magnitude;
+        }
+        else {
+            return cachedTransform.localScale.y;
+        }
     }
 
     // ------------------------------------------------------------------ 

@@ -221,7 +221,8 @@ public class exSprite : exLayeredSprite {
         if (textureInfo_ != null) {
             switch (spriteType_) {
             case exSpriteType.Simple:
-                SimpleUpdateBuffers (_vertices, _uvs, _indices);
+                SpriteBuilder.SimpleUpdateBuffers(this, textureInfo_, useTextureOffset_, Space.World, 
+                                                    _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
                 break;
             case exSpriteType.Sliced:
                 SlicedUpdateBuffers (_vertices, _uvs, _indices);
@@ -278,7 +279,8 @@ public class exSprite : exLayeredSprite {
     // ------------------------------------------------------------------ 
 
     private void SlicedUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
-        SimpleUpdateBuffers (_vertices, _uvs, _indices);
+        SpriteBuilder.SimpleUpdateBuffers(this, textureInfo_, useTextureOffset_, Space.World, 
+                                            _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
         if (textureInfo_.hasBorder == false) {
             if (_indices != null) {
                 for (int i = 6; i < indexCount; ++i) {
@@ -431,10 +433,10 @@ public class exSprite : exLayeredSprite {
         
         switch (spriteType_) {
             case exSpriteType.Simple:
-                SimpleUpdateVertexBuffer(vertices, 0, _space);
+                SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
                 break;
             case exSpriteType.Sliced:
-                SimpleUpdateVertexBuffer(vertices, 0, _space);
+                SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
                 SlicedUpdateVertexBuffer (vertices, 0);
                 break;
             //case exSpriteType.Tiled:
@@ -458,45 +460,7 @@ public class exSprite : exLayeredSprite {
     ///////////////////////////////////////////////////////////////////////////////
     // Other functions
     ///////////////////////////////////////////////////////////////////////////////
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void SimpleUpdateVertexBuffer (exList<Vector3> _vertices, int _startIndex, Space _space) {
-        SpriteBuilder.SimpleUpdateVertexBuffer (this, textureInfo_, useTextureOffset_, _vertices, _startIndex, _space);
-
-        if (_space == Space.World) {
-            _vertices.buffer[_startIndex + 0] = cachedWorldMatrix.MultiplyPoint3x4(_vertices.buffer[_startIndex + 0]);
-            _vertices.buffer[_startIndex + 1] = cachedWorldMatrix.MultiplyPoint3x4(_vertices.buffer[_startIndex + 1]);
-            _vertices.buffer[_startIndex + 2] = cachedWorldMatrix.MultiplyPoint3x4(_vertices.buffer[_startIndex + 2]);
-            _vertices.buffer[_startIndex + 3] = cachedWorldMatrix.MultiplyPoint3x4(_vertices.buffer[_startIndex + 3]);
-            // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
-            _vertices.buffer[_startIndex + 0].z = 0;
-            _vertices.buffer[_startIndex + 1].z = 0;
-            _vertices.buffer[_startIndex + 2].z = 0;
-            _vertices.buffer[_startIndex + 3].z = 0;
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void SimpleUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
-        SpriteBuilder.SimpleUpdateBuffers(this, textureInfo_, useTextureOffset_, Space.World, _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
-
-        _vertices.buffer[vertexBufferIndex + 0] = cachedWorldMatrix.MultiplyPoint3x4(_vertices.buffer[vertexBufferIndex + 0]);
-        _vertices.buffer[vertexBufferIndex + 1] = cachedWorldMatrix.MultiplyPoint3x4(_vertices.buffer[vertexBufferIndex + 1]);
-        _vertices.buffer[vertexBufferIndex + 2] = cachedWorldMatrix.MultiplyPoint3x4(_vertices.buffer[vertexBufferIndex + 2]);
-        _vertices.buffer[vertexBufferIndex + 3] = cachedWorldMatrix.MultiplyPoint3x4(_vertices.buffer[vertexBufferIndex + 3]);
-        // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
-        _vertices.buffer[vertexBufferIndex + 0].z = 0;
-        _vertices.buffer[vertexBufferIndex + 1].z = 0;
-        _vertices.buffer[vertexBufferIndex + 2].z = 0;
-        _vertices.buffer[vertexBufferIndex + 3].z = 0;
-    }
-
+    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
@@ -738,14 +702,7 @@ internal static class SpriteBuilder {
 
         Vector2 shear = _sprite.shear;
         if (shear.x != 0) {
-            float scaleY;
-            if (_space == Space.World) {
-                // 在有rotation时，shear本来就会有冲突，所以这里不需要lossyScale。
-                scaleY = _sprite.GetWorldScaleY();
-            }
-            else {
-                scaleY = _sprite.transform.localScale.y;
-            }
+            float scaleY = _sprite.GetScaleY(_space);
             float offsetX = scaleY * shear.x;
             float topOffset = offsetX * (halfHeight + anchorOffset.y);
             float botOffset = offsetX * (-halfHeight + anchorOffset.y);
@@ -755,14 +712,7 @@ internal static class SpriteBuilder {
             v3.x += botOffset;
         }
         if (shear.y != 0) {
-            float scaleX;
-            if (_space == Space.World) {
-                // 在有rotation时，shear本来就会有冲突，所以这里不需要lossyScale。
-                scaleX = _sprite.GetWorldScaleX();
-            }
-            else {
-                scaleX = _sprite.transform.localScale.x;
-            }
+            float scaleX = _sprite.GetScaleX(_space);
             float offsetY = scaleX * shear.y;
             float leftOffset = offsetY * (-halfWidth + anchorOffset.x);
             float rightOffset = offsetY * (halfWidth + anchorOffset.x);
@@ -770,6 +720,19 @@ internal static class SpriteBuilder {
             v1.y += leftOffset;
             v2.y += rightOffset;
             v3.y += rightOffset;
+        }
+
+        if (_space == Space.World) {
+            exDebug.Assert((_sprite as exLayeredSprite) != null);
+            v0 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v0);
+            v1 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v1);
+            v2 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v2);
+            v3 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v3);
+            // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
+            v0.z = 0;
+            v1.z = 0;
+            v2.z = 0;
+            v3.z = 0;
         }
 
         _vertices.buffer[_startIndex + 0] = v0;

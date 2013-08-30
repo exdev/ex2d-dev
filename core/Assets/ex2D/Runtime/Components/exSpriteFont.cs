@@ -738,6 +738,7 @@ public class exSpriteFont : exLayeredSprite {
     // ------------------------------------------------------------------ 
     
     void BuildText (exList<Vector3> _vertices, int _vbIndex, ref Matrix4x4 _spriteMatrix, exList<Vector2> _uvs = null) {
+        // TODO: use space instead of _spriteMatrix
         width_ = 0.0f;    // 和SpriteBase一致，用于表示实际宽度
         height_ = 0.0f;   // 和SpriteBase一致，用于表示实际高度
         int invisibleVertexStart = -1;
@@ -792,10 +793,10 @@ public class exSpriteFont : exLayeredSprite {
         float shearOffsetX = 0.0f;
         float shearOffsetY = 0.0f;
         if (shear_.x != 0) {
-            shearOffsetX = GetWorldScaleY() * shear_.x;
+            shearOffsetX = GetScaleY(Space.World) * shear_.x;
         }
         if (shear_.y != 0) {
-            shearOffsetY = GetWorldScaleX() * shear_.y;
+            shearOffsetY = GetScaleX(Space.World) * shear_.y;
         }
         int vbEnd = _vbIndex + vertexCountCapacity;
         for (int i = _vbIndex; i < vbEnd; i += 4) {
