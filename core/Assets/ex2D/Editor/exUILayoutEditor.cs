@@ -45,7 +45,7 @@ class exUILayoutEditor : EditorWindow {
 
     Camera editCamera;
     Color background = Color.gray;
-    // Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
+    Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -77,6 +77,9 @@ class exUILayoutEditor : EditorWindow {
             editCamera.renderingPath = RenderingPath.Forward;
             editCamera.orthographic = true;
             editCamera.orthographicSize = 100.0f;
+            editCamera.transform.position = new Vector3 ( sceneViewRect.width * 0.5f - 20.0f,
+                                                          sceneViewRect.height * 0.5f - 20.0f,
+                                                          0.0f );
         }
 
         // rectSelection = new exRectSelection<Object>( PickObject,
@@ -207,7 +210,9 @@ class exUILayoutEditor : EditorWindow {
             // ======================================================== 
 
             if ( GUILayout.Button( "Reset", EditorStyles.toolbarButton ) ) {
-                editCamera.transform.position = Vector3.zero;
+                editCamera.transform.position = new Vector3 ( sceneViewRect.width * 0.5f - 20.0f,
+                                                              sceneViewRect.height * 0.5f - 20.0f,
+                                                              0.0f );
             }
 
             // ======================================================== 
@@ -276,6 +281,7 @@ class exUILayoutEditor : EditorWindow {
         switch ( e.type ) {
         case EventType.Repaint:
 
+            sceneViewRect = _rect;
             editCamera.aspect = _rect.width/_rect.height;
             editCamera.orthographicSize = (_rect.height * 0.5f) / scale;
 
@@ -350,16 +356,16 @@ class exUILayoutEditor : EditorWindow {
             exEditorUtility.GL_DrawTexture ( center, 
                                              size, 
                                              checker, 
-                                             new Rect( (editCamera.transform.position.x)/checker.width,
-                                                       (editCamera.transform.position.y)/checker.height,
+                                             new Rect( (-half_w/scale + editCamera.transform.position.x)/checker.width,
+                                                       (-half_h/scale + editCamera.transform.position.y)/checker.height,
                                                        _rect.width/(checker.width * scale), 
                                                        _rect.height/(checker.height * scale) ),
                                              background );
 
 
             // center line
-            float center_x = -editCamera.transform.position.x * scale;
-            float center_y = -editCamera.transform.position.y * scale;
+            float center_x = half_w - editCamera.transform.position.x * scale;
+            float center_y = half_h - editCamera.transform.position.y * scale;
             exEditorUtility.GL_DrawLine ( 0.0f,
                                           center_y, 
                                           _rect.width,

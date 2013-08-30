@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : exUILayoutInfo.cs
+// File         : exUIStyle.cs
 // Author       : Wu Jie 
-// Last Change  : 08/30/2013 | 16:43:39 PM | Friday,August
+// Last Change  : 08/30/2013 | 23:01:11 PM | Friday,August
 // Description  : 
 // ======================================================================================
 
@@ -16,11 +16,12 @@ using System.IO;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
-/// The ui-layout information
+/// The ui style
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-public class exUILayoutInfo : ScriptableObject {
-    public exUIElement root;
+[System.Serializable]
+public class exUIStyle {
 }
+
 

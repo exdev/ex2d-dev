@@ -359,9 +359,6 @@ class exTextureInfoEditor : EditorWindow {
         switch ( e.type ) {
         case EventType.Repaint:
 
-            editCamera.aspect = _rect.width/_rect.height;
-            editCamera.orthographicSize = (_rect.height * 0.5f) / scale;
-
             // draw scene view
             DrawSceneView (_rect);
 

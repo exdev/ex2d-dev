@@ -551,7 +551,6 @@ class exSceneEditor : EditorWindow {
 
         int controlID = GUIUtility.GetControlID(sceneViewFieldHash, FocusType.Passive);
         Event e = Event.current;
-        editCamera.enabled = true;
 
         switch ( e.type ) {
         case EventType.Repaint:
@@ -559,9 +558,6 @@ class exSceneEditor : EditorWindow {
             // previewBackground.Draw(_rect, false, false, false, false);
 
             sceneViewRect = _rect;
-
-            editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
-            editCamera.orthographicSize = (sceneViewRect.height * 0.5f) / scale;
 
             // draw scene
             DoCulling (sceneViewRect);
@@ -1014,6 +1010,10 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void ProcessSceneEditorHandles () {
+
+        editCamera.enabled = true;
+        editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
+        editCamera.orthographicSize = (sceneViewRect.height * 0.5f) / scale;
 
         //
         GUI.BeginGroup( sceneViewRect );
