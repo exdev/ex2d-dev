@@ -251,6 +251,14 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+	protected override void OnSceneGUI () {
+        base.OnSceneGUI();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     protected new void InitProperties () {
         base.InitProperties();
         fontProp = serializedObject.FindProperty("font_");

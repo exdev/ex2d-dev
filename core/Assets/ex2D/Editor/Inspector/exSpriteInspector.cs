@@ -150,6 +150,14 @@ class exSpriteInspector : exLayeredSpriteInspector {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+	protected override void OnSceneGUI () {
+        base.OnSceneGUI();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     protected new void InitProperties () {
         base.InitProperties();
         textureInfoProp = serializedObject.FindProperty("textureInfo_");
