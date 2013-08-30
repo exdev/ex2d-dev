@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : exUILayout.cs
+// File         : exUILayoutInfo.cs
 // Author       : Wu Jie 
-// Last Change  : 08/30/2013 | 15:57:56 PM | Friday,August
+// Last Change  : 08/30/2013 | 16:43:39 PM | Friday,August
 // Description  : 
 // ======================================================================================
 
@@ -20,6 +20,6 @@ using System.IO;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-public class exUILayout : ScriptableObject {
+public class exUILayoutInfo : ScriptableObject {
 }
 

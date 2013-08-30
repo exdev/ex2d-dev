@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : exTextureInfoEditor.cs
+// File         : exUILayoutEditor.cs
 // Author       : Wu Jie 
-// Last Change  : 08/21/2013 | 14:27:34 PM | Wednesday,August
+// Last Change  : 08/30/2013 | 16:36:31 PM | Friday,August
 // Description  : 
 // ======================================================================================
 
@@ -21,7 +21,7 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-class exTextureInfoEditor : EditorWindow {
+class exUILayoutEditor : EditorWindow {
 
 	static int sceneViewFieldHash = "SceneViewField".GetHashCode();
 
@@ -29,7 +29,7 @@ class exTextureInfoEditor : EditorWindow {
     // properties
     ///////////////////////////////////////////////////////////////////////////////
 
-    exTextureInfo curEdit = null;
+    exUILayoutInfo curEdit = null;
 
     float scale_ = 1.0f;
     float scale {
@@ -47,20 +47,6 @@ class exTextureInfoEditor : EditorWindow {
     Color background = Color.gray;
     // Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
 
-    int editModeIndex = 0;
-
-    bool showTrimRect = true;
-    Color trimRectColor = new Color ( 0.8f, 0.8f, 0.0f );
-
-    bool showRawRect = false;
-    Color rawRectColor = new Color ( 0.8f, 0.0f, 0.0f );
-
-    bool showPixelGrid = false;
-    Color pixelGridColor = new Color ( 1.0f, 1.0f, 1.0f, 0.3f );
-
-    // sliced
-    Color slicedColor = new Color ( 0.0f, 0.8f, 0.0f );
-
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
     ///////////////////////////////////////////////////////////////////////////////
@@ -70,14 +56,14 @@ class exTextureInfoEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void OnEnable () {
-        title = "TextureInfo Editor";
+        title = "UI-Layout Editor";
         wantsMouseMove = true;
         autoRepaintOnSceneChange = false;
         minSize = new Vector2(500f, 500f);
 
         if (editCamera == null) {
             GameObject camGO 
-            = EditorUtility.CreateGameObjectWithHideFlags ( "TextureInfoView_Camera", 
+            = EditorUtility.CreateGameObjectWithHideFlags ( "UILayoutView_Camera", 
                                                             HideFlags.HideAndDontSave, 
                                                             new System.Type[] {
                                                                 typeof(Camera)
@@ -179,7 +165,7 @@ class exTextureInfoEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void UpdateEditObject () {
-        exTextureInfo info = Selection.activeObject as exTextureInfo;
+        exUILayoutInfo info = Selection.activeObject as exUILayoutInfo;
         if ( info != null && info != curEdit ) {
             Edit (info);
         }
@@ -197,7 +183,7 @@ class exTextureInfoEditor : EditorWindow {
     /// Check if the object is valid atlas and open it in atlas editor.
     // ------------------------------------------------------------------ 
 
-    public void Edit ( exTextureInfo _info ) {
+    public void Edit ( exUILayoutInfo _info ) {
         if ( _info == null )
             return;
 
@@ -213,9 +199,6 @@ class exTextureInfoEditor : EditorWindow {
 
     void Toolbar () {
         EditorGUILayout.BeginHorizontal ( EditorStyles.toolbar );
-
-            string[] toolbarStrings = new string[] {"Attach Points", "Collision", "Sliced", "Diced" };
-            editModeIndex = GUILayout.Toolbar( editModeIndex, toolbarStrings, EditorStyles.toolbarButton );
 
             GUILayout.FlexibleSpace();
 
@@ -237,21 +220,6 @@ class exTextureInfoEditor : EditorWindow {
             }
 
             EditorGUILayout.Space();
-
-            // slider
-            scale = GUILayout.HorizontalSlider ( scale, 
-                                                 0.1f, 
-                                                 10.0f, 
-                                                 new GUILayoutOption[] {
-                                                 GUILayout.MinWidth(50),
-                                                 GUILayout.MaxWidth(150)
-                                                 } );
-            EditorGUILayout.Space();
-            scale = EditorGUILayout.FloatField( scale,
-                                                EditorStyles.toolbarTextField,
-                                                new GUILayoutOption[] {
-                                                GUILayout.Width(30)
-                                                } );
 
             // ======================================================== 
             // Help
@@ -281,58 +249,7 @@ class exTextureInfoEditor : EditorWindow {
 
         EditorGUILayout.BeginVertical();
 
-        showTrimRect = EditorGUILayout.Toggle ( "Show Trimed Rect", showTrimRect );
-        trimRectColor = EditorGUILayout.ColorField ( "Trimed Rect Color", trimRectColor );
-
-        showRawRect = EditorGUILayout.Toggle ( "Show Raw Rect", showRawRect );
-        rawRectColor = EditorGUILayout.ColorField ( "Raw Rect Color", rawRectColor );
-        
-        showPixelGrid = EditorGUILayout.Toggle ( "Show Pixel Grid", showPixelGrid );
-        pixelGridColor = EditorGUILayout.ColorField ( "Pixel Grid Color", pixelGridColor );
-
-        EditorGUILayout.Space();
-        EditorGUILayout.Space();
-
-        switch ( editModeIndex ) {
-            // attach pionts
-        case 0:
-            if ( GUILayout.Button("Add...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
-                // TODO:
-            }
-
-            break;
-
-            // collision
-        case 1:
-            GUILayout.Label ( "Coming Soon..." );
-            break;
-
-            // sliced
-        case 2:
-            slicedColor = EditorGUILayout.ColorField ( "Color", slicedColor );
-            EditorGUI.BeginChangeCheck();
-                int result = EditorGUILayout.IntField ( "Left", curEdit.borderLeft );
-                curEdit.borderLeft = System.Math.Min ( System.Math.Max ( 0, result ), curEdit.width - curEdit.borderRight );
-
-                result = EditorGUILayout.IntField ( "Right", curEdit.borderRight );
-                curEdit.borderRight = System.Math.Min ( System.Math.Max ( 0, result ), curEdit.width - curEdit.borderLeft );
-
-                result = EditorGUILayout.IntField ( "Top", curEdit.borderTop );
-                curEdit.borderTop = System.Math.Min ( System.Math.Max ( 0, result ), curEdit.height - curEdit.borderBottom );
-
-                result = EditorGUILayout.IntField ( "Bottom", curEdit.borderBottom );
-                curEdit.borderBottom = System.Math.Min ( System.Math.Max ( 0, result ), curEdit.height - curEdit.borderTop );
-
-            if ( EditorGUI.EndChangeCheck() ) {
-                EditorUtility.SetDirty(curEdit);
-            }
-            break;
-
-            // diced
-        case 3:
-            GUILayout.Label ( "Coming Soon..." );
-            break;
-        }
+        GUILayout.Label ( "Coming Soon..." );
 
         EditorGUILayout.EndVertical();
 
@@ -390,7 +307,7 @@ class exTextureInfoEditor : EditorWindow {
 
         case EventType.MouseDrag:
             if ( GUIUtility.hotControl == controlID ) {
-                editCamera.transform.position += new Vector3 ( -e.delta.x / scale, e.delta.y / scale, 0.0f );
+                editCamera.transform.position += new Vector3 ( -e.delta.x / scale, -e.delta.y / scale, 0.0f );
 
                 Repaint();
                 e.Use();
@@ -422,7 +339,7 @@ class exTextureInfoEditor : EditorWindow {
 
             //
             GL.Viewport(viewportRect);
-            GL.LoadPixelMatrix ( 0.0f, _rect.width, 0.0f, _rect.height );
+            GL.LoadPixelMatrix ( 0.0f, _rect.width, _rect.height, 0.0f );
 
             // background
             float half_w = _rect.width/2.0f;
@@ -433,16 +350,16 @@ class exTextureInfoEditor : EditorWindow {
             exEditorUtility.GL_DrawTexture ( center, 
                                              size, 
                                              checker, 
-                                             new Rect( (-half_w/scale + editCamera.transform.position.x)/checker.width,
-                                                       (-half_h/scale + editCamera.transform.position.y)/checker.height,
+                                             new Rect( (editCamera.transform.position.x)/checker.width,
+                                                       (editCamera.transform.position.y)/checker.height,
                                                        _rect.width/(checker.width * scale), 
                                                        _rect.height/(checker.height * scale) ),
                                              background );
 
 
             // center line
-            float center_x = half_w - editCamera.transform.position.x * scale;
-            float center_y = half_h - editCamera.transform.position.y * scale;
+            float center_x = -editCamera.transform.position.x * scale;
+            float center_y = -editCamera.transform.position.y * scale;
             exEditorUtility.GL_DrawLine ( 0.0f,
                                           center_y, 
                                           _rect.width,
@@ -460,68 +377,10 @@ class exTextureInfoEditor : EditorWindow {
                                 editCamera.transform.position.y - (_rect.height * 0.5f) / scale,
                                 editCamera.transform.position.y + (_rect.height * 0.5f) / scale );
 
-            // draw texture info
-            exEditorUtility.GL_DrawTextureInfo ( curEdit, Vector2.zero, Color.white );
-            
-            float half_width = curEdit.width * 0.5f;
-            float half_height = curEdit.height * 0.5f;
-            int trim_left  = curEdit.trim_x;
-            int trim_right = curEdit.rawWidth - curEdit.trim_x - curEdit.width;
-            int trim_top   = curEdit.rawHeight - curEdit.trim_y - curEdit.height;
-            int trim_bot   = curEdit.trim_y;
 
-            // draw pixel grid
-            if ( showPixelGrid ) {
-                Vector2[] points = new Vector2[(curEdit.width + curEdit.height) * 2];
-                int idx = 0;
-                for ( int x = 0; x < curEdit.width; ++x ) {
-                    points[idx]   = new Vector2( -half_width + x, -half_height );
-                    points[idx+1] = new Vector2( -half_width + x,  half_height );
-                    idx += 2;
-                }
-                for ( int y = 0; y < curEdit.height; ++y ) {
-                    points[idx]   = new Vector2( -half_width, -half_height + y );
-                    points[idx+1] = new Vector2(  half_width, -half_height + y );
-                    idx += 2;
-                }
+            // draw layout
+            // TODO:
 
-                exEditorUtility.GL_DrawLines ( points, pixelGridColor );
-            }
-
-            // draw raw-texture bounding 
-            if ( showRawRect ) {
-                exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                                  new Vector3 ( -half_width - trim_left,  -half_height - trim_bot, 0.0f ),
-                                                  new Vector3 ( -half_width - trim_left,   half_height + trim_top, 0.0f ),
-                                                  new Vector3 (  half_width + trim_right,  half_height + trim_top, 0.0f ),
-                                                  new Vector3 (  half_width + trim_right, -half_height - trim_bot, 0.0f ),
-                                                  }, 
-                                                  rawRectColor );
-            }
-
-            // draw trimed bounding 
-            if ( showTrimRect ) {
-                exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                                  new Vector3 ( -half_width, -half_height, 0.0f ),
-                                                  new Vector3 ( -half_width,  half_height, 0.0f ),
-                                                  new Vector3 (  half_width,  half_height, 0.0f ),
-                                                  new Vector3 (  half_width, -half_height, 0.0f ),
-                                                  }, 
-                                                  trimRectColor );
-            }
-
-            // draw sliced line
-            if ( editModeIndex == 2 ) {
-                float left   = -half_width  + curEdit.borderLeft;
-                float right  =  half_width  - curEdit.borderRight;
-                float top    =  half_height - curEdit.borderTop;
-                float bottom = -half_height + curEdit.borderBottom;
-
-                exEditorUtility.GL_DrawLine ( left, -half_height, left, half_height, slicedColor );
-                exEditorUtility.GL_DrawLine ( right, -half_height, right, half_height, slicedColor );
-                exEditorUtility.GL_DrawLine ( -half_width, top, half_width, top, slicedColor );
-                exEditorUtility.GL_DrawLine ( -half_width, bottom, half_width, bottom, slicedColor );
-            }
         GL.PopMatrix();
 
         GL.Viewport(oldViewport);

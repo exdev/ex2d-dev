@@ -58,6 +58,15 @@ public static class MenuItems {
         exGenericAssetUtility<exBitmapFont>.CreateInCurrentDirectory ("New BitmapFont");
     }
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("Assets/Create/ex2D/UI-Layout Info", false, 1004)]
+    static void Create_UILayoutInfo () {
+        exGenericAssetUtility<exUILayoutInfo>.CreateInCurrentDirectory ("New UILayoutInfo");
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Create From Selected
     ///////////////////////////////////////////////////////////////////////////////

@@ -116,7 +116,7 @@ class exSceneEditor : EditorWindow {
         // camera
         if (editCamera == null) {
             GameObject camGO 
-            = EditorUtility.CreateGameObjectWithHideFlags ( "SceneViewCamera", 
+            = EditorUtility.CreateGameObjectWithHideFlags ( "SceneView_Camera", 
                                                             HideFlags.HideAndDontSave, 
                                                             new System.Type[] {
                                                                 typeof(Camera)
@@ -551,13 +551,17 @@ class exSceneEditor : EditorWindow {
 
         int controlID = GUIUtility.GetControlID(sceneViewFieldHash, FocusType.Passive);
         Event e = Event.current;
+        editCamera.enabled = true;
 
         switch ( e.type ) {
         case EventType.Repaint:
             // GUIStyle previewBackground = "AnimationCurveEditorBackground";
             // previewBackground.Draw(_rect, false, false, false, false);
 
-            sceneViewRect = new Rect( _rect.x, _rect.y, _rect.width, _rect.height );
+            sceneViewRect = _rect;
+
+            editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
+            editCamera.orthographicSize = (sceneViewRect.height * 0.5f) / scale;
 
             // draw scene
             DoCulling (sceneViewRect);
@@ -1013,9 +1017,6 @@ class exSceneEditor : EditorWindow {
 
         //
         GUI.BeginGroup( sceneViewRect );
-        editCamera.enabled = true;
-        editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
-        editCamera.orthographicSize = (sceneViewRect.height * 0.5f) / scale;
         Rect rect = new Rect( 0, 0, sceneViewRect.width, sceneViewRect.height );
         Handles.ClearCamera( rect, editCamera );
         Handles.SetCamera( rect, editCamera );
