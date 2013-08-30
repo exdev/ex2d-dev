@@ -184,6 +184,8 @@ public abstract class exSpriteBase : MonoBehaviour {
     [System.NonSerialized] protected bool isOnEnabled_;
 
     [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
+    
+    [System.NonSerialized] internal Matrix4x4 cachedWorldMatrix;    // 内部使用，只有exLayeredSprite的值才可读
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
@@ -232,12 +234,6 @@ public abstract class exSpriteBase : MonoBehaviour {
         exDebug.Assert(visible == false);
     }
 
-    protected virtual void Show () {
-    }
-
-    protected virtual void Hide () {
-    }
-
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -268,11 +264,37 @@ public abstract class exSpriteBase : MonoBehaviour {
 
 #endregion
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // Interfaces
+    ///////////////////////////////////////////////////////////////////////////////
+
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
+
+    internal abstract float GetScaleX (Space _space);
     
-    protected virtual void UpdateMaterial () {
-        material_ = null;   // set dirty, make material update.
-    }
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    internal abstract float GetScaleY (Space _space);
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected abstract void UpdateMaterial ();
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected virtual void Show () { }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected virtual void Hide () { }
 }

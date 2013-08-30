@@ -75,8 +75,6 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         }
     }
     
-    [System.NonSerialized] protected Matrix4x4 cachedWorldMatrix;
-
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
@@ -187,6 +185,54 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     }
 
 #endif
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    protected override void UpdateMaterial () {
+        if (layer_ != null) {
+            exLayer myLayer = layer_;
+            myLayer.Remove(this, false);
+            material_ = null;   // set dirty, make material update.
+            if (ReferenceEquals(material, null) == false) {
+                myLayer.Add(this, false);
+            }
+        }
+        else {
+            material_ = null;   // set dirty, make material update.
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    internal override float GetScaleX (Space _space) {
+        if (_space == Space.World) {
+            // 在已知matrix的情况下，这个方法比lossyScale快了6倍，但返回的scale不完全精确，因为不计入rotation的影响。
+            exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
+            return (new Vector3(cachedWorldMatrix.m00, cachedWorldMatrix.m10, cachedWorldMatrix.m20)).magnitude;
+        }
+        else {
+            return cachedTransform.localScale.x;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    internal override float GetScaleY (Space _space) {
+        if (_space == Space.World) {
+            // 在已知matrix的情况下，这个方法比lossyScale快了6倍，但返回的scale不完全精确，因为不计入rotation的影响。
+            exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
+            return (new Vector3(cachedWorldMatrix.m01, cachedWorldMatrix.m11, cachedWorldMatrix.m21)).magnitude;
+        }
+        else {
+            return cachedTransform.localScale.y;
+        }
+    }
 
     // ------------------------------------------------------------------ 
     /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
@@ -299,7 +345,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    protected abstract Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix);
+    protected abstract Vector3[] GetVertices (Space _space);
         
     // ------------------------------------------------------------------ 
 	/// Get vertices of the sprite
@@ -307,8 +353,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
 
     public Vector3[] GetLocalVertices () {
-        Matrix4x4 identity = Matrix4x4.identity;
-        return GetVertices(ref identity);
+        return GetVertices(Space.Self);
     }
     
 	// ------------------------------------------------------------------ 
@@ -317,8 +362,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
 	// ------------------------------------------------------------------ 
 
     public Vector3[] GetWorldVertices () {
-        Matrix4x4 l2w = cachedTransform.localToWorldMatrix;
-        return GetVertices(ref l2w);
+        return GetVertices(Space.World);
     }
 
 #if UNITY_EDITOR
@@ -379,21 +423,4 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         return exGeometryUtility.GetAABoundingRect(vertices);
     }
     
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-    
-    protected override void UpdateMaterial () {
-        if (layer_ != null) {
-            exLayer myLayer = layer_;
-            myLayer.Remove(this, false);
-            material_ = null;   // set dirty, make material update.
-            if (ReferenceEquals(material, null) == false) {
-                myLayer.Add(this, false);
-            }
-        }
-        else {
-            material_ = null;   // set dirty, make material update.
-        }
-    }
 }

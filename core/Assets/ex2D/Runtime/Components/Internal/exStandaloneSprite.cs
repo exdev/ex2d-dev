@@ -42,20 +42,20 @@ public abstract class exStandaloneSprite : exSpriteBase {
             return cachedRenderer_;
         }
     }
-    [System.NonSerialized] protected MeshFilter cachedFilter_;
-    public MeshFilter cachedFilter {
-        get {
-            if (cachedFilter_ == null) {
-                cachedFilter_ = GetComponent<MeshFilter>();
-            }
-            return cachedFilter_;
-        }
-    }
+    //[System.NonSerialized] protected MeshFilter cachedFilter_;
+    //public MeshFilter cachedFilter {
+    //    get {
+    //        if (cachedFilter_ == null) {
+    //            cachedFilter_ = GetComponent<MeshFilter>();
+    //        }
+    //        return cachedFilter_;
+    //    }
+    //}
     [System.NonSerialized] protected Mesh mesh_;
     public Mesh mesh {
         get {
             if (mesh_ == null) {
-                mesh_ = cachedFilter.sharedMesh;
+                mesh_ = GetComponent<MeshFilter>().sharedMesh;
             }
             return mesh_;
         }
@@ -85,15 +85,11 @@ public abstract class exStandaloneSprite : exSpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
     
     protected void Awake () {
-        //cachedFilter_ = gameObject.GetComponent<MeshFilter>();
-        //cachedRenderer_ = gameObject.GetComponent<MeshRenderer>();
         exDebug.Assert(mesh_ == null, "mesh_ == null");
         Mesh mesh = new Mesh();
         mesh.name = "ex2D Mesh";
         mesh.hideFlags = HideFlags.DontSave;
-        cachedFilter.sharedMesh = mesh;
-
-        FillBuffers(vertices, uvs, colors32);
+        GetComponent<MeshFilter>().sharedMesh = mesh;
     }
     
     protected void OnDestroy () {
@@ -106,10 +102,8 @@ public abstract class exStandaloneSprite : exSpriteBase {
             mesh_.Destroy();
         }
         mesh_ = null;
-        cachedFilter.sharedMesh = null;
-        cachedFilter_ = null;
+        GetComponent<MeshFilter>().sharedMesh = null;
         cachedRenderer.sharedMaterial = null;
-        Debug.Log("[OnDestroy|exStandaloneSprite] ");
         cachedRenderer_ = null;
     }
 
@@ -127,7 +121,6 @@ public abstract class exStandaloneSprite : exSpriteBase {
         cachedRenderer.enabled = true;
         bool reloadNonSerialized = (vertices.Count == 0);
         if (reloadNonSerialized) {
-            Debug.Log("[OnEnable|exStandaloneSprite] ");
             cachedRenderer.sharedMaterial = material;
             FillBuffers(vertices, uvs, colors32);
         }
@@ -164,7 +157,44 @@ public abstract class exStandaloneSprite : exSpriteBase {
         }
     }
 
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    protected override void UpdateMaterial () {
+        material_ = null;   // set dirty, make material update.
+        cachedRenderer.sharedMaterial = material;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    internal override float GetScaleX (Space _space) {
+        if (_space == Space.World) {
+            return transform.lossyScale.x;
+        }
+        else {
+            return transform.localScale.x;
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    internal override float GetScaleY (Space _space) {
+        if (_space == Space.World) {
+            return transform.lossyScale.y;
+        }
+        else {
+            return transform.localScale.y;
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Other Functions
     ///////////////////////////////////////////////////////////////////////////////
+
 }

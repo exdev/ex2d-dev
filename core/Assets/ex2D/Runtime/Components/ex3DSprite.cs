@@ -95,7 +95,7 @@ public class ex3DSprite : exStandaloneSprite {
         set {
             if ( spriteType_ != value ) {
                 spriteType_ = value;
-                GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
+                SpriteBuilder.GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
 	            updateFlags |= exUpdateFlags.All;
             }
         }
@@ -110,7 +110,7 @@ public class ex3DSprite : exStandaloneSprite {
         set {
             if ( tilling_ != value ) {
                 tilling_ = value;
-                GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
+                SpriteBuilder.GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
 	            updateFlags |= exUpdateFlags.All;
             }
         }
@@ -210,7 +210,9 @@ public class ex3DSprite : exStandaloneSprite {
 
     internal override void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
         UpdateVertexAndIndexCount();
+        // fill vertex buffer
         base.FillBuffers (_vertices, _uvs, _colors32);
+        // fill index buffer
         indices.AddRange(indexCount);
         updateFlags |= exUpdateFlags.Index;
     }
@@ -223,9 +225,7 @@ public class ex3DSprite : exStandaloneSprite {
         exDebug.Assert(textureInfo_ != null, "textureInfo_ == null");
         switch (spriteType_) {
         case exSpriteType.Simple:
-            Matrix4x4 identity = new Matrix4x4 ();
-            identity.m00 = 1; identity.m11 = 1; identity.m22 = 1; identity.m33 = 1;
-            SpriteBuilder.SimpleUpdateBuffers (this, textureInfo_, useTextureOffset_, ref identity, _vertices, _uvs, _indices, 0, 0);
+            SpriteBuilder.SimpleUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.Self, _vertices, _uvs, _indices, 0, 0);
             break;
         case exSpriteType.Sliced:
             //SlicedUpdateBuffers (_vertices, _uvs, _indices);
@@ -400,36 +400,7 @@ public class ex3DSprite : exStandaloneSprite {
     // ------------------------------------------------------------------ 
     
     void UpdateVertexAndIndexCount () {
-        GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-    
-    public void GetVertexAndIndexCount (exSpriteType _spriteType, out int _vertexCount, out int _indexCount) {
-        // 假定不论textureInfo如何，都不改变index, vertex数量
-        switch (spriteType_) {
-        case exSpriteType.Simple:
-            _vertexCount = exMesh.QUAD_VERTEX_COUNT;
-            _indexCount = exMesh.QUAD_INDEX_COUNT;
-            break;
-        case exSpriteType.Sliced:
-            _vertexCount = 4 * 4;
-            _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
-            break;
-        //case exSpriteType.Tiled:
-        //    int quadCount = (int)Mathf.Ceil (tilling_.x) * (int)Mathf.Ceil (tilling_.y);
-        //    _vertexCount = exMesh.QUAD_VERTEX_COUNT * quadCount;
-        //    _indexCount = exMesh.QUAD_INDEX_COUNT * quadCount;
-        //    break;
-        //exSpriteType.Diced:
-        //    break;
-        default:
-            _vertexCount = exMesh.QUAD_VERTEX_COUNT;
-            _indexCount = exMesh.QUAD_INDEX_COUNT;
-            break;
-        }
+        SpriteBuilder.GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
     }
 }
 //#endif
