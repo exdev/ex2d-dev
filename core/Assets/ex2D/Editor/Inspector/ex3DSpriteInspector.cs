@@ -1,5 +1,5 @@
 // ======================================================================================
-// File         : exSpriteInspector.cs
+// File         : ex3DSpriteInspector.cs
 // Author       : Wu Jie 
 // Last Change  : 07/04/2013 | 15:43:11 PM | Thursday,July
 // Description  : 

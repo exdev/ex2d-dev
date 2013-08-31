@@ -724,7 +724,7 @@ internal static class SpriteBuilder {
             _vertices.buffer[_startIndex + i + 2] = left + (right - left) * xStep2;
         }
     }
-        
+    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
