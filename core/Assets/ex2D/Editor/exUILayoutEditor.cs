@@ -46,6 +46,9 @@ class exUILayoutEditor : EditorWindow {
     Camera editCamera;
     Color background = Color.gray;
     Rect sceneViewRect = new Rect( 0, 0, 1, 1 );
+    exRectSelection<Object> rectSelection = null;
+
+    Vector2 hierarchyScrollPos = Vector2.zero;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -82,9 +85,9 @@ class exUILayoutEditor : EditorWindow {
                                                           0.0f );
         }
 
-        // rectSelection = new exRectSelection<Object>( PickObject,
-        //                                              PickRectObjects,
-        //                                              ConfirmRectSelection );
+        rectSelection = new exRectSelection<Object>( PickObject,
+                                                     PickRectObjects,
+                                                     ConfirmRectSelection );
 
         UpdateEditObject ();
     }
@@ -142,26 +145,81 @@ class exUILayoutEditor : EditorWindow {
         Toolbar ();
 
         int margin = 20;
-        GUILayout.Space(margin);
+        int width = 300;
 
         // settings & scene
         EditorGUILayout.BeginHorizontal();
-            //
-            Settings ();
+            float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
+            Hierarchy ( width, (int)(position.height - toolbarHeight ) );
 
-            //
-            GUILayout.Space(40);
+            GUILayout.Space(5);
 
             // scene filed
-            float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
-            Layout_SceneViewField ( Mathf.FloorToInt(position.width - 250 - 40 - margin),
-                                    Mathf.FloorToInt(position.height - toolbarHeight - margin - margin ) );
+            EditorGUILayout.BeginVertical();
+                GUILayout.Space(margin);
+                Layout_SceneViewField ( Mathf.FloorToInt(position.width - width - margin - 5),
+                                        Mathf.FloorToInt(position.height - toolbarHeight - margin - margin) );
+            EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
+
+        // TODO { 
+        //
+        // ProcessSceneEditorHandles();
+
+        //
+        // ProcessSceneEditorEvents();
+        // } TODO end 
+
+        rectSelection.SetSelection( Selection.objects );
+        rectSelection.OnGUI();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    Object PickObject ( Vector2 _position ) {
+        Object[] objs = PickRectObjects( new Rect(_position.x-1,_position.y-1,2,2) );
+        if ( objs.Length > 0 )
+            return objs[0];
+        return null;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    Object[] PickRectObjects ( Rect _rect ) {
+        List<Object> objects = new List<Object>();
+        // TODO { 
+        // for ( int i = spriteNodes.Count-1; i >= 0; --i ) {
+        //     exLayeredSprite node = spriteNodes[i];
+        //     Rect boundingRect = MapBoundingRect ( sceneViewRect, node );
+        //     if ( exGeometryUtility.RectRect_Contains( _rect, boundingRect ) != 0 ||
+        //          exGeometryUtility.RectRect_Intersect( _rect, boundingRect ) )
+        //     {
+        //         objects.Add(node.gameObject);
+        //     }
+        // }
+        // } TODO end 
+
+        return objects.ToArray();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void ConfirmRectSelection ( Object _activeObj, Object[] _selectedObjs ) {
+        // TODO { 
+        // Selection.activeObject = _activeObj;
+        // Selection.objects = _selectedObjs;
+        // } TODO end 
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -241,24 +299,42 @@ class exUILayoutEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void Settings () {
+    void Hierarchy ( int _width, int _height ) {
+        EditorGUILayout.BeginVertical ( new GUILayoutOption [] {
+                                        GUILayout.Width(_width), 
+                                        GUILayout.MinWidth(_width), 
+                                        GUILayout.MaxWidth(_width),
+                                        GUILayout.ExpandWidth(false),
+                                        } );
 
-        EditorGUILayout.BeginHorizontal( new GUILayoutOption [] {
-                                           GUILayout.Width(250), 
-                                           GUILayout.MinWidth(250), 
-                                           GUILayout.MaxWidth(250),
-                                           GUILayout.ExpandWidth(false),
-                                       } );
+            GUIStyle boldLabel = new GUIStyle();
+            boldLabel.fontSize = 20;
+            boldLabel.fontStyle = FontStyle.Bold;
+            boldLabel.normal.textColor = EditorStyles.boldLabel.normal.textColor;
+            EditorGUILayout.LabelField ( "Hierarchy", boldLabel );
+            EditorGUILayout.Space ();
 
-        GUILayout.Space(10);
+            hierarchyScrollPos = EditorGUILayout.BeginScrollView ( hierarchyScrollPos, 
+                                                                   new GUILayoutOption [] {
+                                                                   GUILayout.Width(_width), 
+                                                                   GUILayout.MinWidth(_width), 
+                                                                   GUILayout.MaxWidth(_width),
+                                                                   GUILayout.ExpandWidth(false),
+                                                                   } );
 
-        EditorGUILayout.BeginVertical();
+                ElementField ( curEdit.root, 0 );
 
-        GUILayout.Label ( "Coming Soon..." );
+            EditorGUILayout.EndScrollView();
 
         EditorGUILayout.EndVertical();
+    }
 
-        EditorGUILayout.EndHorizontal();
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void ElementField ( exUIElement _el, int _indentLevel ) {
+        // TODO
     }
 
     // ------------------------------------------------------------------ 

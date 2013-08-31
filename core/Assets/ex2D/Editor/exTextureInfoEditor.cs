@@ -158,14 +158,15 @@ class exTextureInfoEditor : EditorWindow {
         // settings & scene
         EditorGUILayout.BeginHorizontal();
             //
-            Settings ();
+            int width = 250;
+            Settings (width);
 
             //
             GUILayout.Space(40);
 
             // scene filed
             float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
-            Layout_SceneViewField ( Mathf.FloorToInt(position.width - 250 - 40 - margin),
+            Layout_SceneViewField ( Mathf.FloorToInt(position.width - width - 40 - margin),
                                     Mathf.FloorToInt(position.height - toolbarHeight - margin - margin ) );
         EditorGUILayout.EndHorizontal();
     }
@@ -268,12 +269,12 @@ class exTextureInfoEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void Settings () {
+    void Settings ( int _width ) {
 
         EditorGUILayout.BeginHorizontal( new GUILayoutOption [] {
-                                           GUILayout.Width(250), 
-                                           GUILayout.MinWidth(250), 
-                                           GUILayout.MaxWidth(250),
+                                           GUILayout.Width(_width), 
+                                           GUILayout.MinWidth(_width), 
+                                           GUILayout.MaxWidth(_width),
                                            GUILayout.ExpandWidth(false),
                                        } );
 

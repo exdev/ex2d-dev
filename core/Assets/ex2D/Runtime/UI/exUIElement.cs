@@ -22,8 +22,8 @@ using System.IO;
 
 [System.Serializable]
 public class exUIElement {
-    public string name = "";
-    public string id = ""; // for css
+    public string name = "New Element";
+    public string id = "el"; // for css
     public string content = "";
 
     public Vector3 position;
