@@ -221,9 +221,8 @@ public class exSprite : exLayeredSprite {
         if (textureInfo_ != null) {
             switch (spriteType_) {
             case exSpriteType.Simple:
-                exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
-                SpriteBuilder.SimpleUpdateBuffers (this, textureInfo_, useTextureOffset_, ref cachedWorldMatrix, 
-                                                   _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
+                SpriteBuilder.SimpleUpdateBuffers(this, textureInfo_, useTextureOffset_, Space.World, 
+                                                    _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
                 break;
             case exSpriteType.Sliced:
                 SlicedUpdateBuffers (_vertices, _uvs, _indices);
@@ -280,7 +279,7 @@ public class exSprite : exLayeredSprite {
     // ------------------------------------------------------------------ 
 
     private void SlicedUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
-        SpriteBuilder.SimpleUpdateBuffers (this, textureInfo_, useTextureOffset_, ref cachedWorldMatrix, 
+        SpriteBuilder.SimpleUpdateBuffers(this, textureInfo_, useTextureOffset_, Space.World, 
                                             _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
         if (textureInfo_.hasBorder == false) {
             if (_indices != null) {
@@ -291,8 +290,7 @@ public class exSprite : exLayeredSprite {
             }
         }
         if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Vertex) != 0) {
-            exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
-            SlicedUpdateVertexBuffer(_vertices, vertexBufferIndex, ref cachedWorldMatrix);
+            SlicedUpdateVertexBuffer(_vertices, vertexBufferIndex);
         }
         if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
             int index = indexBufferIndex - 1;
@@ -377,7 +375,7 @@ public class exSprite : exLayeredSprite {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    private void SlicedUpdateVertexBuffer (exList<Vector3> _vertices, int _startIndex, ref Matrix4x4 _spriteMatrix) {
+    private void SlicedUpdateVertexBuffer (exList<Vector3> _vertices, int _startIndex) {
         /* vertex index:
             12 13 14 15
             8  9  10 11
@@ -424,7 +422,7 @@ public class exSprite : exLayeredSprite {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    protected override Vector3[] GetVertices (ref Matrix4x4 _spriteMatrix) {
+    protected override Vector3[] GetVertices (Space _space) {
         if (textureInfo_ == null) {
             return new Vector3[0];
         }
@@ -435,11 +433,11 @@ public class exSprite : exLayeredSprite {
         
         switch (spriteType_) {
             case exSpriteType.Simple:
-                SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, ref _spriteMatrix);
+                SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
                 break;
             case exSpriteType.Sliced:
-                SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, ref _spriteMatrix);
-                SlicedUpdateVertexBuffer (vertices, 0, ref _spriteMatrix);
+                SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
+                SlicedUpdateVertexBuffer (vertices, 0);
                 break;
             //case exSpriteType.Tiled:
             //    break;
@@ -469,7 +467,7 @@ public class exSprite : exLayeredSprite {
     
     void UpdateVertexAndIndexCount () {
         if (layer_ == null) {
-            GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
+            SpriteBuilder.GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
         }
     }
     
@@ -480,7 +478,7 @@ public class exSprite : exLayeredSprite {
 	void CheckBufferSize () {
 		if (layer_ != null) {
 			int newVertexCount, newIndexCount;
-			GetVertexAndIndexCount (spriteType_, out newVertexCount, out newIndexCount);
+			SpriteBuilder.GetVertexAndIndexCount (spriteType_, out newVertexCount, out newIndexCount);
 			if (currentVertexCount != newVertexCount || currentIndexCount != newIndexCount) {
 				// rebuild geometry
 				exLayer myLayer = layer_;
@@ -493,35 +491,6 @@ public class exSprite : exLayeredSprite {
 			}
 		}
 	}
-    
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-    
-    public void GetVertexAndIndexCount (exSpriteType _spriteType, out int _vertexCount, out int _indexCount) {
-        // 假定不论textureInfo如何，都不改变index, vertex数量
-        switch (spriteType_) {
-        case exSpriteType.Simple:
-            _vertexCount = exMesh.QUAD_VERTEX_COUNT;
-            _indexCount = exMesh.QUAD_INDEX_COUNT;
-            break;
-        case exSpriteType.Sliced:
-            _vertexCount = 4 * 4;
-            _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
-            break;
-        //case exSpriteType.Tiled:
-        //    int quadCount = (int)Mathf.Ceil (tilling_.x) * (int)Mathf.Ceil (tilling_.y);
-        //    _vertexCount = exMesh.QUAD_VERTEX_COUNT * quadCount;
-        //    _indexCount = exMesh.QUAD_INDEX_COUNT * quadCount;
-        //    break;
-        //exSpriteType.Diced:
-        //    break;
-        default:
-            _vertexCount = exMesh.QUAD_VERTEX_COUNT;
-            _indexCount = exMesh.QUAD_INDEX_COUNT;
-            break;
-        }
-    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -597,10 +566,10 @@ internal static class SpriteBuilder {
     // Desc:
     // ------------------------------------------------------------------ 
     
-    internal static void SimpleUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, ref Matrix4x4 _worldMatrix, 
+    internal static void SimpleUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space,
                                                 exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices, int _vbIndex, int _ibIndex) {
         if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
-            SpriteBuilder.SimpleUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _vertices, _vbIndex, ref _worldMatrix);
+            SpriteBuilder.SimpleUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _vertices, _vbIndex, _space);
         }
         if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
             _indices.buffer[_ibIndex]     = _vbIndex;
@@ -641,7 +610,7 @@ internal static class SpriteBuilder {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    internal static void SimpleUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo textureInfo_, bool useTextureOffset_, exList<Vector3> _vertices, int _startIndex, ref Matrix4x4 _spriteMatrix) {
+    internal static void SimpleUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo textureInfo_, bool useTextureOffset_, exList<Vector3> _vertices, int _startIndex, Space _space) {
         Vector2 anchorOffset;
         float halfHeight = textureInfo_.height * 0.5f;
         float halfWidth = textureInfo_.width * 0.5f;
@@ -733,10 +702,8 @@ internal static class SpriteBuilder {
 
         Vector2 shear = _sprite.shear;
         if (shear.x != 0) {
-            // 这里直接从matrix拿未计入rotation影响的scale，在已知matrix的情况下，速度比较快lossyScale了6倍。
-            // 在有rotation时，shear本来就会有冲突，所以这里不需要lossyScale。
-            float worldScaleY = (new Vector3(_spriteMatrix.m01, _spriteMatrix.m11, _spriteMatrix.m21)).magnitude;
-            float offsetX = worldScaleY * shear.x;
+            float scaleY = _sprite.GetScaleY(_space);
+            float offsetX = scaleY * shear.x;
             float topOffset = offsetX * (halfHeight + anchorOffset.y);
             float botOffset = offsetX * (-halfHeight + anchorOffset.y);
             v0.x += botOffset;
@@ -745,8 +712,8 @@ internal static class SpriteBuilder {
             v3.x += botOffset;
         }
         if (shear.y != 0) {
-            float worldScaleX = (new Vector3(_spriteMatrix.m00, _spriteMatrix.m10, _spriteMatrix.m20)).magnitude;
-            float offsetY = worldScaleX * shear.y;
+            float scaleX = _sprite.GetScaleX(_space);
+            float offsetY = scaleX * shear.y;
             float leftOffset = offsetY * (-halfWidth + anchorOffset.x);
             float rightOffset = offsetY * (halfWidth + anchorOffset.x);
             v0.y += leftOffset;
@@ -755,15 +722,18 @@ internal static class SpriteBuilder {
             v3.y += rightOffset;
         }
 
-        v0 = _spriteMatrix.MultiplyPoint3x4 (v0);
-        v1 = _spriteMatrix.MultiplyPoint3x4 (v1);
-        v2 = _spriteMatrix.MultiplyPoint3x4 (v2);
-        v3 = _spriteMatrix.MultiplyPoint3x4 (v3);
-        // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
-        v0.z = 0;
-        v1.z = 0;
-        v2.z = 0;
-        v3.z = 0;
+        if (_space == Space.World) {
+            exDebug.Assert((_sprite as exLayeredSprite) != null);
+            v0 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v0);
+            v1 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v1);
+            v2 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v2);
+            v3 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v3);
+            // 将z都设为0，使mesh所有mesh的厚度都为0，这样在mesh进行深度排序时会方便一些。但是不能用于3D Sprite
+            v0.z = 0;
+            v1.z = 0;
+            v2.z = 0;
+            v3.z = 0;
+        }
 
         _vertices.buffer[_startIndex + 0] = v0;
         _vertices.buffer[_startIndex + 1] = v1;
@@ -771,6 +741,35 @@ internal static class SpriteBuilder {
         _vertices.buffer[_startIndex + 3] = v3;
 
         // TODO: pixel-perfect
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    public static void GetVertexAndIndexCount (exSpriteType _spriteType, out int _vertexCount, out int _indexCount) {
+        // 假定不论textureInfo如何，都不改变index, vertex数量
+        switch (_spriteType) {
+        case exSpriteType.Simple:
+            _vertexCount = exMesh.QUAD_VERTEX_COUNT;
+            _indexCount = exMesh.QUAD_INDEX_COUNT;
+            break;
+        case exSpriteType.Sliced:
+            _vertexCount = 4 * 4;
+            _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
+            break;
+        //case exSpriteType.Tiled:
+        //    int quadCount = (int)Mathf.Ceil (tilling_.x) * (int)Mathf.Ceil (tilling_.y);
+        //    _vertexCount = exMesh.QUAD_VERTEX_COUNT * quadCount;
+        //    _indexCount = exMesh.QUAD_INDEX_COUNT * quadCount;
+        //    break;
+        //exSpriteType.Diced:
+        //    break;
+        default:
+            _vertexCount = exMesh.QUAD_VERTEX_COUNT;
+            _indexCount = exMesh.QUAD_INDEX_COUNT;
+            break;
+        }
     }
 }
 }
