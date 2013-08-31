@@ -847,16 +847,14 @@ namespace ex2D.Detail {
             default               : anchorOffset.x -= _sprite.width * 0.5f; anchorOffset.y = _sprite.height * 0.5f; break;
             }
             // offset
-            anchorOffset += _sprite.offset;
+            Vector3 offset = anchorOffset + _sprite.offset;
 
-            float shearOffsetX = 0.0f;
-            float shearOffsetY = 0.0f;
-            Vector2 shear = _sprite.shear;
-            if (shear.x != 0) {
-                shearOffsetX = _sprite.GetScaleY(_space) * shear.x;
+            Vector2 shearOffset = _sprite.shear;
+            if (shearOffset.x != 0) {
+                shearOffset.x = _sprite.GetScaleY(_space) * shearOffset.x;
             }
-            if (shear.y != 0) {
-                shearOffsetY = _sprite.GetScaleX(_space) * shear.y;
+            if (shearOffset.y != 0) {
+                shearOffset.y = _sprite.GetScaleX(_space) * shearOffset.y;
             }
             int vbEnd = _vbIndex + _sprite.vertexCount;
             for (int i = _vbIndex; i < vbEnd; i += 4) {
@@ -866,37 +864,36 @@ namespace ex2D.Detail {
                     Vector3 v2 = _vertices.buffer[i + 2];
                     Vector3 v3 = _vertices.buffer[i + 3];
                     // apply anchor and offset
-                    v0.x += anchorOffset.x; v0.y += anchorOffset.y;
-                    v1.x += anchorOffset.x; v1.y += anchorOffset.y;
-                    v2.x += anchorOffset.x; v2.y += anchorOffset.y;
-                    v3.x += anchorOffset.x; v3.y += anchorOffset.y;
-                    
-                    if (_space == Space.World) {
-                        // apply transform
-                        v0 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v0);
-                        v1 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v1);
-                        v2 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v2);
-                        v3 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v3);
-                        v0.z = 0; v1.z = 0; v2.z = 0; v3.z = 0;
-                    }
-                    // shear    TODO: shear before transform
-                    if (shear.x != 0) {
+                    v0 += offset;
+                    v1 += offset;
+                    v2 += offset;
+                    v3 += offset;
+                    // shear
+                    if (shearOffset.x != 0) {
                         float halfCharHeight = (v1.y - v0.y) * 0.5f;
-                        float topOffset = shearOffsetX * (halfCharHeight + anchorOffset.y);
-                        float botOffset = shearOffsetX * (-halfCharHeight + anchorOffset.y);
+                        float topOffset = shearOffset.x * (halfCharHeight + anchorOffset.y);
+                        float botOffset = shearOffset.x * (-halfCharHeight + anchorOffset.y);
                         v0.x += botOffset;
                         v1.x += topOffset;
                         v2.x += topOffset;
                         v3.x += botOffset;
                     }
-                    if (shear.y != 0) {
+                    if (shearOffset.y != 0) {
                         float halfCharWidth = (v2.y - v0.y) * 0.5f;
-                        float leftOffset = shearOffsetY * (-halfCharWidth + anchorOffset.x);
-                        float rightOffset = shearOffsetY * (halfCharWidth + anchorOffset.x);
+                        float leftOffset = shearOffset.y * (-halfCharWidth + anchorOffset.x);
+                        float rightOffset = shearOffset.y * (halfCharWidth + anchorOffset.x);
                         v0.y += leftOffset;
                         v1.y += leftOffset;
                         v2.y += rightOffset;
                         v3.y += rightOffset;
+                    }
+                    // transform
+                    if (_space == Space.World) {
+                        v0 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v0);
+                        v1 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v1);
+                        v2 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v2);
+                        v3 = _sprite.cachedWorldMatrix.MultiplyPoint3x4(v3);
+                        v0.z = 0; v1.z = 0; v2.z = 0; v3.z = 0;
                     }
                     _vertices.buffer[i + 0] = v0;
                     _vertices.buffer[i + 1] = v1;
