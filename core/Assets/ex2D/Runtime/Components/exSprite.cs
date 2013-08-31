@@ -106,7 +106,10 @@ public class exSprite : exLayeredSprite {
         set {
             if ( spriteType_ != value ) {
                 spriteType_ = value;
-                CheckBufferSize ();
+                if (layer_ != null) {
+                    EnsureBufferSize ();
+                    updateFlags |= exUpdateFlags.All;
+                }
             }
         }
     }
@@ -120,7 +123,10 @@ public class exSprite : exLayeredSprite {
         set {
             if ( tilling_ != value ) {
                 tilling_ = value;
-                CheckBufferSize ();
+                if (layer_ != null) {
+                    EnsureBufferSize ();
+                    updateFlags |= exUpdateFlags.All;
+                }
             }
         }
     }
@@ -221,11 +227,12 @@ public class exSprite : exLayeredSprite {
         if (textureInfo_ != null) {
             switch (spriteType_) {
             case exSpriteType.Simple:
-                SpriteBuilder.SimpleUpdateBuffers(this, textureInfo_, useTextureOffset_, Space.World, 
+                SpriteBuilder.SimpleUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.World, 
                                                     _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
                 break;
             case exSpriteType.Sliced:
-                SlicedUpdateBuffers (_vertices, _uvs, _indices);
+                SpriteBuilder.SlicedUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.World,
+                                                   _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
                 break;
             //case exSpriteType.Tiled:
             //    TiledUpdateBuffers (_vertices, _uvs, _indices);
@@ -278,140 +285,6 @@ public class exSprite : exLayeredSprite {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private void SlicedUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
-        SpriteBuilder.SimpleUpdateBuffers(this, textureInfo_, useTextureOffset_, Space.World, 
-                                            _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
-        if (textureInfo_.hasBorder == false) {
-            if (_indices != null) {
-                for (int i = 6; i < indexCount; ++i) {
-                    _indices.buffer[indexBufferIndex + i] = vertexBufferIndex;  // hide unused triangle
-                }
-                return;
-            }
-        }
-        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Vertex) != 0) {
-            SlicedUpdateVertexBuffer(_vertices, vertexBufferIndex);
-        }
-        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
-            int index = indexBufferIndex - 1;
-            for (int i = 0; i <= 10; ++i) {
-                if (i != 3 && i != 7) {     // 0 1 2 4 5 6 8 9 10
-                    int blVertexIndex = vertexBufferIndex + i;
-                    _indices.buffer[++index] = blVertexIndex;
-                    _indices.buffer[++index] = blVertexIndex + 4;
-                    _indices.buffer[++index] = blVertexIndex + 5;
-                    _indices.buffer[++index] = blVertexIndex + 5;
-                    _indices.buffer[++index] = blVertexIndex + 1;
-                    _indices.buffer[++index] = blVertexIndex;
-                }
-            }
-        }
-        if (/*transparent_ == false && */(updateFlags & exUpdateFlags.UV) != 0 && textureInfo_ != null) {
-            float xStep1, xStep2, yStep1, yStep2;
-            if (textureInfo_.rotated == false) {
-                yStep1 = (float)textureInfo_.borderBottom / textureInfo_.height;  // uv step, not position step
-                yStep2 = (float)(textureInfo_.height - textureInfo_.borderTop) / textureInfo_.height;
-                xStep1 = (float)textureInfo_.borderLeft / textureInfo_.width;
-                xStep2 = (float)(textureInfo_.width - textureInfo_.borderRight) / textureInfo_.width;
-            }
-            else {
-                xStep1 = (float)textureInfo_.borderBottom / textureInfo_.height;  // uv step, not position step
-                xStep2 = (float)(textureInfo_.height - textureInfo_.borderTop) / textureInfo_.height;
-                yStep1 = (float)textureInfo_.borderLeft / textureInfo_.width;
-                yStep2 = (float)(textureInfo_.width - textureInfo_.borderRight) / textureInfo_.width;
-            }
-            Vector2 uv0, uv15;
-            uv0 = _uvs.buffer[vertexBufferIndex + 0];
-            uv15 = _uvs.buffer[vertexBufferIndex + 2];
-            Vector2 uv5 = new Vector2(uv0.x + (uv15.x - uv0.x) * xStep1, uv0.y + (uv15.y - uv0.y) * yStep1);
-            Vector2 uv10 = new Vector2(uv0.x + (uv15.x - uv0.x) * xStep2, uv0.y + (uv15.y - uv0.y) * yStep2);
-
-            if (textureInfo_.rotated == false) {
-                //_uvs.buffer[vertexBufferIndex + 0] = uv0;
-                _uvs.buffer[vertexBufferIndex + 1] = new Vector2(uv5.x, uv0.y);
-                _uvs.buffer[vertexBufferIndex + 2] = new Vector2(uv10.x, uv0.y);
-                _uvs.buffer[vertexBufferIndex + 3] = new Vector2(uv15.x, uv0.y);
-
-                _uvs.buffer[vertexBufferIndex + 4] = new Vector2(uv0.x, uv5.y);
-                _uvs.buffer[vertexBufferIndex + 5] = uv5;
-                _uvs.buffer[vertexBufferIndex + 6] = new Vector2(uv10.x, uv5.y);
-                _uvs.buffer[vertexBufferIndex + 7] = new Vector2(uv15.x, uv5.y);
-
-                _uvs.buffer[vertexBufferIndex + 8] = new Vector2(uv0.x, uv10.y);
-                _uvs.buffer[vertexBufferIndex + 9] = new Vector2(uv5.x, uv10.y);
-                _uvs.buffer[vertexBufferIndex + 10] = uv10;
-                _uvs.buffer[vertexBufferIndex + 11] = new Vector2(uv15.x, uv10.y);
-            
-                _uvs.buffer[vertexBufferIndex + 12] = new Vector2(uv0.x, uv15.y);
-                _uvs.buffer[vertexBufferIndex + 13] = new Vector2(uv5.x, uv15.y);
-                _uvs.buffer[vertexBufferIndex + 14] = new Vector2(uv10.x, uv15.y);
-                _uvs.buffer[vertexBufferIndex + 15] = uv15;
-            }
-            else {
-                //_uvs.buffer[vertexBufferIndex + 0] = uv0;
-                _uvs.buffer[vertexBufferIndex + 1] = new Vector2(uv0.x, uv5.y);
-                _uvs.buffer[vertexBufferIndex + 2] = new Vector2(uv0.x, uv10.y);
-                _uvs.buffer[vertexBufferIndex + 3] = new Vector2(uv0.x, uv15.y);
-
-                _uvs.buffer[vertexBufferIndex + 4] = new Vector2(uv5.x, uv0.y);
-                _uvs.buffer[vertexBufferIndex + 5] = uv5;
-                _uvs.buffer[vertexBufferIndex + 6] = new Vector2(uv5.x, uv10.y);
-                _uvs.buffer[vertexBufferIndex + 7] = new Vector2(uv5.x, uv15.y);
-
-                _uvs.buffer[vertexBufferIndex + 8] = new Vector2(uv10.x, uv0.y);
-                _uvs.buffer[vertexBufferIndex + 9] = new Vector2(uv10.x, uv5.y);
-                _uvs.buffer[vertexBufferIndex + 10] = uv10;
-                _uvs.buffer[vertexBufferIndex + 11] = new Vector2(uv10.x, uv15.y);
-            
-                _uvs.buffer[vertexBufferIndex + 12] = new Vector2(uv15.x, uv0.y);
-                _uvs.buffer[vertexBufferIndex + 13] = new Vector2(uv15.x, uv5.y);
-                _uvs.buffer[vertexBufferIndex + 14] = new Vector2(uv15.x, uv10.y);
-                _uvs.buffer[vertexBufferIndex + 15] = uv15;
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    private void SlicedUpdateVertexBuffer (exList<Vector3> _vertices, int _startIndex) {
-        /* vertex index:
-            12 13 14 15
-            8  9  10 11
-            4  5  6  7 
-            0  1  2  3 
-            */
-        // left right columns
-        Vector3 v0 = _vertices.buffer[_startIndex + 0];
-        Vector3 v12 = _vertices.buffer[_startIndex + 1];
-        Vector3 v15 = _vertices.buffer[_startIndex + 2];
-        Vector3 v3 = _vertices.buffer[_startIndex + 3];
-        //_vertices.buffer[_startIndex + 0] = v0;
-        //_vertices.buffer[_startIndex + 3] = v3;
-        _vertices.buffer[_startIndex + 12] = v12;
-        _vertices.buffer[_startIndex + 15] = v15;
-        float yStep1 = (float)textureInfo_.borderBottom / height_;        // position step, not uv step
-        float yStep2 = (height_ - textureInfo_.borderTop) / height_;
-        _vertices.buffer[_startIndex + 4] = v0 + (v12 - v0) * yStep1;
-        _vertices.buffer[_startIndex + 7] = v3 + (v15 - v3) * yStep1;
-        _vertices.buffer[_startIndex + 8] = v0 + (v12 - v0) * yStep2;
-        _vertices.buffer[_startIndex + 11] = v3 + (v15 - v3) * yStep2;
-        // mid columns
-        float xStep1 = (float)textureInfo_.borderLeft / width_;
-        float xStep2 = (width_ - textureInfo_.borderRight) / width_;
-        for (int i = 0; i <= 12; i += 4) {
-            Vector3 left = _vertices.buffer[_startIndex + i];
-            Vector3 right = _vertices.buffer[_startIndex + i + 3];
-            _vertices.buffer[_startIndex + i + 1] = left + (right - left) * xStep1;
-            _vertices.buffer[_startIndex + i + 2] = left + (right - left) * xStep2;
-        }
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
     private void TiledUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
         
     }
@@ -432,17 +305,17 @@ public class exSprite : exLayeredSprite {
         vertices.AddRange(vertexCount);
         
         switch (spriteType_) {
-            case exSpriteType.Simple:
-                SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
-                break;
-            case exSpriteType.Sliced:
-                SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
-                SlicedUpdateVertexBuffer (vertices, 0);
-                break;
-            //case exSpriteType.Tiled:
-            //    break;
-            //case exSpriteType.Diced:
-            //    break;
+        case exSpriteType.Simple:
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
+            break;
+        case exSpriteType.Sliced:
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
+            SpriteBuilder.SlicedUpdateVertexBuffer(this, textureInfo_, vertices, 0);
+            break;
+        //case exSpriteType.Tiled:
+        //    break;
+        //case exSpriteType.Diced:
+        //    break;
         }
 
         return vertices.ToArray();
@@ -475,22 +348,17 @@ public class exSprite : exLayeredSprite {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	void CheckBufferSize () {
-		if (layer_ != null) {
-			int newVertexCount, newIndexCount;
-			SpriteBuilder.GetVertexAndIndexCount (spriteType_, out newVertexCount, out newIndexCount);
-			if (currentVertexCount != newVertexCount || currentIndexCount != newIndexCount) {
-				// rebuild geometry
-				exLayer myLayer = layer_;
-				myLayer.Remove (this, false);
-				myLayer.Add (this, false);
-				exDebug.Assert (currentVertexCount == newVertexCount && currentIndexCount == newIndexCount);
-			}
-			else {
-				updateFlags |= exUpdateFlags.All;
-			}
-		}
-	}
+    void EnsureBufferSize () {
+        int newVertexCount, newIndexCount;
+        SpriteBuilder.GetVertexAndIndexCount (spriteType_, out newVertexCount, out newIndexCount);
+        if (currentVertexCount != newVertexCount || currentIndexCount != newIndexCount) {
+            // rebuild geometry
+            exLayer myLayer = layer_;
+            myLayer.Remove (this, false);
+            myLayer.Add (this, false);
+            exDebug.Assert (currentVertexCount == newVertexCount && currentIndexCount == newIndexCount);
+        }
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -742,7 +610,135 @@ internal static class SpriteBuilder {
 
         // TODO: pixel-perfect
     }
+        
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
 
+    internal static void SlicedUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space,
+                                             exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices, int _vbIndex, int _ibIndex) {
+        SpriteBuilder.SimpleUpdateBuffers(_sprite, _textureInfo, _useTextureOffset, _space, 
+                                          _vertices, _uvs, _indices, _vbIndex, _ibIndex);
+        if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
+            SpriteBuilder.SlicedUpdateVertexBuffer(_sprite, _textureInfo, _vertices, _vbIndex);
+        }
+        if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+            for (int i = 0; i <= 10; ++i) {
+                if (i != 3 && i != 7) {     // 0 1 2 4 5 6 8 9 10
+                    int blVertexIndex = _vbIndex + i;   // bottom left vertex index
+                    _indices.buffer[_ibIndex++] = blVertexIndex;
+                    _indices.buffer[_ibIndex++] = blVertexIndex + 4;
+                    _indices.buffer[_ibIndex++] = blVertexIndex + 5;
+                    _indices.buffer[_ibIndex++] = blVertexIndex + 5;
+                    _indices.buffer[_ibIndex++] = blVertexIndex + 1;
+                    _indices.buffer[_ibIndex++] = blVertexIndex;
+                }
+            }
+        }
+        if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.UV) != 0 && _textureInfo != null) {
+            float xStep1, xStep2, yStep1, yStep2;
+            if (_textureInfo.rotated == false) {
+                yStep1 = (float)_textureInfo.borderBottom / _textureInfo.height;  // uv step, not position step
+                yStep2 = (float)(_textureInfo.height - _textureInfo.borderTop) / _textureInfo.height;
+                xStep1 = (float)_textureInfo.borderLeft / _textureInfo.width;
+                xStep2 = (float)(_textureInfo.width - _textureInfo.borderRight) / _textureInfo.width;
+            }
+            else {
+                xStep1 = (float)_textureInfo.borderBottom / _textureInfo.height;  // uv step, not position step
+                xStep2 = (float)(_textureInfo.height - _textureInfo.borderTop) / _textureInfo.height;
+                yStep1 = (float)_textureInfo.borderLeft / _textureInfo.width;
+                yStep2 = (float)(_textureInfo.width - _textureInfo.borderRight) / _textureInfo.width;
+            }
+            Vector2 uv0, uv15;
+            uv0 = _uvs.buffer[_vbIndex + 0];
+            uv15 = _uvs.buffer[_vbIndex + 2];
+            Vector2 uv5 = new Vector2(uv0.x + (uv15.x - uv0.x) * xStep1, uv0.y + (uv15.y - uv0.y) * yStep1);
+            Vector2 uv10 = new Vector2(uv0.x + (uv15.x - uv0.x) * xStep2, uv0.y + (uv15.y - uv0.y) * yStep2);
+
+            if (_textureInfo.rotated == false) {
+                //_uvs.buffer[vertexBufferIndex + 0] = uv0;
+                _uvs.buffer[_vbIndex + 1] = new Vector2(uv5.x, uv0.y);
+                _uvs.buffer[_vbIndex + 2] = new Vector2(uv10.x, uv0.y);
+                _uvs.buffer[_vbIndex + 3] = new Vector2(uv15.x, uv0.y);
+
+                _uvs.buffer[_vbIndex + 4] = new Vector2(uv0.x, uv5.y);
+                _uvs.buffer[_vbIndex + 5] = uv5;
+                _uvs.buffer[_vbIndex + 6] = new Vector2(uv10.x, uv5.y);
+                _uvs.buffer[_vbIndex + 7] = new Vector2(uv15.x, uv5.y);
+
+                _uvs.buffer[_vbIndex + 8] = new Vector2(uv0.x, uv10.y);
+                _uvs.buffer[_vbIndex + 9] = new Vector2(uv5.x, uv10.y);
+                _uvs.buffer[_vbIndex + 10] = uv10;
+                _uvs.buffer[_vbIndex + 11] = new Vector2(uv15.x, uv10.y);
+
+                _uvs.buffer[_vbIndex + 12] = new Vector2(uv0.x, uv15.y);
+                _uvs.buffer[_vbIndex + 13] = new Vector2(uv5.x, uv15.y);
+                _uvs.buffer[_vbIndex + 14] = new Vector2(uv10.x, uv15.y);
+                _uvs.buffer[_vbIndex + 15] = uv15;
+            }
+            else {
+                //_uvs.buffer[vertexBufferIndex + 0] = uv0;
+                _uvs.buffer[_vbIndex + 1] = new Vector2(uv0.x, uv5.y);
+                _uvs.buffer[_vbIndex + 2] = new Vector2(uv0.x, uv10.y);
+                _uvs.buffer[_vbIndex + 3] = new Vector2(uv0.x, uv15.y);
+
+                _uvs.buffer[_vbIndex + 4] = new Vector2(uv5.x, uv0.y);
+                _uvs.buffer[_vbIndex + 5] = uv5;
+                _uvs.buffer[_vbIndex + 6] = new Vector2(uv5.x, uv10.y);
+                _uvs.buffer[_vbIndex + 7] = new Vector2(uv5.x, uv15.y);
+
+                _uvs.buffer[_vbIndex + 8] = new Vector2(uv10.x, uv0.y);
+                _uvs.buffer[_vbIndex + 9] = new Vector2(uv10.x, uv5.y);
+                _uvs.buffer[_vbIndex + 10] = uv10;
+                _uvs.buffer[_vbIndex + 11] = new Vector2(uv10.x, uv15.y);
+
+                _uvs.buffer[_vbIndex + 12] = new Vector2(uv15.x, uv0.y);
+                _uvs.buffer[_vbIndex + 13] = new Vector2(uv15.x, uv5.y);
+                _uvs.buffer[_vbIndex + 14] = new Vector2(uv15.x, uv10.y);
+                _uvs.buffer[_vbIndex + 15] = uv15;
+            }
+        }
+    }
+        
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    internal static void SlicedUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo textureInfo_, exList<Vector3> _vertices, int _startIndex) {
+        /* vertex index:
+        12 13 14 15
+        8  9  10 11
+        4  5  6  7 
+        0  1  2  3 
+        */
+        // left right columns
+        Vector3 v0 = _vertices.buffer[_startIndex + 0];
+        Vector3 v12 = _vertices.buffer[_startIndex + 1];
+        Vector3 v15 = _vertices.buffer[_startIndex + 2];
+        Vector3 v3 = _vertices.buffer[_startIndex + 3];
+        //_vertices.buffer[_startIndex + 0] = v0;
+        //_vertices.buffer[_startIndex + 3] = v3;
+        _vertices.buffer[_startIndex + 12] = v12;
+        _vertices.buffer[_startIndex + 15] = v15;
+        float height = _sprite.height;
+        float yStep1 = (float)textureInfo_.borderBottom / height;        // position step, not uv step
+        float yStep2 = (height - textureInfo_.borderTop) / height;
+        _vertices.buffer[_startIndex + 4] = v0 + (v12 - v0) * yStep1;
+        _vertices.buffer[_startIndex + 7] = v3 + (v15 - v3) * yStep1;
+        _vertices.buffer[_startIndex + 8] = v0 + (v12 - v0) * yStep2;
+        _vertices.buffer[_startIndex + 11] = v3 + (v15 - v3) * yStep2;
+        // mid columns
+        float width = _sprite.width;
+        float xStep1 = (float)textureInfo_.borderLeft / width;
+        float xStep2 = (width - textureInfo_.borderRight) / width;
+        for (int i = 0; i <= 12; i += 4) {
+            Vector3 left = _vertices.buffer[_startIndex + i];
+            Vector3 right = _vertices.buffer[_startIndex + i + 3];
+            _vertices.buffer[_startIndex + i + 1] = left + (right - left) * xStep1;
+            _vertices.buffer[_startIndex + i + 2] = left + (right - left) * xStep2;
+        }
+    }
+        
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
