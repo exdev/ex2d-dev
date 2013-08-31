@@ -34,7 +34,7 @@ public enum exUpdateFlags {
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-/// The exMesh component. All exLayer have at least one.
+/// The exMesh component used in layer.
 /// Used to maintain and render the generated mesh, and flush geometry buffers to mesh.
 /// This class performs actions selectively depending on what has changed. 
 //
@@ -433,7 +433,7 @@ public class exMesh : MonoBehaviour
 
     private Mesh CreateMesh () {
         Mesh mesh = new Mesh();
-        mesh.name = "ex2D Mesh";
+        mesh.name = "ex2D Layered Mesh";
         mesh.hideFlags = HideFlags.DontSave;
         return mesh;
     }

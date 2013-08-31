@@ -191,9 +191,20 @@ public abstract class exSpriteBase : MonoBehaviour {
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
     
-    public abstract int vertexCount { get; }
-    public abstract int indexCount { get; }
-
+    [System.NonSerialized] protected int vertexCount_ = -1;
+    public virtual int vertexCount {
+        get {
+            return vertexCount_;
+        }
+    }
+    
+    [System.NonSerialized] protected int indexCount_ = -1;
+    public virtual int indexCount {
+        get {
+            return indexCount_;
+        }
+    }
+    
     [System.NonSerialized] protected Material material_;
     public Material material {
         get {

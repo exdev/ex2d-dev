@@ -1,7 +1,7 @@
 ﻿// ======================================================================================
-// File         : exSprite.cs
+// File         : ex3DSprite.cs
 // Author       : 
-// Last Change  : 06/15/2013 | 09:49:04 AM | Saturday,June
+// Last Change  : 08/25/2013
 // Description  : 
 // ======================================================================================
 
@@ -37,6 +37,8 @@ public class ex3DSprite : exStandaloneSprite {
         set {
             // 如果用户在运行时改变了textureInfo，则这里需要重新赋值
             // 假定不论textureInfo如何，都不改变index数量
+            exTextureInfo old = textureInfo_;
+            textureInfo_ = value;
             if (value != null) {
                 if (value.texture == null) {
                     Debug.LogWarning("invalid textureInfo");
@@ -51,22 +53,18 @@ public class ex3DSprite : exStandaloneSprite {
                 }
                 updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
 
-                if (textureInfo_ == null || ReferenceEquals(textureInfo_.texture, value.texture) == false) {
+                if (old == null || ReferenceEquals(old.texture, value.texture) == false) {
                     // texture changed
-                    textureInfo_ = value;
                     updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV);
                     UpdateMaterial();
-                    return;
                 }
-                else if (isOnEnabled_) {
+                if (isOnEnabled_) {
                     Show();
                 }
             }
-            else if (textureInfo_ != null && isOnEnabled_) {
-                textureInfo_ = value;
+            else if (isOnEnabled_ && old != null) {
                 Hide();
             }
-            textureInfo_ = value;
         }
     }
     
@@ -95,7 +93,7 @@ public class ex3DSprite : exStandaloneSprite {
         set {
             if ( spriteType_ != value ) {
                 spriteType_ = value;
-                EnsureBufferSize ();
+                UpdateBufferSize ();
                 updateFlags |= exUpdateFlags.All;
             }
         }
@@ -110,7 +108,7 @@ public class ex3DSprite : exStandaloneSprite {
         set {
             if ( tilling_ != value ) {
                 tilling_ = value;
-                EnsureBufferSize ();
+                UpdateBufferSize ();
                 updateFlags |= exUpdateFlags.All;
             }
         }
@@ -119,21 +117,6 @@ public class ex3DSprite : exStandaloneSprite {
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
-
-    [System.NonSerialized] private int currentVertexCount = -1;
-    [System.NonSerialized] private int currentIndexCount = -1;
-
-    public override int vertexCount {
-        get {
-            return currentVertexCount;
-        }
-    }
-
-    public override int indexCount {
-        get {
-            return currentIndexCount;
-        }
-    }
 
     protected override Texture texture {
         get {
@@ -203,19 +186,6 @@ public class ex3DSprite : exStandaloneSprite {
     // TODO: check border change if sliced
 
 #region Functions used to update geometry buffer
-        
-    // ------------------------------------------------------------------ 
-    /// Add sprite's geometry data to buffers
-    // ------------------------------------------------------------------ 
-
-    internal override void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
-        UpdateVertexAndIndexCount();
-        // fill vertex buffer
-        base.FillBuffers (_vertices, _uvs, _colors32);
-        // fill index buffer
-        indices.AddRange(indexCount);
-        updateFlags |= exUpdateFlags.Index;
-    }
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -223,6 +193,10 @@ public class ex3DSprite : exStandaloneSprite {
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
         exDebug.Assert(textureInfo_ != null, "textureInfo_ == null");
+        if (updateFlags == exUpdateFlags.None) {
+            return exUpdateFlags.None;
+        }
+        
         switch (spriteType_) {
         case exSpriteType.Simple:
             SpriteBuilder.SimpleUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.Self, _vertices, _uvs, _indices, 0, 0);
@@ -238,7 +212,7 @@ public class ex3DSprite : exStandaloneSprite {
         }
         if ((updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null) {
             Color32 color32 = new Color (color_.r, color_.g, color_.b, color_.a);
-            for (int i = 0; i < currentVertexCount; ++i) {
+            for (int i = 0; i < vertexCount_; ++i) {
                 _colors32.buffer [i] = color32;
             }
         }
@@ -257,32 +231,16 @@ public class ex3DSprite : exStandaloneSprite {
     
 #endregion // Functions used to update geometry buffer
     
-    ///////////////////////////////////////////////////////////////////////////////
-    // Other functions
-    ///////////////////////////////////////////////////////////////////////////////
-    
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-    
-    void UpdateVertexAndIndexCount () {
-        SpriteBuilder.GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
-    }
-    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void EnsureBufferSize () {
-        int newVertexCount, newIndexCount;
-        SpriteBuilder.GetVertexAndIndexCount (spriteType_, out newVertexCount, out newIndexCount);
-        if (currentVertexCount != newVertexCount || currentIndexCount != newIndexCount) {
-            // re-alloc buffer
-            vertices.Clear ();
-            uvs.Clear ();
-            colors32.Clear ();
-            indices.Clear ();
-            FillBuffers (vertices, uvs, colors32);
-        }
+    protected override void UpdateVertexAndIndexCount () {
+        SpriteBuilder.GetVertexAndIndexCount(spriteType_, out vertexCount_, out indexCount_);
     }
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // Other functions
+    ///////////////////////////////////////////////////////////////////////////////
+    
 }

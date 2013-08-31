@@ -27,7 +27,7 @@ public enum exSpriteType {
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
-/// The sprite component
+/// A component to render sprite in the layer
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -48,6 +48,8 @@ public class exSprite : exLayeredSprite {
         set {
             // 如果用户在运行时改变了textureInfo，则这里需要重新赋值
             // 假定不论textureInfo如何，都不改变index数量
+            exTextureInfo old = textureInfo_;
+            textureInfo_ = value;
             if (value != null) {
                 if (value.texture == null) {
                     Debug.LogWarning("invalid textureInfo");
@@ -62,22 +64,18 @@ public class exSprite : exLayeredSprite {
                 }
                 updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
 
-                if (textureInfo_ == null || ReferenceEquals(textureInfo_.texture, value.texture) == false) {
+                if (old == null || ReferenceEquals(old.texture, value.texture) == false) {
                     // texture changed
-                    textureInfo_ = value;
                     updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV);
                     UpdateMaterial();
-                    return;
                 }
-                else if (isOnEnabled_) {
+                if (isOnEnabled_) {
                     Show();
                 }
             }
-            else if (textureInfo_ != null && isOnEnabled_) {
-                textureInfo_ = value;
+            else if (isOnEnabled_ && old != null) {
                 Hide();
             }
-            textureInfo_ = value;
         }
     }
     
@@ -134,21 +132,6 @@ public class exSprite : exLayeredSprite {
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
-
-    [System.NonSerialized] private int currentVertexCount = -1;
-    [System.NonSerialized] private int currentIndexCount = -1;
-
-    public override int vertexCount {
-        get {
-            return currentVertexCount;
-        }
-    }
-
-    public override int indexCount {
-        get {
-            return currentIndexCount;
-        }
-    }
 
     protected override Texture texture {
         get {
@@ -224,6 +207,9 @@ public class exSprite : exLayeredSprite {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
+        if (updateFlags == exUpdateFlags.None) {
+            return exUpdateFlags.None;
+        }
         if (textureInfo_ != null) {
             switch (spriteType_) {
             case exSpriteType.Simple:
@@ -248,7 +234,7 @@ public class exSprite : exLayeredSprite {
                 } else {
                     color32 = new Color32 ();
                 }
-                for (int i = 0; i < currentVertexCount; ++i) {
+                for (int i = 0; i < vertexCount_; ++i) {
                     _colors32.buffer [vertexBufferIndex + i] = color32;
                 }
             }
@@ -340,7 +326,7 @@ public class exSprite : exLayeredSprite {
     
     void UpdateVertexAndIndexCount () {
         if (layer_ == null) {
-            SpriteBuilder.GetVertexAndIndexCount(spriteType_, out currentVertexCount, out currentIndexCount);
+            SpriteBuilder.GetVertexAndIndexCount(spriteType_, out vertexCount_, out indexCount_);
         }
     }
     
@@ -351,12 +337,12 @@ public class exSprite : exLayeredSprite {
     void EnsureBufferSize () {
         int newVertexCount, newIndexCount;
         SpriteBuilder.GetVertexAndIndexCount (spriteType_, out newVertexCount, out newIndexCount);
-        if (currentVertexCount != newVertexCount || currentIndexCount != newIndexCount) {
+        if (vertexCount_ != newVertexCount || indexCount_ != newIndexCount) {
             // rebuild geometry
             exLayer myLayer = layer_;
             myLayer.Remove (this, false);
             myLayer.Add (this, false);
-            exDebug.Assert (currentVertexCount == newVertexCount && currentIndexCount == newIndexCount);
+            exDebug.Assert (vertexCount_ == newVertexCount && indexCount_ == newIndexCount);
         }
     }
 
@@ -434,7 +420,7 @@ internal static class SpriteBuilder {
     // Desc:
     // ------------------------------------------------------------------ 
     
-    internal static void SimpleUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space,
+    public static void SimpleUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space,
                                                 exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices, int _vbIndex, int _ibIndex) {
         if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
             SpriteBuilder.SimpleUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _vertices, _vbIndex, _space);
@@ -478,7 +464,7 @@ internal static class SpriteBuilder {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    internal static void SimpleUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo textureInfo_, bool useTextureOffset_, exList<Vector3> _vertices, int _startIndex, Space _space) {
+    public static void SimpleUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo textureInfo_, bool useTextureOffset_, exList<Vector3> _vertices, int _startIndex, Space _space) {
         Vector2 anchorOffset;
         float halfHeight = textureInfo_.height * 0.5f;
         float halfWidth = textureInfo_.width * 0.5f;
@@ -615,7 +601,7 @@ internal static class SpriteBuilder {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    internal static void SlicedUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space,
+    public static void SlicedUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space,
                                              exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices, int _vbIndex, int _ibIndex) {
         SpriteBuilder.SimpleUpdateBuffers(_sprite, _textureInfo, _useTextureOffset, _space, 
                                           _vertices, _uvs, _indices, _vbIndex, _ibIndex);
@@ -704,7 +690,7 @@ internal static class SpriteBuilder {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    internal static void SlicedUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo textureInfo_, exList<Vector3> _vertices, int _startIndex) {
+    public static void SlicedUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo textureInfo_, exList<Vector3> _vertices, int _startIndex) {
         /* vertex index:
         12 13 14 15
         8  9  10 11
