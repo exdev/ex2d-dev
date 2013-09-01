@@ -340,31 +340,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         vertexBufferIndex = _vertices.Count;
         base.FillBuffers (_vertices, _uvs, _colors32);
     }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected abstract Vector3[] GetVertices (Space _space);
-        
-    // ------------------------------------------------------------------ 
-	/// Get vertices of the sprite
-	/// NOTE: This function returns an empty array If sprite is invisible
-    // ------------------------------------------------------------------ 
-
-    public Vector3[] GetLocalVertices () {
-        return GetVertices(Space.Self);
-    }
     
-	// ------------------------------------------------------------------ 
-	/// Get vertices of the sprite
-	/// NOTE: This function returns an empty array If sprite is invisible
-	// ------------------------------------------------------------------ 
-
-    public Vector3[] GetWorldVertices () {
-        return GetVertices(Space.World);
-    }
-
 #if UNITY_EDITOR
 
     // ------------------------------------------------------------------ 

@@ -265,6 +265,30 @@ public abstract class exSpriteBase : MonoBehaviour {
     }
 
     // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected abstract Vector3[] GetVertices (Space _space);
+
+    // ------------------------------------------------------------------ 
+    /// Get vertices of the sprite
+    /// NOTE: This function returns an empty array If sprite is invisible
+    // ------------------------------------------------------------------ 
+
+    public Vector3[] GetLocalVertices () {
+        return GetVertices(Space.Self);
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Get vertices of the sprite
+    /// NOTE: This function returns an empty array If sprite is invisible
+    // ------------------------------------------------------------------ 
+
+    public Vector3[] GetWorldVertices () {
+        return GetVertices(Space.World);
+    }
+
+    // ------------------------------------------------------------------ 
     /// \return the update flags of changed buffer
     /// 
     /// Update sprite's geometry data to buffers selectively depending on what has changed. 

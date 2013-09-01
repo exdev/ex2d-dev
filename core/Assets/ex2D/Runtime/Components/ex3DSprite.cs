@@ -235,6 +235,36 @@ public class ex3DSprite : exStandaloneSprite {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    protected override Vector3[] GetVertices (Space _space) {
+        if (textureInfo_ == null) {
+            return new Vector3[0];
+        }
+
+        exList<Vector3> vertices = exList<Vector3>.GetTempList();
+        UpdateVertexAndIndexCount();
+        vertices.AddRange(vertexCount);
+
+        switch (spriteType_) {
+            case exSpriteType.Simple:
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
+            break;
+            case exSpriteType.Sliced:
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
+            SpriteBuilder.SlicedUpdateVertexBuffer(this, textureInfo_, vertices, 0);
+            break;
+            //case exSpriteType.Tiled:
+            //    break;
+            //case exSpriteType.Diced:
+            //    break;
+        }
+
+        return vertices.ToArray();
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     protected override void UpdateVertexAndIndexCount () {
         SpriteBuilder.GetVertexAndIndexCount(spriteType_, out vertexCount_, out indexCount_);
     }

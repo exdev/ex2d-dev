@@ -345,6 +345,29 @@ public class ex3DSpriteFont : exStandaloneSprite {
 
     #endregion  // Functions used to update geometry buffer
     
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    protected override Vector3[] GetVertices (Space _space) {
+        // TODO: only return the rotated bounding box of the sprite font
+        int visibleVertexCount = text_.Length * 4;
+        exList<Vector3> vertices = exList<Vector3>.GetTempList();
+        vertices.AddRange(visibleVertexCount);
+
+        SpriteFontParams sfp;
+        sfp.text = text_;
+        sfp.font = font_;
+        sfp.spacing = spacing_;
+        sfp.textAlign = textAlign_;
+        sfp.useKerning = useKerning_;
+        sfp.vertexCount = vertexCount_;
+        sfp.indexCount = indexCount_;
+
+        SpriteFontBuilder.BuildText(this, ref sfp, _space, vertices, 0, null);
+        return vertices.ToArray();
+    }
+    
     /*// ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
