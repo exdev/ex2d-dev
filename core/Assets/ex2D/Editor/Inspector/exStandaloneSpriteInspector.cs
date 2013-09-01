@@ -27,7 +27,7 @@ class exStandaloneSpriteInspector : exSpriteBaseInspector {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	protected virtual void OnSceneGUI () {
+	/*protected virtual void OnSceneGUI () {
         exStandaloneSprite sprite = target as exStandaloneSprite;
         // Vector3[] vertices = sprite.GetWorldVertices();
         // if (vertices.Length > 0) {
@@ -38,5 +38,5 @@ class exStandaloneSpriteInspector : exSpriteBaseInspector {
 
         //     Handles.DrawPolyLine( vertices2 );
         // }
-    }
+    }*/
 }

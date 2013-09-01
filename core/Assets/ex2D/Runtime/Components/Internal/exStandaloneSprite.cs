@@ -199,11 +199,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
             return transform.localScale.y;
         }
     }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Other Functions
-    ///////////////////////////////////////////////////////////////////////////////
-    
+ 
     // ------------------------------------------------------------------ 
     /// Add sprite's geometry data to buffers
     // ------------------------------------------------------------------ 
@@ -216,6 +212,24 @@ public abstract class exStandaloneSprite : exSpriteBase {
         indices.AddRange (indexCount);
         updateFlags |= exUpdateFlags.Index;
     }
+
+    // ------------------------------------------------------------------ 
+    /// Get world vertices of the sprite
+    /// NOTE: This function returns an empty array If sprite is invisible
+    // ------------------------------------------------------------------ 
+
+    public override Vector3[] GetWorldVertices () {
+        Vector3[] dest = GetVertices(Space.Self);   // standalone sprite can only get local vertices.
+        Matrix4x4 l2w = transform.localToWorldMatrix;
+        for (int i = 0; i < dest.Length; ++i) {
+            dest[i] = l2w.MultiplyPoint3x4 (dest[i]);
+        }
+        return dest;
+    }
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // Other Functions
+    ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
     // Desc:

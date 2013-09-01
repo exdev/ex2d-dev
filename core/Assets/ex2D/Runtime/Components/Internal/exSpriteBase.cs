@@ -275,7 +275,7 @@ public abstract class exSpriteBase : MonoBehaviour {
     /// NOTE: This function returns an empty array If sprite is invisible
     // ------------------------------------------------------------------ 
 
-    public Vector3[] GetLocalVertices () {
+    public virtual Vector3[] GetLocalVertices () {
         return GetVertices(Space.Self);
     }
 
@@ -284,7 +284,7 @@ public abstract class exSpriteBase : MonoBehaviour {
     /// NOTE: This function returns an empty array If sprite is invisible
     // ------------------------------------------------------------------ 
 
-    public Vector3[] GetWorldVertices () {
+    public virtual Vector3[] GetWorldVertices () {
         return GetVertices(Space.World);
     }
 

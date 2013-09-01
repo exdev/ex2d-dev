@@ -233,7 +233,30 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             return cachedTransform.localScale.y;
         }
     }
+    
+    // ------------------------------------------------------------------ 
+    /// Get world vertices of the sprite
+    /// NOTE: This function returns an empty array If sprite is invisible
+    // ------------------------------------------------------------------ 
 
+    public override Vector3[] GetWorldVertices () {
+        Vector3[] dest = GetVertices(Space.World);
+        if (layer_ != null) {
+            int index = layer_.IndexOfMesh (this);
+            if (index != -1) {
+                // apply mesh transform
+                Matrix4x4 l2w = layer_.meshList[index].transform.localToWorldMatrix;;
+                for (int i = 0; i < dest.Length; ++i) {
+                    dest[i] = l2w.MultiplyPoint3x4 (dest[i]);
+                }
+                return dest;
+            }
+        }
+        return dest;
+    }
+
+    #region System.IComparable<exLayeredSprite>
+    
     // ------------------------------------------------------------------ 
     /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
     // ------------------------------------------------------------------ 
@@ -291,6 +314,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         }
         return 0;
     }
+    
+    #endregion
 
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
@@ -329,8 +354,6 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
 
     protected virtual void OnPreAddToLayer () { }
-
-#region Functions used to update geometry buffer.
     
     // ------------------------------------------------------------------ 
     /// Add sprite's geometry data to buffers
@@ -375,8 +398,6 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     }
 
 #endif
-
-#endregion
     
     // ------------------------------------------------------------------ 
     // Desc: 
