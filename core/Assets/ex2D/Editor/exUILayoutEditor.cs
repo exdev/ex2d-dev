@@ -59,6 +59,7 @@ class exUILayoutEditor : EditorWindow {
     }
 
 	static int sceneViewFieldHash = "SceneViewField".GetHashCode();
+	static int elementsFieldHash = "ElementsField".GetHashCode();
     static HierarchyStyles hierarchyStyles = null;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -417,8 +418,20 @@ class exUILayoutEditor : EditorWindow {
 
 
                 // TODO:
-                SerializedProperty elProp = curSerializedObject.FindProperty ("root");
-                ElementField ( 10.0f, 0.0f, curEdit.root, 0 );
+                int controlID = GUIUtility.GetControlID(elementsFieldHash, FocusType.Passive);
+                ElementField ( controlID, 10.0f, 0.0f, 0, curEdit.root );
+
+
+                // event process for layers
+                Event e = Event.current;
+                switch ( e.GetTypeForControl(controlID) ) {
+                case EventType.MouseUp:
+                    if ( GUIUtility.hotControl == controlID ) {
+                        GUIUtility.hotControl = 0;
+                        e.Use();
+                    }
+                    break;
+                }
 
             EditorGUILayout.EndScrollView();
 
@@ -429,13 +442,15 @@ class exUILayoutEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void ElementField ( float _x, float _y, exUIElement _el, int _indentLevel ) {
+    bool ElementField ( int _controlID, float _x, float _y, int _indentLevel, exUIElement _el ) {
+        Event e = Event.current;
+
         float height = 25.0f;
         Vector2 size = Vector2.zero;
         float cur_x = _x + _indentLevel * 15.0f + 5.0f;
         float cur_y = _y;
-
         Rect rect = new Rect ( _x, _y, 290.0f, height );
+        bool deleted = false;
 
         // background
         Rect draggingHandleRect = new Rect(cur_x, cur_y + 10f, 10f, rect.height);
@@ -495,17 +510,45 @@ class exUILayoutEditor : EditorWindow {
                                                    "Yes",
                                                    "No" ) )
                 {
-                    // ex2DRenderer.instance.DestroyLayer(_layer);
+                    deleted = true;
                 }
             }
         }
 
+
+        // event process for _layer
+        switch ( e.GetTypeForControl(_controlID) ) {
+        case EventType.MouseDown:
+            if ( e.button == 0 && e.clickCount == 1 && rect.Contains(e.mousePosition) ) {
+                GUIUtility.hotControl = _controlID;
+                GUIUtility.keyboardControl = _controlID;
+                activeElement = _el;
+
+                if ( draggingHandleRect.Contains(e.mousePosition) ) {
+                    // draggingLayer = _layer; TODO
+                }
+
+                e.Use();
+            }
+            break;
+        }
+
+        if ( deleted )
+            return true;
+
         // children
         cur_y += height;
         for ( int i = 0; i < _el.children.Count; ++i ) {
-            ElementField ( _x, cur_y, _el.children[i], _indentLevel + 1 );
+            bool isDeleted = ElementField ( _controlID, _x, cur_y, _indentLevel + 1, _el.children[i] );
+            if ( isDeleted ) {
+                _el.children.RemoveAt(i);
+                --i;
+                EditorUtility.SetDirty ( curEdit );
+            }
             cur_y += height;
         }
+
+        return false;
     }
 
     // ------------------------------------------------------------------ 
