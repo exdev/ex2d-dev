@@ -175,6 +175,23 @@ class exSpriteBaseInspector : Editor {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+	protected virtual void OnSceneGUI () {
+        exSpriteBase sprite = target as exSpriteBase;
+        Vector3[] vertices = sprite.GetWorldVertices();
+        if (vertices.Length > 0) {
+            Vector3[] vertices2 = new Vector3[vertices.Length+1];
+            for ( int i = 0; i < vertices.Length; ++i )
+                vertices2[i] = vertices[i];
+            vertices2[vertices.Length] = vertices[0];
+
+            Handles.DrawPolyLine( vertices2 );
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     protected void InitProperties () {
         customSizeProp = serializedObject.FindProperty("customSize_");
         widthProp = serializedObject.FindProperty("width_");
