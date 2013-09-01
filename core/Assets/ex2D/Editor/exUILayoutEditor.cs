@@ -23,13 +23,50 @@ using System.Collections.Generic;
 
 class exUILayoutEditor : EditorWindow {
 
+    class HierarchyStyles {
+        public GUIStyle boldLabel = new GUIStyle();
+        public GUIStyle toolbar = "TE Toolbar";
+        public GUIStyle toolbarButton = "TE ToolbarButton";
+        public GUIStyle toolbarDropDown = "TE ToolbarDropDown";
+        public GUIStyle boxBackground = "TE NodeBackground";
+        public GUIStyle elementBackground = "OL Box";
+        public GUIStyle draggingHandle = "WindowBottomResize";
+        public GUIStyle removeButton = "InvisibleButton";
+        public GUIStyle elementSelectionRect = "SelectionRect";
+
+        public Texture iconToolbarPlus = EditorGUIUtility.FindTexture ("Toolbar Plus");
+        public Texture iconToolbarMinus = EditorGUIUtility.FindTexture("Toolbar Minus");
+
+        public int elementHeight = 25;
+
+        public HierarchyStyles() {
+            // NOTE: if we don't new GUIStyle, it will reference the original style. 
+            boxBackground = new GUIStyle(boxBackground);
+            boxBackground.margin = new RectOffset( 0, 0, 0, 0 );
+            boxBackground.padding = new RectOffset( 0, 0, 0, 0 );
+
+            elementBackground = new GUIStyle(elementBackground);
+            elementBackground.overflow = new RectOffset(0, 0, 1, 0);
+
+            elementSelectionRect = new GUIStyle(elementSelectionRect);
+            elementSelectionRect.overflow = new RectOffset(0, 0, 1, -1);
+
+            boldLabel = new GUIStyle(boldLabel);
+            boldLabel.fontSize = 20;
+            boldLabel.fontStyle = FontStyle.Bold;
+            boldLabel.normal.textColor = EditorStyles.boldLabel.normal.textColor;
+        }
+    }
+
 	static int sceneViewFieldHash = "SceneViewField".GetHashCode();
+    static HierarchyStyles hierarchyStyles = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
     ///////////////////////////////////////////////////////////////////////////////
 
     exUILayoutInfo curEdit = null;
+    SerializedObject curSerializedObject = null;
 
     float scale_ = 1.0f;
     float scale {
@@ -49,6 +86,7 @@ class exUILayoutEditor : EditorWindow {
     exRectSelection<Object> rectSelection = null;
 
     Vector2 hierarchyScrollPos = Vector2.zero;
+    exUIElement activeElement = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -141,24 +179,49 @@ class exUILayoutEditor : EditorWindow {
             return;
         }
 
-        // toolbar
-        Toolbar ();
+        //
+        if ( curSerializedObject == null || 
+             curSerializedObject.targetObject == null ||
+             curSerializedObject.targetObject != curEdit )
+        {
+            curSerializedObject = new SerializedObject(curEdit);
+        }
+
+        // if hierarchyStyles is null
+        if ( hierarchyStyles == null ) {
+            hierarchyStyles = new HierarchyStyles();
+        }
 
         int margin = 20;
         int width = 300;
+        float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
 
-        // settings & scene
+        // hierarchy & scene
         EditorGUILayout.BeginHorizontal();
-            float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
-            Hierarchy ( width, (int)(position.height - toolbarHeight ) );
 
-            GUILayout.Space(5);
+            // hierarchy
+            EditorGUILayout.BeginVertical();
+                // toolbar
+                Hierarchy_Toolbar ();
+
+                // hierarchy elements
+                Hierarchy ( width, (int)(position.height - toolbarHeight ) );
+
+            EditorGUILayout.EndVertical();
 
             // scene filed
             EditorGUILayout.BeginVertical();
+                // toolbar
+                SceneView_Toolbar ();
+
                 GUILayout.Space(margin);
+
+                // view
+                EditorGUILayout.BeginHorizontal();
+                GUILayout.Space(5);
                 Layout_SceneViewField ( Mathf.FloorToInt(position.width - width - margin - 5),
                                         Mathf.FloorToInt(position.height - toolbarHeight - margin - margin) );
+                EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
 
@@ -237,6 +300,7 @@ class exUILayoutEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void Reset () {
+        activeElement = null;
     }
 
     // ------------------------------------------------------------------ 
@@ -258,7 +322,7 @@ class exUILayoutEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void Toolbar () {
+    void SceneView_Toolbar () {
         EditorGUILayout.BeginHorizontal ( EditorStyles.toolbar );
 
             GUILayout.FlexibleSpace();
@@ -299,6 +363,38 @@ class exUILayoutEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void Hierarchy_Toolbar () {
+        // add layer button
+        EditorGUILayout.BeginHorizontal( hierarchyStyles.toolbar, new GUILayoutOption[0]);
+        GUILayout.FlexibleSpace();
+            if ( GUILayout.Button( "UP", hierarchyStyles.toolbarButton ) ) {
+                // int curIdx = ex2DRenderer.instance.layerList.IndexOf(activeLayer);
+                // if ( curIdx != -1 ) {
+                //     int nextIdx = System.Math.Max(curIdx-1,0);
+                //     layerListProp.MoveArrayElement ( curIdx, nextIdx );
+                //     // activeLayer = ex2DRenderer.instance.layerList[nextIdx];
+                // }
+            }
+            if ( GUILayout.Button( "DOWN", hierarchyStyles.toolbarButton ) ) {
+                // int curIdx = ex2DRenderer.instance.layerList.IndexOf(activeLayer);
+                // if ( curIdx != -1 ) {
+                //     int nextIdx = System.Math.Min(curIdx+1,ex2DRenderer.instance.layerList.Count-1);
+                //     layerListProp.MoveArrayElement ( curIdx, nextIdx );
+                //     // activeLayer = ex2DRenderer.instance.layerList[nextIdx];
+                // }
+            }
+            if ( GUILayout.Button( hierarchyStyles.iconToolbarPlus, 
+                                   hierarchyStyles.toolbarDropDown ) ) 
+            {
+                // ex2DRenderer.instance.CreateLayer();
+            }
+        EditorGUILayout.EndHorizontal();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void Hierarchy ( int _width, int _height ) {
         EditorGUILayout.BeginVertical ( new GUILayoutOption [] {
                                         GUILayout.Width(_width), 
@@ -307,11 +403,8 @@ class exUILayoutEditor : EditorWindow {
                                         GUILayout.ExpandWidth(false),
                                         } );
 
-            GUIStyle boldLabel = new GUIStyle();
-            boldLabel.fontSize = 20;
-            boldLabel.fontStyle = FontStyle.Bold;
-            boldLabel.normal.textColor = EditorStyles.boldLabel.normal.textColor;
-            EditorGUILayout.LabelField ( "Hierarchy", boldLabel );
+            EditorGUILayout.LabelField ( "Hierarchy", hierarchyStyles.boldLabel );
+            EditorGUILayout.Space ();
             EditorGUILayout.Space ();
 
             hierarchyScrollPos = EditorGUILayout.BeginScrollView ( hierarchyScrollPos, 
@@ -322,7 +415,10 @@ class exUILayoutEditor : EditorWindow {
                                                                    GUILayout.ExpandWidth(false),
                                                                    } );
 
-                ElementField ( curEdit.root, 0 );
+
+                // TODO:
+                SerializedProperty elProp = curSerializedObject.FindProperty ("root");
+                ElementField ( 10.0f, 0.0f, curEdit.root, 0 );
 
             EditorGUILayout.EndScrollView();
 
@@ -333,8 +429,83 @@ class exUILayoutEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void ElementField ( exUIElement _el, int _indentLevel ) {
-        // TODO
+    void ElementField ( float _x, float _y, exUIElement _el, int _indentLevel ) {
+        float height = 25.0f;
+        Vector2 size = Vector2.zero;
+        float cur_x = _x + _indentLevel * 15.0f + 5.0f;
+        float cur_y = _y;
+
+        Rect rect = new Rect ( _x, _y, 290.0f, height );
+
+        // background
+        Rect draggingHandleRect = new Rect(cur_x, cur_y + 10f, 10f, rect.height);
+        if ( Event.current.type == EventType.Repaint ) {
+            // draw background
+            if ( activeElement == _el ) {
+                hierarchyStyles.elementSelectionRect.Draw(rect, false, false, false, false);
+            }
+            else {
+                hierarchyStyles.elementBackground.Draw(rect, false, false, false, false);
+            }
+
+            hierarchyStyles.draggingHandle.Draw( draggingHandleRect, false, false, false, false );
+            EditorGUIUtility.AddCursorRect ( draggingHandleRect, MouseCursor.Pan );
+        }
+
+        // name
+        cur_x += 10.0f;
+        cur_x += 5.0f;
+        EditorGUI.BeginChangeCheck ();
+            _el.name = EditorGUI.TextField ( new Rect ( cur_x, cur_y + 4f, 100.0f, height - 8f ),
+                                             _el.name ); 
+        if ( EditorGUI.EndChangeCheck () ) {
+            EditorUtility.SetDirty ( curEdit );
+        }
+
+        // #
+        cur_x += 100.0f;
+        cur_x += 5.0f;
+        EditorGUI.LabelField ( new Rect ( cur_x, cur_y + 4f, 10.0f, height - 8f ), "#" );
+
+        // id
+        cur_x += 10.0f;
+        cur_x += 2.0f;
+        EditorGUI.BeginChangeCheck ();
+            _el.id = EditorGUI.TextField ( new Rect ( cur_x, cur_y + 4f, 80.0f, height - 8f ),
+                                             _el.id ); 
+        if ( EditorGUI.EndChangeCheck () ) {
+            EditorUtility.SetDirty ( curEdit );
+        }
+
+        // delete
+        size = hierarchyStyles.removeButton.CalcSize( new GUIContent(hierarchyStyles.iconToolbarMinus) );
+        cur_x = rect.xMax - 5.0f - size.x;
+        if ( GUI.Button( new Rect( cur_x, rect.y + 2f, size.x, size.y ), 
+                         hierarchyStyles.iconToolbarMinus, 
+                         hierarchyStyles.removeButton) )
+        {
+            if ( _indentLevel == 0 ) {
+                EditorUtility.DisplayDialog ( "Can not delete root element?", 
+                                              string.Format("You can not delete root element"),
+                                              "OK" );
+            }
+            else {
+                if ( EditorUtility.DisplayDialog ( "Delete Element?", 
+                                                   string.Format("Are you sure you want to delete element: {0}?", _el.name),
+                                                   "Yes",
+                                                   "No" ) )
+                {
+                    // ex2DRenderer.instance.DestroyLayer(_layer);
+                }
+            }
+        }
+
+        // children
+        cur_y += height;
+        for ( int i = 0; i < _el.children.Count; ++i ) {
+            ElementField ( _x, cur_y, _el.children[i], _indentLevel + 1 );
+            cur_y += height;
+        }
     }
 
     // ------------------------------------------------------------------ 
