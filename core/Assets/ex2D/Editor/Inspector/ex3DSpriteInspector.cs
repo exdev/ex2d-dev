@@ -56,6 +56,16 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
                 ex3DSprite sp = obj as ex3DSprite;
                 if ( sp ) {
                     sp.textureInfo = textureInfoProp.objectReferenceValue as exTextureInfo;
+                    if ( sp.textureInfo != null ) {
+                        if ( sp.textureInfo.hasBorder ) {
+                            sp.spriteType = exSpriteType.Sliced;
+                            sp.customSize = true;
+                        }
+                        else {
+                            sp.spriteType = exSpriteType.Simple;
+                            sp.customSize = false;
+                        }
+                    }
                     EditorUtility.SetDirty(sp);
                 }
             }
@@ -74,7 +84,7 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
         Rect lastRect = GUILayoutUtility.GetLastRect();
         if ( Event.current.type == EventType.Repaint && serializedObject.isEditingMultipleObjects == false ) {
             exTextureInfo textureInfo = textureInfoProp.objectReferenceValue as exTextureInfo;
-            float indent_space = Screen.width - preview_width - 10.0f;
+            float indent_space = 20.0f;
             Rect previewRect = new Rect ( indent_space,
                                           lastRect.yMax,
                                           preview_width, 

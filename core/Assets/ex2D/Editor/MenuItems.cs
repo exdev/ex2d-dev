@@ -231,16 +231,15 @@ public static class MenuItems {
         sprite.shader = Shader.Find("ex2D/Alpha Blended");
     }
 
-    // TODO { 
-    // // ------------------------------------------------------------------ 
-    // // Desc: 
-    // // ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
 
-    // [MenuItem ("GameObject/Create Other/ex2D/3D Sprite Font")]
-    // static void Create_3DSprite () {
-    //     GameObject newGO = new GameObject("New 3D SpriteFont");
-    //     ex3DSprite sprite = newGO.AddComponent<ex3DSpriteFont>();
-    //     sprite.shader = Shader.Find("ex2D/Alpha Blended");
-    // }
-    // } TODO end 
+    [MenuItem ("GameObject/Create Other/ex2D/3D Sprite Font", false, 10001)]
+    static void Create_3DSpriteFont () {
+        GameObject newGO = new GameObject("New 3D SpriteFont");
+        ex3DSpriteFont spriteFont = newGO.AddComponent<ex3DSpriteFont>();
+        spriteFont.shader = Shader.Find("ex2D/Alpha Blended");
+        spriteFont.text = "Hello World";
+    }
 }
