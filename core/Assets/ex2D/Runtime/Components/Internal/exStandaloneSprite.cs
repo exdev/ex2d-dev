@@ -42,22 +42,26 @@ public abstract class exStandaloneSprite : exSpriteBase {
             return cachedRenderer_;
         }
     }
-    [System.NonSerialized] protected MeshFilter cachedFilter_;
-    public MeshFilter cachedFilter {
-        get {
-            if (cachedFilter_ == null) {
-                cachedFilter_ = GetComponent<MeshFilter>();
-            }
-            return cachedFilter_;
-        }
-    }
+    //[System.NonSerialized] protected MeshFilter cachedFilter_;
+    //public MeshFilter cachedFilter {
+    //    get {
+    //        if (cachedFilter_ == null) {
+    //            cachedFilter_ = GetComponent<MeshFilter>();
+    //        }
+    //        return cachedFilter_;
+    //    }
+    //}
     [System.NonSerialized] protected Mesh mesh_;
     public Mesh mesh {
         get {
             if (mesh_ == null) {
-                mesh_ = cachedFilter.sharedMesh;
+                mesh_ = GetComponent<MeshFilter>().sharedMesh;
             }
             return mesh_;
+        }
+        private set {
+            mesh_ = value;
+            GetComponent<MeshFilter>().sharedMesh = mesh_;
         }
     }
     
@@ -85,15 +89,10 @@ public abstract class exStandaloneSprite : exSpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
     
     protected void Awake () {
-        //cachedFilter_ = gameObject.GetComponent<MeshFilter>();
-        //cachedRenderer_ = gameObject.GetComponent<MeshRenderer>();
         exDebug.Assert(mesh_ == null, "mesh_ == null");
-        Mesh mesh = new Mesh();
+        mesh = new Mesh();
         mesh.name = "ex2D Mesh";
         mesh.hideFlags = HideFlags.DontSave;
-        cachedFilter.sharedMesh = mesh;
-
-        FillBuffers(vertices, uvs, colors32);
     }
     
     protected void OnDestroy () {
@@ -105,25 +104,22 @@ public abstract class exStandaloneSprite : exSpriteBase {
         if (mesh != null) {
             mesh_.Destroy();
         }
-        mesh_ = null;
-        cachedFilter.sharedMesh = null;
-        cachedFilter_ = null;
+        mesh = null;
         cachedRenderer.sharedMaterial = null;
         cachedRenderer_ = null;
     }
 
     // ------------------------------------------------------------------ 
     /// OnEnable functoin inherit from MonoBehaviour,
-    /// When exPlane.enabled set to true, this function will be invoked,
-    /// exPlane will enable the renderer if they exist. 
+    /// exStandaloneSprite will enable the renderer if they exist. 
     /// 
-    /// \note if you inherit from exPlane, and implement your own Awake function, 
+    /// \note if you inherit from exStandaloneSprite, and implement your own OnEnable function, 
     /// you need to override this and call base.OnEnable() in your OnEnable block.
     // ------------------------------------------------------------------ 
 
     protected void OnEnable () {
         isOnEnabled_ = true;
-        cachedRenderer.enabled = true;
+        Show ();
         bool reloadNonSerialized = (vertices.Count == 0);
         if (reloadNonSerialized) {
             cachedRenderer.sharedMaterial = material;
@@ -133,16 +129,15 @@ public abstract class exStandaloneSprite : exSpriteBase {
 
     // ------------------------------------------------------------------ 
     /// OnDisable functoin inherit from MonoBehaviour,
-    /// When exPlane.enabled set to false, this function will be invoked,
-    /// exPlane will disable the renderer if they exist. 
+    /// exStandaloneSprite will disable the renderer if they exist. 
     /// 
-    /// \note if you inherit from exPlane, and implement your own Awake function, 
+    /// \note if you inherit from exStandaloneSprite, and implement your own OnDisable function, 
     /// you need to override this and call base.OnDisable() in your OnDisable block.
     // ------------------------------------------------------------------ 
 
     protected void OnDisable () {
         isOnEnabled_ = false;
-        cachedRenderer.enabled = false;
+        Hide ();
     }
 
     // ------------------------------------------------------------------ 
@@ -162,7 +157,101 @@ public abstract class exStandaloneSprite : exSpriteBase {
         }
     }
 
+    protected override void Show () {
+        cachedRenderer.enabled = true;
+    }
+
+    protected override void Hide () {
+        cachedRenderer.enabled = false;
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    protected override void UpdateMaterial () {
+        material_ = null;   // set dirty, make material update.
+        cachedRenderer.sharedMaterial = material;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    internal override float GetScaleX (Space _space) {
+        if (_space == Space.World) {
+            return transform.lossyScale.x;
+        }
+        else {
+            return transform.localScale.x;
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    internal override float GetScaleY (Space _space) {
+        if (_space == Space.World) {
+            return transform.lossyScale.y;
+        }
+        else {
+            return transform.localScale.y;
+        }
+    }
+ 
+    // ------------------------------------------------------------------ 
+    /// Add sprite's geometry data to buffers
+    // ------------------------------------------------------------------ 
+
+    internal override void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
+        UpdateVertexAndIndexCount ();
+        // fill vertex buffer
+        base.FillBuffers (_vertices, _uvs, _colors32);
+        // fill index buffer
+        indices.AddRange (indexCount);
+        updateFlags |= exUpdateFlags.Index;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Get world vertices of the sprite
+    /// NOTE: This function returns an empty array If sprite is invisible
+    // ------------------------------------------------------------------ 
+
+    public override Vector3[] GetWorldVertices () {
+        Vector3[] dest = GetVertices(Space.Self);   // standalone sprite can only get local vertices.
+        Matrix4x4 l2w = transform.localToWorldMatrix;
+        for (int i = 0; i < dest.Length; ++i) {
+            dest[i] = l2w.MultiplyPoint3x4 (dest[i]);
+        }
+        return dest;
+    }
+    
     ///////////////////////////////////////////////////////////////////////////////
     // Other Functions
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    protected abstract void UpdateVertexAndIndexCount ();
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected void UpdateBufferSize () {
+        int oldVertexCount = vertexCount_;
+        int oldIndexCount = indexCount_;
+        UpdateVertexAndIndexCount ();
+        if (vertexCount_ != oldVertexCount || indexCount_ != oldIndexCount) {
+            // re-alloc buffer
+            vertices.Clear ();
+            uvs.Clear ();
+            colors32.Clear ();
+            indices.Clear ();
+            FillBuffers (vertices, uvs, colors32);
+        }
+    }
 }

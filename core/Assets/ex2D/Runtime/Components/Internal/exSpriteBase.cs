@@ -184,14 +184,27 @@ public abstract class exSpriteBase : MonoBehaviour {
     [System.NonSerialized] protected bool isOnEnabled_;
 
     [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
+    
+    [System.NonSerialized] internal Matrix4x4 cachedWorldMatrix;    // 内部使用，只有exLayeredSprite的值才可读
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
     
-    public abstract int vertexCount { get; }
-    public abstract int indexCount { get; }
-
+    [System.NonSerialized] protected int vertexCount_ = -1;
+    public virtual int vertexCount {
+        get {
+            return vertexCount_;
+        }
+    }
+    
+    [System.NonSerialized] protected int indexCount_ = -1;
+    public virtual int indexCount {
+        get {
+            return indexCount_;
+        }
+    }
+    
     [System.NonSerialized] protected Material material_;
     public Material material {
         get {
@@ -232,12 +245,6 @@ public abstract class exSpriteBase : MonoBehaviour {
         exDebug.Assert(visible == false);
     }
 
-    protected virtual void Show () {
-    }
-
-    protected virtual void Hide () {
-    }
-
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -258,6 +265,30 @@ public abstract class exSpriteBase : MonoBehaviour {
     }
 
     // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected abstract Vector3[] GetVertices (Space _space);
+
+    // ------------------------------------------------------------------ 
+    /// Get vertices of the sprite
+    /// NOTE: This function returns an empty array If sprite is invisible
+    // ------------------------------------------------------------------ 
+
+    public virtual Vector3[] GetLocalVertices () {
+        return GetVertices(Space.Self);
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Get vertices of the sprite
+    /// NOTE: This function returns an empty array If sprite is invisible
+    // ------------------------------------------------------------------ 
+
+    public virtual Vector3[] GetWorldVertices () {
+        return GetVertices(Space.World);
+    }
+
+    // ------------------------------------------------------------------ 
     /// \return the update flags of changed buffer
     /// 
     /// Update sprite's geometry data to buffers selectively depending on what has changed. 
@@ -268,11 +299,37 @@ public abstract class exSpriteBase : MonoBehaviour {
 
 #endregion
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // Interfaces
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Get lossy scale
+    // ------------------------------------------------------------------ 
+
+    internal abstract float GetScaleX (Space _space);
+    
+    // ------------------------------------------------------------------ 
+    // Get lossy scale
+    // ------------------------------------------------------------------ 
+
+    internal abstract float GetScaleY (Space _space);
+
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
+
+    protected abstract void UpdateMaterial ();
     
-    protected virtual void UpdateMaterial () {
-        material_ = null;   // set dirty, make material update.
-    }
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected virtual void Show () { }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected virtual void Hide () { }
 }

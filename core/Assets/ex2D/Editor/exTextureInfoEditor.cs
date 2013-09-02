@@ -77,7 +77,7 @@ class exTextureInfoEditor : EditorWindow {
 
         if (editCamera == null) {
             GameObject camGO 
-            = EditorUtility.CreateGameObjectWithHideFlags ( "SceneViewCamera", 
+            = EditorUtility.CreateGameObjectWithHideFlags ( "TextureInfoView_Camera", 
                                                             HideFlags.HideAndDontSave, 
                                                             new System.Type[] {
                                                                 typeof(Camera)
@@ -152,21 +152,22 @@ class exTextureInfoEditor : EditorWindow {
         // toolbar
         Toolbar ();
 
-        GUILayout.Space(20);
+        int margin = 20;
+        GUILayout.Space(margin);
 
         // settings & scene
         EditorGUILayout.BeginHorizontal();
             //
-            Settings ();
+            int width = 250;
+            Settings (width);
 
             //
             GUILayout.Space(40);
 
             // scene filed
-            int margin = 20; 
             float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
-            Layout_SceneViewField ( Mathf.FloorToInt(position.width - 250 - 40 - 10 - margin),
-                                    Mathf.FloorToInt(position.height - toolbarHeight - 40 - margin) );
+            Layout_SceneViewField ( Mathf.FloorToInt(position.width - width - 40 - margin),
+                                    Mathf.FloorToInt(position.height - toolbarHeight - margin - margin ) );
         EditorGUILayout.EndHorizontal();
     }
 
@@ -268,12 +269,12 @@ class exTextureInfoEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void Settings () {
+    void Settings ( int _width ) {
 
         EditorGUILayout.BeginHorizontal( new GUILayoutOption [] {
-                                           GUILayout.Width(250), 
-                                           GUILayout.MinWidth(250), 
-                                           GUILayout.MaxWidth(250),
+                                           GUILayout.Width(_width), 
+                                           GUILayout.MinWidth(_width), 
+                                           GUILayout.MaxWidth(_width),
                                            GUILayout.ExpandWidth(false),
                                        } );
 
@@ -344,7 +345,7 @@ class exTextureInfoEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void Layout_SceneViewField ( int _width, int _height ) {
-        Rect rect = GUILayoutUtility.GetRect ( _width+4, _height+4, 
+        Rect rect = GUILayoutUtility.GetRect ( _width, _height, 
                                                new GUILayoutOption[] {
                                                    GUILayout.ExpandWidth(false),
                                                    GUILayout.ExpandHeight(false)
@@ -358,7 +359,6 @@ class exTextureInfoEditor : EditorWindow {
 
         switch ( e.type ) {
         case EventType.Repaint:
-            // sceneViewRect = new Rect( _rect.x + 2, _rect.y + 2, _rect.width - 4, _rect.height - 4 );
 
             // draw scene view
             DrawSceneView (_rect);
@@ -520,24 +520,6 @@ class exTextureInfoEditor : EditorWindow {
                 exEditorUtility.GL_DrawLine ( -half_width, top, half_width, top, slicedColor );
                 exEditorUtility.GL_DrawLine ( -half_width, bottom, half_width, bottom, slicedColor );
             }
-        GL.PopMatrix();
-
-        // draw border line
-        GL.PushMatrix();
-            Rect rect2 = new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 );
-            Rect viewportRect2 = new Rect ( rect2.x,
-                                            position.height - rect2.yMax,
-                                            rect2.width, 
-                                            rect2.height );
-            GL.LoadPixelMatrix ( 0.0f, rect2.width, rect2.height, 0.0f );
-            GL.Viewport (viewportRect2);
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( 0.0f,        0.0f,         0.0f ),
-                                              new Vector3 ( rect2.width, 0.0f,         0.0f ),
-                                              new Vector3 ( rect2.width, rect2.height, 0.0f ),
-                                              new Vector3 ( 0.0f,        rect2.height, 0.0f ),
-                                              },
-                                              new Color( 0.0f, 0.0f, 0.0f ) );
         GL.PopMatrix();
 
         GL.Viewport(oldViewport);

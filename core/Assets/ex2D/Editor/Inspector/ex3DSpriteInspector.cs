@@ -1,5 +1,5 @@
 // ======================================================================================
-// File         : exSpriteInspector.cs
+// File         : ex3DSpriteInspector.cs
 // Author       : Wu Jie 
 // Last Change  : 07/04/2013 | 15:43:11 PM | Thursday,July
 // Description  : 
@@ -53,9 +53,19 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
         EditorGUILayout.PropertyField ( textureInfoProp, new GUIContent("Texture Info") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSprite sp = obj as exSprite;
+                ex3DSprite sp = obj as ex3DSprite;
                 if ( sp ) {
                     sp.textureInfo = textureInfoProp.objectReferenceValue as exTextureInfo;
+                    if ( sp.textureInfo != null ) {
+                        if ( sp.textureInfo.hasBorder ) {
+                            sp.spriteType = exSpriteType.Sliced;
+                            sp.customSize = true;
+                        }
+                        else {
+                            sp.spriteType = exSpriteType.Simple;
+                            sp.customSize = false;
+                        }
+                    }
                     EditorUtility.SetDirty(sp);
                 }
             }
@@ -74,7 +84,7 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
         Rect lastRect = GUILayoutUtility.GetLastRect();
         if ( Event.current.type == EventType.Repaint && serializedObject.isEditingMultipleObjects == false ) {
             exTextureInfo textureInfo = textureInfoProp.objectReferenceValue as exTextureInfo;
-            float indent_space = Screen.width - preview_width - 10.0f;
+            float indent_space = 20.0f;
             Rect previewRect = new Rect ( indent_space,
                                           lastRect.yMax,
                                           preview_width, 
@@ -115,7 +125,7 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
         EditorGUILayout.PropertyField ( useTextureOffsetProp, new GUIContent("Use Texture Offset") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSprite sp = obj as exSprite;
+                ex3DSprite sp = obj as ex3DSprite;
                 if ( sp ) {
                     sp.useTextureOffset = useTextureOffsetProp.boolValue;
                     EditorUtility.SetDirty(sp);
@@ -128,7 +138,7 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
         EditorGUILayout.PropertyField ( spriteTypeProp, new GUIContent("Sprite Type") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSprite sp = obj as exSprite;
+                ex3DSprite sp = obj as ex3DSprite;
                 if ( sp ) {
                     sp.spriteType = (exSpriteType)spriteTypeProp.intValue;
                     EditorUtility.SetDirty(sp);

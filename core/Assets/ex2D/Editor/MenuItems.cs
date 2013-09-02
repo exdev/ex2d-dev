@@ -58,6 +58,15 @@ public static class MenuItems {
         exGenericAssetUtility<exBitmapFont>.CreateInCurrentDirectory ("New BitmapFont");
     }
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("Assets/Create/ex2D/UI-Layout Info", false, 1004)]
+    static void Create_UILayoutInfo () {
+        exGenericAssetUtility<exUILayoutInfo>.CreateInCurrentDirectory ("New UILayoutInfo");
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Create From Selected
     ///////////////////////////////////////////////////////////////////////////////
@@ -177,6 +186,18 @@ public static class MenuItems {
         EditorWindow.GetWindow<exSpriteAnimationEditor>();
     }
 
+    // DEBUG { 
+    // // ------------------------------------------------------------------ 
+    // // Desc: 
+    // // ------------------------------------------------------------------ 
+
+    // [MenuItem ("ex2D/Unload Unused Assets", false, 200)]
+    // static void ex2D_UnloadUnusedAssets () {
+    //     EditorUtility.UnloadUnusedAssets();
+    //     // EditorUtility.UnloadUnusedAssetsIgnoreManagedReferences();
+    // }
+    // } DEBUG end 
+
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
@@ -195,13 +216,30 @@ public static class MenuItems {
         ScriptableWizard.DisplayWizard<ex2DAboutWindow>("About ex2D");
     }
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // Create Other
+    ///////////////////////////////////////////////////////////////////////////////
+
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    [MenuItem ("ex2D/Unload Unused Assets", false, 200)]
-    static void ex2D_UnloadUnusedAssets () {
-        EditorUtility.UnloadUnusedAssets();
-        // EditorUtility.UnloadUnusedAssetsIgnoreManagedReferences();
+    [MenuItem ("GameObject/Create Other/ex2D/3D Sprite", false, 10000)]
+    static void Create_3DSprite () {
+        GameObject newGO = new GameObject("New 3D Sprite");
+        ex3DSprite sprite = newGO.AddComponent<ex3DSprite>();
+        sprite.shader = Shader.Find("ex2D/Alpha Blended");
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    [MenuItem ("GameObject/Create Other/ex2D/3D Sprite Font", false, 10001)]
+    static void Create_3DSpriteFont () {
+        GameObject newGO = new GameObject("New 3D SpriteFont");
+        ex3DSpriteFont spriteFont = newGO.AddComponent<ex3DSpriteFont>();
+        spriteFont.shader = Shader.Find("ex2D/Alpha Blended");
+        spriteFont.text = "Hello World";
     }
 }

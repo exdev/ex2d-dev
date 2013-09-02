@@ -116,7 +116,7 @@ class exSceneEditor : EditorWindow {
         // camera
         if (editCamera == null) {
             GameObject camGO 
-            = EditorUtility.CreateGameObjectWithHideFlags ( "SceneViewCamera", 
+            = EditorUtility.CreateGameObjectWithHideFlags ( "SceneView_Camera", 
                                                             HideFlags.HideAndDontSave, 
                                                             new System.Type[] {
                                                                 typeof(Camera)
@@ -183,21 +183,20 @@ class exSceneEditor : EditorWindow {
         // toolbar
         Toolbar ();
 
-        GUILayout.Space(40);
-
         // layer & scene
         EditorGUILayout.BeginHorizontal();
+
             //
-            Settings ();
+            int width = 250;
+            Settings ( width );
 
             //
             GUILayout.Space(40);
 
             // scene filed
-            int margin = 40; 
             float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
-            Layout_SceneViewField ( Mathf.FloorToInt(position.width - 250 - 40 - 10 - margin),
-                                    Mathf.FloorToInt(position.height - toolbarHeight - 40 - margin) );
+            Layout_SceneViewField ( Mathf.FloorToInt(position.width - width - 40 ),
+                                    Mathf.FloorToInt(position.height - toolbarHeight - toolbarHeight ) );
         EditorGUILayout.EndHorizontal();
 
         GUILayout.FlexibleSpace();
@@ -346,11 +345,11 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void Settings () {
+    void Settings ( int _width ) {
         EditorGUILayout.BeginHorizontal( new GUILayoutOption [] {
-                                           GUILayout.Width(250), 
-                                           GUILayout.MinWidth(250), 
-                                           GUILayout.MaxWidth(250),
+                                           GUILayout.Width(_width), 
+                                           GUILayout.MinWidth(_width), 
+                                           GUILayout.MaxWidth(_width),
                                            GUILayout.ExpandWidth(false),
                                        } );
         GUILayout.Space(10);
@@ -542,7 +541,7 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void Layout_SceneViewField ( int _width, int _height ) {
-        Rect rect = GUILayoutUtility.GetRect ( _width+4, _height+4, 
+        Rect rect = GUILayoutUtility.GetRect ( _width, _height, 
                                                new GUILayoutOption[] {
                                                    GUILayout.ExpandWidth(false),
                                                    GUILayout.ExpandHeight(false)
@@ -551,12 +550,16 @@ class exSceneEditor : EditorWindow {
     }
 
     void SceneViewField ( Rect _rect ) {
+
         int controlID = GUIUtility.GetControlID(sceneViewFieldHash, FocusType.Passive);
         Event e = Event.current;
 
         switch ( e.type ) {
         case EventType.Repaint:
-            sceneViewRect = new Rect( _rect.x + 2, _rect.y + 2, _rect.width - 4, _rect.height - 4 );
+            // GUIStyle previewBackground = "AnimationCurveEditorBackground";
+            // previewBackground.Draw(_rect, false, false, false, false);
+
+            sceneViewRect = _rect;
 
             // draw scene
             DoCulling (sceneViewRect);
@@ -801,24 +804,6 @@ class exSceneEditor : EditorWindow {
             }
         GL.PopMatrix();
 
-        // draw border line
-        GL.PushMatrix();
-            Rect rect2 = new Rect ( _rect.x-2, _rect.y-2, _rect.width+4, _rect.height+4 );
-            Rect viewportRect2 = new Rect ( rect2.x,
-                                            position.height - rect2.yMax,
-                                            rect2.width, 
-                                            rect2.height );
-            GL.LoadPixelMatrix ( 0.0f, rect2.width, rect2.height, 0.0f );
-            GL.Viewport (viewportRect2);
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( 0.0f,        0.0f,         0.0f ),
-                                              new Vector3 ( rect2.width, 0.0f,         0.0f ),
-                                              new Vector3 ( rect2.width, rect2.height, 0.0f ),
-                                              new Vector3 ( 0.0f,        rect2.height, 0.0f ),
-                                              },
-                                              new Color( 0.0f, 0.0f, 0.0f ) );
-        GL.PopMatrix();
-
         // pop viewport
         GL.Viewport(oldViewport);
     }
@@ -1028,11 +1013,12 @@ class exSceneEditor : EditorWindow {
 
     void ProcessSceneEditorHandles () {
 
-        //
-        GUI.BeginGroup( sceneViewRect );
         editCamera.enabled = true;
         editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
         editCamera.orthographicSize = (sceneViewRect.height * 0.5f) / scale;
+
+        //
+        GUI.BeginGroup( sceneViewRect );
         Rect rect = new Rect( 0, 0, sceneViewRect.width, sceneViewRect.height );
         Handles.ClearCamera( rect, editCamera );
         Handles.SetCamera( rect, editCamera );
