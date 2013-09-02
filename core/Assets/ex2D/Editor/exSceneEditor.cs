@@ -1098,38 +1098,9 @@ class exSceneEditor : EditorWindow {
 
                 if ( changed ) {
                     exSprite sprite = layeredSprite as exSprite;
-                    if (sprite != null && sprite.spriteType == exSpriteType.Sliced && sprite.textureInfo != null && sprite.textureInfo.hasBorder) {
-                        size.x = Mathf.Max(size.x, sprite.textureInfo.borderLeft + sprite.textureInfo.borderRight);
-                        size.y = Mathf.Max(size.y, sprite.textureInfo.borderBottom + sprite.textureInfo.borderTop);
+                    if (sprite != null) {
+                        exSpriteBaseInspector.ApplySpriteScale(sprite, size, center);
                     }
-                    
-                    layeredSprite.width = size.x;
-                    layeredSprite.height = size.y;
-
-                    Vector3 offset = new Vector3( layeredSprite.offset.x, layeredSprite.offset.y, 0.0f );
-                    Vector3 anchorOffset = Vector3.zero;
-                    Vector3 textureOffset = Vector3.zero;
-                    if ( sprite != null ) {
-                        textureOffset = sprite.GetTextureOffset();
-                    }
-
-                    switch (layeredSprite.anchor) {
-                    case Anchor.TopLeft:    anchorOffset = new Vector3( -size.x*0.5f,  size.y*0.5f, 0.0f ); break;
-                    case Anchor.TopCenter:  anchorOffset = new Vector3(         0.0f,  size.y*0.5f, 0.0f ); break;
-                    case Anchor.TopRight:   anchorOffset = new Vector3(  size.x*0.5f,  size.y*0.5f, 0.0f ); break;
-                    case Anchor.MidLeft:    anchorOffset = new Vector3( -size.x*0.5f,         0.0f, 0.0f ); break;
-                    case Anchor.MidCenter:  anchorOffset = new Vector3(         0.0f,         0.0f, 0.0f ); break;
-                    case Anchor.MidRight:   anchorOffset = new Vector3(  size.x*0.5f,         0.0f, 0.0f ); break;
-                    case Anchor.BotLeft:    anchorOffset = new Vector3( -size.x*0.5f, -size.y*0.5f, 0.0f ); break;
-                    case Anchor.BotCenter:  anchorOffset = new Vector3(         0.0f, -size.y*0.5f, 0.0f ); break;
-                    case Anchor.BotRight:   anchorOffset = new Vector3(  size.x*0.5f, -size.y*0.5f, 0.0f ); break;
-                    }
-
-                    Vector3 scaledOffset = offset + anchorOffset - textureOffset;
-                    scaledOffset.x *= trans.lossyScale.x;
-                    scaledOffset.y *= trans.lossyScale.y;
-
-                    trans.position = center + trans.rotation * scaledOffset;
                 }
             }
 

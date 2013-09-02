@@ -21,7 +21,7 @@ using ex2D.Detail;
 ///////////////////////////////////////////////////////////////////////////////
 
 [AddComponentMenu("ex2D/3D Sprite")]
-public class ex3DSprite : exStandaloneSprite {
+public class ex3DSprite : exStandaloneSprite, exISprite {
 
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -273,63 +273,4 @@ public class ex3DSprite : exStandaloneSprite {
     // Other functions
     ///////////////////////////////////////////////////////////////////////////////
     
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public Vector2 GetTextureOffset () {
-        Vector2 anchorOffset = Vector2.zero;
-        if (useTextureOffset_) {
-            switch (anchor_) {
-                case Anchor.TopLeft:
-                anchorOffset.x = textureInfo_.trim_x;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
-                break;
-                case Anchor.TopCenter:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
-                break;
-                case Anchor.TopRight:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
-                break;
-                //
-                case Anchor.MidLeft:
-                anchorOffset.x = textureInfo_.trim_x;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
-                break;
-                case Anchor.MidCenter:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
-                break;
-                case Anchor.MidRight:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
-                break;
-                //
-                case Anchor.BotLeft:
-                anchorOffset.x = textureInfo_.trim_x;
-                anchorOffset.y = textureInfo_.trim_y;
-                break;
-                case Anchor.BotCenter:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffset.y = textureInfo_.trim_y;
-                break;
-                case Anchor.BotRight:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffset.y = textureInfo_.trim_y;
-                break;
-                //
-                default:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
-                break;
-            }
-            Vector2 customSizeScale = new Vector2 (width_ / textureInfo_.width, height_ / textureInfo_.height);
-            anchorOffset.x *= customSizeScale.x;
-            anchorOffset.y *= customSizeScale.y;
-        }
-        return anchorOffset;
-    } 
 }

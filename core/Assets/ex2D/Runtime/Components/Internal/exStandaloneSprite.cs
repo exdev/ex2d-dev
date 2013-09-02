@@ -93,6 +93,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
         mesh = new Mesh();
         mesh.name = "ex2D Mesh";
         mesh.hideFlags = HideFlags.DontSave;
+        mesh.MarkDynamic();
     }
     
     protected void OnDestroy () {
