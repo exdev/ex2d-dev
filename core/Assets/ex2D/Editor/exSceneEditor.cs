@@ -91,18 +91,6 @@ class exSceneEditor : EditorWindow {
 
     int firstResolutionIdx = 0;
     int secondResolutionIdx = 0;
-    string[] resolutionList = new string[] { 
-        "None",
-        "320 x 480 (iPhone3 Tall)",  // iPhone3 Tall
-        "480 x 320 (iPhone3 Wide)",  // iPhone3 Wide
-        "640 x 960 (iPhone4 Tall)",  // iPhone4 Tall
-        "960 x 640 (iPhone4 Wide)",  // iPhone4 Wide
-        "640 x 1136 (iPhone5 Tall)", // iPhone5 Tall
-        "1136 x 640 (iPhone5 Wide)", // iPhone5 Wide
-        "768 x 1024 (iPad Tall)",    // iPad Tall
-        "1024 x 768 (iPad Wide)",    // iPad Wide
-        "Custom",
-    };
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -368,10 +356,10 @@ class exSceneEditor : EditorWindow {
 
             // Color oldContentColor = GUI.contentColor;
                 // GUI.contentColor = Color.yellow;
-                firstResolutionIdx = EditorGUILayout.Popup ( "1st Resolution", firstResolutionIdx, resolutionList );
+                firstResolutionIdx = EditorGUILayout.Popup ( "1st Resolution", firstResolutionIdx, exEditorUtility.resolutionDescList );
 
                 // GUI.contentColor = Color.red;
-                secondResolutionIdx = EditorGUILayout.Popup ( "2nd Resolution", secondResolutionIdx, resolutionList );
+                secondResolutionIdx = EditorGUILayout.Popup ( "2nd Resolution", secondResolutionIdx, exEditorUtility.resolutionDescList );
             // GUI.contentColor = oldContentColor;
 
         EditorGUILayout.Space();
@@ -889,91 +877,18 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawResolutionRect ( int _idx, Color _color ) {
-        // "320 x 480 (iPhone3 Tall)",  // iPhone3 Tall
-        // "480 x 320 (iPhone3 Wide)",  // iPhone3 Wide
-        // "640 x 960 (iPhone4 Tall)",  // iPhone4 Tall
-        // "960 x 640 (iPhone4 Wide)",  // iPhone4 Wide
-        // "640 x 1136 (iPhone5 Tall)", // iPhone5 Tall
-        // "1136 x 640 (iPhone5 Wide)", // iPhone5 Wide
-        // "768 x 1024 (iPad Tall)",    // iPad Tall
-        // "1024 x 768 (iPad Wide)",    // iPad Wide
+        if ( _idx <= 0 || _idx >= exEditorUtility.resolutionList.Length -1 )
+            return;
 
-        switch ( _idx ) {
-        case 0:
-            break;
-
-        case 1:
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( -160.0f, -240.0f, 0.0f ),
-                                              new Vector3 ( -160.0f,  240.0f, 0.0f ),
-                                              new Vector3 (  160.0f,  240.0f, 0.0f ),
-                                              new Vector3 (  160.0f, -240.0f, 0.0f ),
-                                              }, _color );
-            break;
-
-        case 2:
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( -240.0f, -160.0f, 0.0f ),
-                                              new Vector3 ( -240.0f,  160.0f, 0.0f ),
-                                              new Vector3 (  240.0f,  160.0f, 0.0f ),
-                                              new Vector3 (  240.0f, -160.0f, 0.0f ),
-                                              }, _color );
-            break;
-
-        case 3:
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( -320.0f, -480.0f, 0.0f ),
-                                              new Vector3 ( -320.0f,  480.0f, 0.0f ),
-                                              new Vector3 (  320.0f,  480.0f, 0.0f ),
-                                              new Vector3 (  320.0f, -480.0f, 0.0f ),
-                                              }, _color );
-            break;
-
-        case 4:
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( -480.0f, -320.0f, 0.0f ),
-                                              new Vector3 ( -480.0f,  320.0f, 0.0f ),
-                                              new Vector3 (  480.0f,  320.0f, 0.0f ),
-                                              new Vector3 (  480.0f, -320.0f, 0.0f ),
-                                              }, _color );
-            break;
-
-        case 5:
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( -320.0f, -568.0f, 0.0f ),
-                                              new Vector3 ( -320.0f,  568.0f, 0.0f ),
-                                              new Vector3 (  320.0f,  568.0f, 0.0f ),
-                                              new Vector3 (  320.0f, -568.0f, 0.0f ),
-                                              }, _color );
-            break;
-
-        case 6:
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( -568.0f, -320.0f, 0.0f ),
-                                              new Vector3 ( -568.0f,  320.0f, 0.0f ),
-                                              new Vector3 (  568.0f,  320.0f, 0.0f ),
-                                              new Vector3 (  568.0f, -320.0f, 0.0f ),
-                                              }, _color );
-            break;
-
-        case 7:
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( -384.0f, -512.0f, 0.0f ),
-                                              new Vector3 ( -384.0f,  512.0f, 0.0f ),
-                                              new Vector3 (  384.0f,  512.0f, 0.0f ),
-                                              new Vector3 (  384.0f, -512.0f, 0.0f ),
-                                              }, _color );
-            break;
-
-        case 8:
-            exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                              new Vector3 ( -512.0f, -384.0f, 0.0f ),
-                                              new Vector3 ( -512.0f,  384.0f, 0.0f ),
-                                              new Vector3 (  512.0f,  384.0f, 0.0f ),
-                                              new Vector3 (  512.0f, -384.0f, 0.0f ),
-                                              }, _color );
-            break;
-        }
+        Vector2 size = exEditorUtility.resolutionList[_idx];
+        float half_w = size.x * 0.5f;
+        float half_h = size.y * 0.5f;
+        exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                          new Vector3 ( -half_w, -half_h, 0.0f ),
+                                          new Vector3 ( -half_w,  half_h, 0.0f ),
+                                          new Vector3 (  half_w,  half_h, 0.0f ),
+                                          new Vector3 (  half_w, -half_h, 0.0f ),
+                                          }, _color );
     }
 
     // ------------------------------------------------------------------ 

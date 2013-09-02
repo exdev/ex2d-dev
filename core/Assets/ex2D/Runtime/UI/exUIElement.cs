@@ -25,11 +25,15 @@ public class exUIElement {
     public string name = "New Element";
     public string id = "el"; // for css
     public string content = "";
+    public exUIStyle style;
 
-    public Vector3 position;
-    public Vector3 size;
+    public List<exUIElement> children = new List<exUIElement>();
 
-    [System.NonSerialized] protected exUIElement parent_ = null;
+    ///////////////////////////////////////////////////////////////////////////////
+    // non-serialized
+    ///////////////////////////////////////////////////////////////////////////////
+
+    public exUIElement parent_ = null;
     public exUIElement parent {
         set {
             if ( !ReferenceEquals(parent_, value) ) {
@@ -51,7 +55,8 @@ public class exUIElement {
         }
     }
 
-    public List<exUIElement> children = new List<exUIElement>();
+    [System.NonSerialized] public Vector3 position;
+    [System.NonSerialized] public Vector3 size;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -70,6 +75,54 @@ public class exUIElement {
             _el.parent = null;
         }
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public int GetElementIndex ( exUIElement _el ) {
+        return children.IndexOf(_el);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void InsertAt ( int _idx, exUIElement _el ) {
+        int idx = _idx;
+        if ( _el.parent == this ) {
+            int curIdx = this.children.IndexOf(_el);
+            exDebug.Assert( curIdx != -1, 
+                            "Can't find the element in the parent children list.", 
+                            true );
+            if ( curIdx == _idx )
+                return;
+
+            if ( curIdx > _idx ) 
+                idx = curIdx - 1;
+        }
+
+        _el.parent = null;
+        this.children.Insert( idx, _el );
+        _el.parent_ = this;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public bool Exists ( exUIElement _el ) {
+        if ( this != _el ) {
+            for ( int i = 0; i < this.children.Count; ++i ) {
+                exUIElement child = this.children[i];
+                if ( child.Exists (_el) )
+                    return true;
+            }
+
+            return false;
+        }
+        return true;
+    } 
 }
 
 

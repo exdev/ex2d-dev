@@ -87,6 +87,7 @@ class exUILayoutEditor : EditorWindow {
     exRectSelection<Object> rectSelection = null;
 
     Vector2 hierarchyScrollPos = Vector2.zero;
+    Vector2 styleScrollPos = Vector2.zero;
     exUIElement activeElement = null;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -193,8 +194,14 @@ class exUILayoutEditor : EditorWindow {
             hierarchyStyles = new HierarchyStyles();
         }
 
+        //
+        if ( activeElement == null || curEdit.root.Exists(activeElement) == false ) {
+            activeElement = curEdit.root;
+        }
+
         int margin = 20;
-        int width = 300;
+        int hierarchy_width = 300;
+        int style_width = 250;
         float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
 
         // hierarchy & scene
@@ -206,7 +213,7 @@ class exUILayoutEditor : EditorWindow {
                 Hierarchy_Toolbar ();
 
                 // hierarchy elements
-                Hierarchy ( width, (int)(position.height - toolbarHeight ) );
+                Hierarchy ( hierarchy_width, (int)(position.height - toolbarHeight) );
 
             EditorGUILayout.EndVertical();
 
@@ -220,9 +227,19 @@ class exUILayoutEditor : EditorWindow {
                 // view
                 EditorGUILayout.BeginHorizontal();
                 GUILayout.Space(5);
-                Layout_SceneViewField ( Mathf.FloorToInt(position.width - width - margin - 5),
+                Layout_SceneViewField ( Mathf.FloorToInt(position.width - hierarchy_width - style_width - margin - 5),
                                         Mathf.FloorToInt(position.height - toolbarHeight - margin - margin) );
                 EditorGUILayout.EndHorizontal();
+            EditorGUILayout.EndVertical();
+
+            // style settings
+            EditorGUILayout.BeginVertical();
+                // toolbar
+                Style_Toolbar ();
+
+                // hierarchy elements
+                Style ( style_width, (int)(position.height - toolbarHeight) );
+
             EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
 
@@ -302,6 +319,8 @@ class exUILayoutEditor : EditorWindow {
 
     public void Reset () {
         activeElement = null;
+        if ( curEdit != null )
+            activeElement = curEdit.root;
     }
 
     // ------------------------------------------------------------------ 
@@ -325,6 +344,38 @@ class exUILayoutEditor : EditorWindow {
 
     void SceneView_Toolbar () {
         EditorGUILayout.BeginHorizontal ( EditorStyles.toolbar );
+
+            EditorGUI.BeginChangeCheck ();
+            // resolution
+            curEdit.resolutionIdx = EditorGUILayout.Popup ( "",
+                                                            curEdit.resolutionIdx, 
+                                                            exEditorUtility.resolutionDescList,
+                                                            hierarchyStyles.toolbarDropDown,
+                                                            new GUILayoutOption [] {
+                                                            GUILayout.Width(150), 
+                                                            } );
+            if ( curEdit.resolutionIdx != exEditorUtility.resolutionList.Length-1 ) {
+                Vector2 size = exEditorUtility.resolutionList[curEdit.resolutionIdx];
+                curEdit.width = (int)size.x;
+                curEdit.height = (int)size.y;
+            }
+            EditorGUILayout.Space();
+
+            // if customSize
+            GUI.enabled = (curEdit.resolutionIdx == exEditorUtility.resolutionList.Length-1);
+                curEdit.width = EditorGUILayout.IntField( "", curEdit.width, EditorStyles.toolbarTextField,
+                                                          new GUILayoutOption [] {
+                                                          GUILayout.Width(40)
+                                                          } ); 
+                GUILayout.Label( "x" );
+                curEdit.height = EditorGUILayout.IntField( "", curEdit.height, EditorStyles.toolbarTextField,
+                                                           new GUILayoutOption [] {
+                                                           GUILayout.Width(40)
+                                                           } ); 
+            GUI.enabled = true;
+            if ( EditorGUI.EndChangeCheck () ) {
+                EditorUtility.SetDirty(curEdit);
+            }
 
             GUILayout.FlexibleSpace();
 
@@ -369,25 +420,30 @@ class exUILayoutEditor : EditorWindow {
         EditorGUILayout.BeginHorizontal( hierarchyStyles.toolbar, new GUILayoutOption[0]);
         GUILayout.FlexibleSpace();
             if ( GUILayout.Button( "UP", hierarchyStyles.toolbarButton ) ) {
-                // int curIdx = ex2DRenderer.instance.layerList.IndexOf(activeLayer);
-                // if ( curIdx != -1 ) {
-                //     int nextIdx = System.Math.Max(curIdx-1,0);
-                //     layerListProp.MoveArrayElement ( curIdx, nextIdx );
-                //     // activeLayer = ex2DRenderer.instance.layerList[nextIdx];
-                // }
+                if ( activeElement != curEdit.root && activeElement.parent != null ) {
+                    int curIdx = activeElement.parent.GetElementIndex(activeElement);
+                    int nextIdx = System.Math.Max(curIdx-1,0);
+                    activeElement.parent.InsertAt ( nextIdx, activeElement );
+
+                    EditorUtility.SetDirty(curEdit);
+                }
             }
             if ( GUILayout.Button( "DOWN", hierarchyStyles.toolbarButton ) ) {
-                // int curIdx = ex2DRenderer.instance.layerList.IndexOf(activeLayer);
-                // if ( curIdx != -1 ) {
-                //     int nextIdx = System.Math.Min(curIdx+1,ex2DRenderer.instance.layerList.Count-1);
-                //     layerListProp.MoveArrayElement ( curIdx, nextIdx );
-                //     // activeLayer = ex2DRenderer.instance.layerList[nextIdx];
-                // }
+                if ( activeElement != curEdit.root && activeElement.parent != null ) {
+                    int curIdx = activeElement.parent.GetElementIndex(activeElement);
+                    int nextIdx = System.Math.Min(curIdx+1, activeElement.parent.children.Count-1);
+                    activeElement.parent.InsertAt ( nextIdx, activeElement );
+
+                    EditorUtility.SetDirty(curEdit);
+                }
             }
             if ( GUILayout.Button( hierarchyStyles.iconToolbarPlus, 
                                    hierarchyStyles.toolbarDropDown ) ) 
             {
-                // ex2DRenderer.instance.CreateLayer();
+                exUIElement newEL = new exUIElement(); 
+                newEL.parent = activeElement;
+
+                EditorUtility.SetDirty(curEdit);
             }
         EditorGUILayout.EndHorizontal();
     }
@@ -419,7 +475,8 @@ class exUILayoutEditor : EditorWindow {
 
                 // TODO:
                 int controlID = GUIUtility.GetControlID(elementsFieldHash, FocusType.Passive);
-                ElementField ( controlID, 10.0f, 0.0f, 0, curEdit.root );
+                bool isDeleted = false;
+                ElementField ( controlID, 10.0f, 0.0f, 0, curEdit.root, ref isDeleted );
 
 
                 // event process for layers
@@ -442,7 +499,7 @@ class exUILayoutEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    bool ElementField ( int _controlID, float _x, float _y, int _indentLevel, exUIElement _el ) {
+    float ElementField ( int _controlID, float _x, float _y, int _indentLevel, exUIElement _el, ref bool _deleted ) {
         Event e = Event.current;
 
         float height = 25.0f;
@@ -505,13 +562,16 @@ class exUILayoutEditor : EditorWindow {
                                               "OK" );
             }
             else {
-                if ( EditorUtility.DisplayDialog ( "Delete Element?", 
-                                                   string.Format("Are you sure you want to delete element: {0}?", _el.name),
-                                                   "Yes",
-                                                   "No" ) )
-                {
-                    deleted = true;
-                }
+                // DISABLE { 
+                // if ( EditorUtility.DisplayDialog ( "Delete Element?", 
+                //                                    string.Format("Are you sure you want to delete element: {0}?", _el.name),
+                //                                    "Yes",
+                //                                    "No" ) )
+                // {
+                //     deleted = true;
+                // }
+                // } DISABLE end 
+                deleted = true;
             }
         }
 
@@ -533,22 +593,25 @@ class exUILayoutEditor : EditorWindow {
             break;
         }
 
-        if ( deleted )
-            return true;
+        if ( deleted ) {
+            _deleted = true;
+            return 0.0f;
+        }
 
         // children
         cur_y += height;
         for ( int i = 0; i < _el.children.Count; ++i ) {
-            bool isDeleted = ElementField ( _controlID, _x, cur_y, _indentLevel + 1, _el.children[i] );
+            bool isDeleted = false;
+            float totalHeight = ElementField ( _controlID, _x, cur_y, _indentLevel + 1, _el.children[i], ref isDeleted );
             if ( isDeleted ) {
                 _el.children.RemoveAt(i);
                 --i;
                 EditorUtility.SetDirty ( curEdit );
             }
-            cur_y += height;
+            cur_y += totalHeight;
         }
 
-        return false;
+        return (cur_y - _y);
     }
 
     // ------------------------------------------------------------------ 
@@ -625,6 +688,212 @@ class exUILayoutEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void Style_Toolbar () {
+        // add layer button
+        EditorGUILayout.BeginHorizontal( hierarchyStyles.toolbar, new GUILayoutOption[0]);
+        GUILayout.FlexibleSpace();
+        EditorGUILayout.EndHorizontal();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void Style ( int _width, int _height ) {
+        EditorGUILayout.BeginVertical ( new GUILayoutOption [] {
+                                        GUILayout.Width(_width), 
+                                        GUILayout.MinWidth(_width), 
+                                        GUILayout.MaxWidth(_width),
+                                        GUILayout.ExpandWidth(false),
+                                        } );
+
+            EditorGUILayout.LabelField ( "Style", hierarchyStyles.boldLabel );
+            EditorGUILayout.Space ();
+            EditorGUILayout.Space ();
+
+            if ( activeElement != null ) {
+                styleScrollPos = EditorGUILayout.BeginScrollView ( styleScrollPos, 
+                                                                   new GUILayoutOption [] {
+                                                                   GUILayout.Width(_width), 
+                                                                   GUILayout.MinWidth(_width), 
+                                                                   GUILayout.MaxWidth(_width),
+                                                                   GUILayout.ExpandWidth(false),
+                                                                   } );
+
+
+                    EditorGUI.BeginChangeCheck();
+
+                    exUIStyle style = activeElement.style;
+                    int indentLevel = 0;
+
+                    // size
+                    GUILayout.Label ( "size", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    ++indentLevel;
+                        exCSSUI.IntField ( indentLevel, activeElement, "width", style.width );
+                        exCSSUI.IntField ( indentLevel, activeElement, "height", style.height );
+                        exCSSUI.IntField ( indentLevel, activeElement, "minWidth", style.minWidth );
+                        exCSSUI.IntField ( indentLevel, activeElement, "minHeight", style.minHeight );
+                        exCSSUI.IntField ( indentLevel, activeElement, "maxWidth", style.maxWidth );
+                        exCSSUI.IntField ( indentLevel, activeElement, "maxHeight", style.maxHeight );
+                    --indentLevel;
+
+                    EditorGUILayout.Space();
+
+                    // position
+                    GUILayout.Label ( "position", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    ++indentLevel;
+                        exCSSUI.PositionField ( indentLevel, activeElement, "position", ref style.position );
+                        exCSSUI.IntField ( indentLevel, activeElement, "top", style.top );
+                        exCSSUI.IntField ( indentLevel, activeElement, "right", style.right );
+                        exCSSUI.IntField ( indentLevel, activeElement, "bottom", style.bottom );
+                        exCSSUI.IntField ( indentLevel, activeElement, "left", style.left );
+                    --indentLevel;
+
+                    EditorGUILayout.Space();
+
+                    // margin
+                    GUILayout.Label ( "margin", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    ++indentLevel;
+                        exCSSUI.IntField ( indentLevel, activeElement, "top", style.marginTop );
+                        exCSSUI.LockableIntField ( indentLevel, activeElement, "right", style.marginRight, ref style.lockMarginRight );
+                        exCSSUI.LockableIntField ( indentLevel, activeElement, "bottom", style.marginBottom, ref style.lockMarginBottom );
+                        exCSSUI.LockableIntField ( indentLevel, activeElement, "left", style.marginLeft, ref style.lockMarginLeft );
+                        if ( style.lockMarginRight ) {
+                            style.marginRight.type = style.marginTop.type;
+                            style.marginRight.val = style.marginTop.val;
+                            style.marginBottom.type = style.marginTop.type;
+                            style.marginBottom.val = style.marginTop.val;
+                            style.marginLeft.type = style.marginRight.type;
+                            style.marginLeft.val = style.marginRight.val;
+
+                            style.lockMarginRight = true;
+                            style.lockMarginBottom = true;
+                            style.lockMarginLeft = true;
+                        }
+                        else if ( style.lockMarginBottom ) {
+                            style.marginBottom.type = style.marginTop.type;
+                            style.marginBottom.val = style.marginTop.val;
+                            style.marginLeft.type = style.marginRight.type;
+                            style.marginLeft.val = style.marginRight.val;
+
+                            style.lockMarginBottom = true;
+                            style.lockMarginLeft = true;
+                        }
+                        else if ( style.lockMarginLeft ) {
+                            style.marginLeft.type = style.marginRight.type;
+                            style.marginLeft.val = style.marginRight.val;
+
+                            style.lockMarginLeft = true;
+                        }
+                    --indentLevel;
+
+                    EditorGUILayout.Space();
+
+                    // padding
+                    GUILayout.Label ( "padding", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    ++indentLevel;
+                        exCSSUI.IntField ( indentLevel, activeElement, "top", style.paddingTop );
+                        exCSSUI.LockableIntField ( indentLevel, activeElement, "right", style.paddingRight, ref style.lockPaddingRight );
+                        exCSSUI.LockableIntField ( indentLevel, activeElement, "bottom", style.paddingBottom, ref style.lockPaddingBottom );
+                        exCSSUI.LockableIntField ( indentLevel, activeElement, "left", style.paddingLeft, ref style.lockPaddingLeft );
+                        if ( style.lockPaddingRight ) {
+                            style.paddingRight.type = style.paddingTop.type;
+                            style.paddingRight.val = style.paddingTop.val;
+                            style.paddingBottom.type = style.paddingTop.type;
+                            style.paddingBottom.val = style.paddingTop.val;
+                            style.paddingLeft.type = style.paddingRight.type;
+                            style.paddingLeft.val = style.paddingRight.val;
+
+                            style.lockPaddingRight = true;
+                            style.lockPaddingBottom = true;
+                            style.lockPaddingLeft = true;
+                        }
+                        else if ( style.lockPaddingBottom ) {
+                            style.paddingBottom.type = style.paddingTop.type;
+                            style.paddingBottom.val = style.paddingTop.val;
+                            style.paddingLeft.type = style.paddingRight.type;
+                            style.paddingLeft.val = style.paddingRight.val;
+
+                            style.lockPaddingBottom = true;
+                            style.lockPaddingLeft = true;
+                        }
+                        else if ( style.lockPaddingLeft ) {
+                            style.paddingLeft.type = style.paddingRight.type;
+                            style.paddingLeft.val = style.paddingRight.val;
+
+                            style.lockPaddingLeft = true;
+                        }
+                    --indentLevel;
+
+                    EditorGUILayout.Space();
+
+                    // border
+                    GUILayout.Label ( "border", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    ++indentLevel;
+                        exCSSUI.ImageField ( indentLevel, activeElement, "src", style.borderSrc );
+                        exTextureInfo borderTextureInfo = style.borderSrc.val as exTextureInfo;
+                        if ( borderTextureInfo && borderTextureInfo.hasBorder ) {
+                            style.borderSizeTop.type    = exCSS_type.Local;
+                            style.borderSizeTop.val     = borderTextureInfo.borderTop;
+                            style.borderSizeRight.type  = exCSS_type.Local;
+                            style.borderSizeRight.val   = borderTextureInfo.borderRight;
+                            style.borderSizeBottom.type = exCSS_type.Local;
+                            style.borderSizeBottom.val  = borderTextureInfo.borderBottom;
+                            style.borderSizeLeft.type   = exCSS_type.Local;
+                            style.borderSizeLeft.val    = borderTextureInfo.borderRight;
+                        }
+
+                        exCSSUI.ColorField ( indentLevel, activeElement, "color", style.borderColor );
+                        exCSSUI.IntField ( indentLevel, activeElement, "top", style.borderSizeTop );
+                        exCSSUI.LockableIntField ( indentLevel, activeElement, "right", style.borderSizeRight, ref style.lockBorderSizeRight );
+                        exCSSUI.LockableIntField ( indentLevel, activeElement, "bottom", style.borderSizeBottom, ref style.lockBorderSizeBottom );
+                        exCSSUI.LockableIntField ( indentLevel, activeElement, "left", style.borderSizeLeft, ref style.lockBorderSizeLeft );
+                        if ( style.lockBorderSizeRight ) {
+                            style.borderSizeRight.type = style.borderSizeTop.type;
+                            style.borderSizeRight.val = style.borderSizeTop.val;
+                            style.borderSizeBottom.type = style.borderSizeTop.type;
+                            style.borderSizeBottom.val = style.borderSizeTop.val;
+                            style.borderSizeLeft.type = style.borderSizeRight.type;
+                            style.borderSizeLeft.val = style.borderSizeRight.val;
+
+                            style.lockBorderSizeRight = true;
+                            style.lockBorderSizeBottom = true;
+                            style.lockBorderSizeLeft = true;
+                        }
+                        else if ( style.lockBorderSizeBottom ) {
+                            style.borderSizeBottom.type = style.borderSizeTop.type;
+                            style.borderSizeBottom.val = style.borderSizeTop.val;
+                            style.borderSizeLeft.type = style.borderSizeRight.type;
+                            style.borderSizeLeft.val = style.borderSizeRight.val;
+
+                            style.lockBorderSizeBottom = true;
+                            style.lockBorderSizeLeft = true;
+                        }
+                        else if ( style.lockBorderSizeLeft ) {
+                            style.borderSizeLeft.type = style.borderSizeRight.type;
+                            style.borderSizeLeft.val = style.borderSizeRight.val;
+
+                            style.lockBorderSizeLeft = true;
+                        }
+                    --indentLevel;
+
+
+                    if ( EditorGUI.EndChangeCheck() ) {
+                        // apply layout
+                        curEdit.Apply();
+                        EditorUtility.SetDirty (curEdit);
+                    }
+
+                EditorGUILayout.EndScrollView();
+            }
+
+        EditorGUILayout.EndVertical();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void DrawSceneView ( Rect _rect ) {
         Rect oldViewport = new Rect( 0, 0, Screen.width, Screen.height ); 
         Rect viewportRect = new Rect ( _rect.x,
@@ -670,9 +939,19 @@ class exUILayoutEditor : EditorWindow {
             //
             GL.LoadPixelMatrix( editCamera.transform.position.x - (_rect.width  * 0.5f) / scale, 
                                 editCamera.transform.position.x + (_rect.width  * 0.5f) / scale, 
-                                editCamera.transform.position.y - (_rect.height * 0.5f) / scale,
-                                editCamera.transform.position.y + (_rect.height * 0.5f) / scale );
+                                editCamera.transform.position.y + (_rect.height * 0.5f) / scale,
+                                editCamera.transform.position.y - (_rect.height * 0.5f) / scale );
 
+
+            // draw resolution border
+            int width = (curEdit.width == -1) ? int.MaxValue : curEdit.width; 
+            int height = (curEdit.height == -1) ? int.MaxValue : curEdit.height; 
+            exEditorUtility.GL_DrawRectLine( new Vector3[] {
+                                                new Vector3( 0.0f, 0.0f, 0.0f ),
+                                                new Vector3( width, 0.0f, 0.0f ),
+                                                new Vector3( width, height, 0.0f ),
+                                                new Vector3( 0.0f, height, 0.0f ),
+                                             }, Color.yellow );
 
             // draw layout
             // TODO:

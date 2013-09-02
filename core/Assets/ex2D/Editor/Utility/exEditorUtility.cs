@@ -176,6 +176,32 @@ public static class exEditorUtility {
         }
     }
 
+    //
+    public static Vector2[] resolutionList = new Vector2[] {
+        new Vector2 ( -1, -1 ),      // None
+        new Vector2 ( 320, 480 ),  // iPhone3 Tall
+        new Vector2 ( 480, 320 ),  // iPhone3 Wide
+        new Vector2 ( 640, 960 ),  // iPhone4 Tall
+        new Vector2 ( 960, 640 ),  // iPhone4 Wide
+        new Vector2 ( 640, 1136 ), // iPhone5 Tall
+        new Vector2 ( 1136, 640 ), // iPhone5 Wide
+        new Vector2 ( 768, 1024 ), // iPad Tall
+        new Vector2 ( 1024, 768 ), // iPad Wide
+        new Vector2 ( 0, 0 ), // Custom
+    };
+    public static string[] resolutionDescList = new string[] { 
+        "None",
+        "320 x 480 (iPhone3 Tall)",  // iPhone3 Tall
+        "480 x 320 (iPhone3 Wide)",  // iPhone3 Wide
+        "640 x 960 (iPhone4 Tall)",  // iPhone4 Tall
+        "960 x 640 (iPhone4 Wide)",  // iPhone4 Wide
+        "640 x 1136 (iPhone5 Tall)", // iPhone5 Tall
+        "1136 x 640 (iPhone5 Wide)", // iPhone5 Wide
+        "768 x 1024 (iPad Tall)",    // iPad Tall
+        "1024 x 768 (iPad Wide)",    // iPad Wide
+        "Custom",
+    };
+
     ///////////////////////////////////////////////////////////////////////////////
     // GUI draws helper 
     ///////////////////////////////////////////////////////////////////////////////
