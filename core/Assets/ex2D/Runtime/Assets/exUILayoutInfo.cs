@@ -37,6 +37,7 @@ public class exUILayoutInfo : ScriptableObject {
 
     void OnEnable () {
         LinkElement ( root );
+        Apply();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -48,7 +49,13 @@ public class exUILayoutInfo : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public void Apply () {
-        // TODO: apply layout
+        if ( width < 0 )
+            width = int.MaxValue;
+
+        if ( height < 0 )
+            height = int.MaxValue;
+
+        root.Layout( width, height );
     }
 
     // ------------------------------------------------------------------ 

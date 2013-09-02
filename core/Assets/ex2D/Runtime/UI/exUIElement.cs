@@ -55,8 +55,10 @@ public class exUIElement {
         }
     }
 
-    [System.NonSerialized] public Vector3 position;
-    [System.NonSerialized] public Vector3 size;
+    [System.NonSerialized] public int x;
+    [System.NonSerialized] public int y;
+    [System.NonSerialized] public int width;
+    [System.NonSerialized] public int height;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -123,6 +125,36 @@ public class exUIElement {
         }
         return true;
     } 
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void Layout ( int _width, int _height ) {
+        // calculate width
+        if ( style.width.type == exCSS_type.Pixel ) {
+            width = style.width.val;
+            if ( style.minWidth.type == exCSS_type.Pixel )
+                width = System.Math.Max ( width, style.minWidth.val );
+            if ( style.maxWidth.type == exCSS_type.Pixel )
+                width = System.Math.Min ( width, style.maxWidth.val );
+        }
+        else if ( style.width.type == exCSS_type.Auto ) {
+            // TODO:
+        }
+
+        // calculate height
+        if ( style.height.type == exCSS_type.Pixel ) {
+            height = style.height.val;
+            if ( style.minHeight.type == exCSS_type.Pixel )
+                height = System.Math.Max ( height, style.minHeight.val );
+            if ( style.maxHeight.type == exCSS_type.Pixel )
+                height = System.Math.Min ( height, style.maxHeight.val );
+        }
+        else if ( style.width.type == exCSS_type.Auto ) {
+            // TODO:
+        }
+    }
 }
 
 

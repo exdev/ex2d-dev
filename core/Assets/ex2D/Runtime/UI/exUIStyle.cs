@@ -103,6 +103,21 @@ public class exCSS_image {
 
 [System.Serializable]
 public class exUIStyle {
+    // position
+    public exCSS_position position = exCSS_position.Static;
+    public exCSS_int top    = new exCSS_int( exCSS_type.Auto, -1 );
+    public exCSS_int right  = new exCSS_int( exCSS_type.Auto, -1 );
+    public exCSS_int bottom = new exCSS_int( exCSS_type.Auto, -1 );
+    public exCSS_int left   = new exCSS_int( exCSS_type.Auto, -1 );
+
+    // size
+    public exCSS_int width     = new exCSS_int( exCSS_type.Auto, -1 );
+    public exCSS_int height    = new exCSS_int( exCSS_type.Auto, -1 );
+    public exCSS_int minWidth  = new exCSS_int( exCSS_type.Auto, -1 );
+    public exCSS_int minHeight = new exCSS_int( exCSS_type.Auto, -1 );
+    public exCSS_int maxWidth  = new exCSS_int( exCSS_type.Auto, -1 );
+    public exCSS_int maxHeight = new exCSS_int( exCSS_type.Auto, -1 );
+
     // margin
     public exCSS_int marginTop    = new exCSS_int( exCSS_type.Auto, -1 );
     public exCSS_int marginRight  = new exCSS_int( exCSS_type.Auto, -1 );
@@ -131,21 +146,6 @@ public class exUIStyle {
     public bool lockBorderSizeRight   = true;
     public bool lockBorderSizeBottom  = true;
     public bool lockBorderSizeLeft    = true;
-
-    // size
-    public exCSS_int width     = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int height    = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int minWidth  = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int minHeight = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int maxWidth  = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int maxHeight = new exCSS_int( exCSS_type.Auto, -1 );
-
-    // position
-    public exCSS_position position = exCSS_position.Static;
-    public exCSS_int top    = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int right  = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int bottom = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int left   = new exCSS_int( exCSS_type.Auto, -1 );
 
     // background
     public exCSS_color backgroundColor = new exCSS_color( exCSS_type.Inherit, new Color( 0, 0, 0, 255 )  );

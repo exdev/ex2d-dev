@@ -954,10 +954,23 @@ class exUILayoutEditor : EditorWindow {
                                              }, Color.yellow );
 
             // draw layout
-            // TODO:
+            DrawElement( curEdit.root );
 
         GL.PopMatrix();
 
         GL.Viewport(oldViewport);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawElement ( exUIElement _el ) {
+        exEditorUtility.GL_DrawRectLine( new Vector3[] {
+                                         new Vector3( _el.x, _el.y, 0.0f ),
+                                         new Vector3( _el.x + _el.width, _el.y, 0.0f ),
+                                         new Vector3( _el.x + _el.width, _el.y + _el.height, 0.0f ),
+                                         new Vector3( _el.x, _el.y + _el.height, 0.0f ),
+                                         }, Color.white );
     }
 }
