@@ -14,6 +14,7 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using ex2D.Detail;
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoardPatternInspector
@@ -364,21 +365,6 @@ class exSpriteBaseInspector : Editor {
     }
     
     // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected void InitProperties () {
-        customSizeProp = serializedObject.FindProperty("customSize_");
-        widthProp = serializedObject.FindProperty("width_");
-        heightProp = serializedObject.FindProperty("height_");
-        anchorProp = serializedObject.FindProperty("anchor_");
-        offsetProp = serializedObject.FindProperty("offset_");
-        shearProp = serializedObject.FindProperty("shear_");
-        colorProp = serializedObject.FindProperty("color_");
-        shaderProp = serializedObject.FindProperty("shader_");
-    }
-    
-    // ------------------------------------------------------------------ 
     // Apply exSprite or ex3DSprite change 
     // ------------------------------------------------------------------ 
 
@@ -407,7 +393,7 @@ class exSpriteBaseInspector : Editor {
         }
 
         Vector3 scaledOffset = offset + anchorOffset - (Vector3)_sprite.GetTextureOffset();
-        Transform trans = (_sprite as MonoBehaviour).gameObject.transform;
+        Transform trans = _sprite.transform;
         Vector3 lossyScale = trans.lossyScale;
         scaledOffset.x *= lossyScale.x;
         scaledOffset.y *= lossyScale.y;
@@ -415,6 +401,21 @@ class exSpriteBaseInspector : Editor {
         Vector3 localPos = trans.InverseTransformPoint (newPos);
         localPos.z = 0; // keep z unchagned
         trans.position = trans.TransformPoint (localPos);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected void InitProperties () {
+        customSizeProp = serializedObject.FindProperty("customSize_");
+        widthProp = serializedObject.FindProperty("width_");
+        heightProp = serializedObject.FindProperty("height_");
+        anchorProp = serializedObject.FindProperty("anchor_");
+        offsetProp = serializedObject.FindProperty("offset_");
+        shearProp = serializedObject.FindProperty("shear_");
+        colorProp = serializedObject.FindProperty("color_");
+        shaderProp = serializedObject.FindProperty("shader_");
     }
 }
 

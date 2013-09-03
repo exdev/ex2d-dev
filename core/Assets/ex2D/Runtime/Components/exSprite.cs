@@ -21,7 +21,7 @@ using ex2D.Detail;
 public enum exSpriteType {
     Simple = 0,
     Sliced,
-    //Tiled,
+    Tiled,
     //Diced,
 }
 
@@ -47,19 +47,26 @@ public class exSprite : exLayeredSprite, exISprite {
         get { return textureInfo_; }
         set {
             // 如果用户在运行时改变了textureInfo，则这里需要重新赋值
-            // 假定不论textureInfo如何，都不改变index数量
             exTextureInfo old = textureInfo_;
             textureInfo_ = value;
             if (value != null) {
                 if (value.texture == null) {
                     Debug.LogWarning("invalid textureInfo");
                 }
-                if (customSize_ == false && (value.width != width_ || value.height != height_)) {
-                    width_ = value.width;
-                    height_ = value.height;
-                    updateFlags |= exUpdateFlags.Vertex;
+                if (spriteType_ != exSpriteType.Tiled) {
+                    if (customSize_ == false && (value.width != width_ || value.height != height_)) {
+                        width_ = value.width;
+                        height_ = value.height;
+                        updateFlags |= exUpdateFlags.Vertex;
+                    }
                 }
-                else if (useTextureOffset_) {
+                else {
+                    if (old == null || value.width != old.width || value.height != old.height) {
+                        EnsureBufferSize ();
+                        updateFlags |= exUpdateFlags.Vertex;
+                    }
+                }
+                if (useTextureOffset_) {
                     updateFlags |= exUpdateFlags.Vertex;
                 }
                 updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
@@ -112,23 +119,6 @@ public class exSprite : exLayeredSprite, exISprite {
         }
     }
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 tilling_ = new Vector2(10.0f, 10.0f);
-    // ------------------------------------------------------------------ 
-
-    public Vector2 tilling {
-        get { return tilling_; }
-        set {
-            if ( tilling_ != value ) {
-                tilling_ = value;
-                if (layer_ != null) {
-                    EnsureBufferSize ();
-                    updateFlags |= exUpdateFlags.All;
-                }
-            }
-        }
-    }
-
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -145,9 +135,12 @@ public class exSprite : exLayeredSprite, exISprite {
     }
 
     public override bool customSize {
-        get { return customSize_; }
+        get { return spriteType_ == exSpriteType.Tiled || customSize_; }
         set {
-            if (customSize_ != value) {
+            if (spriteType_ == exSpriteType.Tiled) {
+                customSize_ = true;
+            }
+            else if (customSize_ != value) {
                 customSize_ = value;
                 if (customSize_ == false && textureInfo_ != null) {
                     if (textureInfo_.width != width_ || textureInfo_.height != height_) {
@@ -171,6 +164,10 @@ public class exSprite : exLayeredSprite, exISprite {
         }
         set {
             base.width = value;
+            if (spriteType_ == exSpriteType.Tiled && layer_ != null) {
+                EnsureBufferSize ();
+                updateFlags |= exUpdateFlags.All;
+            }
         }
     }
 
@@ -185,6 +182,10 @@ public class exSprite : exLayeredSprite, exISprite {
         }
         set {
             base.height = value;
+            if (spriteType_ == exSpriteType.Tiled && layer_ != null) {
+                EnsureBufferSize ();
+                updateFlags |= exUpdateFlags.All;
+            }
         }
     }
     
@@ -214,15 +215,16 @@ public class exSprite : exLayeredSprite, exISprite {
             switch (spriteType_) {
             case exSpriteType.Simple:
                 SpriteBuilder.SimpleUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.World, 
-                                                    _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
-                break;
-            case exSpriteType.Sliced:
-                SpriteBuilder.SlicedUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.World,
                                                    _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
                 break;
-            //case exSpriteType.Tiled:
-            //    TiledUpdateBuffers (_vertices, _uvs, _indices);
-            //    break;
+            case exSpriteType.Sliced:
+                SpriteBuilder.SlicedUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.World, 
+                                                   _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
+                break;
+            case exSpriteType.Tiled:
+                SpriteBuilder.TiledUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.World, 
+                                                  _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
+                break;
             //case exSpriteType.Diced:
             //    break;
             }
@@ -252,27 +254,19 @@ public class exSprite : exLayeredSprite, exISprite {
         else {
             if (_indices != null) {
                 _vertices.buffer[vertexBufferIndex] = cachedTransform.position;
-                for (int i = indexBufferIndex; i < indexBufferIndex + indexCount; ++i) {
+                for (int i = indexBufferIndex; i < indexBufferIndex + indexCount_; ++i) {
                     _indices.buffer[i] = vertexBufferIndex;
                 }
                 return exUpdateFlags.All;   // TODO: remove from layer if no material
             }
             else {
                 Vector3 pos = cachedTransform.position;
-                for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount; ++i) {
+                for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount_; ++i) {
                     _vertices.buffer[i] = pos;
                 }
                 return exUpdateFlags.All;   // TODO: remove from layer if no material
             }
         }
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
-    private void TiledUpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices) {
-        
     }
     
 #endregion // Functions used to update geometry buffer
@@ -288,7 +282,7 @@ public class exSprite : exLayeredSprite, exISprite {
 
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
         UpdateVertexAndIndexCount();
-        vertices.AddRange(vertexCount);
+        vertices.AddRange(vertexCount_);
         
         switch (spriteType_) {
         case exSpriteType.Simple:
@@ -326,7 +320,7 @@ public class exSprite : exLayeredSprite, exISprite {
     
     void UpdateVertexAndIndexCount () {
         if (layer_ == null) {
-            SpriteBuilder.GetVertexAndIndexCount(spriteType_, out vertexCount_, out indexCount_);
+            this.GetVertexAndIndexCount(out vertexCount_, out indexCount_);
         }
     }
     
@@ -336,7 +330,7 @@ public class exSprite : exLayeredSprite, exISprite {
 
     void EnsureBufferSize () {
         int newVertexCount, newIndexCount;
-        SpriteBuilder.GetVertexAndIndexCount (spriteType_, out newVertexCount, out newIndexCount);
+        this.GetVertexAndIndexCount (out newVertexCount, out newIndexCount);
         if (vertexCount_ != newVertexCount || indexCount_ != newIndexCount) {
             // rebuild geometry
             exLayer myLayer = layer_;
@@ -665,34 +659,16 @@ internal static class SpriteBuilder {
             _vertices.buffer[_startIndex + i + 2] = left + (right - left) * xStep2;
         }
     }
-    
+        
     // ------------------------------------------------------------------ 
-    // Desc: 
+    // Desc:
     // ------------------------------------------------------------------ 
-    
-    public static void GetVertexAndIndexCount (exSpriteType _spriteType, out int _vertexCount, out int _indexCount) {
-        // 假定不论textureInfo如何，都不改变index, vertex数量
-        switch (_spriteType) {
-        case exSpriteType.Simple:
-            _vertexCount = exMesh.QUAD_VERTEX_COUNT;
-            _indexCount = exMesh.QUAD_INDEX_COUNT;
-            break;
-        case exSpriteType.Sliced:
-            _vertexCount = 4 * 4;
-            _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
-            break;
-        //case exSpriteType.Tiled:
-        //    int quadCount = (int)Mathf.Ceil (tilling_.x) * (int)Mathf.Ceil (tilling_.y);
-        //    _vertexCount = exMesh.QUAD_VERTEX_COUNT * quadCount;
-        //    _indexCount = exMesh.QUAD_INDEX_COUNT * quadCount;
-        //    break;
-        //exSpriteType.Diced:
-        //    break;
-        default:
-            _vertexCount = exMesh.QUAD_VERTEX_COUNT;
-            _indexCount = exMesh.QUAD_INDEX_COUNT;
-            break;
-        }
+
+    public static void TiledUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space, 
+                                           exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices, int _vbIndex, int _ibIndex) {
+        
+        int colCount = (int)Mathf.Ceil(_sprite.width / _textureInfo.width);
+        int rowCount = (int)Mathf.Ceil(_sprite.height / _textureInfo.height);
     }
 }
 }

@@ -43,12 +43,20 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
                 if (value.texture == null) {
                     Debug.LogWarning("invalid textureInfo");
                 }
-                if (customSize_ == false && (value.width != width_ || value.height != height_)) {
-                    width_ = value.width;
-                    height_ = value.height;
-                    updateFlags |= exUpdateFlags.Vertex;
+                if (spriteType_ != exSpriteType.Tiled) {
+                    if (customSize_ == false && (value.width != width_ || value.height != height_)) {
+                        width_ = value.width;
+                        height_ = value.height;
+                        updateFlags |= exUpdateFlags.Vertex;
+                    }
                 }
-                else if (useTextureOffset_) {
+                else {
+                    if (old == null || value.width != old.width || value.height != old.height) {
+                        UpdateBufferSize ();
+                        updateFlags |= exUpdateFlags.Vertex;
+                    }
+                }
+                if (useTextureOffset_) {
                     updateFlags |= exUpdateFlags.Vertex;
                 }
                 updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
@@ -98,22 +106,7 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
             }
         }
     }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 tilling_ = new Vector2(10.0f, 10.0f);
-    // ------------------------------------------------------------------ 
-
-    public Vector2 tilling {
-        get { return tilling_; }
-        set {
-            if ( tilling_ != value ) {
-                tilling_ = value;
-                UpdateBufferSize ();
-                updateFlags |= exUpdateFlags.All;
-            }
-        }
-    }
-
+    
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -130,9 +123,12 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
     }
 
     public override bool customSize {
-        get { return customSize_; }
+        get { return spriteType_ == exSpriteType.Tiled || customSize_; }
         set {
-            if (customSize_ != value) {
+            if (spriteType_ == exSpriteType.Tiled) {
+                customSize_ = true;
+            }
+            else if (customSize_ != value) {
                 customSize_ = value;
                 if (customSize_ == false && textureInfo_ != null) {
                     if (textureInfo_.width != width_ || textureInfo_.height != height_) {
@@ -156,6 +152,10 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
         }
         set {
             base.width = value;
+            if (spriteType_ == exSpriteType.Tiled) {
+                UpdateBufferSize ();
+                updateFlags |= exUpdateFlags.All;
+            }
         }
     }
 
@@ -170,6 +170,10 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
         }
         set {
             base.height = value;
+            if (spriteType_ == exSpriteType.Tiled) {
+                UpdateBufferSize ();
+                updateFlags |= exUpdateFlags.All;
+            }
         }
     }
     
@@ -242,7 +246,7 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
 
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
         UpdateVertexAndIndexCount();
-        vertices.AddRange(vertexCount);
+        vertices.AddRange(vertexCount_);
 
         switch (spriteType_) {
             case exSpriteType.Simple:
@@ -266,7 +270,7 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
     // ------------------------------------------------------------------ 
 
     protected override void UpdateVertexAndIndexCount () {
-        SpriteBuilder.GetVertexAndIndexCount(spriteType_, out vertexCount_, out indexCount_);
+        this.GetVertexAndIndexCount(out vertexCount_, out indexCount_);
     }
     
     ///////////////////////////////////////////////////////////////////////////////

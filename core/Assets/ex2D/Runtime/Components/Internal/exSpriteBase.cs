@@ -192,14 +192,14 @@ public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
     
     [System.NonSerialized] protected int vertexCount_ = -1;
-    public virtual int vertexCount {
+    public int vertexCount {
         get {
             return vertexCount_;
         }
     }
     
     [System.NonSerialized] protected int indexCount_ = -1;
-    public virtual int indexCount {
+    public int indexCount {
         get {
             return indexCount_;
         }
@@ -256,11 +256,11 @@ public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
     // ------------------------------------------------------------------ 
 
     internal virtual void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
-        _vertices.AddRange(vertexCount);
+        _vertices.AddRange(vertexCount_);
         if (_colors32 != null) {
-            _colors32.AddRange(vertexCount);
+            _colors32.AddRange(vertexCount_);
         }
-        _uvs.AddRange(vertexCount);
+        _uvs.AddRange(vertexCount_);
         updateFlags |= exUpdateFlags.AllExcludeIndex;
     }
 
