@@ -765,13 +765,6 @@ class exUILayoutEditor : EditorWindow {
                                                          ref style.lockMarginRight ) ) 
                         {
                             if ( style.lockMarginRight ) {
-                                style.marginRight.type = style.marginTop.type;
-                                style.marginRight.val = style.marginTop.val;
-                                style.marginBottom.type = style.marginTop.type;
-                                style.marginBottom.val = style.marginTop.val;
-                                style.marginLeft.type = style.marginRight.type;
-                                style.marginLeft.val = style.marginRight.val;
-
                                 style.lockMarginRight = true;
                                 style.lockMarginBottom = true;
                                 style.lockMarginLeft = true;
@@ -785,11 +778,6 @@ class exUILayoutEditor : EditorWindow {
                                                          ref style.lockMarginBottom ) ) 
                         {
                             if ( style.lockMarginBottom ) {
-                                style.marginBottom.type = style.marginTop.type;
-                                style.marginBottom.val = style.marginTop.val;
-                                style.marginLeft.type = style.marginRight.type;
-                                style.marginLeft.val = style.marginRight.val;
-
                                 style.lockMarginBottom = true;
                                 style.lockMarginLeft = true;
                             }
@@ -805,9 +793,6 @@ class exUILayoutEditor : EditorWindow {
                                                          ref style.lockMarginLeft ) ) 
                         {
                             if ( style.lockMarginLeft ) {
-                                style.marginLeft.type = style.marginRight.type;
-                                style.marginLeft.val = style.marginRight.val;
-
                                 style.lockMarginLeft = true;
                             }
                             else {
@@ -815,6 +800,26 @@ class exUILayoutEditor : EditorWindow {
                                 style.lockMarginBottom = false;
                             }
                         }
+
+                        if ( style.lockMarginRight ) {
+                            style.marginRight.type = style.marginTop.type;
+                            style.marginRight.val = style.marginTop.val;
+                            style.marginBottom.type = style.marginTop.type;
+                            style.marginBottom.val = style.marginTop.val;
+                            style.marginLeft.type = style.marginRight.type;
+                            style.marginLeft.val = style.marginRight.val;
+                        }
+                        else if ( style.lockMarginBottom ) {
+                            style.marginBottom.type = style.marginTop.type;
+                            style.marginBottom.val = style.marginTop.val;
+                            style.marginLeft.type = style.marginRight.type;
+                            style.marginLeft.val = style.marginRight.val;
+                        }
+                        else if ( style.lockMarginLeft ) {
+                            style.marginLeft.type = style.marginRight.type;
+                            style.marginLeft.val = style.marginRight.val;
+                        }
+
                     --indentLevel;
 
                     EditorGUILayout.Space();
@@ -831,13 +836,6 @@ class exUILayoutEditor : EditorWindow {
                                                                ref style.lockPaddingRight ) ) 
                         {
                             if ( style.lockPaddingRight ) {
-                                style.paddingRight.type = style.paddingTop.type;
-                                style.paddingRight.val = style.paddingTop.val;
-                                style.paddingBottom.type = style.paddingTop.type;
-                                style.paddingBottom.val = style.paddingTop.val;
-                                style.paddingLeft.type = style.paddingRight.type;
-                                style.paddingLeft.val = style.paddingRight.val;
-
                                 style.lockPaddingRight = true;
                                 style.lockPaddingBottom = true;
                                 style.lockPaddingLeft = true;
@@ -851,11 +849,6 @@ class exUILayoutEditor : EditorWindow {
                                                                ref style.lockPaddingBottom ) ) 
                         {
                             if ( style.lockPaddingBottom ) {
-                                style.paddingBottom.type = style.paddingTop.type;
-                                style.paddingBottom.val = style.paddingTop.val;
-                                style.paddingLeft.type = style.paddingRight.type;
-                                style.paddingLeft.val = style.paddingRight.val;
-
                                 style.lockPaddingBottom = true;
                                 style.lockPaddingLeft = true;
                             }
@@ -871,9 +864,6 @@ class exUILayoutEditor : EditorWindow {
                                                                ref style.lockPaddingLeft ) ) 
                         {
                             if ( style.lockPaddingLeft ) {
-                                style.paddingLeft.type = style.paddingRight.type;
-                                style.paddingLeft.val = style.paddingRight.val;
-
                                 style.lockPaddingLeft = true;
                             }
                             else {
@@ -881,6 +871,26 @@ class exUILayoutEditor : EditorWindow {
                                 style.lockPaddingBottom = false;
                             }
                         }
+
+                        if ( style.lockPaddingRight ) {
+                            style.paddingRight.type = style.paddingTop.type;
+                            style.paddingRight.val = style.paddingTop.val;
+                            style.paddingBottom.type = style.paddingTop.type;
+                            style.paddingBottom.val = style.paddingTop.val;
+                            style.paddingLeft.type = style.paddingRight.type;
+                            style.paddingLeft.val = style.paddingRight.val;
+                        }
+                        else if ( style.lockPaddingBottom ) {
+                            style.paddingBottom.type = style.paddingTop.type;
+                            style.paddingBottom.val = style.paddingTop.val;
+                            style.paddingLeft.type = style.paddingRight.type;
+                            style.paddingLeft.val = style.paddingRight.val;
+                        }
+                        else if ( style.lockPaddingLeft ) {
+                            style.paddingLeft.type = style.paddingRight.type;
+                            style.paddingLeft.val = style.paddingRight.val;
+                        }
+
                     --indentLevel;
 
                     EditorGUILayout.Space();
@@ -915,17 +925,11 @@ class exUILayoutEditor : EditorWindow {
                                                                    ref style.lockBorderSizeRight ) ) 
                         {
                             if ( style.lockBorderSizeRight ) {
-                                style.borderSizeRight.type = style.borderSizeTop.type;
-                                style.borderSizeRight.val = style.borderSizeTop.val;
-                                style.borderSizeBottom.type = style.borderSizeTop.type;
-                                style.borderSizeBottom.val = style.borderSizeTop.val;
-                                style.borderSizeLeft.type = style.borderSizeRight.type;
-                                style.borderSizeLeft.val = style.borderSizeRight.val;
-
                                 style.lockBorderSizeRight = true;
                                 style.lockBorderSizeBottom = true;
                                 style.lockBorderSizeLeft = true;
                             }
+
                         }
                         if ( exCSSUI.LockableSizeLengthOnlyField ( indentLevel, 
                                                                    activeElement, 
@@ -935,11 +939,6 @@ class exUILayoutEditor : EditorWindow {
                                                                    ref style.lockBorderSizeBottom ) ) 
                         {
                             if ( style.lockBorderSizeBottom ) {
-                                style.borderSizeBottom.type = style.borderSizeTop.type;
-                                style.borderSizeBottom.val = style.borderSizeTop.val;
-                                style.borderSizeLeft.type = style.borderSizeRight.type;
-                                style.borderSizeLeft.val = style.borderSizeRight.val;
-
                                 style.lockBorderSizeBottom = true;
                                 style.lockBorderSizeLeft = true;
                             }
@@ -955,15 +954,31 @@ class exUILayoutEditor : EditorWindow {
                                                                    ref style.lockBorderSizeLeft ) ) 
                         {
                             if ( style.lockBorderSizeLeft ) {
-                                style.borderSizeLeft.type = style.borderSizeRight.type;
-                                style.borderSizeLeft.val = style.borderSizeRight.val;
-
                                 style.lockBorderSizeLeft = true;
                             }
                             else {
                                 style.lockBorderSizeBottom = false;
                                 style.lockBorderSizeRight = false;
                             }
+                        }
+
+                        if ( style.lockBorderSizeRight ) {
+                            style.borderSizeRight.type = style.borderSizeTop.type;
+                            style.borderSizeRight.val = style.borderSizeTop.val;
+                            style.borderSizeBottom.type = style.borderSizeTop.type;
+                            style.borderSizeBottom.val = style.borderSizeTop.val;
+                            style.borderSizeLeft.type = style.borderSizeRight.type;
+                            style.borderSizeLeft.val = style.borderSizeRight.val;
+                        }
+                        else if ( style.lockBorderSizeBottom ) {
+                            style.borderSizeBottom.type = style.borderSizeTop.type;
+                            style.borderSizeBottom.val = style.borderSizeTop.val;
+                            style.borderSizeLeft.type = style.borderSizeRight.type;
+                            style.borderSizeLeft.val = style.borderSizeRight.val;
+                        }
+                        else if ( style.lockBorderSizeLeft ) {
+                            style.borderSizeLeft.type = style.borderSizeRight.type;
+                            style.borderSizeLeft.val = style.borderSizeRight.val;
                         }
                     --indentLevel;
 
