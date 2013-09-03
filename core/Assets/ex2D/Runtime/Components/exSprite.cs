@@ -290,7 +290,7 @@ public class exSprite : exLayeredSprite, exISprite {
             break;
         case exSpriteType.Sliced:
             SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
-            SpriteBuilder.SlicedUpdateVertexBuffer(this, textureInfo_, vertices, 0);
+            SpriteBuilder.SimpleVertexBufferToSliced(this, textureInfo_, vertices, 0);
             break;
         //case exSpriteType.Tiled:
         //    break;
@@ -368,7 +368,7 @@ internal static class SpriteBuilder {
             _indices.buffer[_ibIndex + 4] = _vbIndex + 3;
             _indices.buffer[_ibIndex + 5] = _vbIndex;
         }
-        if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.UV) != 0 && _textureInfo != null) {
+        if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.UV) != 0) {
             Vector2 texelSize;
             if (_textureInfo.texture != null) {
                 texelSize = _textureInfo.texture.texelSize;
@@ -540,10 +540,10 @@ internal static class SpriteBuilder {
                                              exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices, int _vbIndex, int _ibIndex) {
         SpriteBuilder.SimpleUpdateBuffers(_sprite, _textureInfo, _useTextureOffset, _space, 
                                           _vertices, _uvs, _indices, _vbIndex, _ibIndex);
-        if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
-            SpriteBuilder.SlicedUpdateVertexBuffer(_sprite, _textureInfo, _vertices, _vbIndex);
+        if ((_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
+            SpriteBuilder.SimpleVertexBufferToSliced(_sprite, _textureInfo, _vertices, _vbIndex);
         }
-        if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+        if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
             for (int i = 0; i <= 10; ++i) {
                 if (i != 3 && i != 7) {     // 0 1 2 4 5 6 8 9 10
                     int blVertexIndex = _vbIndex + i;   // bottom left vertex index
@@ -556,7 +556,7 @@ internal static class SpriteBuilder {
                 }
             }
         }
-        if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.UV) != 0 && _textureInfo != null) {
+        if ((_sprite.updateFlags & exUpdateFlags.UV) != 0) {
             float xStep1, xStep2, yStep1, yStep2;
             if (_textureInfo.rotated == false) {
                 yStep1 = (float)_textureInfo.borderBottom / _textureInfo.height;  // uv step, not position step
@@ -620,12 +620,12 @@ internal static class SpriteBuilder {
             }
         }
     }
-        
+    
     // ------------------------------------------------------------------ 
-    // Desc: 
+    // Change vertex buffer from simple to sliced
     // ------------------------------------------------------------------ 
 
-    public static void SlicedUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo textureInfo_, exList<Vector3> _vertices, int _startIndex) {
+    public static void SimpleVertexBufferToSliced (exSpriteBase _sprite, exTextureInfo textureInfo_, exList<Vector3> _vertices, int _startIndex) {
         /* vertex index:
         12 13 14 15
         8  9  10 11
@@ -667,8 +667,45 @@ internal static class SpriteBuilder {
     public static void TiledUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space, 
                                            exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices, int _vbIndex, int _ibIndex) {
         
-        int colCount = (int)Mathf.Ceil(_sprite.width / _textureInfo.width);
-        int rowCount = (int)Mathf.Ceil(_sprite.height / _textureInfo.height);
+        SpriteBuilder.SimpleUpdateBuffers(_sprite, _textureInfo, _useTextureOffset, _space, 
+                                          _vertices, _uvs, _indices, _vbIndex, _ibIndex);
+        int colCount, rowCount;
+        exSpriteUtility.GetTilingCount ((exISprite)_sprite, out colCount, out rowCount);
+        if ((_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
+            SimpleVertexBufferToTiled(_sprite, _textureInfo, _vertices, _vbIndex);
+        }
+        if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+            for (int i = 0; i <= 10; ++i) {
+                if (i != 3 && i != 7) {     // 0 1 2 4 5 6 8 9 10
+                    int blVertexIndex = _vbIndex + i;   // bottom left vertex index
+                    _indices.buffer[_ibIndex++] = blVertexIndex;
+                    _indices.buffer[_ibIndex++] = blVertexIndex + 4;
+                    _indices.buffer[_ibIndex++] = blVertexIndex + 5;
+                    _indices.buffer[_ibIndex++] = blVertexIndex + 5;
+                    _indices.buffer[_ibIndex++] = blVertexIndex + 1;
+                    _indices.buffer[_ibIndex++] = blVertexIndex;
+                }
+            }
+        }
+        if ((_sprite.updateFlags & exUpdateFlags.UV) != 0) {
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Change vertex buffer from simple to tiled
+    // ------------------------------------------------------------------ 
+
+    public static void SimpleVertexBufferToTiled (exSpriteBase _sprite, exTextureInfo textureInfo_, exList<Vector3> _vertices, int _startIndex) {
+        /* vertex index:
+        8    9    10 11
+        4    5    6  7 
+
+        0    1    2  3 
+        */
+        /*Vector3 v0 = _vertices.buffer[_startIndex + 0];
+        Vector3 v12 = _vertices.buffer[_startIndex + 1];
+        Vector3 v15 = _vertices.buffer[_startIndex + 2];
+        Vector3 v3 = _vertices.buffer[_startIndex + 3];*/
     }
 }
 }

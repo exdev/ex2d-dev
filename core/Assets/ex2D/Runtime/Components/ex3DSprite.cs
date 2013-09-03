@@ -249,16 +249,16 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
         vertices.AddRange(vertexCount_);
 
         switch (spriteType_) {
-            case exSpriteType.Simple:
+        case exSpriteType.Simple:
             SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
             break;
-            case exSpriteType.Sliced:
+        case exSpriteType.Sliced:
             SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
-            SpriteBuilder.SlicedUpdateVertexBuffer(this, textureInfo_, vertices, 0);
+            SpriteBuilder.SimpleVertexBufferToSliced(this, textureInfo_, vertices, 0);
             break;
-            //case exSpriteType.Tiled:
+        //case exSpriteType.Tiled:
             //    break;
-            //case exSpriteType.Diced:
+        //case exSpriteType.Diced:
             //    break;
         }
 
