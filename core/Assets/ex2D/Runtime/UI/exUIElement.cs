@@ -151,10 +151,7 @@ public class exUIElement {
             if ( style.marginLeft.type == exCSS_size.Type.Auto ) style.marginLeft.val = 0.0f;
             if ( style.marginRight.type == exCSS_size.Type.Auto ) style.marginRight.val = 0.0f;
 
-            fWidth = _width 
-                - style.GetMarginLeft(_width) - style.GetMarginRight(_width) 
-                - style.borderSizeLeft.val - style.borderSizeRight.val;
-
+            fWidth = _width - style.GetMarginLeft(_width) - style.GetMarginRight(_width); 
             fWidth = Mathf.Max ( fWidth, 0.0f );
         }
 
@@ -163,13 +160,14 @@ public class exUIElement {
         if ( style.maxWidth.type == exCSS_max_size.Type.Length )
             fWidth = Mathf.Min ( fWidth, style.maxWidth.val );
         width = Mathf.FloorToInt(fWidth);
-        int contentWidth = width - style.GetPaddingLeft(_width) - style.GetPaddingRight(_width);
+        int contentWidth = width 
+            - style.GetPaddingLeft(_width) - style.GetPaddingRight(_width)
+            - (int)style.borderSizeLeft.val - (int)style.borderSizeRight.val;
 
         // ======================================================== 
         // property relate with content-height 
         // ======================================================== 
 
-        // TODO: later { 
         // calculate height
         if ( style.height.type == exCSS_size.Type.Length ) {
             fHeight = style.height.val;
@@ -178,6 +176,11 @@ public class exUIElement {
             fHeight = style.height.val/100.0f * (float)_height;
         }
         else if ( style.height.type == exCSS_size.Type.Auto ) {
+            if ( style.marginTop.type == exCSS_size.Type.Auto ) style.marginTop.val = 0.0f;
+            if ( style.marginBottom.type == exCSS_size.Type.Auto ) style.marginBottom.val = 0.0f;
+
+            fHeight = _height - style.GetMarginTop(_height) - style.GetMarginBottom(_height); 
+            fHeight = Mathf.Max ( fHeight, 0.0f );
         }
 
         if ( style.minHeight.type == exCSS_min_size.Type.Length )
@@ -185,14 +188,16 @@ public class exUIElement {
         if ( style.maxHeight.type == exCSS_max_size.Type.Length )
             fHeight = Mathf.Min ( fHeight, style.maxHeight.val );
         height = Mathf.FloorToInt(fHeight);
-        // } TODO end 
+        int contentHeight = height 
+            - style.GetPaddingTop(_height) - style.GetPaddingBottom(_height)
+            - (int)style.borderSizeTop.val - (int)style.borderSizeBottom.val;
 
         // layout the children
         int child_x = x + style.GetMarginLeft(_width) + style.GetPaddingLeft(_width) + (int)style.borderSizeLeft.val;
-        int child_y = y; // + TODO
+        int child_y = y + style.GetMarginTop(_height) + style.GetPaddingTop(_height) + (int)style.borderSizeTop.val;
         for ( int i = 0; i < children.Count; ++i ) {
             exUIElement child = children[i];
-            child.Layout( child_x, child_y, contentWidth, height );
+            child.Layout( child_x, child_y, contentWidth, contentHeight );
 
             // TODO: offset child
         }
