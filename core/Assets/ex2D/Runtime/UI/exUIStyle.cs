@@ -18,52 +18,156 @@ using System.IO;
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// css type
-public enum exCSS_type {
-    Local,      // css: none
-    Inherit,    // css: inherit        
-    Auto,       // css: auto
-    Percentage, // css: %
-    Pixel,      // css: px
-}
-
 // css position
 public enum exCSS_position {
     Static,
     Relative,
     Absolute,
     Fixed,
-    Inherit
 }
 
-// css int
+// size
 [System.Serializable]
-public class exCSS_int { 
-    public exCSS_type type; 
-    public int val; 
-    public exCSS_int ( exCSS_type _type, int _val ) { type = _type; val = _val; }
+public class exCSS_size { 
+    public enum Type {
+        Length,
+        Percentage,
+        Auto,
+        Inherit
+    }
+    public Type type; 
+    float val_; 
+    public float val {
+        set {
+            if ( type == Type.Length )
+                val_ = Mathf.FloorToInt(value);
+            else
+                val_ = value;
+        }
+        get {
+            return val_;
+        }
+    }
+    public exCSS_size ( Type _type, float _val ) { type = _type; val = _val; }
 }
 
-// css float
+// size no-auto
 [System.Serializable]
-public class exCSS_float { 
-    public exCSS_type type; 
-    public float val; 
-    public exCSS_float ( exCSS_type _type, float _val ) { type = _type; val = _val; }
+public class exCSS_size_noauto { 
+    public enum Type {
+        Length,
+        Percentage,
+        Inherit
+    }
+    public Type type; 
+    float val_; 
+    public float val {
+        set {
+            if ( type == Type.Length )
+                val_ = Mathf.FloorToInt(value);
+            else
+                val_ = value;
+        }
+        get {
+            return val_;
+        }
+    }
+    public exCSS_size_noauto ( Type _type, float _val ) { type = _type; val = _val; }
+}
+
+// size length-only
+[System.Serializable]
+public class exCSS_size_lengthonly { 
+    public enum Type {
+        Length,
+        Inherit
+    }
+    public Type type; 
+    float val_; 
+    public float val {
+        set {
+            if ( type == Type.Length )
+                val_ = Mathf.FloorToInt(value);
+            else
+                val_ = value;
+        }
+        get {
+            return val_;
+        }
+    }
+    public exCSS_size_lengthonly ( Type _type, float _val ) { type = _type; val = _val; }
+}
+
+// min-size
+[System.Serializable]
+public class exCSS_min_size { 
+    public enum Type {
+        Length,
+        Percentage,
+        Inherit
+    }
+    public Type type; 
+    float val_; 
+    public float val {
+        set {
+            if ( type == Type.Length )
+                val_ = Mathf.FloorToInt(value);
+            else
+                val_ = value;
+        }
+        get {
+            return val_;
+        }
+    }
+    public exCSS_min_size ( Type _type, float _val ) { type = _type; val = _val; }
+}
+
+// max-size
+[System.Serializable]
+public class exCSS_max_size { 
+    public enum Type {
+        Length,
+        Percentage,
+        None,
+        Inherit
+    }
+    public Type type; 
+    float val_; 
+    public float val {
+        set {
+            if ( type == Type.Length )
+                val_ = Mathf.FloorToInt(value);
+            else
+                val_ = value;
+        }
+        get {
+            return val_;
+        }
+    }
+    public exCSS_max_size ( Type _type, float _val ) { type = _type; val = _val; }
 }
 
 // css color
 [System.Serializable]
 public class exCSS_color { 
-    public exCSS_type type; 
+    public enum Type {
+        Color,
+        Inherit
+    }
+    public Type type; 
     public Color val; 
-    public exCSS_color ( exCSS_type _type, Color _val ) { type = _type; val = _val; }
+    public exCSS_color ( Type _type, Color _val ) { type = _type; val = _val; }
 }
 
 // css image
 [System.Serializable]
 public class exCSS_image { 
-    public exCSS_type type; 
+    public enum Type {
+        TextureInfo,
+        Texture2D,
+        Inherit
+    }
+    public Type type;
     public exTextureInfo src1; 
     public Texture2D src2; 
     public Object val {
@@ -89,7 +193,7 @@ public class exCSS_image {
             return null;
         }
     }
-    public exCSS_image ( exCSS_type _type, Object _val ) { 
+    public exCSS_image ( Type _type, Object _val ) { 
         type = _type; 
         val = _val;
     }
@@ -103,52 +207,52 @@ public class exCSS_image {
 
 [System.Serializable]
 public class exUIStyle {
+    // size
+    public exCSS_size width         = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
+    public exCSS_size height        = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
+    public exCSS_min_size minWidth  = new exCSS_min_size( exCSS_min_size.Type.Length, 0.0f );
+    public exCSS_min_size minHeight = new exCSS_min_size( exCSS_min_size.Type.Length, 0.0f );
+    public exCSS_max_size maxWidth  = new exCSS_max_size( exCSS_max_size.Type.None, -1.0f );
+    public exCSS_max_size maxHeight = new exCSS_max_size( exCSS_max_size.Type.None, -1.0f );
+
     // position
     public exCSS_position position = exCSS_position.Static;
-    public exCSS_int top    = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int right  = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int bottom = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int left   = new exCSS_int( exCSS_type.Auto, -1 );
-
-    // size
-    public exCSS_int width     = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int height    = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int minWidth  = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int minHeight = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int maxWidth  = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int maxHeight = new exCSS_int( exCSS_type.Auto, -1 );
+    public exCSS_size top    = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
+    public exCSS_size right  = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
+    public exCSS_size bottom = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
+    public exCSS_size left   = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
 
     // margin
-    public exCSS_int marginTop    = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int marginRight  = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int marginBottom = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int marginLeft   = new exCSS_int( exCSS_type.Auto, -1 );
+    public exCSS_size marginTop    = new exCSS_size( exCSS_size.Type.Length, 0.0f );
+    public exCSS_size marginRight  = new exCSS_size( exCSS_size.Type.Length, 0.0f );
+    public exCSS_size marginBottom = new exCSS_size( exCSS_size.Type.Length, 0.0f );
+    public exCSS_size marginLeft   = new exCSS_size( exCSS_size.Type.Length, 0.0f );
     public bool lockMarginRight   = true;
     public bool lockMarginBottom  = true;
     public bool lockMarginLeft    = true;
 
     // padding
-    public exCSS_int paddingTop    = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int paddingRight  = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int paddingBottom = new exCSS_int( exCSS_type.Auto, -1 );
-    public exCSS_int paddingLeft   = new exCSS_int( exCSS_type.Auto, -1 );
+    public exCSS_size_noauto paddingTop    = new exCSS_size_noauto( exCSS_size_noauto.Type.Length, 0.0f );
+    public exCSS_size_noauto paddingRight  = new exCSS_size_noauto( exCSS_size_noauto.Type.Length, 0.0f );
+    public exCSS_size_noauto paddingBottom = new exCSS_size_noauto( exCSS_size_noauto.Type.Length, 0.0f );
+    public exCSS_size_noauto paddingLeft   = new exCSS_size_noauto( exCSS_size_noauto.Type.Length, 0.0f );
     public bool lockPaddingRight   = true;
     public bool lockPaddingBottom  = true;
     public bool lockPaddingLeft    = true;
 
     // border
-    public exCSS_image borderSrc      = new exCSS_image( exCSS_type.Inherit, null );
-    public exCSS_color borderColor    = new exCSS_color( exCSS_type.Inherit, new Color( 0, 0, 0, 255 ) );
-    public exCSS_int borderSizeTop    = new exCSS_int( exCSS_type.Inherit, 0 );
-    public exCSS_int borderSizeRight  = new exCSS_int( exCSS_type.Inherit, 0 );
-    public exCSS_int borderSizeBottom = new exCSS_int( exCSS_type.Inherit, 0 );
-    public exCSS_int borderSizeLeft   = new exCSS_int( exCSS_type.Inherit, 0 );
+    public exCSS_image borderSrc      = new exCSS_image( exCSS_image.Type.TextureInfo, null );
+    public exCSS_color borderColor    = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 255 ) );
+    public exCSS_size_lengthonly borderSizeTop    = new exCSS_size_lengthonly( exCSS_size_lengthonly.Type.Length, 0.0f );
+    public exCSS_size_lengthonly borderSizeRight  = new exCSS_size_lengthonly( exCSS_size_lengthonly.Type.Length, 0.0f );
+    public exCSS_size_lengthonly borderSizeBottom = new exCSS_size_lengthonly( exCSS_size_lengthonly.Type.Length, 0.0f );
+    public exCSS_size_lengthonly borderSizeLeft   = new exCSS_size_lengthonly( exCSS_size_lengthonly.Type.Length, 0.0f );
     public bool lockBorderSizeRight   = true;
     public bool lockBorderSizeBottom  = true;
     public bool lockBorderSizeLeft    = true;
 
     // background
-    public exCSS_color backgroundColor = new exCSS_color( exCSS_type.Inherit, new Color( 0, 0, 0, 255 )  );
+    public exCSS_color backgroundColor = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 255 ) );
 }
 
 

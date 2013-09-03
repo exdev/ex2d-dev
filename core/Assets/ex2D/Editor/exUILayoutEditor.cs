@@ -729,12 +729,12 @@ class exUILayoutEditor : EditorWindow {
                     // size
                     GUILayout.Label ( "size", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
                     ++indentLevel;
-                        exCSSUI.IntField ( indentLevel, activeElement, "width", style.width );
-                        exCSSUI.IntField ( indentLevel, activeElement, "height", style.height );
-                        exCSSUI.IntField ( indentLevel, activeElement, "minWidth", style.minWidth );
-                        exCSSUI.IntField ( indentLevel, activeElement, "minHeight", style.minHeight );
-                        exCSSUI.IntField ( indentLevel, activeElement, "maxWidth", style.maxWidth );
-                        exCSSUI.IntField ( indentLevel, activeElement, "maxHeight", style.maxHeight );
+                        exCSSUI.SizeField ( indentLevel, activeElement, "width", style.width, false );
+                        exCSSUI.SizeField ( indentLevel, activeElement, "height", style.height, false );
+                        exCSSUI.MinSizeField ( indentLevel, activeElement, "minWidth", style.minWidth, false );
+                        exCSSUI.MinSizeField ( indentLevel, activeElement, "minHeight", style.minHeight, false );
+                        exCSSUI.MaxSizeField ( indentLevel, activeElement, "maxWidth", style.maxWidth, false );
+                        exCSSUI.MaxSizeField ( indentLevel, activeElement, "maxHeight", style.maxHeight, false );
                     --indentLevel;
 
                     EditorGUILayout.Space();
@@ -743,10 +743,10 @@ class exUILayoutEditor : EditorWindow {
                     GUILayout.Label ( "position", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
                     ++indentLevel;
                         exCSSUI.PositionField ( indentLevel, activeElement, "position", ref style.position );
-                        exCSSUI.IntField ( indentLevel, activeElement, "top", style.top );
-                        exCSSUI.IntField ( indentLevel, activeElement, "right", style.right );
-                        exCSSUI.IntField ( indentLevel, activeElement, "bottom", style.bottom );
-                        exCSSUI.IntField ( indentLevel, activeElement, "left", style.left );
+                        exCSSUI.SizeField ( indentLevel, activeElement, "top", style.top, false );
+                        exCSSUI.SizeField ( indentLevel, activeElement, "right", style.right, false );
+                        exCSSUI.SizeField ( indentLevel, activeElement, "bottom", style.bottom, false );
+                        exCSSUI.SizeField ( indentLevel, activeElement, "left", style.left, false );
                     --indentLevel;
 
                     EditorGUILayout.Space();
@@ -754,10 +754,10 @@ class exUILayoutEditor : EditorWindow {
                     // margin
                     GUILayout.Label ( "margin", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
                     ++indentLevel;
-                        exCSSUI.IntField ( indentLevel, activeElement, "top", style.marginTop );
-                        exCSSUI.LockableIntField ( indentLevel, activeElement, "right", style.marginRight, ref style.lockMarginRight );
-                        exCSSUI.LockableIntField ( indentLevel, activeElement, "bottom", style.marginBottom, ref style.lockMarginBottom );
-                        exCSSUI.LockableIntField ( indentLevel, activeElement, "left", style.marginLeft, ref style.lockMarginLeft );
+                        exCSSUI.SizeField ( indentLevel, activeElement, "top", style.marginTop, false );
+                        exCSSUI.LockableSizeField ( indentLevel, activeElement, "right", style.marginRight, false, ref style.lockMarginRight );
+                        exCSSUI.LockableSizeField ( indentLevel, activeElement, "bottom", style.marginBottom, false, ref style.lockMarginBottom );
+                        exCSSUI.LockableSizeField ( indentLevel, activeElement, "left", style.marginLeft, false, ref style.lockMarginLeft );
                         if ( style.lockMarginRight ) {
                             style.marginRight.type = style.marginTop.type;
                             style.marginRight.val = style.marginTop.val;
@@ -792,10 +792,10 @@ class exUILayoutEditor : EditorWindow {
                     // padding
                     GUILayout.Label ( "padding", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
                     ++indentLevel;
-                        exCSSUI.IntField ( indentLevel, activeElement, "top", style.paddingTop );
-                        exCSSUI.LockableIntField ( indentLevel, activeElement, "right", style.paddingRight, ref style.lockPaddingRight );
-                        exCSSUI.LockableIntField ( indentLevel, activeElement, "bottom", style.paddingBottom, ref style.lockPaddingBottom );
-                        exCSSUI.LockableIntField ( indentLevel, activeElement, "left", style.paddingLeft, ref style.lockPaddingLeft );
+                        exCSSUI.SizeNoAutoField ( indentLevel, activeElement, "top", style.paddingTop, false );
+                        exCSSUI.LockableSizeNoAutoField ( indentLevel, activeElement, "right", style.paddingRight, false, ref style.lockPaddingRight );
+                        exCSSUI.LockableSizeNoAutoField ( indentLevel, activeElement, "bottom", style.paddingBottom, false, ref style.lockPaddingBottom );
+                        exCSSUI.LockableSizeNoAutoField ( indentLevel, activeElement, "left", style.paddingLeft, false, ref style.lockPaddingLeft );
                         if ( style.lockPaddingRight ) {
                             style.paddingRight.type = style.paddingTop.type;
                             style.paddingRight.val = style.paddingTop.val;
@@ -830,24 +830,24 @@ class exUILayoutEditor : EditorWindow {
                     // border
                     GUILayout.Label ( "border", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
                     ++indentLevel;
-                        exCSSUI.ImageField ( indentLevel, activeElement, "src", style.borderSrc );
+                        exCSSUI.ImageField ( indentLevel, activeElement, "src", style.borderSrc, false );
                         exTextureInfo borderTextureInfo = style.borderSrc.val as exTextureInfo;
                         if ( borderTextureInfo && borderTextureInfo.hasBorder ) {
-                            style.borderSizeTop.type    = exCSS_type.Local;
+                            style.borderSizeTop.type    = exCSS_size_lengthonly.Type.Length;
                             style.borderSizeTop.val     = borderTextureInfo.borderTop;
-                            style.borderSizeRight.type  = exCSS_type.Local;
+                            style.borderSizeRight.type  = exCSS_size_lengthonly.Type.Length;
                             style.borderSizeRight.val   = borderTextureInfo.borderRight;
-                            style.borderSizeBottom.type = exCSS_type.Local;
+                            style.borderSizeBottom.type = exCSS_size_lengthonly.Type.Length;
                             style.borderSizeBottom.val  = borderTextureInfo.borderBottom;
-                            style.borderSizeLeft.type   = exCSS_type.Local;
+                            style.borderSizeLeft.type   = exCSS_size_lengthonly.Type.Length;
                             style.borderSizeLeft.val    = borderTextureInfo.borderRight;
                         }
 
-                        exCSSUI.ColorField ( indentLevel, activeElement, "color", style.borderColor );
-                        exCSSUI.IntField ( indentLevel, activeElement, "top", style.borderSizeTop );
-                        exCSSUI.LockableIntField ( indentLevel, activeElement, "right", style.borderSizeRight, ref style.lockBorderSizeRight );
-                        exCSSUI.LockableIntField ( indentLevel, activeElement, "bottom", style.borderSizeBottom, ref style.lockBorderSizeBottom );
-                        exCSSUI.LockableIntField ( indentLevel, activeElement, "left", style.borderSizeLeft, ref style.lockBorderSizeLeft );
+                        exCSSUI.ColorField ( indentLevel, activeElement, "color", style.borderColor, false );
+                        exCSSUI.SizeLengthOnlyField ( indentLevel, activeElement, "top", style.borderSizeTop, false );
+                        exCSSUI.LockableSizeLengthOnlyField ( indentLevel, activeElement, "right", style.borderSizeRight, false, ref style.lockBorderSizeRight );
+                        exCSSUI.LockableSizeLengthOnlyField ( indentLevel, activeElement, "bottom", style.borderSizeBottom, false, ref style.lockBorderSizeBottom );
+                        exCSSUI.LockableSizeLengthOnlyField ( indentLevel, activeElement, "left", style.borderSizeLeft, false, ref style.lockBorderSizeLeft );
                         if ( style.lockBorderSizeRight ) {
                             style.borderSizeRight.type = style.borderSizeTop.type;
                             style.borderSizeRight.val = style.borderSizeTop.val;

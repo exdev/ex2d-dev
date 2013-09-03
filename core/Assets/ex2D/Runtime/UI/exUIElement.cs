@@ -131,29 +131,34 @@ public class exUIElement {
     // ------------------------------------------------------------------ 
 
     public void Layout ( int _width, int _height ) {
+        float fWidth = 0.0f;
+        float fHeight = 0.0f;
+
         // calculate width
-        if ( style.width.type == exCSS_type.Pixel ) {
-            width = style.width.val;
-            if ( style.minWidth.type == exCSS_type.Pixel )
-                width = System.Math.Max ( width, style.minWidth.val );
-            if ( style.maxWidth.type == exCSS_type.Pixel )
-                width = System.Math.Min ( width, style.maxWidth.val );
+        if ( style.width.type == exCSS_size.Type.Length ) {
+            fWidth = style.width.val;
+            if ( style.minWidth.type == exCSS_min_size.Type.Length )
+                fWidth = Mathf.Max ( fWidth, style.minWidth.val );
+            if ( style.maxWidth.type == exCSS_max_size.Type.Length )
+                fWidth = Mathf.Min ( fWidth, style.maxWidth.val );
         }
-        else if ( style.width.type == exCSS_type.Auto ) {
+        else if ( style.width.type == exCSS_size.Type.Auto ) {
             // TODO:
         }
+        width = Mathf.FloorToInt(fWidth);
 
         // calculate height
-        if ( style.height.type == exCSS_type.Pixel ) {
-            height = style.height.val;
-            if ( style.minHeight.type == exCSS_type.Pixel )
-                height = System.Math.Max ( height, style.minHeight.val );
-            if ( style.maxHeight.type == exCSS_type.Pixel )
-                height = System.Math.Min ( height, style.maxHeight.val );
+        if ( style.height.type == exCSS_size.Type.Length ) {
+            fHeight = style.height.val;
+            if ( style.minHeight.type == exCSS_min_size.Type.Length )
+                fHeight = Mathf.Max ( fHeight, style.minHeight.val );
+            if ( style.maxHeight.type == exCSS_max_size.Type.Length )
+                fHeight = Mathf.Min ( fHeight, style.maxHeight.val );
         }
-        else if ( style.width.type == exCSS_type.Auto ) {
+        else if ( style.width.type == exCSS_size.Type.Auto ) {
             // TODO:
         }
+        height = Mathf.FloorToInt(fHeight);
     }
 }
 
