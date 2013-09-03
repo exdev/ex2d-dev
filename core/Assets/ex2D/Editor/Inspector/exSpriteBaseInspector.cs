@@ -391,7 +391,7 @@ class exSpriteBaseInspector : Editor {
         _sprite.width = _size.x;
         _sprite.height = _size.y;
 
-        Vector3 offset = new Vector3( _sprite.offset.x, _sprite.offset.y, 0.0f );
+        Vector3 offset = new Vector3( -_sprite.offset.x, -_sprite.offset.y, 0.0f );
         Vector3 anchorOffset = Vector3.zero;
 
         switch (_sprite.anchor) {
