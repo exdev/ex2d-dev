@@ -23,6 +23,32 @@ using System.Reflection;
 ///////////////////////////////////////////////////////////////////////////////
 
 public static class exCSSUI {
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void DisplayField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_display _val ) {
+        EditorGUILayout.BeginHorizontal ();
+            GUILayout.Space( 15.0f * _indentLevel );
+            GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+
+            _val = (exCSS_display)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+        EditorGUILayout.EndHorizontal ();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void PositionField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_position _val ) {
+        EditorGUILayout.BeginHorizontal ();
+            GUILayout.Space( 15.0f * _indentLevel );
+            GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+
+            _val = (exCSS_position)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+        EditorGUILayout.EndHorizontal ();
+    }
     
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -61,19 +87,6 @@ public static class exCSSUI {
                 GUI.enabled = true;
                 break;
             }
-        EditorGUILayout.EndHorizontal ();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public static void PositionField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_position _val ) {
-        EditorGUILayout.BeginHorizontal ();
-            GUILayout.Space( 15.0f * _indentLevel );
-            GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
-
-            _val = (exCSS_position)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
         EditorGUILayout.EndHorizontal ();
     }
     

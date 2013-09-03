@@ -537,7 +537,8 @@ class exUILayoutEditor : EditorWindow {
         // #
         cur_x += 100.0f;
         cur_x += 5.0f;
-        EditorGUI.LabelField ( new Rect ( cur_x, cur_y + 4f, 10.0f, height - 8f ), "#" );
+        size = EditorStyles.label.CalcSize(new GUIContent("#") );
+        EditorGUI.LabelField ( new Rect ( cur_x, cur_y + 4f, size.y, height - 8f ), "#" );
 
         // id
         cur_x += 10.0f;
@@ -742,6 +743,7 @@ class exUILayoutEditor : EditorWindow {
                     // position
                     GUILayout.Label ( "position", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
                     ++indentLevel;
+                        exCSSUI.DisplayField ( indentLevel, activeElement, "display", ref style.display );
                         exCSSUI.PositionField ( indentLevel, activeElement, "position", ref style.position );
                         exCSSUI.SizeField ( indentLevel, activeElement, "top", style.top, false );
                         exCSSUI.SizeField ( indentLevel, activeElement, "right", style.right, false );
@@ -954,7 +956,11 @@ class exUILayoutEditor : EditorWindow {
                                              }, Color.yellow );
 
             // draw layout
-            DrawElement( curEdit.root );
+            DrawElements ( curEdit.root );
+
+            // draw active element border-line again
+            if ( activeElement != null )
+                DrawElementBorder ( activeElement, new Color( 0.0f, 1.0f, 0.2f )  );
 
         GL.PopMatrix();
 
@@ -965,16 +971,24 @@ class exUILayoutEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DrawElement ( exUIElement _el ) {
-        Color outlineColor = Color.white;
-        if ( activeElement == _el ) {
-            outlineColor = new Color( 0.0f, 1.0f, 0.2f );
+    void DrawElements ( exUIElement _el ) {
+        DrawElementBorder ( _el, Color.white );
+
+        for ( int i = 0; i < _el.children.Count; ++i ) {
+            DrawElements(_el.children[i]);
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawElementBorder ( exUIElement _el, Color _color ) {
         exEditorUtility.GL_DrawRectLine( new Vector3[] {
                                          new Vector3( _el.x, _el.y, 0.0f ),
                                          new Vector3( _el.x + _el.width, _el.y, 0.0f ),
                                          new Vector3( _el.x + _el.width, _el.y + _el.height, 0.0f ),
                                          new Vector3( _el.x, _el.y + _el.height, 0.0f ),
-                                         }, outlineColor );
+                                         }, _color );
     }
 }

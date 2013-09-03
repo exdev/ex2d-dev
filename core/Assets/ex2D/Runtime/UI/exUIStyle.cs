@@ -18,7 +18,14 @@ using System.IO;
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// css position
+// display
+public enum exCSS_display {
+    Block,
+    InlineBlock,
+    Inline,
+}
+
+// position
 public enum exCSS_position {
     Static,
     Relative,
@@ -216,6 +223,7 @@ public class exUIStyle {
     public exCSS_max_size maxHeight = new exCSS_max_size( exCSS_max_size.Type.None, -1.0f );
 
     // position
+    public exCSS_display display = exCSS_display.Block;
     public exCSS_position position = exCSS_position.Static;
     public exCSS_size top    = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
     public exCSS_size right  = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
@@ -253,6 +261,44 @@ public class exUIStyle {
 
     // background
     public exCSS_color backgroundColor = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 255 ) );
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // functions
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public int GetMarginLeft ( int _contentWidth ) {
+        float val = marginLeft.val;
+        if ( marginLeft.type == exCSS_size.Type.Percentage ) 
+            val = marginLeft.val/100.0f * (float)_contentWidth;
+        return Mathf.FloorToInt(val); 
+    } 
+    public int GetMarginRight ( int _contentWidth ) {
+        float val = marginRight.val;
+        if ( marginRight.type == exCSS_size.Type.Percentage ) 
+            val = marginRight.val/100.0f * (float)_contentWidth;
+        return Mathf.FloorToInt(val); 
+    } 
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public int GetPaddingLeft ( int _contentWidth ) {
+        float val = paddingLeft.val;
+        if ( paddingLeft.type == exCSS_size_noauto.Type.Percentage ) 
+            val = paddingLeft.val/100.0f * (float)_contentWidth;
+        return Mathf.FloorToInt(val); 
+    } 
+    public int GetPaddingRight ( int _contentWidth ) {
+        float val = paddingRight.val;
+        if ( paddingRight.type == exCSS_size_noauto.Type.Percentage ) 
+            val = paddingRight.val/100.0f * (float)_contentWidth;
+        return Mathf.FloorToInt(val); 
+    } 
 }
 
 

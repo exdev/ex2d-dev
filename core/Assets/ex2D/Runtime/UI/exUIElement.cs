@@ -130,35 +130,72 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void Layout ( int _width, int _height ) {
+    public void Layout ( int _x, int _y, int _width, int _height ) {
         float fWidth = 0.0f;
         float fHeight = 0.0f;
+        x = _x;
+        y = _y;
+
+        // ======================================================== 
+        // property relate with content-width 
+        // ======================================================== 
 
         // calculate width
         if ( style.width.type == exCSS_size.Type.Length ) {
             fWidth = style.width.val;
-            if ( style.minWidth.type == exCSS_min_size.Type.Length )
-                fWidth = Mathf.Max ( fWidth, style.minWidth.val );
-            if ( style.maxWidth.type == exCSS_max_size.Type.Length )
-                fWidth = Mathf.Min ( fWidth, style.maxWidth.val );
+        }
+        else if ( style.width.type == exCSS_size.Type.Percentage ) {
+            fWidth = style.width.val/100.0f * (float)_width;
         }
         else if ( style.width.type == exCSS_size.Type.Auto ) {
-            // TODO:
-        }
-        width = Mathf.FloorToInt(fWidth);
+            if ( style.marginLeft.type == exCSS_size.Type.Auto ) style.marginLeft.val = 0.0f;
+            if ( style.marginRight.type == exCSS_size.Type.Auto ) style.marginRight.val = 0.0f;
 
+            fWidth = _width 
+                - style.GetMarginLeft(_width) - style.GetMarginRight(_width) 
+                - style.borderSizeLeft.val - style.borderSizeRight.val;
+
+            fWidth = Mathf.Max ( fWidth, 0.0f );
+        }
+
+        if ( style.minWidth.type == exCSS_min_size.Type.Length )
+            fWidth = Mathf.Max ( fWidth, style.minWidth.val );
+        if ( style.maxWidth.type == exCSS_max_size.Type.Length )
+            fWidth = Mathf.Min ( fWidth, style.maxWidth.val );
+        width = Mathf.FloorToInt(fWidth);
+        int contentWidth = width - style.GetPaddingLeft(_width) - style.GetPaddingRight(_width);
+
+        // ======================================================== 
+        // property relate with content-height 
+        // ======================================================== 
+
+        // TODO: later { 
         // calculate height
         if ( style.height.type == exCSS_size.Type.Length ) {
             fHeight = style.height.val;
-            if ( style.minHeight.type == exCSS_min_size.Type.Length )
-                fHeight = Mathf.Max ( fHeight, style.minHeight.val );
-            if ( style.maxHeight.type == exCSS_max_size.Type.Length )
-                fHeight = Mathf.Min ( fHeight, style.maxHeight.val );
         }
-        else if ( style.width.type == exCSS_size.Type.Auto ) {
-            // TODO:
+        else if ( style.height.type == exCSS_size.Type.Percentage ) {
+            fHeight = style.height.val/100.0f * (float)_height;
         }
+        else if ( style.height.type == exCSS_size.Type.Auto ) {
+        }
+
+        if ( style.minHeight.type == exCSS_min_size.Type.Length )
+            fHeight = Mathf.Max ( fHeight, style.minHeight.val );
+        if ( style.maxHeight.type == exCSS_max_size.Type.Length )
+            fHeight = Mathf.Min ( fHeight, style.maxHeight.val );
         height = Mathf.FloorToInt(fHeight);
+        // } TODO end 
+
+        // layout the children
+        int child_x = x + style.GetMarginLeft(_width) + style.GetPaddingLeft(_width) + (int)style.borderSizeLeft.val;
+        int child_y = y; // + TODO
+        for ( int i = 0; i < children.Count; ++i ) {
+            exUIElement child = children[i];
+            child.Layout( child_x, child_y, contentWidth, height );
+
+            // TODO: offset child
+        }
     }
 }
 
