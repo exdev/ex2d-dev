@@ -543,6 +543,68 @@ public static class exEditorUtility {
         GL.End();
     }
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void GL_DrawBorderRectangle ( float _x, float _y, float _width, float _height, 
+                                                float _top, float _right, float _bottom, float _left, 
+                                                Color _color ) 
+    {
+        //  
+        //  0--------------------------1
+        //  |   |                  |   |
+        //  |---4------------------5---|
+        //  |   |                  |   |
+        //  |   |                  |   |
+        //  |   |                  |   |
+        //  |---7------------------6---|
+        //  |   |                  |   |
+        //  3--------------------------2
+        //  
+
+        // GL.Vertex3( _x, _y, 0.0f ); // 0
+        // GL.Vertex3( _x + _width, _y, 0.0f ); // 1
+        // GL.Vertex3( _x + _width, _y + _height, 0.0f ); // 2
+        // GL.Vertex3( _x, _y + _height, 0.0f ); // 3
+        // GL.Vertex3( _x + _left, _y + _top, 0.0f ); // 4
+        // GL.Vertex3( _x + _width - _right, _y + _top , 0.0f ); // 5
+        // GL.Vertex3( _x + _width - _right, _y + _height - _bottom, 0.0f ); // 6
+        // GL.Vertex3( _x + _left, _y + _height - _bottom, 0.0f ); // 7
+
+        materialLine.SetPass(0);
+        GL.Begin(GL.TRIANGLES);
+            GL.Color(_color);
+            GL.Vertex3( _x, _y, 0.0f ); // 0
+            GL.Vertex3( _x + _width, _y, 0.0f ); // 1
+            GL.Vertex3( _x + _left, _y + _top, 0.0f ); // 4
+            GL.Vertex3( _x + _left, _y + _top, 0.0f ); // 4
+            GL.Vertex3( _x + _width, _y, 0.0f ); // 1
+            GL.Vertex3( _x + _width - _right, _y + _top , 0.0f ); // 5
+
+            GL.Vertex3( _x + _width - _right, _y + _top , 0.0f ); // 5
+            GL.Vertex3( _x + _width, _y, 0.0f ); // 1
+            GL.Vertex3( _x + _width - _right, _y + _height - _bottom, 0.0f ); // 6
+            GL.Vertex3( _x + _width - _right, _y + _height - _bottom, 0.0f ); // 6
+            GL.Vertex3( _x + _width, _y, 0.0f ); // 1
+            GL.Vertex3( _x + _width, _y + _height, 0.0f ); // 2
+
+            GL.Vertex3( _x, _y + _height, 0.0f ); // 3
+            GL.Vertex3( _x + _left, _y + _height - _bottom, 0.0f ); // 7
+            GL.Vertex3( _x + _width - _right, _y + _height - _bottom, 0.0f ); // 6
+            GL.Vertex3( _x, _y + _height, 0.0f ); // 3
+            GL.Vertex3( _x + _width - _right, _y + _height - _bottom, 0.0f ); // 6
+            GL.Vertex3( _x + _width, _y + _height, 0.0f ); // 2
+
+            GL.Vertex3( _x, _y + _height, 0.0f ); // 3
+            GL.Vertex3( _x, _y, 0.0f ); // 0
+            GL.Vertex3( _x + _left, _y + _top, 0.0f ); // 4
+            GL.Vertex3( _x, _y + _height, 0.0f ); // 3
+            GL.Vertex3( _x + _left, _y + _top, 0.0f ); // 4
+            GL.Vertex3( _x + _left, _y + _height - _bottom, 0.0f ); // 7
+        GL.End();
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // assets
     ///////////////////////////////////////////////////////////////////////////////

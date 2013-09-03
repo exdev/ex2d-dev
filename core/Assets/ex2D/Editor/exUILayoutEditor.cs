@@ -89,6 +89,7 @@ class exUILayoutEditor : EditorWindow {
     Vector2 hierarchyScrollPos = Vector2.zero;
     Vector2 styleScrollPos = Vector2.zero;
     exUIElement activeElement = null;
+    exUIElement hoverElement = null;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -318,6 +319,7 @@ class exUILayoutEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void Reset () {
+        hoverElement = null;
         activeElement = null;
         if ( curEdit != null )
             activeElement = curEdit.root;
@@ -516,6 +518,8 @@ class exUILayoutEditor : EditorWindow {
             if ( activeElement == _el ) {
                 hierarchyStyles.elementSelectionRect.Draw(rect, false, false, false, false);
             }
+            else if ( hoverElement == _el ) {
+            }
             else {
                 hierarchyStyles.elementBackground.Draw(rect, false, false, false, false);
             }
@@ -579,6 +583,13 @@ class exUILayoutEditor : EditorWindow {
 
         // event process for _layer
         switch ( e.GetTypeForControl(_controlID) ) {
+        case EventType.MouseMove:
+            if ( rect.Contains(e.mousePosition) ) {
+                hoverElement = _el;
+                Repaint();
+            }
+            break;
+
         case EventType.MouseDown:
             if ( e.button == 0 && e.clickCount == 1 && rect.Contains(e.mousePosition) ) {
                 GUIUtility.hotControl = _controlID;
@@ -1064,6 +1075,12 @@ class exUILayoutEditor : EditorWindow {
             // draw active element border-line again
             if ( activeElement != null )
                 DrawElementBorder ( activeElement, new Color( 0.0f, 1.0f, 0.2f )  );
+
+            // TEST { 
+            // exEditorUtility.GL_DrawBorderRectangle ( 0, 0, 500, 800, 
+            //                                          20, 30, 40, 50, 
+            //                                          new Color(1.0f, 1.0f, 0.0f, 0.5f ) );
+            // } TEST end 
 
         GL.PopMatrix();
 
