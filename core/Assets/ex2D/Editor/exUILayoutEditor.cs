@@ -966,11 +966,15 @@ class exUILayoutEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawElement ( exUIElement _el ) {
+        Color outlineColor = Color.white;
+        if ( activeElement == _el ) {
+            outlineColor = new Color( 0.0f, 1.0f, 0.2f );
+        }
         exEditorUtility.GL_DrawRectLine( new Vector3[] {
                                          new Vector3( _el.x, _el.y, 0.0f ),
                                          new Vector3( _el.x + _el.width, _el.y, 0.0f ),
                                          new Vector3( _el.x + _el.width, _el.y + _el.height, 0.0f ),
                                          new Vector3( _el.x, _el.y + _el.height, 0.0f ),
-                                         }, Color.white );
+                                         }, outlineColor );
     }
 }
