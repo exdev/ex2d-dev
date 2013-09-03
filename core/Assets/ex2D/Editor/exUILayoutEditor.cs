@@ -757,35 +757,63 @@ class exUILayoutEditor : EditorWindow {
                     GUILayout.Label ( "margin", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
                     ++indentLevel;
                         exCSSUI.SizeField ( indentLevel, activeElement, "top", style.marginTop, false );
-                        exCSSUI.LockableSizeField ( indentLevel, activeElement, "right", style.marginRight, false, ref style.lockMarginRight );
-                        exCSSUI.LockableSizeField ( indentLevel, activeElement, "bottom", style.marginBottom, false, ref style.lockMarginBottom );
-                        exCSSUI.LockableSizeField ( indentLevel, activeElement, "left", style.marginLeft, false, ref style.lockMarginLeft );
-                        if ( style.lockMarginRight ) {
-                            style.marginRight.type = style.marginTop.type;
-                            style.marginRight.val = style.marginTop.val;
-                            style.marginBottom.type = style.marginTop.type;
-                            style.marginBottom.val = style.marginTop.val;
-                            style.marginLeft.type = style.marginRight.type;
-                            style.marginLeft.val = style.marginRight.val;
+                        if ( exCSSUI.LockableSizeField ( indentLevel, 
+                                                         activeElement, 
+                                                         "right", 
+                                                         style.marginRight, 
+                                                         false, 
+                                                         ref style.lockMarginRight ) ) 
+                        {
+                            if ( style.lockMarginRight ) {
+                                style.marginRight.type = style.marginTop.type;
+                                style.marginRight.val = style.marginTop.val;
+                                style.marginBottom.type = style.marginTop.type;
+                                style.marginBottom.val = style.marginTop.val;
+                                style.marginLeft.type = style.marginRight.type;
+                                style.marginLeft.val = style.marginRight.val;
 
-                            style.lockMarginRight = true;
-                            style.lockMarginBottom = true;
-                            style.lockMarginLeft = true;
+                                style.lockMarginRight = true;
+                                style.lockMarginBottom = true;
+                                style.lockMarginLeft = true;
+                            }
                         }
-                        else if ( style.lockMarginBottom ) {
-                            style.marginBottom.type = style.marginTop.type;
-                            style.marginBottom.val = style.marginTop.val;
-                            style.marginLeft.type = style.marginRight.type;
-                            style.marginLeft.val = style.marginRight.val;
+                        if ( exCSSUI.LockableSizeField ( indentLevel, 
+                                                         activeElement, 
+                                                         "bottom", 
+                                                         style.marginBottom, 
+                                                         false, 
+                                                         ref style.lockMarginBottom ) ) 
+                        {
+                            if ( style.lockMarginBottom ) {
+                                style.marginBottom.type = style.marginTop.type;
+                                style.marginBottom.val = style.marginTop.val;
+                                style.marginLeft.type = style.marginRight.type;
+                                style.marginLeft.val = style.marginRight.val;
 
-                            style.lockMarginBottom = true;
-                            style.lockMarginLeft = true;
+                                style.lockMarginBottom = true;
+                                style.lockMarginLeft = true;
+                            }
+                            else {
+                                style.lockMarginRight = false;
+                            }
                         }
-                        else if ( style.lockMarginLeft ) {
-                            style.marginLeft.type = style.marginRight.type;
-                            style.marginLeft.val = style.marginRight.val;
+                        if ( exCSSUI.LockableSizeField ( indentLevel, 
+                                                         activeElement, 
+                                                         "left", 
+                                                         style.marginLeft, 
+                                                         false, 
+                                                         ref style.lockMarginLeft ) ) 
+                        {
+                            if ( style.lockMarginLeft ) {
+                                style.marginLeft.type = style.marginRight.type;
+                                style.marginLeft.val = style.marginRight.val;
 
-                            style.lockMarginLeft = true;
+                                style.lockMarginLeft = true;
+                            }
+                            else {
+                                style.lockMarginRight = false;
+                                style.lockMarginBottom = false;
+                            }
                         }
                     --indentLevel;
 
@@ -795,35 +823,63 @@ class exUILayoutEditor : EditorWindow {
                     GUILayout.Label ( "padding", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
                     ++indentLevel;
                         exCSSUI.SizeNoAutoField ( indentLevel, activeElement, "top", style.paddingTop, false );
-                        exCSSUI.LockableSizeNoAutoField ( indentLevel, activeElement, "right", style.paddingRight, false, ref style.lockPaddingRight );
-                        exCSSUI.LockableSizeNoAutoField ( indentLevel, activeElement, "bottom", style.paddingBottom, false, ref style.lockPaddingBottom );
-                        exCSSUI.LockableSizeNoAutoField ( indentLevel, activeElement, "left", style.paddingLeft, false, ref style.lockPaddingLeft );
-                        if ( style.lockPaddingRight ) {
-                            style.paddingRight.type = style.paddingTop.type;
-                            style.paddingRight.val = style.paddingTop.val;
-                            style.paddingBottom.type = style.paddingTop.type;
-                            style.paddingBottom.val = style.paddingTop.val;
-                            style.paddingLeft.type = style.paddingRight.type;
-                            style.paddingLeft.val = style.paddingRight.val;
+                        if ( exCSSUI.LockableSizeNoAutoField ( indentLevel, 
+                                                               activeElement, 
+                                                               "right", 
+                                                               style.paddingRight, 
+                                                               false, 
+                                                               ref style.lockPaddingRight ) ) 
+                        {
+                            if ( style.lockPaddingRight ) {
+                                style.paddingRight.type = style.paddingTop.type;
+                                style.paddingRight.val = style.paddingTop.val;
+                                style.paddingBottom.type = style.paddingTop.type;
+                                style.paddingBottom.val = style.paddingTop.val;
+                                style.paddingLeft.type = style.paddingRight.type;
+                                style.paddingLeft.val = style.paddingRight.val;
 
-                            style.lockPaddingRight = true;
-                            style.lockPaddingBottom = true;
-                            style.lockPaddingLeft = true;
+                                style.lockPaddingRight = true;
+                                style.lockPaddingBottom = true;
+                                style.lockPaddingLeft = true;
+                            }
                         }
-                        else if ( style.lockPaddingBottom ) {
-                            style.paddingBottom.type = style.paddingTop.type;
-                            style.paddingBottom.val = style.paddingTop.val;
-                            style.paddingLeft.type = style.paddingRight.type;
-                            style.paddingLeft.val = style.paddingRight.val;
+                        if ( exCSSUI.LockableSizeNoAutoField ( indentLevel, 
+                                                               activeElement, 
+                                                               "bottom", 
+                                                               style.paddingBottom, 
+                                                               false, 
+                                                               ref style.lockPaddingBottom ) ) 
+                        {
+                            if ( style.lockPaddingBottom ) {
+                                style.paddingBottom.type = style.paddingTop.type;
+                                style.paddingBottom.val = style.paddingTop.val;
+                                style.paddingLeft.type = style.paddingRight.type;
+                                style.paddingLeft.val = style.paddingRight.val;
 
-                            style.lockPaddingBottom = true;
-                            style.lockPaddingLeft = true;
+                                style.lockPaddingBottom = true;
+                                style.lockPaddingLeft = true;
+                            }
+                            else {
+                                style.lockPaddingRight = false;
+                            }
                         }
-                        else if ( style.lockPaddingLeft ) {
-                            style.paddingLeft.type = style.paddingRight.type;
-                            style.paddingLeft.val = style.paddingRight.val;
+                        if ( exCSSUI.LockableSizeNoAutoField ( indentLevel, 
+                                                               activeElement, 
+                                                               "left", 
+                                                               style.paddingLeft, 
+                                                               false, 
+                                                               ref style.lockPaddingLeft ) ) 
+                        {
+                            if ( style.lockPaddingLeft ) {
+                                style.paddingLeft.type = style.paddingRight.type;
+                                style.paddingLeft.val = style.paddingRight.val;
 
-                            style.lockPaddingLeft = true;
+                                style.lockPaddingLeft = true;
+                            }
+                            else {
+                                style.lockPaddingRight = false;
+                                style.lockPaddingBottom = false;
+                            }
                         }
                     --indentLevel;
 
@@ -843,39 +899,71 @@ class exUILayoutEditor : EditorWindow {
                             style.borderSizeBottom.val  = borderTextureInfo.borderBottom;
                             style.borderSizeLeft.type   = exCSS_size_lengthonly.Type.Length;
                             style.borderSizeLeft.val    = borderTextureInfo.borderRight;
+
+                            style.lockBorderSizeRight  = false;
+                            style.lockBorderSizeBottom = false;
+                            style.lockBorderSizeLeft   = false;
                         }
 
                         exCSSUI.ColorField ( indentLevel, activeElement, "color", style.borderColor, false );
                         exCSSUI.SizeLengthOnlyField ( indentLevel, activeElement, "top", style.borderSizeTop, false );
-                        exCSSUI.LockableSizeLengthOnlyField ( indentLevel, activeElement, "right", style.borderSizeRight, false, ref style.lockBorderSizeRight );
-                        exCSSUI.LockableSizeLengthOnlyField ( indentLevel, activeElement, "bottom", style.borderSizeBottom, false, ref style.lockBorderSizeBottom );
-                        exCSSUI.LockableSizeLengthOnlyField ( indentLevel, activeElement, "left", style.borderSizeLeft, false, ref style.lockBorderSizeLeft );
-                        if ( style.lockBorderSizeRight ) {
-                            style.borderSizeRight.type = style.borderSizeTop.type;
-                            style.borderSizeRight.val = style.borderSizeTop.val;
-                            style.borderSizeBottom.type = style.borderSizeTop.type;
-                            style.borderSizeBottom.val = style.borderSizeTop.val;
-                            style.borderSizeLeft.type = style.borderSizeRight.type;
-                            style.borderSizeLeft.val = style.borderSizeRight.val;
+                        if ( exCSSUI.LockableSizeLengthOnlyField ( indentLevel, 
+                                                                   activeElement, 
+                                                                   "right", 
+                                                                   style.borderSizeRight, 
+                                                                   false, 
+                                                                   ref style.lockBorderSizeRight ) ) 
+                        {
+                            if ( style.lockBorderSizeRight ) {
+                                style.borderSizeRight.type = style.borderSizeTop.type;
+                                style.borderSizeRight.val = style.borderSizeTop.val;
+                                style.borderSizeBottom.type = style.borderSizeTop.type;
+                                style.borderSizeBottom.val = style.borderSizeTop.val;
+                                style.borderSizeLeft.type = style.borderSizeRight.type;
+                                style.borderSizeLeft.val = style.borderSizeRight.val;
 
-                            style.lockBorderSizeRight = true;
-                            style.lockBorderSizeBottom = true;
-                            style.lockBorderSizeLeft = true;
+                                style.lockBorderSizeRight = true;
+                                style.lockBorderSizeBottom = true;
+                                style.lockBorderSizeLeft = true;
+                            }
                         }
-                        else if ( style.lockBorderSizeBottom ) {
-                            style.borderSizeBottom.type = style.borderSizeTop.type;
-                            style.borderSizeBottom.val = style.borderSizeTop.val;
-                            style.borderSizeLeft.type = style.borderSizeRight.type;
-                            style.borderSizeLeft.val = style.borderSizeRight.val;
+                        if ( exCSSUI.LockableSizeLengthOnlyField ( indentLevel, 
+                                                                   activeElement, 
+                                                                   "bottom", 
+                                                                   style.borderSizeBottom, 
+                                                                   false, 
+                                                                   ref style.lockBorderSizeBottom ) ) 
+                        {
+                            if ( style.lockBorderSizeBottom ) {
+                                style.borderSizeBottom.type = style.borderSizeTop.type;
+                                style.borderSizeBottom.val = style.borderSizeTop.val;
+                                style.borderSizeLeft.type = style.borderSizeRight.type;
+                                style.borderSizeLeft.val = style.borderSizeRight.val;
 
-                            style.lockBorderSizeBottom = true;
-                            style.lockBorderSizeLeft = true;
+                                style.lockBorderSizeBottom = true;
+                                style.lockBorderSizeLeft = true;
+                            }
+                            else {
+                                style.lockBorderSizeRight = false;
+                            }
                         }
-                        else if ( style.lockBorderSizeLeft ) {
-                            style.borderSizeLeft.type = style.borderSizeRight.type;
-                            style.borderSizeLeft.val = style.borderSizeRight.val;
+                        if ( exCSSUI.LockableSizeLengthOnlyField ( indentLevel, 
+                                                                   activeElement, 
+                                                                   "left", 
+                                                                   style.borderSizeLeft, 
+                                                                   false, 
+                                                                   ref style.lockBorderSizeLeft ) ) 
+                        {
+                            if ( style.lockBorderSizeLeft ) {
+                                style.borderSizeLeft.type = style.borderSizeRight.type;
+                                style.borderSizeLeft.val = style.borderSizeRight.val;
 
-                            style.lockBorderSizeLeft = true;
+                                style.lockBorderSizeLeft = true;
+                            }
+                            else {
+                                style.lockBorderSizeBottom = false;
+                                style.lockBorderSizeRight = false;
+                            }
                         }
                     --indentLevel;
 
@@ -984,11 +1072,16 @@ class exUILayoutEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawElementBorder ( exUIElement _el, Color _color ) {
+        int contentWidth = (_el.parent != null) ? _el.parent.width : curEdit.width;
+        int contentHeight = (_el.parent != null) ? _el.parent.height : curEdit.height;
+        float x = _el.x + _el.style.GetMarginLeft(contentWidth);
+        float y = _el.y + _el.style.GetMarginTop(contentHeight);
+
         exEditorUtility.GL_DrawRectLine( new Vector3[] {
-                                         new Vector3( _el.x, _el.y, 0.0f ),
-                                         new Vector3( _el.x + _el.width, _el.y, 0.0f ),
-                                         new Vector3( _el.x + _el.width, _el.y + _el.height, 0.0f ),
-                                         new Vector3( _el.x, _el.y + _el.height, 0.0f ),
+                                         new Vector3( x,             y,              0.0f ),
+                                         new Vector3( x + _el.width, y,              0.0f ),
+                                         new Vector3( x + _el.width, y + _el.height, 0.0f ),
+                                         new Vector3( x,             y + _el.height, 0.0f ),
                                          }, _color );
     }
 }

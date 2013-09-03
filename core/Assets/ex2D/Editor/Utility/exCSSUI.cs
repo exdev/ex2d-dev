@@ -143,16 +143,20 @@ public static class exCSSUI {
         EditorGUILayout.EndHorizontal ();
     }
 
-    public static void LockableSizeField ( int _indentLevel, exUIElement _el, string _name, exCSS_size _prop, bool _inherited, ref bool _lock ) {
+    public static bool LockableSizeField ( int _indentLevel, exUIElement _el, string _name, exCSS_size _prop, bool _inherited, ref bool _lock ) {
+        bool changed = false;
         EditorGUILayout.BeginHorizontal ();
             GUI.enabled = !_lock;
                 DoSizeField ( _indentLevel, _el, _name, _prop, _inherited );
             GUI.enabled = true;
+            EditorGUI.BeginChangeCheck();
             _lock = GUILayout.Toggle ( _lock, GUIContent.none, "IN LockButton", new GUILayoutOption [] {
                                        GUILayout.Width(20),
                                        GUILayout.Height(20),
                                        } );
+            if ( EditorGUI.EndChangeCheck() ) changed = true;
         EditorGUILayout.EndHorizontal ();
+        return changed;
     }
 
     // ------------------------------------------------------------------ 
@@ -207,16 +211,20 @@ public static class exCSSUI {
         EditorGUILayout.EndHorizontal ();
     }
 
-    public static void LockableSizeNoAutoField ( int _indentLevel, exUIElement _el, string _name, exCSS_size_noauto _prop, bool _inherited, ref bool _lock ) {
+    public static bool LockableSizeNoAutoField ( int _indentLevel, exUIElement _el, string _name, exCSS_size_noauto _prop, bool _inherited, ref bool _lock ) {
+        bool changed = false;
         EditorGUILayout.BeginHorizontal ();
             GUI.enabled = !_lock;
                 DoSizeNoAutoField ( _indentLevel, _el, _name, _prop, _inherited );
             GUI.enabled = true;
+            EditorGUI.BeginChangeCheck();
             _lock = GUILayout.Toggle ( _lock, GUIContent.none, "IN LockButton", new GUILayoutOption [] {
                                        GUILayout.Width(20),
                                        GUILayout.Height(20),
                                        } );
+            if ( EditorGUI.EndChangeCheck() ) changed = true;
         EditorGUILayout.EndHorizontal ();
+        return changed;
     }
 
     // ------------------------------------------------------------------ 
@@ -266,16 +274,20 @@ public static class exCSSUI {
         EditorGUILayout.EndHorizontal ();
     }
 
-    public static void LockableSizeLengthOnlyField ( int _indentLevel, exUIElement _el, string _name, exCSS_size_lengthonly _prop, bool _inherited, ref bool _lock ) {
+    public static bool LockableSizeLengthOnlyField ( int _indentLevel, exUIElement _el, string _name, exCSS_size_lengthonly _prop, bool _inherited, ref bool _lock ) {
+        bool changed = false;
         EditorGUILayout.BeginHorizontal ();
             GUI.enabled = !_lock;
                 DoSizeLengthOnlyField ( _indentLevel, _el, _name, _prop, _inherited );
             GUI.enabled = true;
+            EditorGUI.BeginChangeCheck();
             _lock = GUILayout.Toggle ( _lock, GUIContent.none, "IN LockButton", new GUILayoutOption [] {
                                        GUILayout.Width(20),
                                        GUILayout.Height(20),
                                        } );
+            if ( EditorGUI.EndChangeCheck() ) changed = true;
         EditorGUILayout.EndHorizontal ();
+        return changed;
     }
     
     // ------------------------------------------------------------------ 
