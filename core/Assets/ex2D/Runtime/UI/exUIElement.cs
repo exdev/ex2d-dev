@@ -252,7 +252,12 @@ public class exUIElement {
         // http://www.w3.org/TR/CSS2/visudet.html#Computing_heights_and_margins
         // ======================================================== 
 
-        Vector2 contentTextSize = style.CalcTextSize ( content, width );
+        string text = content.Replace ( "\n", " " );
+        text.Trim();
+        Vector2 contentTextSize = Vector2.zero;
+        if ( string.IsNullOrEmpty(text) == false ) {
+            contentTextSize = style.CalcTextSize ( text, width );
+        }
 
         // calculate height
         if ( style.height.type == exCSS_size.Type.Length ) {

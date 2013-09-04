@@ -1182,8 +1182,12 @@ class exUILayoutEditor : EditorWindow {
         // DrawElementBorder ( _el, Color.white );
         if ( _el.style.font.val != null ) {
             if ( _el.style.font.type == exCSS_font.Type.TTF ) {
-                Vector2 size = _el.style.CalcTextSize ( _el.content, _el.width );
-                _el.style.DrawText ( new Rect( _el.x, _el.y, size.x, size.y ), _el.content );
+                string text = _el.content.Replace ( "\n", " " );
+                text.Trim();
+                if ( string.IsNullOrEmpty(text) == false ) {
+                    Vector2 size = _el.style.CalcTextSize ( text, _el.width );
+                    _el.style.DrawText ( new Rect( _el.x, _el.y, size.x, size.y ), text );
+                }
             }
             else {
                 // TODO:
