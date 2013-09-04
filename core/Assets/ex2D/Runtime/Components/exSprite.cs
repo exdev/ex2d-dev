@@ -453,19 +453,19 @@ internal static class SpriteBuilder {
         }
         else {
             switch ( _sprite.anchor ) {
-            case Anchor.TopLeft     : anchorOffset.x = halfWidth;   anchorOffset.y = -halfHeight;  break;
-            case Anchor.TopCenter   : anchorOffset.x = 0.0f;        anchorOffset.y = -halfHeight;  break;
-            case Anchor.TopRight    : anchorOffset.x = -halfWidth;  anchorOffset.y = -halfHeight;  break;
+            case Anchor.TopLeft   : anchorOffset.x = halfWidth;   anchorOffset.y = -halfHeight;  break;
+            case Anchor.TopCenter : anchorOffset.x = 0.0f;        anchorOffset.y = -halfHeight;  break;
+            case Anchor.TopRight  : anchorOffset.x = -halfWidth;  anchorOffset.y = -halfHeight;  break;
 
-            case Anchor.MidLeft     : anchorOffset.x = halfWidth;   anchorOffset.y = 0.0f;         break;
-            case Anchor.MidCenter   : anchorOffset.x = 0.0f;        anchorOffset.y = 0.0f;         break;
-            case Anchor.MidRight    : anchorOffset.x = -halfWidth;  anchorOffset.y = 0.0f;         break;
+            case Anchor.MidLeft   : anchorOffset.x = halfWidth;   anchorOffset.y = 0.0f;         break;
+            case Anchor.MidCenter : anchorOffset.x = 0.0f;        anchorOffset.y = 0.0f;         break;
+            case Anchor.MidRight  : anchorOffset.x = -halfWidth;  anchorOffset.y = 0.0f;         break;
 
-            case Anchor.BotLeft     : anchorOffset.x = halfWidth;   anchorOffset.y = halfHeight;   break;
-            case Anchor.BotCenter   : anchorOffset.x = 0.0f;        anchorOffset.y = halfHeight;   break;
-            case Anchor.BotRight    : anchorOffset.x = -halfWidth;  anchorOffset.y = halfHeight;   break;
+            case Anchor.BotLeft   : anchorOffset.x = halfWidth;   anchorOffset.y = halfHeight;   break;
+            case Anchor.BotCenter : anchorOffset.x = 0.0f;        anchorOffset.y = halfHeight;   break;
+            case Anchor.BotRight  : anchorOffset.x = -halfWidth;  anchorOffset.y = halfHeight;   break;
 
-            default                 : anchorOffset.x = 0.0f;        anchorOffset.y = 0.0f;         break;
+            default               : anchorOffset.x = 0.0f;        anchorOffset.y = 0.0f;         break;
             }
         }
 
@@ -484,15 +484,11 @@ internal static class SpriteBuilder {
         }
 
         Vector3 offset = _sprite.offset;
-        v0 += offset;
-        v1 += offset;
-        v2 += offset;
-        v3 += offset;
+        v0 += offset; v1 += offset; v2 += offset; v3 += offset;
 
         Vector2 shear = _sprite.shear;
         if (shear.x != 0) {
-            float scaleY = _sprite.GetScaleY(_space);
-            float offsetX = scaleY * shear.x;
+            float offsetX = _sprite.GetScaleY(_space) * shear.x;
             float topOffset = offsetX * (halfHeight + anchorOffset.y);
             float botOffset = offsetX * (-halfHeight + anchorOffset.y);
             v0.x += botOffset;
@@ -501,8 +497,7 @@ internal static class SpriteBuilder {
             v3.x += botOffset;
         }
         if (shear.y != 0) {
-            float scaleX = _sprite.GetScaleX(_space);
-            float offsetY = scaleX * shear.y;
+            float offsetY = _sprite.GetScaleX(_space) * shear.y;
             float leftOffset = offsetY * (-halfWidth + anchorOffset.x);
             float rightOffset = offsetY * (halfWidth + anchorOffset.x);
             v0.y += leftOffset;
@@ -669,25 +664,31 @@ internal static class SpriteBuilder {
         
         SpriteBuilder.SimpleUpdateBuffers(_sprite, _textureInfo, _useTextureOffset, _space, 
                                           _vertices, _uvs, _indices, _vbIndex, _ibIndex);
-        int colCount, rowCount;
-        exSpriteUtility.GetTilingCount ((exISprite)_sprite, out colCount, out rowCount);
+
         if ((_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
             SimpleVertexBufferToTiled(_sprite, _textureInfo, _vertices, _vbIndex);
         }
+        
+        int colCount, rowCount;
+        exSpriteUtility.GetTilingCount ((exISprite)_sprite, out colCount, out rowCount);
+
         if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
-            for (int i = 0; i <= 10; ++i) {
-                if (i != 3 && i != 7) {     // 0 1 2 4 5 6 8 9 10
-                    int blVertexIndex = _vbIndex + i;   // bottom left vertex index
-                    _indices.buffer[_ibIndex++] = blVertexIndex;
-                    _indices.buffer[_ibIndex++] = blVertexIndex + 4;
-                    _indices.buffer[_ibIndex++] = blVertexIndex + 5;
-                    _indices.buffer[_ibIndex++] = blVertexIndex + 5;
-                    _indices.buffer[_ibIndex++] = blVertexIndex + 1;
-                    _indices.buffer[_ibIndex++] = blVertexIndex;
-                }
+            int v = _vbIndex;
+            int i = _ibIndex;
+            int quadCount = colCount * rowCount;
+            for (int q = 0; q < quadCount; ++q) {
+                _indices.buffer[i++] = v;
+                _indices.buffer[i++] = v + 1;
+                _indices.buffer[i++] = v + 2;
+                _indices.buffer[i++] = v + 2;
+                _indices.buffer[i++] = v + 3;
+                _indices.buffer[i++] = v;
+                v += exMesh.QUAD_VERTEX_COUNT;
             }
         }
+
         if ((_sprite.updateFlags & exUpdateFlags.UV) != 0) {
+
         }
     }
 
@@ -696,16 +697,16 @@ internal static class SpriteBuilder {
     // ------------------------------------------------------------------ 
 
     public static void SimpleVertexBufferToTiled (exSpriteBase _sprite, exTextureInfo textureInfo_, exList<Vector3> _vertices, int _startIndex) {
-        /* vertex index:
-        8    9    10 11
-        4    5    6  7 
-
-        0    1    2  3 
+        /* tile index:
+        8  9  10 11
+        4  5  6  7 
+        0  1  2  3 
         */
         /*Vector3 v0 = _vertices.buffer[_startIndex + 0];
         Vector3 v12 = _vertices.buffer[_startIndex + 1];
         Vector3 v15 = _vertices.buffer[_startIndex + 2];
         Vector3 v3 = _vertices.buffer[_startIndex + 3];*/
+        return;
     }
 }
 }
