@@ -430,4 +430,48 @@ public static class exCSSUI {
             }
         EditorGUILayout.EndHorizontal ();
     }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void FontField ( int _indentLevel, exUIElement _el, string _name, exCSS_font _prop, bool _inherited ) {
+        EditorGUILayout.BeginHorizontal ();
+            GUILayout.Space( 15.0f * _indentLevel );
+            GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+
+            // process enum with inherit variable
+            if ( _inherited ) {
+                _prop.type = (exCSS_font.Type)EditorGUILayout.EnumPopup ( _prop.type, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+            }
+            else {
+                string[] names = System.Enum.GetNames(typeof(exCSS_font.Type));
+                // int idx = System.Array.IndexOf<string>(names, System.Enum.GetName( typeof(exCSS_max_size.Type), _prop.type));
+                int idx = (int)_prop.type;
+                string[] names2 = new string [names.Length-1];
+                for ( int i = 0; i < names2.Length; ++i ) {
+                    names2[i] = names[i];
+                }
+
+                idx = EditorGUILayout.Popup ( "", idx, names2, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                _prop.type = (exCSS_font.Type)System.Math.Min( idx, names2.Length-1 );
+            }
+
+            switch ( _prop.type ) {
+            case exCSS_font.Type.TTF:
+                _prop.val = (Font)EditorGUILayout.ObjectField ( _prop.val, typeof(Font), false, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+                break;
+
+            case exCSS_font.Type.BitmapFont:
+                _prop.val = (exBitmapFont)EditorGUILayout.ObjectField ( _prop.val, typeof(exBitmapFont), false, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+                break;
+
+            case exCSS_font.Type.Inherit:
+                GUI.enabled = false;
+                _prop.val = EditorGUILayout.ObjectField ( _prop.val, typeof(Object), false, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+                GUI.enabled = true;
+                break;
+            }
+        EditorGUILayout.EndHorizontal ();
+    }
 }

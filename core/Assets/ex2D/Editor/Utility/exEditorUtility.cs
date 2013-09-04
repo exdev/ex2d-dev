@@ -543,13 +543,18 @@ public static class exEditorUtility {
         GL.End();
     }
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // GL_UI
+    ///////////////////////////////////////////////////////////////////////////////
+
+
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void GL_DrawBorderRectangle ( float _x, float _y, float _width, float _height, 
-                                                float _top, float _right, float _bottom, float _left, 
-                                                Color _color ) 
+    public static void GL_UI_DrawBorderRectangle ( float _x, float _y, float _width, float _height, 
+                                                   float _top, float _right, float _bottom, float _left, 
+                                                   Color _color ) 
     {
         //  
         //  0--------------------------1
@@ -602,6 +607,25 @@ public static class exEditorUtility {
             GL.Vertex3( _x, _y + _height, 0.0f ); // 3
             GL.Vertex3( _x + _left, _y + _top, 0.0f ); // 4
             GL.Vertex3( _x + _left, _y + _height - _bottom, 0.0f ); // 7
+        GL.End();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void GL_UI_DrawRectangle ( float _x, float _y, float _width, float _height, 
+                                             Color _color ) 
+    {
+        materialLine.SetPass(0);
+        GL.Begin(GL.TRIANGLES);
+            GL.Color(_color);
+            GL.Vertex3( _x, _y, 0.0f ); 
+            GL.Vertex3( _x + _width, _y, 0.0f );
+            GL.Vertex3( _x + _width, _y + _height , 0.0f );
+            GL.Vertex3( _x, _y, 0.0f ); 
+            GL.Vertex3( _x + _width, _y + _height , 0.0f );
+            GL.Vertex3( _x, _y + _height , 0.0f );
         GL.End();
     }
 

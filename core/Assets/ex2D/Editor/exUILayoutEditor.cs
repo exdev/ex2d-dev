@@ -90,6 +90,7 @@ class exUILayoutEditor : EditorWindow {
     Vector2 styleScrollPos = Vector2.zero;
     exUIElement activeElement = null;
     exUIElement hoverElement = null;
+    bool debugElement = false;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -245,10 +246,7 @@ class exUILayoutEditor : EditorWindow {
         EditorGUILayout.EndHorizontal();
 
         // TODO { 
-        //
         // ProcessSceneEditorHandles();
-
-        //
         // ProcessSceneEditorEvents();
         // } TODO end 
 
@@ -319,6 +317,7 @@ class exUILayoutEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     public void Reset () {
+        debugElement = false;
         hoverElement = null;
         activeElement = null;
         if ( curEdit != null )
@@ -420,7 +419,10 @@ class exUILayoutEditor : EditorWindow {
     void Hierarchy_Toolbar () {
         // add layer button
         EditorGUILayout.BeginHorizontal( hierarchyStyles.toolbar, new GUILayoutOption[0]);
-        GUILayout.FlexibleSpace();
+            debugElement = GUILayout.Toggle ( debugElement, "Debug", hierarchyStyles.toolbarButton );
+
+            GUILayout.FlexibleSpace();
+
             if ( GUILayout.Button( "UP", hierarchyStyles.toolbarButton ) ) {
                 if ( activeElement != curEdit.root && activeElement.parent != null ) {
                     int curIdx = activeElement.parent.GetElementIndex(activeElement);
@@ -445,7 +447,9 @@ class exUILayoutEditor : EditorWindow {
                 exUIElement newEL = new exUIElement(); 
                 newEL.parent = activeElement;
 
+                curEdit.Apply();
                 EditorUtility.SetDirty(curEdit);
+                Repaint();
             }
         EditorGUILayout.EndHorizontal();
     }
@@ -463,6 +467,17 @@ class exUILayoutEditor : EditorWindow {
                                         } );
 
             EditorGUILayout.LabelField ( "Hierarchy", hierarchyStyles.boldLabel );
+            EditorGUILayout.BeginHorizontal ();
+                GUILayout.FlexibleSpace();
+                if ( GUILayout.Button ( "Edit" ) ) {
+                    if ( activeElement != null ) {
+                        exElementContentWizard wizard = ScriptableWizard.DisplayWizard<exElementContentWizard>( "Edit "  + activeElement.name + " Content:" );
+                        wizard.position = new Rect ( position.x + 50.0f, position.y + 100.0f, 400.0f, 400.0f );
+                        wizard.curEdit = activeElement;
+                    }
+                }
+            EditorGUILayout.EndHorizontal ();
+
             EditorGUILayout.Space ();
             EditorGUILayout.Space ();
 
@@ -478,12 +493,20 @@ class exUILayoutEditor : EditorWindow {
                 // TODO:
                 int controlID = GUIUtility.GetControlID(elementsFieldHash, FocusType.Passive);
                 bool isDeleted = false;
-                ElementField ( controlID, 10.0f, 0.0f, 0, curEdit.root, ref isDeleted );
+                float totalHeight = ElementField ( controlID, 10.0f, 0.0f, 0, curEdit.root, ref isDeleted );
+                totalHeight = Mathf.Min( _height, totalHeight );
 
 
                 // event process for layers
                 Event e = Event.current;
                 switch ( e.GetTypeForControl(controlID) ) {
+                case EventType.MouseMove:
+                    if ( new Rect( 0.0f, 0.0f, _width, totalHeight).Contains(e.mousePosition) == false ) {
+                        hoverElement = null;
+                        Repaint();
+                    }
+                    break;
+
                 case EventType.MouseUp:
                     if ( GUIUtility.hotControl == controlID ) {
                         GUIUtility.hotControl = 0;
@@ -519,6 +542,7 @@ class exUILayoutEditor : EditorWindow {
                 hierarchyStyles.elementSelectionRect.Draw(rect, false, false, false, false);
             }
             else if ( hoverElement == _el ) {
+                exEditorUtility.GUI_DrawRect( rect, new Color( 0.0f, 0.5f, 1.0f, 0.5f ), new Color( 0.0f, 0.0f, 0.0f, 0.0f ) );
             }
             else {
                 hierarchyStyles.elementBackground.Draw(rect, false, false, false, false);
@@ -909,8 +933,8 @@ class exUILayoutEditor : EditorWindow {
                     // border
                     GUILayout.Label ( "border", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
                     ++indentLevel;
-                        exCSSUI.ImageField ( indentLevel, activeElement, "src", style.borderSrc, false );
-                        exTextureInfo borderTextureInfo = style.borderSrc.val as exTextureInfo;
+                        exCSSUI.ImageField ( indentLevel, activeElement, "image", style.borderImage, false );
+                        exTextureInfo borderTextureInfo = style.borderImage.val as exTextureInfo;
                         if ( borderTextureInfo && borderTextureInfo.hasBorder ) {
                             style.borderSizeTop.type    = exCSS_size_lengthonly.Type.Length;
                             style.borderSizeTop.val     = borderTextureInfo.borderTop;
@@ -993,6 +1017,26 @@ class exUILayoutEditor : EditorWindow {
                         }
                     --indentLevel;
 
+                    EditorGUILayout.Space();
+
+                    // font
+                    GUILayout.Label ( "font", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    ++indentLevel;
+                        exCSSUI.FontField ( indentLevel, activeElement, "font", style.font, true );
+                        exCSSUI.SizeNoAutoField ( indentLevel, activeElement, "size", style.fontSize, true );
+                        exCSSUI.ColorField ( indentLevel, activeElement, "color", style.textColor, true );
+                    --indentLevel;
+
+                    EditorGUILayout.Space();
+
+                    // background
+                    GUILayout.Label ( "background", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    ++indentLevel;
+                        exCSSUI.ImageField ( indentLevel, activeElement, "image", style.backgroundImage, false );
+                        exCSSUI.ColorField ( indentLevel, activeElement, "color", style.backgroundColor, false );
+                        // TODO: exCSSUI.BackgroundRepeatField ( indentLevel, activeElement, "repeat", style.backgroundColor, false );
+                    --indentLevel;
+
 
                     if ( EditorGUI.EndChangeCheck() ) {
                         // apply layout
@@ -1073,14 +1117,19 @@ class exUILayoutEditor : EditorWindow {
             DrawElements ( curEdit.root );
 
             // draw active element border-line again
-            if ( activeElement != null )
+            if ( activeElement != null ) {
                 DrawElementBorder ( activeElement, new Color( 0.0f, 1.0f, 0.2f )  );
+            }
 
-            // TEST { 
-            // exEditorUtility.GL_DrawBorderRectangle ( 0, 0, 500, 800, 
-            //                                          20, 30, 40, 50, 
-            //                                          new Color(1.0f, 1.0f, 0.0f, 0.5f ) );
-            // } TEST end 
+            // draw hover element
+            if ( debugElement && hoverElement != null ) {
+                float alpha = 0.78f;
+                DrawHoverElement ( hoverElement, 
+                                   new Color( 0.98f, 0.8f,  0.62f, alpha ),
+                                   new Color( 0.5f,  0.5f,  0.5f,  alpha ),
+                                   new Color( 0.76f, 0.87f, 0.71f, alpha ),
+                                   new Color( 0.6f,  0.75f, 0.89f, alpha ) );
+            }
 
         GL.PopMatrix();
 
@@ -1092,7 +1141,54 @@ class exUILayoutEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawElements ( exUIElement _el ) {
-        DrawElementBorder ( _el, Color.white );
+        // draw border
+        if ( _el.style.borderImage.val == null ) {
+            if ( _el.style.borderColor.val.a > 0.0f &&
+                 _el.borderSizeLeft > 0 && _el.borderSizeRight > 0 && _el.borderSizeTop > 0 && _el.borderSizeBottom > 0 ) 
+            {
+                int x = _el.x - _el.paddingLeft - _el.borderSizeLeft;
+                int y = _el.y - _el.paddingTop - _el.borderSizeTop;
+                int width = _el.width 
+                    + _el.paddingLeft + _el.paddingRight 
+                    + _el.borderSizeLeft + _el.borderSizeRight;
+                int height = _el.height 
+                    + _el.paddingTop + _el.paddingBottom 
+                    + _el.borderSizeTop + _el.borderSizeBottom;
+                exEditorUtility.GL_UI_DrawBorderRectangle ( x, y, width, height, 
+                                                            _el.borderSizeTop, _el.borderSizeRight, _el.borderSizeBottom, _el.borderSizeLeft,
+                                                            _el.style.borderColor.val );
+            }
+        }
+        else {
+            // TODO:
+        }
+
+        // draw background
+        if ( _el.style.backgroundImage.val == null ) {
+            if ( _el.style.backgroundColor.val.a > 0.0f ) {
+                int x = _el.x - _el.paddingLeft;
+                int y = _el.y - _el.paddingTop;
+                int width = _el.width + _el.paddingLeft + _el.paddingRight; 
+                int height = _el.height + _el.paddingTop + _el.paddingBottom; 
+                exEditorUtility.GL_UI_DrawRectangle ( x, y, width, height, 
+                                                      _el.style.backgroundColor.val );
+            }
+        }
+        else {
+            // TODO:
+        }
+
+        // draw content 
+        // DrawElementBorder ( _el, Color.white );
+        if ( _el.style.font.val != null ) {
+            if ( _el.style.font.type == exCSS_font.Type.TTF ) {
+                Vector2 size = _el.style.CalcTextSize ( _el.content, _el.width );
+                _el.style.DrawText ( new Rect( _el.x, _el.y, size.x, size.y ), _el.content );
+            }
+            else {
+                // TODO:
+            }
+        }
 
         for ( int i = 0; i < _el.children.Count; ++i ) {
             DrawElements(_el.children[i]);
@@ -1104,16 +1200,85 @@ class exUILayoutEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawElementBorder ( exUIElement _el, Color _color ) {
-        int contentWidth = (_el.parent != null) ? _el.parent.width : curEdit.width;
-        int contentHeight = (_el.parent != null) ? _el.parent.height : curEdit.height;
-        float x = _el.x + _el.style.GetMarginLeft(contentWidth);
-        float y = _el.y + _el.style.GetMarginTop(contentHeight);
-
         exEditorUtility.GL_DrawRectLine( new Vector3[] {
-                                         new Vector3( x,             y,              0.0f ),
-                                         new Vector3( x + _el.width, y,              0.0f ),
-                                         new Vector3( x + _el.width, y + _el.height, 0.0f ),
-                                         new Vector3( x,             y + _el.height, 0.0f ),
+                                         new Vector3( _el.x,             _el.y,              0.0f ),
+                                         new Vector3( _el.x + _el.width, _el.y,              0.0f ),
+                                         new Vector3( _el.x + _el.width, _el.y + _el.height, 0.0f ),
+                                         new Vector3( _el.x,             _el.y + _el.height, 0.0f ),
                                          }, _color );
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawHoverElement ( exUIElement _el, 
+                            Color _marginColor,
+                            Color _borderColor,
+                            Color _paddingColor,
+                            Color _contentColor ) 
+    {
+        float cur_x = _el.x;
+        float cur_y = _el.y;
+        float width = _el.width;
+        float height = _el.height;
+
+        // content
+        exEditorUtility.GL_UI_DrawRectangle ( cur_x, cur_y, width, height, 
+                                              _contentColor );
+
+        // padding
+        cur_x -= _el.paddingLeft;
+        cur_y -= _el.paddingTop;
+        width += (_el.paddingLeft + _el.paddingRight);
+        height += (_el.paddingTop + _el.paddingBottom);
+        exEditorUtility.GL_UI_DrawBorderRectangle ( cur_x, cur_y, width, height, 
+                                                    _el.paddingTop, _el.paddingRight, _el.paddingBottom, _el.paddingLeft, 
+                                                    _paddingColor );
+
+        // border
+        cur_x -= _el.borderSizeLeft;
+        cur_y -= _el.borderSizeTop;
+        width += (_el.borderSizeLeft + _el.borderSizeRight);
+        height += (_el.borderSizeTop + _el.borderSizeBottom);
+        exEditorUtility.GL_UI_DrawBorderRectangle ( cur_x, cur_y, width, height, 
+                                                    _el.borderSizeTop, _el.borderSizeRight, _el.borderSizeBottom, _el.borderSizeLeft, 
+                                                    _borderColor );
+
+        // margin
+        cur_x -= _el.marginLeft;
+        cur_y -= _el.marginTop;
+        width += (_el.marginLeft + _el.marginRight);
+        height += (_el.marginTop + _el.marginBottom);
+        exEditorUtility.GL_UI_DrawBorderRectangle ( cur_x, cur_y, width, height, 
+                                                    _el.marginTop, _el.marginRight, _el.marginBottom, _el.marginLeft, 
+                                                    _marginColor );
+    }
+
+    // // ------------------------------------------------------------------ 
+    // // Desc: 
+    // // ------------------------------------------------------------------ 
+
+    // void ProcessSceneEditorHandles () {
+
+    //     editCamera.enabled = true;
+    //     editCamera.aspect = sceneViewRect.width/sceneViewRect.height;
+    //     editCamera.orthographicSize = (sceneViewRect.height * 0.5f) / scale;
+
+    //     //
+    //     GUI.BeginGroup( sceneViewRect );
+    //     Rect rect = new Rect( 0, 0, sceneViewRect.width, sceneViewRect.height );
+    //     Handles.ClearCamera( rect, editCamera );
+    //     Handles.SetCamera( rect, editCamera );
+
+    //     if ( debugElement && hoverElement != null ) {
+    //         Handles.BeginGUI();
+    //         GUI.Label( new Rect ( hoverElement.x, hoverElement.y, 200.0f, 200.0f ), "Hello World" );
+    //         Handles.EndGUI();
+    //     }
+
+
+    //     editCamera.enabled = false;
+    //     GUI.EndGroup();
+    // }
 }

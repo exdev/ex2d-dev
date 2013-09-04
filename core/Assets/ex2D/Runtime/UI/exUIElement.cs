@@ -22,10 +22,15 @@ using System.IO;
 
 [System.Serializable]
 public class exUIElement {
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+
     public string name = "New Element";
     public string id = "el"; // for css
     public string content = "";
-    public exUIStyle style;
+    public exUIStyle style = new exUIStyle();
 
     public List<exUIElement> children = new List<exUIElement>();
 
@@ -55,10 +60,26 @@ public class exUIElement {
         }
     }
 
+    // computed style
     [System.NonSerialized] public int x;
     [System.NonSerialized] public int y;
     [System.NonSerialized] public int width;
     [System.NonSerialized] public int height;
+
+    [System.NonSerialized] public int marginLeft;
+    [System.NonSerialized] public int marginRight;
+    [System.NonSerialized] public int marginTop;
+    [System.NonSerialized] public int marginBottom;
+
+    [System.NonSerialized] public int borderSizeLeft;
+    [System.NonSerialized] public int borderSizeRight;
+    [System.NonSerialized] public int borderSizeTop;
+    [System.NonSerialized] public int borderSizeBottom;
+
+    [System.NonSerialized] public int paddingLeft;
+    [System.NonSerialized] public int paddingRight;
+    [System.NonSerialized] public int paddingTop;
+    [System.NonSerialized] public int paddingBottom;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -130,76 +151,154 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public int GetTotalHeight () {
+        return height 
+            + marginTop + marginBottom 
+            + borderSizeTop + borderSizeBottom
+            + paddingTop + paddingBottom;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public int GetTotalWidth () {
+        return height 
+            + marginLeft + marginRight 
+            + borderSizeLeft + borderSizeRight
+            + paddingLeft + paddingRight;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public void Layout ( int _x, int _y, int _width, int _height ) {
-        float fWidth = 0.0f;
-        float fHeight = 0.0f;
-        x = _x;
-        y = _y;
+        marginLeft = style.GetMarginLeft(_width);
+        marginRight = style.GetMarginRight(_width);
+        marginTop = style.GetMarginTop(_height);
+        marginBottom = style.GetMarginBottom(_height);
+
+        borderSizeLeft = (int)style.borderSizeLeft.val;
+        borderSizeRight = (int)style.borderSizeRight.val;
+        borderSizeTop = (int)style.borderSizeTop.val;
+        borderSizeBottom = (int)style.borderSizeBottom.val;
+
+        paddingLeft = style.GetPaddingLeft(_width);
+        paddingRight = style.GetPaddingRight(_width);
+        paddingTop = style.GetPaddingTop(_height);
+        paddingBottom = style.GetPaddingBottom(_height);
+
+        if ( style.marginLeft.type == exCSS_size.Type.Auto ) marginLeft = 0;
+        if ( style.marginRight.type == exCSS_size.Type.Auto ) marginRight = 0;
+        if ( style.marginTop.type == exCSS_size.Type.Auto ) marginTop = 0;
+        if ( style.marginBottom.type == exCSS_size.Type.Auto ) marginBottom = 0;
 
         // ======================================================== 
         // property relate with content-width 
+        // http://www.w3.org/TR/CSS2/visudet.html#Computing_widths_and_margins
         // ======================================================== 
 
         // calculate width
         if ( style.width.type == exCSS_size.Type.Length ) {
-            fWidth = style.width.val;
+            width = (int)style.width.val;
         }
         else if ( style.width.type == exCSS_size.Type.Percentage ) {
-            fWidth = style.width.val/100.0f * (float)_width;
+            width = Mathf.FloorToInt ( style.width.val/100.0f * (float)_width );
         }
         else if ( style.width.type == exCSS_size.Type.Auto ) {
-            if ( style.marginLeft.type == exCSS_size.Type.Auto ) style.marginLeft.val = 0.0f;
-            if ( style.marginRight.type == exCSS_size.Type.Auto ) style.marginRight.val = 0.0f;
+            width = _width 
+                   - marginLeft - marginRight
+                   - borderSizeLeft - borderSizeRight
+                   - paddingLeft - paddingRight;
+            width = System.Math.Max ( width, 0 );
+        }
 
-            fWidth = _width - style.GetMarginLeft(_width) - style.GetMarginRight(_width); 
-            fWidth = Mathf.Max ( fWidth, 0.0f );
+        if ( style.width.type != exCSS_size.Type.Auto &&
+             ( style.marginLeft.type == exCSS_size.Type.Auto || style.marginRight.type == exCSS_size.Type.Auto ) ) 
+        {
+            int remainWidth = _width - width - borderSizeLeft - borderSizeRight - paddingLeft - paddingRight;
+            if ( style.marginLeft.type == exCSS_size.Type.Auto && style.marginRight.type == exCSS_size.Type.Auto ) {
+                remainWidth = System.Math.Max ( remainWidth, 0 );
+                marginLeft = remainWidth / 2;
+                marginRight = remainWidth / 2;
+            }
+            else if ( style.marginLeft.type == exCSS_size.Type.Auto ) {
+                remainWidth -= marginRight; 
+                remainWidth = System.Math.Max ( remainWidth, 0 );
+                marginLeft = remainWidth;
+            }
+            else if ( style.marginRight.type == exCSS_size.Type.Auto ) {
+                remainWidth -= marginLeft; 
+                remainWidth = System.Math.Max ( remainWidth, 0 );
+                marginRight = remainWidth;
+            }
+        }
+
+        if ( style.display == exCSS_display.Block && style.marginRight.type != exCSS_size.Type.Auto ) {
+            int remainWidth = _width - width - borderSizeLeft - borderSizeRight - paddingLeft - paddingRight;
+            remainWidth -= marginLeft; 
+            remainWidth = System.Math.Max ( remainWidth, 0 );
+            marginRight = remainWidth;
         }
 
         if ( style.minWidth.type == exCSS_min_size.Type.Length )
-            fWidth = Mathf.Max ( fWidth, style.minWidth.val );
+            width = System.Math.Max ( width, (int)style.minWidth.val );
         if ( style.maxWidth.type == exCSS_max_size.Type.Length )
-            fWidth = Mathf.Min ( fWidth, style.maxWidth.val );
-        width = Mathf.FloorToInt(fWidth);
-        int contentWidth = width 
-            - style.GetPaddingLeft(_width) - style.GetPaddingRight(_width)
-            - (int)style.borderSizeLeft.val - (int)style.borderSizeRight.val;
+            width = System.Math.Min ( width, (int)style.maxWidth.val );
 
         // ======================================================== 
         // property relate with content-height 
+        // http://www.w3.org/TR/CSS2/visudet.html#Computing_heights_and_margins
         // ======================================================== 
+
+        Vector2 contentTextSize = style.CalcTextSize ( content, width );
 
         // calculate height
         if ( style.height.type == exCSS_size.Type.Length ) {
-            fHeight = style.height.val;
+            height = (int)style.height.val;
         }
         else if ( style.height.type == exCSS_size.Type.Percentage ) {
-            fHeight = style.height.val/100.0f * (float)_height;
+            height = Mathf.FloorToInt ( style.height.val/100.0f * (float)_height );
         }
         else if ( style.height.type == exCSS_size.Type.Auto ) {
-            if ( style.marginTop.type == exCSS_size.Type.Auto ) style.marginTop.val = 0.0f;
-            if ( style.marginBottom.type == exCSS_size.Type.Auto ) style.marginBottom.val = 0.0f;
-
-            fHeight = _height - style.GetMarginTop(_height) - style.GetMarginBottom(_height); 
-            fHeight = Mathf.Max ( fHeight, 0.0f );
+            height = 0;
+            height += (int)contentTextSize.y;
         }
 
         if ( style.minHeight.type == exCSS_min_size.Type.Length )
-            fHeight = Mathf.Max ( fHeight, style.minHeight.val );
+            height = System.Math.Max ( height, (int)style.minHeight.val );
         if ( style.maxHeight.type == exCSS_max_size.Type.Length )
-            fHeight = Mathf.Min ( fHeight, style.maxHeight.val );
-        height = Mathf.FloorToInt(fHeight);
-        int contentHeight = height 
-            - style.GetPaddingTop(_height) - style.GetPaddingBottom(_height)
-            - (int)style.borderSizeTop.val - (int)style.borderSizeBottom.val;
+            height = System.Math.Min ( height, (int)style.maxHeight.val );
+
+        // ======================================================== 
+        // calculate position
+        // ======================================================== 
+
+        x = _x + marginLeft + borderSizeLeft + paddingLeft;
+        y = _y + marginTop + borderSizeTop + paddingTop;
 
         // layout the children
-        int child_x = x + style.GetMarginLeft(_width) + style.GetPaddingLeft(_width) + (int)style.borderSizeLeft.val;
-        int child_y = y + style.GetMarginTop(_height) + style.GetPaddingTop(_height) + (int)style.borderSizeTop.val;
+        int child_start_x = x;
+        int child_start_y = y + (int)contentTextSize.y;
+        int child_x = child_start_x;
+        int child_y = child_start_y;
+
         for ( int i = 0; i < children.Count; ++i ) {
             exUIElement child = children[i];
-            child.Layout( child_x, child_y, contentWidth, contentHeight );
+            child.Layout( child_x, child_y, width, height );
 
-            // TODO: offset child
+            if ( child.style.display == exCSS_display.Block ) {
+                child_x = child_start_x;
+                child_y = child_y + child.GetTotalHeight();
+            }
+            else if ( child.style.display == exCSS_display.Inline ) {
+                // TODO: offset child
+            }
+        }
+
+        if ( style.height.type == exCSS_size.Type.Auto ) {
+            height += child_y - child_start_y;  
         }
     }
 }

@@ -25,6 +25,14 @@ public enum exCSS_display {
     Inline,
 }
 
+// background-repeat
+public enum exCSS_background_repeat {
+    Repeat,
+    RepeatX,
+    RepeatY,
+    NoRepeat,
+}
+
 // position
 public enum exCSS_position {
     Static,
@@ -206,6 +214,46 @@ public class exCSS_image {
     }
 }
 
+// css font
+[System.Serializable]
+public class exCSS_font { 
+    public enum Type {
+        TTF,
+        BitmapFont,
+        Inherit
+    }
+    public Type type;
+    public Font src1; 
+    public exBitmapFont src2; 
+    public Object val {
+        set {
+            if ( value is Font ) {
+                src1 = value as Font; 
+                src2 = null; 
+            }
+            else if ( value is exBitmapFont ) {
+                src1 = null;
+                src2 = value as exBitmapFont; 
+            }
+            else {
+                src1 = null;
+                src2 = null;
+            }
+        }
+        get { 
+            if ( src1 != null )
+                return src1;
+            else if ( src2 != null )
+                return src2;
+            return null;
+        }
+    }
+    public exCSS_font ( Type _type, Object _val ) { 
+        type = _type; 
+        val = _val;
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ///
 /// The ui style
@@ -214,6 +262,9 @@ public class exCSS_image {
 
 [System.Serializable]
 public class exUIStyle {
+
+    static GUIStyle fontHelper = new GUIStyle();
+
     // size
     public exCSS_size width         = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
     public exCSS_size height        = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
@@ -249,7 +300,7 @@ public class exUIStyle {
     public bool lockPaddingLeft    = true;
 
     // border
-    public exCSS_image borderSrc      = new exCSS_image( exCSS_image.Type.TextureInfo, null );
+    public exCSS_image borderImage    = new exCSS_image( exCSS_image.Type.TextureInfo, null );
     public exCSS_color borderColor    = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 255 ) );
     public exCSS_size_lengthonly borderSizeTop    = new exCSS_size_lengthonly( exCSS_size_lengthonly.Type.Length, 0.0f );
     public exCSS_size_lengthonly borderSizeRight  = new exCSS_size_lengthonly( exCSS_size_lengthonly.Type.Length, 0.0f );
@@ -260,7 +311,14 @@ public class exUIStyle {
     public bool lockBorderSizeLeft    = true;
 
     // background
-    public exCSS_color backgroundColor = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 255 ) );
+    public exCSS_color backgroundColor = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 0 ) );
+    public exCSS_image backgroundImage = new exCSS_image( exCSS_image.Type.TextureInfo, null );
+    public exCSS_background_repeat backgroundRepeat = exCSS_background_repeat.NoRepeat;
+
+    // font
+    public exCSS_font font = new exCSS_font( exCSS_font.Type.Inherit, null );
+    public exCSS_size_noauto fontSize = new exCSS_size_noauto( exCSS_size_noauto.Type.Inherit, 16.0f );
+    public exCSS_color textColor = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 255 ) );
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
@@ -325,6 +383,61 @@ public class exUIStyle {
             val = paddingBottom.val/100.0f * (float)_contentHeight;
         return Mathf.FloorToInt(val); 
     } 
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public Vector2 CalcTextSize ( string _content, int _width ) {
+        bool wrap = false; // TODO
+        Vector2 size = Vector2.zero;
+
+        if ( font.type == exCSS_font.Type.TTF ) {
+            fontHelper.font = font.val as Font;
+            fontHelper.fontSize = (int)fontSize.val;
+            fontHelper.fontStyle = FontStyle.Normal; 
+            fontHelper.wordWrap = wrap;
+            fontHelper.richText = false;
+            fontHelper.normal.textColor = textColor.val;
+
+            GUIContent uiContent = new GUIContent(_content);
+
+            if ( wrap == false ) {
+                size = fontHelper.CalcSize (uiContent);
+            }
+            else {
+                size.x = _width;
+                size.y = fontHelper.CalcHeight( uiContent, _width );
+            }
+        }
+
+        return size;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void DrawText ( Rect _rect, string _content ) {
+        bool wrap = false; // TODO
+
+        if ( font.type == exCSS_font.Type.TTF ) {
+            fontHelper.font = font.val as Font;
+            fontHelper.fontSize = (int)fontSize.val;
+            fontHelper.fontStyle = FontStyle.Normal; 
+            fontHelper.wordWrap = wrap;
+            fontHelper.richText = false;
+            fontHelper.normal.textColor = textColor.val;
+
+            GUIContent uiContent = new GUIContent(_content);
+            fontHelper.Draw ( _rect,
+                              uiContent,
+                              false,
+                              false, 
+                              true,
+                              false );
+        }
+    }
 }
 
 
