@@ -41,6 +41,31 @@ public enum exCSS_position {
     Fixed,
 }
 
+// white-space
+public enum exCSS_white_space {
+    Normal,
+    Pre,
+    NoWrap,
+    PreWrap,
+    Inherit
+}
+
+// text-alignment
+public enum exCSS_alignment {
+    Left,
+    Center,
+    Right,
+    Inherit
+}
+
+// text-decoration
+public enum exCSS_decoration {
+    None,
+    Underline,
+    Overline,
+    LineThrough
+}
+
 // size
 [System.Serializable]
 public class exCSS_size { 
@@ -64,6 +89,30 @@ public class exCSS_size {
         }
     }
     public exCSS_size ( Type _type, float _val ) { type = _type; val = _val; }
+}
+
+// size no-percentage
+[System.Serializable]
+public class exCSS_size_nopercentage { 
+    public enum Type {
+        Auto,
+        Length,
+        Inherit
+    }
+    public Type type; 
+    float val_; 
+    public float val {
+        set {
+            if ( type == Type.Length )
+                val_ = Mathf.FloorToInt(value);
+            else
+                val_ = value;
+        }
+        get {
+            return val_;
+        }
+    }
+    public exCSS_size_nopercentage ( Type _type, float _val ) { type = _type; val = _val; }
 }
 
 // size no-auto
@@ -318,7 +367,20 @@ public class exUIStyle {
     // font
     public exCSS_font font = new exCSS_font( exCSS_font.Type.Inherit, null );
     public exCSS_size_noauto fontSize = new exCSS_size_noauto( exCSS_size_noauto.Type.Inherit, 16.0f );
+
+    // text
     public exCSS_color textColor = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 255 ) );
+    public exCSS_white_space whiteSpace = exCSS_white_space.Normal;
+    public exCSS_alignment textAlign = exCSS_alignment.Left;
+    public exCSS_decoration textDecoration = exCSS_decoration.None;
+    public exCSS_size_nopercentage letterSpacing = new exCSS_size_nopercentage( exCSS_size_nopercentage.Type.Auto, 0.0f );
+    public exCSS_size_nopercentage wordSpacing = new exCSS_size_nopercentage( exCSS_size_nopercentage.Type.Auto, 0.0f );
+    public exCSS_size lineHeight = new exCSS_size( exCSS_size.Type.Auto, 0.0f );
+
+    // clipping
+    // text-overflow: ellipsis;
+    // overflow-x: visible;
+    // overflow-y: visible;
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
