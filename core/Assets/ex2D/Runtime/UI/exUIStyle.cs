@@ -394,12 +394,16 @@ public class exUIStyle {
         float val = marginLeft.val;
         if ( marginLeft.type == exCSS_size.Type.Percentage ) 
             val = marginLeft.val/100.0f * (float)_contentWidth;
+        else if ( marginLeft.type == exCSS_size.Type.Auto )
+            val = 0.0f;
         return Mathf.FloorToInt(val); 
     } 
     public int GetMarginRight ( int _contentWidth ) {
         float val = marginRight.val;
         if ( marginRight.type == exCSS_size.Type.Percentage ) 
             val = marginRight.val/100.0f * (float)_contentWidth;
+        else if ( marginRight.type == exCSS_size.Type.Auto )
+            val = 0.0f;
         return Mathf.FloorToInt(val); 
     } 
 
@@ -407,12 +411,16 @@ public class exUIStyle {
         float val = marginTop.val;
         if ( marginTop.type == exCSS_size.Type.Percentage ) 
             val = marginTop.val/100.0f * (float)_contentHeight;
+        else if ( marginTop.type == exCSS_size.Type.Auto )
+            val = 0.0f;
         return Mathf.FloorToInt(val); 
     } 
     public int GetMarginBottom ( int _contentHeight ) {
         float val = marginBottom.val;
         if ( marginBottom.type == exCSS_size.Type.Percentage ) 
             val = marginBottom.val/100.0f * (float)_contentHeight;
+        else if ( marginBottom.type == exCSS_size.Type.Auto )
+            val = 0.0f;
         return Mathf.FloorToInt(val); 
     } 
 

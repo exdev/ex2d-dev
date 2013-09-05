@@ -174,6 +174,9 @@ public class exUIElement {
     // ------------------------------------------------------------------ 
 
     public void Layout ( int _x, int _y, int _width, int _height ) {
+        x = _x;
+        y = _y;
+
         marginLeft = style.GetMarginLeft(_width);
         marginRight = style.GetMarginRight(_width);
         marginTop = style.GetMarginTop(_height);
@@ -188,11 +191,6 @@ public class exUIElement {
         paddingRight = style.GetPaddingRight(_width);
         paddingTop = style.GetPaddingTop(_height);
         paddingBottom = style.GetPaddingBottom(_height);
-
-        if ( style.marginLeft.type == exCSS_size.Type.Auto ) marginLeft = 0;
-        if ( style.marginRight.type == exCSS_size.Type.Auto ) marginRight = 0;
-        if ( style.marginTop.type == exCSS_size.Type.Auto ) marginTop = 0;
-        if ( style.marginBottom.type == exCSS_size.Type.Auto ) marginBottom = 0;
 
         // ======================================================== 
         // property relate with content-width 
@@ -247,17 +245,25 @@ public class exUIElement {
         if ( style.maxWidth.type == exCSS_max_size.Type.Length )
             width = System.Math.Min ( width, (int)style.maxWidth.val );
 
-        // ======================================================== 
-        // property relate with content-height 
-        // http://www.w3.org/TR/CSS2/visudet.html#Computing_heights_and_margins
-        // ======================================================== 
+        // check if wrap the block
+        if ( style.width.type == exCSS_size.Type.Auto ) {
+            // TODO: calculate the result in no-wrap
+            // Vector2 nowrapSize = style.CalcTextSize ( text, width );
+            // width = nowrapSize.x;
+        }
 
+        // calculate content size after width calculated
         string text = content.Replace ( "\n", " " );
         text.Trim();
         Vector2 contentTextSize = Vector2.zero;
         if ( string.IsNullOrEmpty(text) == false ) {
             contentTextSize = style.CalcTextSize ( text, width );
         }
+
+        // ======================================================== 
+        // property relate with content-height 
+        // http://www.w3.org/TR/CSS2/visudet.html#Computing_heights_and_margins
+        // ======================================================== 
 
         // calculate height
         if ( style.height.type == exCSS_size.Type.Length ) {
@@ -280,10 +286,13 @@ public class exUIElement {
         // calculate position
         // ======================================================== 
 
-        x = _x + marginLeft + borderSizeLeft + paddingLeft;
-        y = _y + marginTop + borderSizeTop + paddingTop;
+        x = x + marginLeft + borderSizeLeft + paddingLeft;
+        y = y + marginTop + borderSizeTop + paddingTop;
 
+        // ======================================================== 
         // layout the children
+        // ======================================================== 
+
         int child_start_x = x;
         int child_start_y = y + (int)contentTextSize.y;
         int child_x = child_start_x;
@@ -297,11 +306,14 @@ public class exUIElement {
                 child_x = child_start_x;
                 child_y = child_y + child.GetTotalHeight();
             }
-            else if ( child.style.display == exCSS_display.Inline ) {
+            else if ( child.style.display == exCSS_display.InlineBlock ) {
                 // TODO: offset child
             }
+
+            // TODO: We assume inline element not have child, this will save us a lot of work! 
         }
 
+        // calculate the height after child
         if ( style.height.type == exCSS_size.Type.Auto ) {
             height += child_y - child_start_y;  
         }
