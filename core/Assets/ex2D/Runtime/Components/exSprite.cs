@@ -654,7 +654,7 @@ internal static class SpriteBuilder {
             _vertices.buffer[_startIndex + i + 2] = left + (right - left) * xStep2;
         }
     }
-        
+    
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
@@ -686,9 +686,37 @@ internal static class SpriteBuilder {
                 v += exMesh.QUAD_VERTEX_COUNT;
             }
         }
-
+        
         if ((_sprite.updateFlags & exUpdateFlags.UV) != 0) {
-
+            Vector2 uv0 = _uvs.buffer[0];
+            Vector2 uv2 = _uvs.buffer[2];
+            Vector2 uv3 = _uvs.buffer[3];
+            Vector2 clippedUv2;
+            float stepX = (_sprite.width % _textureInfo.rawWidth) / _textureInfo.width;
+            float stepY = (_sprite.height % _textureInfo.rawHeight) / _textureInfo.height;
+            clippedUv2.x = Mathf.Lerp(uv0.x, uv2.x, Mathf.Min(stepX, 1.0f));
+            clippedUv2.y = Mathf.Lerp(uv0.y, uv2.y, Mathf.Min(stepY, 1.0f));
+            int i = _ibIndex;
+            int lastColIndex = colCount - 1;
+            for (int r = 0; r < rowCount; ++r) {
+                float rowTopUv = uv2.y;
+                if (r == rowCount - 1) {
+                    rowTopUv = clippedUv2.y;
+                }
+                // full width column
+                for (int c = 0; c < lastColIndex; ++c) {
+                    _uvs.buffer[i++] = uv0;
+                    _uvs.buffer[i++] = new Vector2(uv0.x, rowTopUv);
+                    _uvs.buffer[i++] = new Vector2(uv2.x, rowTopUv);
+                    _uvs.buffer[i++] = uv3;
+                }
+                // last column
+                float clippedX = uv2.x;
+                _uvs.buffer[i++] = uv0;
+                _uvs.buffer[i++] = new Vector2(uv0.x, rowTopUv);
+                _uvs.buffer[i++] = new Vector2(clippedX, rowTopUv);
+                _uvs.buffer[i++] = new Vector2(clippedX, uv0.y);
+            }
         }
     }
 
@@ -696,17 +724,17 @@ internal static class SpriteBuilder {
     // Change vertex buffer from simple to tiled
     // ------------------------------------------------------------------ 
 
-    public static void SimpleVertexBufferToTiled (exSpriteBase _sprite, exTextureInfo textureInfo_, exList<Vector3> _vertices, int _startIndex) {
+    public static void SimpleVertexBufferToTiled (exSpriteBase _sprite, exTextureInfo _textureInfo, exList<Vector3> _vertices, int _startIndex) {
         /* tile index:
         8  9  10 11
         4  5  6  7 
         0  1  2  3 
         */
         /*Vector3 v0 = _vertices.buffer[_startIndex + 0];
-        Vector3 v12 = _vertices.buffer[_startIndex + 1];
-        Vector3 v15 = _vertices.buffer[_startIndex + 2];
+        Vector3 v1 = _vertices.buffer[_startIndex + 1];
+        Vector3 v2 = _vertices.buffer[_startIndex + 2];
         Vector3 v3 = _vertices.buffer[_startIndex + 3];*/
-        return;
+        
     }
 }
 }

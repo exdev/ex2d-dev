@@ -21,8 +21,11 @@ using System.Collections;
 public static class exSpriteUtility {
 
     public static void GetTilingCount (exISprite _sprite, out int _colCount, out int _rowCount) {
-        _colCount = (int)Mathf.Ceil(Mathf.Abs(_sprite.width / _sprite.textureInfo.width));
-        _rowCount = (int)Mathf.Ceil(Mathf.Abs(_sprite.height / _sprite.textureInfo.height));
+        exTextureInfo ti = _sprite.textureInfo;
+        float rawTiledWidth = _sprite.width + (ti.rawWidth - ti.width);
+        _colCount = (int)Mathf.Ceil(Mathf.Abs(rawTiledWidth) / ti.rawWidth);
+        float rawTiledHeight = _sprite.height + (ti.rawHeight - ti.height);
+        _rowCount = (int)Mathf.Ceil(Mathf.Abs(rawTiledHeight / ti.rawHeight));
     }
 }
 
