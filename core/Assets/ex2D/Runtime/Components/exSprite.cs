@@ -399,55 +399,55 @@ internal static class SpriteBuilder {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void SimpleUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo textureInfo_, bool useTextureOffset_, exList<Vector3> _vertices, int _startIndex, Space _space) {
+    public static void SimpleUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, exList<Vector3> _vertices, int _startIndex, Space _space) {
         Vector2 anchorOffset;
-        float halfHeight = textureInfo_.height * 0.5f;
-        float halfWidth = textureInfo_.width * 0.5f;
+        float halfHeight = _textureInfo.height * 0.5f;
+        float halfWidth = _textureInfo.width * 0.5f;
 
-        if (useTextureOffset_) {
+        if (_useTextureOffset) {
             switch (_sprite.anchor) {
             case Anchor.TopLeft:
-                anchorOffset.x = halfWidth + textureInfo_.trim_x;
-                anchorOffset.y = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
+                anchorOffset.x = halfWidth + _textureInfo.trim_x;
+                anchorOffset.y = -halfHeight + _textureInfo.trim_y - (_textureInfo.rawHeight - _textureInfo.height);
                 break;
             case Anchor.TopCenter:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffset.y = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
+                anchorOffset.x = _textureInfo.trim_x - (_textureInfo.rawWidth - _textureInfo.width) * 0.5f;
+                anchorOffset.y = -halfHeight + _textureInfo.trim_y - (_textureInfo.rawHeight - _textureInfo.height);
                 break;
             case Anchor.TopRight:
-                anchorOffset.x = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffset.y = -halfHeight + textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
+                anchorOffset.x = -halfWidth + _textureInfo.trim_x - (_textureInfo.rawWidth - _textureInfo.width);
+                anchorOffset.y = -halfHeight + _textureInfo.trim_y - (_textureInfo.rawHeight - _textureInfo.height);
                 break;
             //
             case Anchor.MidLeft:
-                anchorOffset.x = halfWidth + textureInfo_.trim_x;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
+                anchorOffset.x = halfWidth + _textureInfo.trim_x;
+                anchorOffset.y = _textureInfo.trim_y - (_textureInfo.rawHeight - _textureInfo.height) * 0.5f;
                 break;
             case Anchor.MidCenter:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
+                anchorOffset.x = _textureInfo.trim_x - (_textureInfo.rawWidth - _textureInfo.width) * 0.5f;
+                anchorOffset.y = _textureInfo.trim_y - (_textureInfo.rawHeight - _textureInfo.height) * 0.5f;
                 break;
             case Anchor.MidRight:
-                anchorOffset.x = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
+                anchorOffset.x = -halfWidth + _textureInfo.trim_x - (_textureInfo.rawWidth - _textureInfo.width);
+                anchorOffset.y = _textureInfo.trim_y - (_textureInfo.rawHeight - _textureInfo.height) * 0.5f;
                 break;
             //
             case Anchor.BotLeft:
-                anchorOffset.x = halfWidth + textureInfo_.trim_x;
-                anchorOffset.y = halfHeight + textureInfo_.trim_y;
+                anchorOffset.x = halfWidth + _textureInfo.trim_x;
+                anchorOffset.y = halfHeight + _textureInfo.trim_y;
                 break;
             case Anchor.BotCenter:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffset.y = halfHeight + textureInfo_.trim_y;
+                anchorOffset.x = _textureInfo.trim_x - (_textureInfo.rawWidth - _textureInfo.width) * 0.5f;
+                anchorOffset.y = halfHeight + _textureInfo.trim_y;
                 break;
             case Anchor.BotRight:
-                anchorOffset.x = -halfWidth + textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffset.y = halfHeight + textureInfo_.trim_y;
+                anchorOffset.x = -halfWidth + _textureInfo.trim_x - (_textureInfo.rawWidth - _textureInfo.width);
+                anchorOffset.y = halfHeight + _textureInfo.trim_y;
                 break;
             //
             default:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
+                anchorOffset.x = _textureInfo.trim_x - (_textureInfo.rawWidth - _textureInfo.width) * 0.5f;
+                anchorOffset.y = _textureInfo.trim_y - (_textureInfo.rawHeight - _textureInfo.height) * 0.5f;
                 break;
             }
         }
@@ -476,7 +476,7 @@ internal static class SpriteBuilder {
         Vector3 v2 = new Vector3 (halfWidth + anchorOffset.x, halfHeight + anchorOffset.y, 0.0f);
         Vector3 v3 = new Vector3 (halfWidth + anchorOffset.x, -halfHeight + anchorOffset.y, 0.0f);
         if (_sprite.customSize) {
-            Vector2 customSizeScale = new Vector2 (_sprite.width / textureInfo_.width, _sprite.height / textureInfo_.height);
+            Vector2 customSizeScale = new Vector2 (_sprite.width / _textureInfo.width, _sprite.height / _textureInfo.height);
             v0.x *= customSizeScale.x;  v0.y *= customSizeScale.y;
             v1.x *= customSizeScale.x;  v1.y *= customSizeScale.y;
             v2.x *= customSizeScale.x;  v2.y *= customSizeScale.y;
@@ -666,13 +666,18 @@ internal static class SpriteBuilder {
                                           _vertices, _uvs, _indices, _vbIndex, _ibIndex);
 
         if ((_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
-            SimpleVertexBufferToTiled(_sprite, _textureInfo, _vertices, _vbIndex);
+            UpdateTiledVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _space, _vertices, _vbIndex);
         }
         
         int colCount, rowCount;
         exSpriteUtility.GetTilingCount ((exISprite)_sprite, out colCount, out rowCount);
 
         if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+            /* tile index:
+            8  9  10 11
+            4  5  6  7 
+            0  1  2  3 
+            */
             int v = _vbIndex;
             int i = _ibIndex;
             int quadCount = colCount * rowCount;
@@ -724,17 +729,34 @@ internal static class SpriteBuilder {
     // Change vertex buffer from simple to tiled
     // ------------------------------------------------------------------ 
 
-    public static void SimpleVertexBufferToTiled (exSpriteBase _sprite, exTextureInfo _textureInfo, exList<Vector3> _vertices, int _startIndex) {
+    public static void UpdateTiledVertexBuffer (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space, 
+                                                exList<Vector3> _vertices, int _startIndex) {
         /* tile index:
         8  9  10 11
         4  5  6  7 
         0  1  2  3 
         */
+        int oriW = _textureInfo.width;
+        int oriH = _textureInfo.height;
+        int oriRawW = _textureInfo.rawWidth;
+        int oriRawH = _textureInfo.rawHeight;
+        // use tiled size
+        _textureInfo.width = (int)_sprite.width;
+        _textureInfo.height = (int)_sprite.height;
+        _textureInfo.rawWidth = _textureInfo.width + oriRawW - oriW;
+        _textureInfo.rawHeight = _textureInfo.height + oriRawH - oriH;
+        // get entire sprite
+        SimpleUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _vertices, _startIndex, _space);
+        // restore
+        _textureInfo.width = oriW;
+        _textureInfo.height = oriH;
+        _textureInfo.rawWidth = oriRawW;
+        _textureInfo.rawHeight = oriRawH;
+
         /*Vector3 v0 = _vertices.buffer[_startIndex + 0];
         Vector3 v1 = _vertices.buffer[_startIndex + 1];
         Vector3 v2 = _vertices.buffer[_startIndex + 2];
         Vector3 v3 = _vertices.buffer[_startIndex + 3];*/
-        
     }
 }
 }
