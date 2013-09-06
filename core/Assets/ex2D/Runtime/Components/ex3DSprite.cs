@@ -101,6 +101,9 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
         set {
             if ( spriteType_ != value ) {
                 spriteType_ = value;
+                if (spriteType_ == exSpriteType.Tiled) {
+                    customSize_ = true;
+                }
                 UpdateBufferSize ();
                 updateFlags |= exUpdateFlags.All;
             }
@@ -208,9 +211,9 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
         case exSpriteType.Sliced:
             SpriteBuilder.SlicedUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.Self, _vertices, _uvs, _indices, 0, 0);
             break;
-        //case exSpriteType.Tiled:
-        //    TiledUpdateBuffers (_vertices, _uvs, _indices);
-        //    break;
+        case exSpriteType.Tiled:
+            SpriteBuilder.TiledUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.Self, _vertices, _uvs, _indices, 0, 0);
+            break;
         //case exSpriteType.Diced:
         //    break;
         }
@@ -250,14 +253,15 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
 
         switch (spriteType_) {
         case exSpriteType.Simple:
-            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vertices, 0);
             break;
         case exSpriteType.Sliced:
-            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vertices, 0);
             SpriteBuilder.SimpleVertexBufferToSliced(this, textureInfo_, vertices, 0);
             break;
-        //case exSpriteType.Tiled:
-            //    break;
+        case exSpriteType.Tiled:
+            SpriteBuilder.TiledUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vertices, 0);
+            break;
         //case exSpriteType.Diced:
             //    break;
         }

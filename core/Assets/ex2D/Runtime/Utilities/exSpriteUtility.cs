@@ -22,10 +22,16 @@ public static class exSpriteUtility {
 
     public static void GetTilingCount (exISprite _sprite, out int _colCount, out int _rowCount) {
         exTextureInfo ti = _sprite.textureInfo;
-        float rawTiledWidth = _sprite.width + (ti.rawWidth - ti.width);
-        _colCount = (int)Mathf.Ceil(Mathf.Abs(rawTiledWidth) / ti.rawWidth);
-        float rawTiledHeight = _sprite.height + (ti.rawHeight - ti.height);
-        _rowCount = (int)Mathf.Ceil(Mathf.Abs(rawTiledHeight / ti.rawHeight));
+        if (ti != null) {
+            //float rawTiledWidth = _sprite.width + (ti.rawWidth - ti.width);
+            _colCount = (int)Mathf.Ceil(Mathf.Abs(_sprite.width) / ti.rawWidth);
+            //float rawTiledHeight = _sprite.height + (ti.rawHeight - ti.height);
+            _rowCount = (int)Mathf.Ceil(Mathf.Abs(_sprite.height / ti.rawHeight));
+        }
+        else {
+            _colCount = 0;
+            _rowCount = 0;
+        }
     }
 }
 

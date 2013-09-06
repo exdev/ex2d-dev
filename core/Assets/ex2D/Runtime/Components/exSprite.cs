@@ -111,6 +111,9 @@ public class exSprite : exLayeredSprite, exISprite {
         set {
             if ( spriteType_ != value ) {
                 spriteType_ = value;
+                if (spriteType_ == exSpriteType.Tiled) {
+                    customSize_ = true;
+                }
                 if (layer_ != null) {
                     EnsureBufferSize ();
                     updateFlags |= exUpdateFlags.All;
@@ -286,14 +289,15 @@ public class exSprite : exLayeredSprite, exISprite {
         
         switch (spriteType_) {
         case exSpriteType.Simple:
-            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vertices, 0);
             break;
         case exSpriteType.Sliced:
-            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vertices, 0);
             SpriteBuilder.SimpleVertexBufferToSliced(this, textureInfo_, vertices, 0);
             break;
-        //case exSpriteType.Tiled:
-        //    break;
+        case exSpriteType.Tiled:
+            SpriteBuilder.TiledUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vertices, 0);
+            break;
         //case exSpriteType.Diced:
         //    break;
         }
@@ -358,7 +362,7 @@ internal static class SpriteBuilder {
     public static void SimpleUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space,
                                                 exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices, int _vbIndex, int _ibIndex) {
         if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
-            SpriteBuilder.SimpleUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _vertices, _vbIndex, _space);
+            SpriteBuilder.SimpleUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _space, _vertices, _vbIndex);
         }
         if (/*transparent_ == false && */(_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
             _indices.buffer[_ibIndex]     = _vbIndex;
@@ -399,7 +403,7 @@ internal static class SpriteBuilder {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void SimpleUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, exList<Vector3> _vertices, int _startIndex, Space _space) {
+    public static void SimpleUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space, exList<Vector3> _vertices, int _startIndex) {
         Vector2 anchorOffset;
         float halfHeight = _textureInfo.height * 0.5f;
         float halfWidth = _textureInfo.width * 0.5f;
@@ -666,7 +670,7 @@ internal static class SpriteBuilder {
                                           _vertices, _uvs, _indices, _vbIndex, _ibIndex);
 
         if ((_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
-            UpdateTiledVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _space, _vertices, _vbIndex);
+            TiledUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _space, _vertices, _vbIndex);
         }
         
         int colCount, rowCount;
@@ -702,25 +706,21 @@ internal static class SpriteBuilder {
             clippedUv2.x = Mathf.Lerp(uv0.x, uv2.x, Mathf.Min(stepX, 1.0f));
             clippedUv2.y = Mathf.Lerp(uv0.y, uv2.y, Mathf.Min(stepY, 1.0f));
             int i = _ibIndex;
-            int lastColIndex = colCount - 1;
             for (int r = 0; r < rowCount; ++r) {
                 float rowTopUv = uv2.y;
                 if (r == rowCount - 1) {
                     rowTopUv = clippedUv2.y;
                 }
-                // full width column
-                for (int c = 0; c < lastColIndex; ++c) {
+                for (int c = 0; c < colCount; ++c) {
                     _uvs.buffer[i++] = uv0;
                     _uvs.buffer[i++] = new Vector2(uv0.x, rowTopUv);
                     _uvs.buffer[i++] = new Vector2(uv2.x, rowTopUv);
                     _uvs.buffer[i++] = uv3;
                 }
-                // last column
+                // clip last column
                 float clippedX = uv2.x;
-                _uvs.buffer[i++] = uv0;
-                _uvs.buffer[i++] = new Vector2(uv0.x, rowTopUv);
-                _uvs.buffer[i++] = new Vector2(clippedX, rowTopUv);
-                _uvs.buffer[i++] = new Vector2(clippedX, uv0.y);
+                _uvs.buffer[i - 2].x = clippedX;
+                _uvs.buffer[i - 1].x = clippedX;
             }
         }
     }
@@ -729,7 +729,7 @@ internal static class SpriteBuilder {
     // Change vertex buffer from simple to tiled
     // ------------------------------------------------------------------ 
 
-    public static void UpdateTiledVertexBuffer (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space, 
+    public static void TiledUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space, 
                                                 exList<Vector3> _vertices, int _startIndex) {
         /* tile index:
         8  9  10 11
@@ -740,23 +740,73 @@ internal static class SpriteBuilder {
         int oriH = _textureInfo.height;
         int oriRawW = _textureInfo.rawWidth;
         int oriRawH = _textureInfo.rawHeight;
-        // use tiled size
+        // use entire sprite size
         _textureInfo.width = (int)_sprite.width;
         _textureInfo.height = (int)_sprite.height;
         _textureInfo.rawWidth = _textureInfo.width + oriRawW - oriW;
         _textureInfo.rawHeight = _textureInfo.height + oriRawH - oriH;
         // get entire sprite
-        SimpleUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _vertices, _startIndex, _space);
+        SimpleUpdateVertexBuffer (_sprite, _textureInfo, _useTextureOffset, _space, _vertices, _startIndex);
         // restore
         _textureInfo.width = oriW;
         _textureInfo.height = oriH;
         _textureInfo.rawWidth = oriRawW;
         _textureInfo.rawHeight = oriRawH;
 
-        /*Vector3 v0 = _vertices.buffer[_startIndex + 0];
-        Vector3 v1 = _vertices.buffer[_startIndex + 1];
-        Vector3 v2 = _vertices.buffer[_startIndex + 2];
-        Vector3 v3 = _vertices.buffer[_startIndex + 3];*/
+        Vector3 v0 = _vertices.buffer [_startIndex + 0];
+        Vector3 v1 = _vertices.buffer [_startIndex + 1];
+        Vector3 v2 = _vertices.buffer [_startIndex + 2];
+        
+        int colCount, rowCount;
+        exSpriteUtility.GetTilingCount ((exISprite)_sprite, out colCount, out rowCount);
+        
+        Vector2 lastTileRawSize = new Vector2(_sprite.width % _textureInfo.rawWidth, _sprite.height % _textureInfo.rawHeight);
+        Vector2 lastTileRawPercent = new Vector2(lastTileRawSize.x / _textureInfo.rawWidth, lastTileRawSize.y / _textureInfo.rawHeight);
+        Vector2 lastTilePercent = new Vector2(lastTileRawSize.x / _textureInfo.width, lastTileRawSize.y / _textureInfo.height);
+        
+        Vector3 horizontalTileDis = (v2 - v1) / (colCount - 1 + lastTileRawPercent.x);
+        Vector3 verticalTileDis = (v1 - v0) / (rowCount - 1 + lastTileRawPercent.y);
+        Vector3 trimedTileBottomToTop = verticalTileDis / _textureInfo.rawHeight * _textureInfo.height;
+        Vector3 trimedTileLeftToRight = horizontalTileDis / _textureInfo.rawWidth * _textureInfo.width;
+        
+        int i = _startIndex;
+        Vector3 rowBottomLeft = v0;
+        for (int r = 0; r < rowCount; ++r) {
+            Vector3 bottomLeft = rowBottomLeft;
+            Vector3 topLeft;
+            if (r == rowCount - 1) {
+                // last row
+                if (lastTilePercent.y >= 1.0f) {
+                    topLeft = bottomLeft + trimedTileBottomToTop;
+                }
+                else {
+                    topLeft = v1;
+                }
+            }
+            else {
+                topLeft = bottomLeft + trimedTileBottomToTop;
+            }
+
+            for (int c = 0; c < colCount; ++c) {
+                _vertices.buffer[i++] = bottomLeft;
+                _vertices.buffer[i++] = topLeft;
+                _vertices.buffer[i++] = topLeft + trimedTileLeftToRight;
+                _vertices.buffer[i++] = bottomLeft + trimedTileLeftToRight;
+                // next column
+                bottomLeft += horizontalTileDis;
+                topLeft += horizontalTileDis;
+            }
+            
+            // clip last column
+            if (lastTilePercent.x < 1.0f) {
+                Vector3 clipped = trimedTileLeftToRight * (1.0f - lastTilePercent.x);
+                _vertices.buffer[i - 2] -= clipped;
+                _vertices.buffer[i - 1] -= clipped;
+            }
+            
+            // next row
+            rowBottomLeft += verticalTileDis;
+        }
     }
 }
 }
