@@ -61,7 +61,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
                             sp.spriteType = exSpriteType.Sliced;
                             sp.customSize = true;
                         }
-                        else {
+                        else if (sp.spriteType == exSpriteType.Sliced) {
                             sp.spriteType = exSpriteType.Simple;
                             sp.customSize = false;
                         }

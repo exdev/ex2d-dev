@@ -761,7 +761,7 @@ class exSceneEditor : EditorWindow {
                 exLayeredSprite layeredSprite = trans.GetComponent<exLayeredSprite>();
                 if ( layeredSprite ) {
                     // DrawAABoundingRect (layeredSprite);
-                    DrawBoundingRect (layeredSprite);
+                    exSpriteBaseInspector.DrawBoundingRect (layeredSprite, true);
                 }
             }
 
@@ -837,39 +837,6 @@ class exSceneEditor : EditorWindow {
                                           new Vector3 ( boundingRect.xMax, boundingRect.yMax, 0.0f ),
                                           new Vector3 ( boundingRect.xMax, boundingRect.yMin, 0.0f ),
                                           }, Color.white );
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void DrawBoundingRect ( exLayeredSprite _node ) {
-        Vector3[] vertices = _node.GetWorldVertices();
-        if (vertices.Length == 0) {
-            return;
-        }
-        exSprite sprite = _node as exSprite;
-        if ( sprite != null && sprite.spriteType == exSpriteType.Sliced) {
-            Vector3[] rectVertices = new Vector3[16];
-            rectVertices[0] = vertices[0];
-            rectVertices[1] = vertices[4];
-            rectVertices[2] = vertices[7];
-            rectVertices[3] = vertices[3];
-            rectVertices[4] = vertices[8];
-            rectVertices[5] = vertices[12];
-            rectVertices[6] = vertices[15];
-            rectVertices[7] = vertices[11];
-            rectVertices[8] = vertices[0];
-            rectVertices[9] = vertices[12];
-            rectVertices[10] = vertices[13];
-            rectVertices[11] = vertices[1];
-            rectVertices[12] = vertices[2];
-            rectVertices[13] = vertices[14];
-            rectVertices[14] = vertices[15];
-            rectVertices[15] = vertices[3];
-            vertices = rectVertices;
-        }
-        exEditorUtility.GL_DrawRectLine ( vertices, Color.white );
     }
 
     // ------------------------------------------------------------------ 
@@ -963,7 +930,7 @@ class exSceneEditor : EditorWindow {
                 Vector3[] vertices = layeredSprite.GetLocalVertices();
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
                 Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
-                Vector3 size = new Vector3( layeredSprite.width, layeredSprite.height, 0.0f );
+                Vector3 size = new Vector3( aabb.width, aabb.height, 0.0f );
 
                 Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,
                                                                   center.y + size.y * 0.5f,

@@ -35,7 +35,7 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
     public exTextureInfo textureInfo {
         get { return textureInfo_; }
         set {
-            // 如果用户在运行时改变了textureInfo，则这里需要重新赋值
+            // 如果用户在运行时改变了textureInfo，则需要重新设置textureInfo
             // 假定不论textureInfo如何，都不改变index数量
             exTextureInfo old = textureInfo_;
             textureInfo_ = value;
@@ -51,9 +51,9 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
                     }
                 }
                 else {
-                    if (old == null || value.width != old.width || value.height != old.height) {
+                    if (old == null || ReferenceEquals(old, value) || value.rawWidth != old.rawWidth || value.rawHeight != old.rawHeight) {
                         UpdateBufferSize ();
-                        updateFlags |= exUpdateFlags.Vertex;
+                        updateFlags |= exUpdateFlags.Vertex;    // tile数量可能不变，但是间距可能会改变
                     }
                 }
                 if (useTextureOffset_) {
@@ -157,7 +157,7 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
             base.width = value;
             if (spriteType_ == exSpriteType.Tiled) {
                 UpdateBufferSize ();
-                updateFlags |= exUpdateFlags.All;
+                updateFlags |= exUpdateFlags.UV;
             }
         }
     }
@@ -175,7 +175,7 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
             base.height = value;
             if (spriteType_ == exSpriteType.Tiled) {
                 UpdateBufferSize ();
-                updateFlags |= exUpdateFlags.All;
+                updateFlags |= exUpdateFlags.UV;
             }
         }
     }
@@ -248,7 +248,7 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
         }
 
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
-        UpdateVertexAndIndexCount();
+        UpdateBufferSize();
         vertices.AddRange(vertexCount_);
 
         switch (spriteType_) {

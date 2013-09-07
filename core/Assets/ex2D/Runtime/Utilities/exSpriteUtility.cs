@@ -110,7 +110,6 @@ public static partial class exISpriteExtends {
     // ------------------------------------------------------------------ 
     
     public static void GetVertexAndIndexCount (this exISprite _sprite, out int _vertexCount, out int _indexCount) {
-        // 假定不论textureInfo如何，都不改变index, vertex数量
         switch (_sprite.spriteType) {
         case exSpriteType.Simple:
             _vertexCount = exMesh.QUAD_VERTEX_COUNT;
@@ -127,12 +126,12 @@ public static partial class exISpriteExtends {
             _vertexCount = quadCount * exMesh.QUAD_VERTEX_COUNT;
             if (_vertexCount > exMesh.MAX_VERTEX_COUNT) {
                 Debug.LogWarning(_sprite.gameObject.name + " is too big. Consider using a bigger texture.");
-                int sqrCount = (int)Mathf.Sqrt(exMesh.MAX_VERTEX_COUNT);
+                int sqrCount = (int)Mathf.Sqrt(exMesh.MAX_VERTEX_COUNT / exMesh.QUAD_VERTEX_COUNT);
                 if (colCount > sqrCount) {
-                    _sprite.width = _sprite.textureInfo.width * sqrCount;
+                    _sprite.width = _sprite.textureInfo.rawWidth * sqrCount;
                 }
                 if (rowCount > sqrCount) {
-                    _sprite.height = _sprite.textureInfo.height * sqrCount;
+                    _sprite.height = _sprite.textureInfo.rawHeight * sqrCount;
                 }
                 exSpriteUtility.GetTilingCount (_sprite, out colCount, out rowCount);
                 quadCount = colCount * rowCount;

@@ -428,8 +428,8 @@ public static class exEditorUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void GL_DrawRectLine ( Vector3[] _points, Color _color ) {
-        if ( _points.Length < 4 ) {
+    public static void GL_DrawRectLine ( Vector3[] _points, Color _color, bool ignoreZ = true ) {
+        if ( _points.Length % 4 != 0 ) {
             Debug.LogWarning ("Failed to call GL_DrawRectLine, not enough points");
             return;
         }
@@ -437,19 +437,35 @@ public static class exEditorUtility {
         materialLine.SetPass(0);
         GL.Begin( GL.LINES );
             GL.Color(_color);
+            if (ignoreZ) {
+                for ( int i = 0; i < _points.Length; i += 4 ) {
+                    GL.Vertex3( _points[i+0].x, _points[i+0].y, 0.0f );
+                    GL.Vertex3( _points[i+1].x, _points[i+1].y, 0.0f );
 
-            for ( int i = 0; i < _points.Length; i += 4 ) {
-                GL.Vertex3( _points[i+0].x, _points[i+0].y, 0.0f );
-                GL.Vertex3( _points[i+1].x, _points[i+1].y, 0.0f );
+                    GL.Vertex3( _points[i+1].x, _points[i+1].y, 0.0f );
+                    GL.Vertex3( _points[i+2].x, _points[i+2].y, 0.0f );
 
-                GL.Vertex3( _points[i+1].x, _points[i+1].y, 0.0f );
-                GL.Vertex3( _points[i+2].x, _points[i+2].y, 0.0f );
+                    GL.Vertex3( _points[i+2].x, _points[i+2].y, 0.0f );
+                    GL.Vertex3( _points[i+3].x, _points[i+3].y, 0.0f );
 
-                GL.Vertex3( _points[i+2].x, _points[i+2].y, 0.0f );
-                GL.Vertex3( _points[i+3].x, _points[i+3].y, 0.0f );
+                    GL.Vertex3( _points[i+3].x, _points[i+3].y, 0.0f );
+                    GL.Vertex3( _points[i+0].x, _points[i+0].y, 0.0f );
+                }
+            }
+            else {
+                for ( int i = 0; i < _points.Length; i += 4 ) {
+                    GL.Vertex3( _points[i+0].x, _points[i+0].y, _points[i+0].z );
+                    GL.Vertex3( _points[i+1].x, _points[i+1].y, _points[i+1].z );
 
-                GL.Vertex3( _points[i+3].x, _points[i+3].y, 0.0f );
-                GL.Vertex3( _points[i+0].x, _points[i+0].y, 0.0f );
+                    GL.Vertex3( _points[i+1].x, _points[i+1].y, _points[i+1].z );
+                    GL.Vertex3( _points[i+2].x, _points[i+2].y, _points[i+2].z );
+
+                    GL.Vertex3( _points[i+2].x, _points[i+2].y, _points[i+2].z );
+                    GL.Vertex3( _points[i+3].x, _points[i+3].y, _points[i+3].z );
+
+                    GL.Vertex3( _points[i+3].x, _points[i+3].y, _points[i+3].z );
+                    GL.Vertex3( _points[i+0].x, _points[i+0].y, _points[i+0].z );
+                }
             }
         GL.End();
     }
