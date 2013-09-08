@@ -297,17 +297,27 @@ public class exUIElement {
         int child_start_y = y + (int)contentTextSize.y;
         int child_x = child_start_x;
         int child_y = child_start_y;
+        int maxHeight = 0;
 
         for ( int i = 0; i < children.Count; ++i ) {
             exUIElement child = children[i];
             child.Layout( child_x, child_y, width, height );
 
+            // calculate max-height for the prev children
+            int childTotalHeight = child.GetTotalHeight();
+            if ( childTotalHeight > maxHeight )
+                maxHeight = childTotalHeight;
+
+            // advance the child 
             if ( child.style.display == exCSS_display.Block ) {
                 child_x = child_start_x;
-                child_y = child_y + child.GetTotalHeight();
+                child_y = child_y + maxHeight;
+                maxHeight = 0;
             }
             else if ( child.style.display == exCSS_display.InlineBlock ) {
                 // TODO: offset child
+                // if the child width < content_width, next child will not start from child_start_x
+                // else, next child will start from child_start_x
             }
 
             // TODO: We assume inline element not have child, this will save us a lot of work! 
