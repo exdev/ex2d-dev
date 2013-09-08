@@ -35,44 +35,16 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
     public exTextureInfo textureInfo {
         get { return textureInfo_; }
         set {
-            // 如果用户在运行时改变了textureInfo，则需要重新设置textureInfo
-            // 假定不论textureInfo如何，都不改变index数量
-            exTextureInfo old = textureInfo_;
-            textureInfo_ = value;
             if (value != null) {
-                if (value.texture == null) {
-                    Debug.LogWarning("invalid textureInfo");
-                }
-                if (spriteType_ != exSpriteType.Tiled) {
-                    if (customSize_ == false && (value.width != width_ || value.height != height_)) {
-                        width_ = value.width;
-                        height_ = value.height;
-                        updateFlags |= exUpdateFlags.Vertex;
-                    }
-                }
-                else {
-                    if (old == null || ReferenceEquals(old, value) || value.rawWidth != old.rawWidth || value.rawHeight != old.rawHeight) {
-                        UpdateBufferSize ();
-                        updateFlags |= exUpdateFlags.Vertex;    // tile数量可能不变，但是间距可能会改变
-                    }
-                }
-                if (useTextureOffset_) {
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-                updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
-
-                if (old == null || ReferenceEquals(old.texture, value.texture) == false) {
-                    // texture changed
-                    updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV);
-                    UpdateMaterial();
-                }
-                if (isOnEnabled_) {
-                    Show();
+                if (isOnEnabled) {
+                    Show ();
                 }
             }
-            else if (isOnEnabled_ && old != null) {
-                Hide();
+            else if (isOnEnabled && textureInfo_ != null) {
+                Hide ();
             }
+            // 如果用户在运行时改变了textureInfo，则需要重新设置textureInfo
+            exSpriteUtility.SetTextureInfo (this, ref textureInfo_, value, useTextureOffset_, spriteType_);
         }
     }
     
@@ -100,10 +72,15 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
         get { return spriteType_; }
         set {
             if ( spriteType_ != value ) {
-                spriteType_ = value;
-                if (spriteType_ == exSpriteType.Tiled) {
+                if (value == exSpriteType.Tiled) {
                     customSize_ = true;
                 }
+                else if (value == exSpriteType.Diced) {
+                    if (textureInfo_ != null && textureInfo_.diceUnitX == 0 && textureInfo_.diceUnitY == 0) {
+                        Debug.LogWarning ("The texture info does not diced!");
+                    }
+                }
+                spriteType_ = value;
                 UpdateBufferSize ();
                 updateFlags |= exUpdateFlags.All;
             }
@@ -182,7 +159,7 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
     
     public override bool visible {
         get {
-            return isOnEnabled_ && textureInfo_ != null;
+            return isOnEnabled && textureInfo_ != null;
         }
     }
 
@@ -191,8 +168,6 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
     ///////////////////////////////////////////////////////////////////////////////
 
     // TODO: check border change if sliced
-
-#region Functions used to update geometry buffer
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -236,8 +211,6 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
         
     }
     
-#endregion // Functions used to update geometry buffer
-    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
@@ -247,26 +220,26 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
             return new Vector3[0];
         }
 
-        exList<Vector3> vertices = exList<Vector3>.GetTempList();
+        exList<Vector3> vb = exList<Vector3>.GetTempList();
         UpdateBufferSize();
-        vertices.AddRange(vertexCount_);
+        vb.AddRange(vertexCount_);
 
         switch (spriteType_) {
         case exSpriteType.Simple:
-            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vertices, 0);
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vb, 0);
             break;
         case exSpriteType.Sliced:
-            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vertices, 0);
-            SpriteBuilder.SimpleVertexBufferToSliced(this, textureInfo_, vertices, 0);
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vb, 0);
+            SpriteBuilder.SimpleVertexBufferToSliced(this, textureInfo_, vb, 0);
             break;
         case exSpriteType.Tiled:
-            SpriteBuilder.TiledUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vertices, 0);
+            SpriteBuilder.TiledUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vb, 0);
             break;
         //case exSpriteType.Diced:
             //    break;
         }
 
-        return vertices.ToArray();
+        return vb.ToArray();
     }
     
     // ------------------------------------------------------------------ 
@@ -275,6 +248,14 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
 
     protected override void UpdateVertexAndIndexCount () {
         this.GetVertexAndIndexCount(out vertexCount_, out indexCount_);
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void exISprite.UpdateBufferSize () {
+        UpdateBufferSize ();
     }
     
     ///////////////////////////////////////////////////////////////////////////////

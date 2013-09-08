@@ -119,7 +119,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     protected void OnEnable () {
-        isOnEnabled_ = true;
+        isOnEnabled = true;
         Show ();
         bool reloadNonSerialized = (vertices.Count == 0);
         if (reloadNonSerialized) {
@@ -139,7 +139,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
 
     protected void OnDisable () {
-        isOnEnabled_ = false;
+        isOnEnabled = false;
         Hide ();
     }
 

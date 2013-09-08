@@ -41,7 +41,10 @@ public class exTextureInfo : ScriptableObject {
     public int borderRight = 0;
     public int borderTop = 0;
     public int borderBottom = 0;
-
+    
+    public int diceUnitX = 0;
+    public int diceUnitY = 0;
+    
     public int rotatedWidth {
         get {
             if ( rotated ) return height;

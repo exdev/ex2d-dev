@@ -12,6 +12,8 @@
 using UnityEngine;
 using System.Collections;
 
+namespace ex2D.Detail {
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 //
@@ -33,9 +35,47 @@ public static class exSpriteUtility {
             _rowCount = 0;
         }
     }
-}
+    
+    public static void SetTextureInfo (exSpriteBase _sprite, ref exTextureInfo _ti, exTextureInfo _newTi, bool _useTextureOffset, exSpriteType _spriteType) {
+        exTextureInfo old = _ti;
+        _ti = _newTi;
+        if (_newTi != null) {
+            if (_newTi.texture == null) {
+                Debug.LogWarning("invalid textureInfo");
+            }
+            if (_spriteType == exSpriteType.Tiled) {
+                if (old == null || ReferenceEquals(old, _newTi) || _newTi.rawWidth != old.rawWidth || _newTi.rawHeight != old.rawHeight) {
+                    (_sprite as exISprite).UpdateBufferSize ();
+                    _sprite.updateFlags |= exUpdateFlags.Vertex;    // tile数量可能不变，但是间距可能会改变
+                }
+            }
+            else if (_spriteType == exSpriteType.Diced) {
+                if (_newTi.diceUnitX == 0 && _newTi.diceUnitY == 0) {
+                    Debug.LogWarning ("The texture info does not diced!");
+                }
+                (_sprite as exISprite).UpdateBufferSize ();
+                _sprite.updateFlags |= exUpdateFlags.Vertex;
+            }
+            else {
+                if (_sprite.customSize == false && (_newTi.width != _sprite.width || _newTi.height != _sprite.height)) {
+                    _sprite.width = _newTi.width;
+                    _sprite.height = _newTi.height;
+                    _sprite.updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+            if (_useTextureOffset) {
+                _sprite.updateFlags |= exUpdateFlags.Vertex;
+            }
+            _sprite.updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
 
-namespace ex2D.Detail {
+            if (old == null || ReferenceEquals(old.texture, _newTi.texture) == false) {
+                // texture changed
+                _sprite.updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV);
+                (_sprite as exISprite).UpdateMaterial();
+            }
+        }
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //

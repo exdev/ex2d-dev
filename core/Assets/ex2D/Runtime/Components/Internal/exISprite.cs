@@ -36,6 +36,8 @@ public interface exISpriteBase : IMonoBehaviour {
     int indexCount { get; }
     Material material { get; }
     bool visible { get; }
+    
+    void UpdateMaterial ();     ///< internal use
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -48,4 +50,6 @@ public interface exISprite : exISpriteBase {
     exTextureInfo textureInfo { get; set; }
     bool useTextureOffset { get; set; }
     exSpriteType spriteType { get; set; }
+    
+    void UpdateBufferSize ();   ///< internal use
 }

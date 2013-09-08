@@ -331,7 +331,16 @@ class exTextureInfoEditor : EditorWindow {
 
             // diced
         case 3:
-            GUILayout.Label ( "Coming Soon..." );
+            EditorGUI.BeginChangeCheck();
+                int dicedX = EditorGUILayout.IntField ( "Dice X", curEdit.diceUnitX );
+                curEdit.diceUnitX = Mathf.Clamp ( dicedX, 0, curEdit.rawWidth );
+
+                int dicedY = EditorGUILayout.IntField ( "Dice Y", curEdit.diceUnitY );
+                curEdit.diceUnitY = Mathf.Clamp ( dicedY, 0, curEdit.rawHeight );
+
+            if ( EditorGUI.EndChangeCheck() ) {
+                EditorUtility.SetDirty(curEdit);
+            }
             break;
         }
 

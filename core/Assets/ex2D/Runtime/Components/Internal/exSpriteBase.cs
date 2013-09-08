@@ -181,7 +181,7 @@ public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
     
     /// If OnEnable, isOnEnabled_ is true. If OnDisable, isOnEnabled_ is false.
-    [System.NonSerialized] protected bool isOnEnabled_;
+    [System.NonSerialized] protected bool isOnEnabled;
 
     [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
     
@@ -221,7 +221,7 @@ public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
     /// 当前sprite是否可见？只返回sprite自身属性，不一定真的显示在任一camera中。
     public virtual bool visible {
         get {
-            return isOnEnabled_;
+            return isOnEnabled;
         }
     }
 
@@ -230,14 +230,14 @@ public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
 
     void OnEnable () {
-        isOnEnabled_ = true;
+        isOnEnabled = true;
         if (visible) {
             Show();
         }
     }
 
     void OnDisable () {
-        isOnEnabled_ = false;
+        isOnEnabled = false;
         Hide();
     }
 
@@ -302,6 +302,14 @@ public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
 
     internal abstract float GetScaleY (Space _space);
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void exISpriteBase.UpdateMaterial () {
+        UpdateMaterial ();
+    }
+    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 

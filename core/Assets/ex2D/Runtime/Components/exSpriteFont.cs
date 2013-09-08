@@ -60,7 +60,7 @@ public class exSpriteFont : exLayeredSprite {
                     UpdateMaterial();   // 前面update过text了
                     return;
                 }
-                if (layer_ != null && isOnEnabled_ && visible == false) {
+                if (layer_ != null && isOnEnabled && visible == false) {
                     font_ = value;
                     if (visible) {
                         Show();
@@ -314,7 +314,7 @@ public class exSpriteFont : exLayeredSprite {
 
     public override bool visible {
         get {
-            return isOnEnabled_ && font_ != null && font_.texture != null && font_.charInfos.Count > 0;
+            return isOnEnabled && font_ != null && font_.texture != null && font_.charInfos.Count > 0;
         }
     }
     

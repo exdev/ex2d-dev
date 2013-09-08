@@ -22,7 +22,7 @@ public enum exSpriteType {
     Simple = 0,
     Sliced,
     Tiled,
-    //Diced,
+    Diced,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -47,42 +47,16 @@ public class exSprite : exLayeredSprite, exISprite {
         get { return textureInfo_; }
         set {
             // 如果用户在运行时改变了textureInfo，则需要重新设置textureInfo
-            exTextureInfo old = textureInfo_;
-            textureInfo_ = value;
             if (value != null) {
-                if (value.texture == null) {
-                    Debug.LogWarning("invalid textureInfo");
-                }
-                if (spriteType_ != exSpriteType.Tiled) {
-                    if (customSize_ == false && (value.width != width_ || value.height != height_)) {
-                        width_ = value.width;
-                        height_ = value.height;
-                        updateFlags |= exUpdateFlags.Vertex;
-                    }
-                }
-                else {
-                    if (old == null || ReferenceEquals(old, value) || value.rawWidth != old.rawWidth || value.rawHeight != old.rawHeight) {
-                        EnsureBufferSize ();
-                        updateFlags |= exUpdateFlags.Vertex;    // tile数量可能不变，但是间距可能会改变
-                    }
-                }
-                if (useTextureOffset_) {
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-                updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
-
-                if (old == null || ReferenceEquals(old.texture, value.texture) == false) {
-                    // texture changed
-                    updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV);
-                    UpdateMaterial();
-                }
-                if (isOnEnabled_) {
-                    Show();
+                if (isOnEnabled) {
+                    Show ();
                 }
             }
-            else if (isOnEnabled_ && old != null) {
-                Hide();
+            else if (isOnEnabled && textureInfo_ != null) {
+                Hide ();
             }
+            // 如果用户在运行时改变了textureInfo，则需要重新设置textureInfo
+            exSpriteUtility.SetTextureInfo (this, ref textureInfo_, value, useTextureOffset_, spriteType_);
         }
     }
     
@@ -110,12 +84,17 @@ public class exSprite : exLayeredSprite, exISprite {
         get { return spriteType_; }
         set {
             if ( spriteType_ != value ) {
-                spriteType_ = value;
-                if (spriteType_ == exSpriteType.Tiled) {
+                if (value == exSpriteType.Tiled) {
                     customSize_ = true;
                 }
+                else if (value == exSpriteType.Diced) {
+                    if (textureInfo_ != null && textureInfo_.diceUnitX == 0 && textureInfo_.diceUnitY == 0) {
+                        Debug.LogWarning ("The texture info does not diced!");
+                    }
+                }
+                spriteType_ = value;
                 if (layer_ != null) {
-                    EnsureBufferSize ();
+                    UpdateBufferSize ();
                     updateFlags |= exUpdateFlags.All;
                 }
             }
@@ -168,7 +147,7 @@ public class exSprite : exLayeredSprite, exISprite {
         set {
             base.width = value;
             if (spriteType_ == exSpriteType.Tiled && layer_ != null) {
-                EnsureBufferSize ();
+                UpdateBufferSize ();
                 updateFlags |= exUpdateFlags.UV;
             }
         }
@@ -186,7 +165,7 @@ public class exSprite : exLayeredSprite, exISprite {
         set {
             base.height = value;
             if (spriteType_ == exSpriteType.Tiled && layer_ != null) {
-                EnsureBufferSize ();
+                UpdateBufferSize ();
                 updateFlags |= exUpdateFlags.UV;
             }
         }
@@ -194,7 +173,7 @@ public class exSprite : exLayeredSprite, exISprite {
     
     public override bool visible {
         get {
-            return isOnEnabled_ && textureInfo_ != null;
+            return isOnEnabled && textureInfo_ != null;
         }
     }
 
@@ -284,7 +263,7 @@ public class exSprite : exLayeredSprite, exISprite {
         }
 
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
-        EnsureBufferSize();
+        UpdateBufferSize();
         vertices.AddRange(vertexCount_);
         
         switch (spriteType_) {
@@ -332,7 +311,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void EnsureBufferSize () {
+    void UpdateBufferSize () {
         int newVertexCount, newIndexCount;
         this.GetVertexAndIndexCount (out newVertexCount, out newIndexCount);
         if (vertexCount_ != newVertexCount || indexCount_ != newIndexCount) {
@@ -342,6 +321,14 @@ public class exSprite : exLayeredSprite, exISprite {
             myLayer.Add (this, false);
             exDebug.Assert (vertexCount_ == newVertexCount && indexCount_ == newIndexCount);
         }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void exISprite.UpdateBufferSize () {
+        UpdateBufferSize ();
     }
 }
 
@@ -734,7 +721,7 @@ internal static class SpriteBuilder {
     // ------------------------------------------------------------------ 
     // Change vertex buffer from simple to tiled
     // ------------------------------------------------------------------ 
-    // TODO texture info 修改后，缓冲长度不足
+    
     public static void TiledUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space, 
                                                 exList<Vector3> _vertices, int _startIndex) {
         /* tile index:

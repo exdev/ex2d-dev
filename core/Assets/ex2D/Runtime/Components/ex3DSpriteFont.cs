@@ -50,7 +50,7 @@ public class ex3DSpriteFont : exStandaloneSprite {
                     UpdateMaterial();   // 前面update过text了
                     return;
                 }
-                if (isOnEnabled_ && visible == false) {
+                if (isOnEnabled && visible == false) {
                     font_ = value;
                     if (visible) {
                         Show();
@@ -300,7 +300,7 @@ public class ex3DSpriteFont : exStandaloneSprite {
     
     public override bool visible {
         get {
-            return isOnEnabled_ && font_ != null && font_.texture != null;
+            return isOnEnabled && font_ != null && font_.texture != null;
         }
     }
 
