@@ -44,7 +44,9 @@ public class exTextureInfo : ScriptableObject {
     
     public int diceUnitX = 0;
     public int diceUnitY = 0;
-    
+
+    [SerializeField] private int[] diceData;
+
     public int rotatedWidth {
         get {
             if ( rotated ) return height;
@@ -61,5 +63,130 @@ public class exTextureInfo : ScriptableObject {
         get {
             return borderLeft != 0 || borderRight != 0 || borderTop != 0 || borderBottom != 0;
         }
+    }
+
+    public bool isDiced {
+        get {
+            exDebug.Assert((diceUnitX != 0) == (diceUnitY != 0));
+            return diceUnitX != 0 && diceUnitY != 0;
+        }
+    }
+
+    public DiceEnumerator GetDiceEnumerator() {
+        return new DiceEnumerator(diceData);    // No GC
+    }
+
+    /* tile index:
+    8  9  10 11
+    4  5  6  7 
+    0  1  2  3 
+    */
+    public void SetDiceData (Rect[] tileRects, int[] x, int[] y, bool[] rotated) {
+        // TODO: compress diceData
+        diceData = new int[tileRects.Length * 6];
+        int dataIndex = 0;
+        for (int i = 0; i < tileRects.Length; ++i) {
+        	diceData[dataIndex++] = (int)tileRects[i].x;
+            diceData[dataIndex++] = (int)tileRects[i].y;
+            diceData[dataIndex++] = (int)tileRects[i].width;
+            diceData[dataIndex++] = (int)tileRects[i].height;
+            if (rotated[i]) {
+                diceData[dataIndex++] = - x[i];
+            }
+            else {
+                diceData[dataIndex++] = x[i];
+            }
+            diceData[dataIndex++] = y[i];
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+/// The dice data enumerator. Use struct type to avoid GC.
+//
+///////////////////////////////////////////////////////////////////////////////
+
+public struct DiceEnumerator : System.Collections.Generic.IEnumerator<DiceEnumerator.DiceData> {
+
+    public enum SizeType {
+        Max,
+        Empty,
+        Trimmed,
+    }
+
+    public struct DiceData {
+        public SizeType sizeType;
+        public int trim_x;
+        public int trim_y;
+        public int width;
+        public int height;
+        public int x;
+        public int y;
+        public bool rotated;
+    }
+
+    private int[] diceData;
+    private int dataIndex;
+
+    public DiceEnumerator (int[] _diceData) {
+        diceData = _diceData;
+        dataIndex = 0;
+        Reset();
+    }
+
+    public DiceData Current {
+        get {
+            DiceData d = new DiceData();
+            if (diceData[dataIndex] == -1) {
+                d.sizeType = SizeType.Empty;
+                return d;
+            }
+            if (diceData[dataIndex] >= 0) {
+                d.sizeType = SizeType.Trimmed;
+                d.trim_x = diceData[dataIndex];
+                d.trim_y = diceData[dataIndex + 1];
+                d.width = diceData[dataIndex + 2];
+                d.height = diceData[dataIndex + 3];
+                d.x = diceData[dataIndex + 4];
+                d.y = diceData[dataIndex + 5];
+            }
+            else {
+                exDebug.Assert(diceData[dataIndex] == -2);
+                d.sizeType = SizeType.Max;
+                d.x = diceData[dataIndex + 1];
+                d.y = diceData[dataIndex + 2];
+            }
+            if (d.x < 0) {
+                d.rotated = true;
+                d.x = -d.x;
+            }
+            return d;
+        }
+    }
+    
+    public bool MoveNext () {
+        if (dataIndex == -1) {
+            dataIndex = 0;
+        }
+        else if (diceData[dataIndex] >= 0) {
+            dataIndex += 4;
+        }
+        else {
+            dataIndex += 1;
+        }
+        return dataIndex < diceData.Length;
+    }
+
+    public void Dispose () {
+        diceData = null;
+    }
+
+    object System.Collections.IEnumerator.Current {
+        get { return Current; }
+    }
+
+    public void Reset () {
+        dataIndex = -1;
     }
 }

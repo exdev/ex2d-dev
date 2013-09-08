@@ -286,3 +286,22 @@ namespace UnityEngine {
         }
     }
 }
+
+/*
+///////////////////////////////////////////////////////////////////////////////
+//
+//
+//
+///////////////////////////////////////////////////////////////////////////////
+
+public struct exRect {
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+
+    public exRect (int _x, int _y, int _width, int _height) {
+        x = _x; y = _y; width = _width; height = _height;
+    }
+}
+*/
