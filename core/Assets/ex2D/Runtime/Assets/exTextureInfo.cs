@@ -82,14 +82,19 @@ public class exTextureInfo : ScriptableObject {
     0  1  2  3 
     */
     public void SetDiceData (Rect[] tileRects, int[] x, int[] y, bool[] rotated) {
-        // TODO: compress diceData
         diceData = new int[tileRects.Length * 6];
         int dataIndex = 0;
         for (int i = 0; i < tileRects.Length; ++i) {
+            Rect rect = tileRects[i];
+            if (rect.width == 0 || rect.height == 0) {
+                diceData[dataIndex++] = -1;
+                continue;
+            }
         	diceData[dataIndex++] = (int)tileRects[i].x;
             diceData[dataIndex++] = (int)tileRects[i].y;
             diceData[dataIndex++] = (int)tileRects[i].width;
             diceData[dataIndex++] = (int)tileRects[i].height;
+            // TODO: compress max dice
             if (rotated[i]) {
                 diceData[dataIndex++] = - x[i];
             }
@@ -170,7 +175,10 @@ public struct DiceEnumerator : System.Collections.Generic.IEnumerator<DiceEnumer
             dataIndex = 0;
         }
         else if (diceData[dataIndex] >= 0) {
-            dataIndex += 4;
+            dataIndex += 6;
+        }
+        else if (diceData[dataIndex] == -2) {
+            dataIndex += 2;
         }
         else {
             dataIndex += 1;
