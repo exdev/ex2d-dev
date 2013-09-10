@@ -16,7 +16,7 @@ namespace ex2D.Detail {
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-//
+/// The sprite utilities
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -26,9 +26,9 @@ public static class exSpriteUtility {
         exTextureInfo ti = _sprite.textureInfo;
         if (ti != null) {
             //float rawTiledWidth = _sprite.width + (ti.rawWidth - ti.width);
-            _colCount = (int)Mathf.Ceil(Mathf.Abs(_sprite.width) / ti.rawWidth);
+            _colCount = Mathf.Max((int)Mathf.Ceil(_sprite.width / ti.rawWidth), 1);
             //float rawTiledHeight = _sprite.height + (ti.rawHeight - ti.height);
-            _rowCount = (int)Mathf.Ceil(Mathf.Abs(_sprite.height / ti.rawHeight));
+            _rowCount = Mathf.Max((int)Mathf.Ceil(_sprite.height / ti.rawHeight), 1);
         }
         else {
             _colCount = 0;
@@ -162,7 +162,7 @@ public static partial class exISpriteExtends {
         case exSpriteType.Tiled:
             int colCount, rowCount;
             exSpriteUtility.GetTilingCount (_sprite, out colCount, out rowCount);
-            int quadCount = Mathf.Max (colCount * rowCount, 1);
+            int quadCount = colCount * rowCount;
             _vertexCount = quadCount * exMesh.QUAD_VERTEX_COUNT;
             if (_vertexCount > exMesh.MAX_VERTEX_COUNT) {
                 Debug.LogWarning(_sprite.gameObject.name + " is too big. Consider using a bigger texture.");

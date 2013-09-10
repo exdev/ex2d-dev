@@ -688,32 +688,50 @@ internal static class SpriteBuilder {
             Vector2 uv0 = _uvs.buffer[_vbIndex + 0];
             Vector2 uv2 = _uvs.buffer[_vbIndex + 2];
             Vector2 uv3 = _uvs.buffer[_vbIndex + 3];
-            Vector2 clippedUv2 = uv2;
             Vector2 lastTileRawSize = new Vector2(_sprite.width % _textureInfo.rawWidth, _sprite.height % _textureInfo.rawHeight);
+            Vector2 clippedUv2 = uv2;
             if (0f < lastTileRawSize.y && lastTileRawSize.y < _textureInfo.height) {  // clipped last row
-                float step = lastTileRawSize.y / _textureInfo.height;
-                clippedUv2.y = Mathf.Lerp(uv0.y, uv2.y, step);
+                float stepY = lastTileRawSize.y / _textureInfo.height;
+                if (_textureInfo.rotated == false)
+                    clippedUv2.y = Mathf.Lerp(uv0.y, uv2.y, stepY);
+                else
+                    clippedUv2.x = Mathf.Lerp(uv0.x, uv2.x, stepY);
             }
-            if (0f < lastTileRawSize.x && lastTileRawSize.x < _textureInfo.width) {  // clipped last column
-                float step = lastTileRawSize.x / _textureInfo.width;
-                clippedUv2.x = Mathf.Lerp(uv0.x, uv2.x, step);
+            if (0f < lastTileRawSize.x && lastTileRawSize.x < _textureInfo.width) {   // clipped last column
+                float stepX = lastTileRawSize.x / _textureInfo.width;
+                if (_textureInfo.rotated == false)
+                    clippedUv2.x = Mathf.Lerp(uv0.x, uv2.x, stepX);
+                else
+                    clippedUv2.y = Mathf.Lerp(uv0.y, uv2.y, stepX);
             }
             int i = _vbIndex;
-            for (int r = 0; r < rowCount; ++r) {
-                float rowTopUv = uv2.y;
-                if (r == rowCount - 1) {
-                    rowTopUv = clippedUv2.y;
+            if (_textureInfo.rotated == false) {
+                for (int r = 0; r < rowCount; ++r) {
+                    float rowTopUv = (r < rowCount - 1) ? uv2.y : clippedUv2.y;
+                    for (int c = 0; c < colCount; ++c) {
+                        _uvs.buffer[i++] = uv0;
+                        _uvs.buffer[i++] = new Vector2(uv0.x, rowTopUv);
+                        _uvs.buffer[i++] = new Vector2(uv2.x, rowTopUv);
+                        _uvs.buffer[i++] = uv3;
+                    }
+                    // clip last column
+                    _uvs.buffer[i - 2].x = clippedUv2.x;
+                    _uvs.buffer[i - 1].x = clippedUv2.x;
                 }
-                for (int c = 0; c < colCount; ++c) {
-                    _uvs.buffer[i++] = uv0;
-                    _uvs.buffer[i++] = new Vector2(uv0.x, rowTopUv);
-                    _uvs.buffer[i++] = new Vector2(uv2.x, rowTopUv);
-                    _uvs.buffer[i++] = uv3;
+            }
+            else {
+                for (int r = 0; r < rowCount; ++r) {
+                    float rowTopUv = (r < rowCount - 1) ? uv2.x : clippedUv2.x;
+                    for (int c = 0; c < colCount; ++c) {
+                        _uvs.buffer[i++] = uv0;
+                        _uvs.buffer[i++] = new Vector2(rowTopUv, uv0.y);
+                        _uvs.buffer[i++] = new Vector2(rowTopUv, uv2.y);
+                        _uvs.buffer[i++] = uv3;
+                    }
+                    // clip last column
+                    _uvs.buffer[i - 2].y = clippedUv2.y;
+                    _uvs.buffer[i - 1].y = clippedUv2.y;
                 }
-                // clip last column
-                float clippedX = clippedUv2.x;
-                _uvs.buffer[i - 2].x = clippedX;
-                _uvs.buffer[i - 1].x = clippedX;
             }
         }
     }
