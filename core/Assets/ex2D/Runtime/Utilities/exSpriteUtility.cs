@@ -162,7 +162,7 @@ public static partial class exISpriteExtends {
         case exSpriteType.Tiled:
             int colCount, rowCount;
             exSpriteUtility.GetTilingCount (_sprite, out colCount, out rowCount);
-            int quadCount = colCount * rowCount;
+            int quadCount = Mathf.Max (colCount * rowCount, 1);
             _vertexCount = quadCount * exMesh.QUAD_VERTEX_COUNT;
             if (_vertexCount > exMesh.MAX_VERTEX_COUNT) {
                 Debug.LogWarning(_sprite.gameObject.name + " is too big. Consider using a bigger texture.");

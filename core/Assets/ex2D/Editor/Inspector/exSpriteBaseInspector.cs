@@ -75,7 +75,7 @@ class exSpriteBaseInspector : Editor {
                 foreach ( Object obj in serializedObject.targetObjects ) {
                     exSpriteBase sp = obj as exSpriteBase;
                     if ( sp ) {
-                        sp.width = widthProp.floatValue;
+                        sp.width = Mathf.Max(widthProp.floatValue, 0f);
                         EditorUtility.SetDirty(sp);
                     }
                 }
@@ -88,7 +88,7 @@ class exSpriteBaseInspector : Editor {
                 foreach ( Object obj in serializedObject.targetObjects ) {
                     exSpriteBase sp = obj as exSpriteBase;
                     if ( sp ) {
-                        sp.height = heightProp.floatValue;
+                        sp.height = Mathf.Max(heightProp.floatValue, 0f);
                         EditorUtility.SetDirty(sp);
                     }
                 }

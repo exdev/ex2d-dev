@@ -258,7 +258,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
 
     protected override Vector3[] GetVertices (Space _space) {
-        if (textureInfo_ == null) {
+        if (textureInfo_ == null || layer_ == null) {
             return new Vector3[0];
         }
 
@@ -664,7 +664,6 @@ internal static class SpriteBuilder {
         
         int colCount, rowCount;
         exSpriteUtility.GetTilingCount ((exISprite)_sprite, out colCount, out rowCount);
-
         if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
             /* tile index:
             8  9  10 11
@@ -686,19 +685,20 @@ internal static class SpriteBuilder {
         }
         
         if ((_sprite.updateFlags & exUpdateFlags.UV) != 0) {
-            Vector2 uv0 = _uvs.buffer[0];
-            Vector2 uv2 = _uvs.buffer[2];
-            Vector2 uv3 = _uvs.buffer[3];
+            Vector2 uv0 = _uvs.buffer[_vbIndex + 0];
+            Vector2 uv2 = _uvs.buffer[_vbIndex + 2];
+            Vector2 uv3 = _uvs.buffer[_vbIndex + 3];
             Vector2 clippedUv2 = uv2;
-            float stepY = (_sprite.height % _textureInfo.rawHeight) / _textureInfo.height;
-            if (stepY != 0f) {
-                clippedUv2.y = Mathf.Lerp(uv0.y, uv2.y, Mathf.Min(stepY, 1.0f));
+            Vector2 lastTileRawSize = new Vector2(_sprite.width % _textureInfo.rawWidth, _sprite.height % _textureInfo.rawHeight);
+            if (0f < lastTileRawSize.y && lastTileRawSize.y < _textureInfo.height) {  // clipped last row
+                float step = lastTileRawSize.y / _textureInfo.height;
+                clippedUv2.y = Mathf.Lerp(uv0.y, uv2.y, step);
             }
-            float stepX = (_sprite.width % _textureInfo.rawWidth) / _textureInfo.width;
-            if (stepX != 0f) {
-                clippedUv2.x = Mathf.Lerp(uv0.x, uv2.x, Mathf.Min(stepX, 1.0f));
+            if (0f < lastTileRawSize.x && lastTileRawSize.x < _textureInfo.width) {  // clipped last column
+                float step = lastTileRawSize.x / _textureInfo.width;
+                clippedUv2.x = Mathf.Lerp(uv0.x, uv2.x, step);
             }
-            int i = _ibIndex;
+            int i = _vbIndex;
             for (int r = 0; r < rowCount; ++r) {
                 float rowTopUv = uv2.y;
                 if (r == rowCount - 1) {
@@ -758,14 +758,14 @@ internal static class SpriteBuilder {
         
         Vector2 lastTileRawSize = new Vector2(_sprite.width % _textureInfo.rawWidth, _sprite.height % _textureInfo.rawHeight);
         Vector3 horizontalTileDis, verticalTileDis;
-        if (lastTileRawSize.x != 0) {
+        if (lastTileRawSize.x > 0f) {
             float perc = lastTileRawSize.x / _textureInfo.rawWidth;
             horizontalTileDis = (v2 - v1) / (colCount - 1 + perc);
         }
         else {
             horizontalTileDis = (v2 - v1) / colCount;
         }
-        if (lastTileRawSize.y != 0) {
+        if (lastTileRawSize.y > 0f) {
             float perc = lastTileRawSize.y / _textureInfo.rawHeight;
             verticalTileDis = (v1 - v0) / (rowCount - 1 + perc);
         }
