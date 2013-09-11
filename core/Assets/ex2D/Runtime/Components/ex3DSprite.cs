@@ -97,7 +97,7 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
             if ( tiledSpacing_ != value ) {
                 tiledSpacing_ = value;
                 UpdateBufferSize();
-                updateFlags |= exUpdateFlags.Vertex;
+                updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV);
             }
         }
     }
@@ -202,7 +202,7 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
             SpriteBuilder.SlicedUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.Self, _vertices, _uvs, _indices, 0, 0);
             break;
         case exSpriteType.Tiled:
-            SpriteBuilder.TiledUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.Self, _vertices, _uvs, _indices, 0, 0);
+            SpriteBuilder.TiledUpdateBuffers (this, textureInfo_, useTextureOffset_, tiledSpacing_, Space.Self, _vertices, _uvs, _indices, 0, 0);
             break;
         //case exSpriteType.Diced:
         //    break;
@@ -248,7 +248,7 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
             SpriteBuilder.SimpleVertexBufferToSliced(this, textureInfo_, vb, 0);
             break;
         case exSpriteType.Tiled:
-            SpriteBuilder.TiledUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vb, 0);
+            SpriteBuilder.TiledUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, tiledSpacing_, _space, vb, 0);
             break;
         //case exSpriteType.Diced:
             //    break;

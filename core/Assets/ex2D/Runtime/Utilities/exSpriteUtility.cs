@@ -24,15 +24,13 @@ public static class exSpriteUtility {
 
     public static void GetTilingCount (exISprite _sprite, out int _colCount, out int _rowCount) {
         exTextureInfo ti = _sprite.textureInfo;
-        if (ti != null) {
-            //float rawTiledWidth = _sprite.width + (ti.rawWidth - ti.width);
-            _colCount = Mathf.Max((int)Mathf.Ceil(_sprite.width / ti.rawWidth), 1);
-            //float rawTiledHeight = _sprite.height + (ti.rawHeight - ti.height);
-            _rowCount = Mathf.Max((int)Mathf.Ceil(_sprite.height / ti.rawHeight), 1);
+        if (ti != null && ti.width + _sprite.tiledSpacing.x != 0 && ti.height + _sprite.tiledSpacing.y != 0) {
+            _colCount = Mathf.Max((int)Mathf.Ceil(_sprite.width / (ti.width + _sprite.tiledSpacing.x)), 1);
+            _rowCount = Mathf.Max((int)Mathf.Ceil(_sprite.height / (ti.height + _sprite.tiledSpacing.y)), 1);
         }
         else {
-            _colCount = 0;
-            _rowCount = 0;
+            _colCount = 1;
+            _rowCount = 1;
         }
     }
     
@@ -164,19 +162,21 @@ public static partial class exISpriteExtends {
             exSpriteUtility.GetTilingCount (_sprite, out colCount, out rowCount);
             int quadCount = colCount * rowCount;
             _vertexCount = quadCount * exMesh.QUAD_VERTEX_COUNT;
-            if (_vertexCount > exMesh.MAX_VERTEX_COUNT) {
+            const int maxVertex = exMesh.MAX_VERTEX_COUNT;
+            //const int maxVertex = 40000;
+            if (_vertexCount > maxVertex) {
                 Debug.LogWarning(_sprite.gameObject.name + " is too big. Consider using a bigger texture.");
-                int sqrCount = (int)Mathf.Sqrt(exMesh.MAX_VERTEX_COUNT / exMesh.QUAD_VERTEX_COUNT);
+                int sqrCount = (int)Mathf.Sqrt(maxVertex / exMesh.QUAD_VERTEX_COUNT);
                 if (colCount > sqrCount) {
-                    _sprite.width = _sprite.textureInfo.rawWidth * sqrCount;
+                    _sprite.width = (_sprite.textureInfo.width + _sprite.tiledSpacing.x) * sqrCount;
                 }
                 if (rowCount > sqrCount) {
-                    _sprite.height = _sprite.textureInfo.rawHeight * sqrCount;
+                    _sprite.height = (_sprite.textureInfo.height + _sprite.tiledSpacing.y) * sqrCount;
                 }
                 exSpriteUtility.GetTilingCount (_sprite, out colCount, out rowCount);
                 quadCount = colCount * rowCount;
                 _vertexCount = quadCount * exMesh.QUAD_VERTEX_COUNT;
-                exDebug.Assert (_vertexCount <= exMesh.MAX_VERTEX_COUNT);
+                exDebug.Assert (_vertexCount <= maxVertex);
             }
             _indexCount = quadCount * exMesh.QUAD_INDEX_COUNT;
             break;

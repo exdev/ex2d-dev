@@ -112,7 +112,7 @@ public class exSprite : exLayeredSprite, exISprite {
                 tiledSpacing_ = value;
                 if (layer_ != null) {
                     UpdateBufferSize();
-                    updateFlags |= exUpdateFlags.Vertex;
+                    updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV);
                 }
             }
         }
@@ -221,7 +221,7 @@ public class exSprite : exLayeredSprite, exISprite {
                                                    _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
                 break;
             case exSpriteType.Tiled:
-                SpriteBuilder.TiledUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.World, 
+                SpriteBuilder.TiledUpdateBuffers (this, textureInfo_, useTextureOffset_, tiledSpacing_, Space.World, 
                                                   _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
                 break;
             //case exSpriteType.Diced:
@@ -292,7 +292,7 @@ public class exSprite : exLayeredSprite, exISprite {
             SpriteBuilder.SimpleVertexBufferToSliced(this, textureInfo_, vertices, 0);
             break;
         case exSpriteType.Tiled:
-            SpriteBuilder.TiledUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vertices, 0);
+            SpriteBuilder.TiledUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, tiledSpacing_, _space, vertices, 0);
             break;
         //case exSpriteType.Diced:
         //    break;
@@ -667,7 +667,7 @@ internal static class SpriteBuilder {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public static void TiledUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space, 
+    public static void TiledUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Vector2 _tiledSpacing, Space _space, 
                                            exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices, int _vbIndex, int _ibIndex) {
         if (_vertices.Count == 0) {
             return;
@@ -676,7 +676,7 @@ internal static class SpriteBuilder {
                                           _vertices, _uvs, _indices, _vbIndex, _ibIndex);
 
         if ((_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
-            TiledUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _space, _vertices, _vbIndex);
+            TiledUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _tiledSpacing, _space, _vertices, _vbIndex);
         }
         
         int colCount, rowCount;
@@ -705,7 +705,7 @@ internal static class SpriteBuilder {
             Vector2 uv0 = _uvs.buffer[_vbIndex + 0];
             Vector2 uv2 = _uvs.buffer[_vbIndex + 2];
             Vector2 uv3 = _uvs.buffer[_vbIndex + 3];
-            Vector2 lastTileRawSize = new Vector2(_sprite.width % _textureInfo.rawWidth, _sprite.height % _textureInfo.rawHeight);
+            Vector2 lastTileRawSize = new Vector2(_sprite.width % (_textureInfo.width + _tiledSpacing.x), _sprite.height % (_textureInfo.height + _tiledSpacing.y));
             Vector2 clippedUv2 = uv2;
             if (0f < lastTileRawSize.y && lastTileRawSize.y < _textureInfo.height) {  // clipped last row
                 float stepY = lastTileRawSize.y / _textureInfo.height;
@@ -757,7 +757,7 @@ internal static class SpriteBuilder {
     // Change vertex buffer from simple to tiled
     // ------------------------------------------------------------------ 
     
-    public static void TiledUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space, 
+    public static void TiledUpdateVertexBuffer (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Vector2 _tiledSpacing, Space _space, 
                                                 exList<Vector3> _vertices, int _startIndex) {
         /* tile index:
         8  9  10 11
@@ -771,19 +771,22 @@ internal static class SpriteBuilder {
         int oriH = _textureInfo.height;
         int oriRawW = _textureInfo.rawWidth;
         int oriRawH = _textureInfo.rawHeight;
-        // use entire sprite size
-        _textureInfo.width = Mathf.Max((int)Mathf.Abs(_sprite.width), 1);
-        _textureInfo.height = Mathf.Max((int)Mathf.Abs(_sprite.height), 1);
-        _textureInfo.rawWidth = Mathf.Max(_textureInfo.width + oriRawW - oriW, 1);
-        _textureInfo.rawHeight = Mathf.Max(_textureInfo.height + oriRawH - oriH, 1);
-        // get entire sprite
-        SimpleUpdateVertexBuffer (_sprite, _textureInfo, _useTextureOffset, _space, _vertices, _startIndex);
-        // restore
-        _textureInfo.width = oriW;
-        _textureInfo.height = oriH;
-        _textureInfo.rawWidth = oriRawW;
-        _textureInfo.rawHeight = oriRawH;
-
+        try {
+            // use entire sprite size
+            _textureInfo.width = Mathf.Max((int)Mathf.Abs(_sprite.width), 1);
+            _textureInfo.height = Mathf.Max((int)Mathf.Abs(_sprite.height), 1);
+            _textureInfo.rawWidth = Mathf.Max(_textureInfo.width + oriRawW - oriW, 1);
+            _textureInfo.rawHeight = Mathf.Max(_textureInfo.height + oriRawH - oriH, 1);
+            // get entire sprite
+            SimpleUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _space, _vertices, _startIndex);
+        }
+        finally {
+            // restore
+            _textureInfo.width = oriW;
+            _textureInfo.height = oriH;
+            _textureInfo.rawWidth = oriRawW;
+            _textureInfo.rawHeight = oriRawH;
+        }
         Vector3 v0 = _vertices.buffer [_startIndex + 0];
         Vector3 v1 = _vertices.buffer [_startIndex + 1];
         Vector3 v2 = _vertices.buffer [_startIndex + 2];
@@ -791,17 +794,17 @@ internal static class SpriteBuilder {
         int colCount, rowCount;
         exSpriteUtility.GetTilingCount ((exISprite)_sprite, out colCount, out rowCount);
         
-        Vector2 lastTileRawSize = new Vector2(_sprite.width % _textureInfo.rawWidth, _sprite.height % _textureInfo.rawHeight);
+        Vector2 lastTileRawSize = new Vector2(_sprite.width % (_textureInfo.width + _tiledSpacing.x), _sprite.height % (_textureInfo.height + _tiledSpacing.y));
         Vector3 horizontalTileDis, verticalTileDis;
         if (lastTileRawSize.x > 0f) {
-            float perc = lastTileRawSize.x / _textureInfo.rawWidth;
+            float perc = lastTileRawSize.x / (_textureInfo.width + _tiledSpacing.x);
             horizontalTileDis = (v2 - v1) / (colCount - 1 + perc);
         }
         else {
             horizontalTileDis = (v2 - v1) / colCount;
         }
         if (lastTileRawSize.y > 0f) {
-            float perc = lastTileRawSize.y / _textureInfo.rawHeight;
+            float perc = lastTileRawSize.y / (_textureInfo.height + _tiledSpacing.y);
             verticalTileDis = (v1 - v0) / (rowCount - 1 + perc);
         }
         else {
@@ -809,8 +812,8 @@ internal static class SpriteBuilder {
         }
         Vector2 lastTilePercent = new Vector2(lastTileRawSize.x / _textureInfo.width, lastTileRawSize.y / _textureInfo.height);
         
-        Vector3 trimedTileBottomToTop = verticalTileDis / _textureInfo.rawHeight * _textureInfo.height;
-        Vector3 trimedTileLeftToRight = horizontalTileDis / _textureInfo.rawWidth * _textureInfo.width;
+        Vector3 trimedTileBottomToTop = verticalTileDis / (_textureInfo.height + _tiledSpacing.y) * _textureInfo.height;
+        Vector3 trimedTileLeftToRight = horizontalTileDis / (_textureInfo.width + _tiledSpacing.x) * _textureInfo.width;
         
         int i = _startIndex;
         Vector3 rowBottomLeft = v0;

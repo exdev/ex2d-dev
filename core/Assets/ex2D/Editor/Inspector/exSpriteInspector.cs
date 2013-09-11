@@ -171,6 +171,10 @@ class exSpriteInspector : exLayeredSpriteInspector {
                     exSprite sp = obj as exSprite;
                     if ( sp ) {
                         sp.tiledSpacing = tiledSpacingProp.vector2Value;
+                        if (sp.textureInfo != null) {
+                            sp.tiledSpacing = new Vector2(Mathf.Max(-sp.textureInfo.width + 1, sp.tiledSpacing.x), 
+                                                          Mathf.Max(-sp.textureInfo.height + 1, sp.tiledSpacing.y));
+                        }
                         EditorUtility.SetDirty(sp);
                     }
                 }
