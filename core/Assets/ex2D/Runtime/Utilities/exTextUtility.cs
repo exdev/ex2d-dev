@@ -20,6 +20,8 @@ using System.Collections;
 
 public static class exTextUtility {
 
+    public static GUIStyle fontHelper = new GUIStyle();
+
     public enum WrapMode {
         None,
         Word,

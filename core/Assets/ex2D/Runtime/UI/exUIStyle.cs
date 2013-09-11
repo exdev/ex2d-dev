@@ -312,8 +312,6 @@ public class exCSS_font {
 [System.Serializable]
 public class exUIStyle {
 
-    static GUIStyle fontHelper = new GUIStyle();
-
     // size
     public exCSS_size width         = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
     public exCSS_size height        = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
@@ -370,7 +368,7 @@ public class exUIStyle {
 
     // text
     public exCSS_color textColor = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 255 ) );
-    public exCSS_white_space whiteSpace = exCSS_white_space.Normal;
+    public exCSS_white_space whitespace = exCSS_white_space.Normal;
     public exCSS_alignment textAlign = exCSS_alignment.Left;
     public exCSS_decoration textDecoration = exCSS_decoration.None;
     public exCSS_size_nopercentage letterSpacing = new exCSS_size_nopercentage( exCSS_size_nopercentage.Type.Auto, 0.0f );
@@ -390,122 +388,155 @@ public class exUIStyle {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public int GetMarginLeft ( int _contentWidth ) {
-        float val = marginLeft.val;
+    public void Compute ( exUIElement _el, int _x, int _y, int _width, int _height ) {
+        float val = 0.0f;
+
+        // ======================================================== 
+        // margin 
+        // ======================================================== 
+
+        // margin-left
+        val = marginLeft.val;
         if ( marginLeft.type == exCSS_size.Type.Percentage ) 
-            val = marginLeft.val/100.0f * (float)_contentWidth;
+            val = marginLeft.val/100.0f * (float)_width;
         else if ( marginLeft.type == exCSS_size.Type.Auto )
             val = 0.0f;
-        return Mathf.FloorToInt(val); 
-    } 
-    public int GetMarginRight ( int _contentWidth ) {
-        float val = marginRight.val;
+        _el.marginLeft = Mathf.FloorToInt(val); 
+
+        // margin-right
+        val = marginRight.val;
         if ( marginRight.type == exCSS_size.Type.Percentage ) 
-            val = marginRight.val/100.0f * (float)_contentWidth;
+            val = marginRight.val/100.0f * (float)_width;
         else if ( marginRight.type == exCSS_size.Type.Auto )
             val = 0.0f;
-        return Mathf.FloorToInt(val); 
-    } 
+        _el.marginRight = Mathf.FloorToInt(val); 
 
-    public int GetMarginTop ( int _contentHeight ) {
-        float val = marginTop.val;
+        // margin-top
+        val = marginTop.val;
         if ( marginTop.type == exCSS_size.Type.Percentage ) 
-            val = marginTop.val/100.0f * (float)_contentHeight;
+            val = marginTop.val/100.0f * (float)_height;
         else if ( marginTop.type == exCSS_size.Type.Auto )
             val = 0.0f;
-        return Mathf.FloorToInt(val); 
-    } 
-    public int GetMarginBottom ( int _contentHeight ) {
-        float val = marginBottom.val;
+        _el.marginTop = Mathf.FloorToInt(val); 
+
+        // margin-bottom
+        val = marginBottom.val;
         if ( marginBottom.type == exCSS_size.Type.Percentage ) 
-            val = marginBottom.val/100.0f * (float)_contentHeight;
+            val = marginBottom.val/100.0f * (float)_height;
         else if ( marginBottom.type == exCSS_size.Type.Auto )
             val = 0.0f;
-        return Mathf.FloorToInt(val); 
-    } 
+        _el.marginBottom = Mathf.FloorToInt(val); 
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
+        // ======================================================== 
+        // border-size 
+        // ======================================================== 
 
-    public int GetPaddingLeft ( int _contentWidth ) {
-        float val = paddingLeft.val;
+        // border-size-left
+        _el.borderSizeLeft = Mathf.FloorToInt(borderSizeLeft.val);
+
+        // border-size-right
+        _el.borderSizeRight = Mathf.FloorToInt(borderSizeRight.val);
+
+        // border-size-top
+        _el.borderSizeTop = Mathf.FloorToInt(borderSizeTop.val);
+
+        // border-size-bottom
+        _el.borderSizeBottom = Mathf.FloorToInt(borderSizeBottom.val);
+
+        // ======================================================== 
+        // padding 
+        // ======================================================== 
+
+        // padding-left
+        val = paddingLeft.val;
         if ( paddingLeft.type == exCSS_size_noauto.Type.Percentage ) 
-            val = paddingLeft.val/100.0f * (float)_contentWidth;
-        return Mathf.FloorToInt(val); 
-    } 
-    public int GetPaddingRight ( int _contentWidth ) {
-        float val = paddingRight.val;
+            val = paddingLeft.val/100.0f * (float)_width;
+        _el.paddingLeft = Mathf.FloorToInt(val); 
+
+        // padding-right 
+        val = paddingRight.val;
         if ( paddingRight.type == exCSS_size_noauto.Type.Percentage ) 
-            val = paddingRight.val/100.0f * (float)_contentWidth;
-        return Mathf.FloorToInt(val); 
-    } 
+            val = paddingRight.val/100.0f * (float)_width;
+        _el.paddingRight = Mathf.FloorToInt(val); 
 
-    public int GetPaddingTop ( int _contentHeight ) {
-        float val = paddingTop.val;
+        // padding-top
+        val = paddingTop.val;
         if ( paddingTop.type == exCSS_size_noauto.Type.Percentage ) 
-            val = paddingTop.val/100.0f * (float)_contentHeight;
-        return Mathf.FloorToInt(val); 
-    } 
-    public int GetPaddingBottom ( int _contentHeight ) {
-        float val = paddingBottom.val;
+            val = paddingTop.val/100.0f * (float)_height;
+        _el.paddingTop = Mathf.FloorToInt(val); 
+
+        // padding-bottom
+        val = paddingBottom.val;
         if ( paddingBottom.type == exCSS_size_noauto.Type.Percentage ) 
-            val = paddingBottom.val/100.0f * (float)_contentHeight;
-        return Mathf.FloorToInt(val); 
-    } 
+            val = paddingBottom.val/100.0f * (float)_height;
+        _el.paddingBottom = Mathf.FloorToInt(val); 
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
+        // ======================================================== 
+        // calculate inherit elements 
+        // ======================================================== 
 
-    public Vector2 CalcTextSize ( string _content, int _width ) {
-        bool wrap = false; // TODO
-        Vector2 size = Vector2.zero;
+        // font
+        if ( font.type == exCSS_font.Type.Inherit )
+            _el.font = (_el.parent != null) ? _el.parent.font : null;
+        else 
+            _el.font = font.val;
 
-        if ( font.type == exCSS_font.Type.TTF ) {
-            fontHelper.font = font.val as Font;
-            fontHelper.fontSize = (int)fontSize.val;
-            fontHelper.fontStyle = FontStyle.Normal; 
-            fontHelper.wordWrap = wrap;
-            fontHelper.richText = false;
-            fontHelper.normal.textColor = textColor.val;
-
-            GUIContent uiContent = new GUIContent(_content);
-
-            if ( wrap == false ) {
-                size = fontHelper.CalcSize (uiContent);
+        // font-size
+        if ( fontSize.type == exCSS_size_noauto.Type.Inherit ) {
+            _el.fontSize = (_el.parent != null) ? _el.parent.fontSize : 16;
+        }
+        else {
+            val = fontSize.val;
+            if ( fontSize.type == exCSS_size_noauto.Type.Percentage ) {
+                float parent_val = (_el.parent != null) ? (float)_el.parent.fontSize : 16;
+                val = fontSize.val/100.0f * parent_val;
             }
-            else {
-                size.x = _width;
-                size.y = fontHelper.CalcHeight( uiContent, _width );
-            }
+            _el.fontSize = Mathf.FloorToInt(val);
         }
 
-        return size;
-    }
+        // text-color
+        if ( textColor.type == exCSS_color.Type.Inherit ) {
+            _el.textColor = (_el.parent != null) ? _el.parent.textColor : Color.white;
+        }
+        else {
+            _el.textColor = textColor.val;
+        }
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
+        // white-space
+        if ( whitespace == exCSS_white_space.Inherit ) {
+            _el.whitespace = (_el.parent != null) ? _el.parent.whitespace : exCSS_white_space.Normal;
+        }
+        else {
+            _el.whitespace = whitespace;
+        }
 
-    public void DrawText ( Rect _rect, string _content ) {
-        bool wrap = false; // TODO
+        // letter-spacing
+        if ( letterSpacing.type == exCSS_size_nopercentage.Type.Inherit ) {
+            _el.letterSpacing = (_el.parent != null) ? _el.parent.letterSpacing : 0;
+        }
+        else {
+            _el.letterSpacing = Mathf.FloorToInt(letterSpacing.val);
+        }
 
-        if ( font.type == exCSS_font.Type.TTF ) {
-            fontHelper.font = font.val as Font;
-            fontHelper.fontSize = (int)fontSize.val;
-            fontHelper.fontStyle = FontStyle.Normal; 
-            fontHelper.wordWrap = wrap;
-            fontHelper.richText = false;
-            fontHelper.normal.textColor = textColor.val;
+        // word-spacing
+        if ( wordSpacing.type == exCSS_size_nopercentage.Type.Inherit ) {
+            _el.wordSpacing = (_el.parent != null) ? _el.parent.wordSpacing : 0;
+        }
+        else {
+            _el.wordSpacing = Mathf.FloorToInt(wordSpacing.val);
+        }
 
-            GUIContent uiContent = new GUIContent(_content);
-            fontHelper.Draw ( _rect,
-                              uiContent,
-                              false,
-                              false, 
-                              true,
-                              false );
+        // line-height
+        if ( lineHeight.type == exCSS_size.Type.Inherit ) {
+            _el.lineHeight = (_el.parent != null) ? _el.parent.lineHeight : 0;
+        }
+        else {
+            val = lineHeight.val;
+            if ( lineHeight.type == exCSS_size.Type.Percentage ) {
+                float parent_val = (_el.parent != null) ? (float)_el.parent.lineHeight : 0;
+                val = lineHeight.val/100.0f * parent_val;
+            }
+            _el.lineHeight = Mathf.FloorToInt(val);
         }
     }
 }

@@ -49,6 +49,45 @@ public static class exCSSUI {
             _val = (exCSS_position)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
         EditorGUILayout.EndHorizontal ();
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void WhiteSpaceField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_white_space _val ) {
+        EditorGUILayout.BeginHorizontal ();
+            GUILayout.Space( 15.0f * _indentLevel );
+            GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+
+            _val = (exCSS_white_space)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+        EditorGUILayout.EndHorizontal ();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void AligmentField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_alignment _val ) {
+        EditorGUILayout.BeginHorizontal ();
+            GUILayout.Space( 15.0f * _indentLevel );
+            GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+
+            _val = (exCSS_alignment)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+        EditorGUILayout.EndHorizontal ();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void DecorationField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_decoration _val ) {
+        EditorGUILayout.BeginHorizontal ();
+            GUILayout.Space( 15.0f * _indentLevel );
+            GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+
+            _val = (exCSS_decoration)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+        EditorGUILayout.EndHorizontal ();
+    }
     
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -216,6 +255,70 @@ public static class exCSSUI {
         EditorGUILayout.BeginHorizontal ();
             GUI.enabled = !_lock;
                 DoSizeNoAutoField ( _indentLevel, _el, _name, _prop, _inherited );
+            GUI.enabled = true;
+            EditorGUI.BeginChangeCheck();
+            _lock = GUILayout.Toggle ( _lock, GUIContent.none, "IN LockButton", new GUILayoutOption [] {
+                                       GUILayout.Width(20),
+                                       GUILayout.Height(20),
+                                       } );
+            if ( EditorGUI.EndChangeCheck() ) changed = true;
+        EditorGUILayout.EndHorizontal ();
+        return changed;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void DoSizeNoPercentageField ( int _indentLevel, exUIElement _el, string _name, exCSS_size_nopercentage _prop, bool _inherited ) {
+        GUILayout.Space( 15.0f * _indentLevel );
+        GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+
+        // process enum with inherit variable
+        if ( _inherited ) {
+            _prop.type = (exCSS_size_nopercentage.Type)EditorGUILayout.EnumPopup ( _prop.type, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+        }
+        else {
+            string[] names = System.Enum.GetNames(typeof(exCSS_size_nopercentage.Type));
+            // int idx = System.Array.IndexOf<string>(names, System.Enum.GetName( typeof(exCSS_size_nopercentage.Type), _prop.type));
+            int idx = (int)_prop.type;
+            string[] names2 = new string [names.Length-1];
+            for ( int i = 0; i < names2.Length; ++i ) {
+                names2[i] = names[i];
+            }
+
+            idx = EditorGUILayout.Popup ( "", idx, names2, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+            _prop.type = (exCSS_size_nopercentage.Type)System.Math.Min( idx, names2.Length-1 );
+        }
+
+        // process value with type
+        switch ( _prop.type ) {
+        case exCSS_size_nopercentage.Type.Length:
+            _prop.val = EditorGUILayout.FloatField ( _prop.val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+            GUILayout.Label ( "px" );
+            break;
+
+        case exCSS_size_nopercentage.Type.Auto:
+        case exCSS_size_nopercentage.Type.Inherit:
+            bool old = GUI.enabled;
+            GUI.enabled = false;
+            _prop.val = EditorGUILayout.FloatField ( _prop.val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+            GUI.enabled = old;
+            break;
+        }
+    }
+
+    public static void SizeNoPercentageField ( int _indentLevel, exUIElement _el, string _name, exCSS_size_nopercentage _prop, bool _inherited ) {
+        EditorGUILayout.BeginHorizontal ();
+            DoSizeNoPercentageField ( _indentLevel, _el, _name, _prop, _inherited );
+        EditorGUILayout.EndHorizontal ();
+    }
+
+    public static bool LockableSizeNoPercentageField ( int _indentLevel, exUIElement _el, string _name, exCSS_size_nopercentage _prop, bool _inherited, ref bool _lock ) {
+        bool changed = false;
+        EditorGUILayout.BeginHorizontal ();
+            GUI.enabled = !_lock;
+                DoSizeNoPercentageField ( _indentLevel, _el, _name, _prop, _inherited );
             GUI.enabled = true;
             EditorGUI.BeginChangeCheck();
             _lock = GUILayout.Toggle ( _lock, GUIContent.none, "IN LockButton", new GUILayoutOption [] {

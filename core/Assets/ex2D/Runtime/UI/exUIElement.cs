@@ -45,12 +45,14 @@ public class exUIElement {
                 if ( !ReferenceEquals(parent_, null) ) {
                     parent_.children.Remove(this);
                     parent_ = null;
+                    dirty = true;
                 }
 
                 if ( !ReferenceEquals(value, null) ) {
                     parent_ = value;
                     if ( parent_.children.IndexOf (this) == -1 ) {
                         parent_.children.Add(this);
+                        dirty = true;
                     }
                 }
             }
@@ -80,6 +82,24 @@ public class exUIElement {
     [System.NonSerialized] public int paddingRight;
     [System.NonSerialized] public int paddingTop;
     [System.NonSerialized] public int paddingBottom;
+
+    [System.NonSerialized] public Object font;
+    [System.NonSerialized] public int fontSize;
+    [System.NonSerialized] public Color textColor;
+    [System.NonSerialized] public exCSS_white_space whitespace;
+    [System.NonSerialized] public int letterSpacing;
+    [System.NonSerialized] public int wordSpacing;
+    [System.NonSerialized] public int lineHeight;
+
+    bool dirty = false;
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void SetDirty () {
+        dirty = true;
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -177,20 +197,8 @@ public class exUIElement {
         x = _x;
         y = _y;
 
-        marginLeft = style.GetMarginLeft(_width);
-        marginRight = style.GetMarginRight(_width);
-        marginTop = style.GetMarginTop(_height);
-        marginBottom = style.GetMarginBottom(_height);
-
-        borderSizeLeft = (int)style.borderSizeLeft.val;
-        borderSizeRight = (int)style.borderSizeRight.val;
-        borderSizeTop = (int)style.borderSizeTop.val;
-        borderSizeBottom = (int)style.borderSizeBottom.val;
-
-        paddingLeft = style.GetPaddingLeft(_width);
-        paddingRight = style.GetPaddingRight(_width);
-        paddingTop = style.GetPaddingTop(_height);
-        paddingBottom = style.GetPaddingBottom(_height);
+        // compute style
+        style.Compute ( this, _x, _y, _width, _height );
 
         // ======================================================== 
         // property relate with content-width 
@@ -248,7 +256,7 @@ public class exUIElement {
         // check if wrap the block
         if ( style.width.type == exCSS_size.Type.Auto ) {
             // TODO: calculate the result in no-wrap
-            // Vector2 nowrapSize = style.CalcTextSize ( text, width );
+            // Vector2 nowrapSize = CalcTextSize ( text, width );
             // width = nowrapSize.x;
         }
 
@@ -257,7 +265,7 @@ public class exUIElement {
         text.Trim();
         Vector2 contentTextSize = Vector2.zero;
         if ( string.IsNullOrEmpty(text) == false ) {
-            contentTextSize = style.CalcTextSize ( text, width );
+            contentTextSize = CalcTextSize ( text, width );
         }
 
         // ======================================================== 
@@ -305,8 +313,10 @@ public class exUIElement {
 
             // calculate max-height for the prev children
             int childTotalHeight = child.GetTotalHeight();
-            if ( childTotalHeight > maxHeight )
+            if ( childTotalHeight > maxHeight ) {
                 maxHeight = childTotalHeight;
+                // TODO: re-calculate inline blocks
+            }
 
             // advance the child 
             if ( child.style.display == exCSS_display.Block ) {
@@ -326,6 +336,66 @@ public class exUIElement {
         // calculate the height after child
         if ( style.height.type == exCSS_size.Type.Auto ) {
             height += child_y - child_start_y;  
+        }
+
+        // TODO: I think only parent set dirty
+        dirty = false;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public Vector2 CalcTextSize ( string _content, int _width ) {
+        bool wrap = false; // TODO
+        Vector2 size = Vector2.zero;
+        GUIStyle fontHelper = exTextUtility.fontHelper;
+
+        if ( font is Font ) {
+            fontHelper.font = font as Font;
+            fontHelper.fontSize = fontSize;
+            fontHelper.fontStyle = FontStyle.Normal; 
+            fontHelper.wordWrap = wrap;
+            fontHelper.richText = false;
+            fontHelper.normal.textColor = textColor;
+
+            GUIContent uiContent = new GUIContent(_content);
+
+            if ( wrap == false ) {
+                size = fontHelper.CalcSize (uiContent);
+            }
+            else {
+                size.x = _width;
+                size.y = fontHelper.CalcHeight( uiContent, _width );
+            }
+        }
+
+        return size;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void DrawText ( Rect _rect, string _content ) {
+        bool wrap = false; // TODO
+        GUIStyle fontHelper = exTextUtility.fontHelper;
+
+        if ( font is Font ) {
+            fontHelper.font = font as Font;
+            fontHelper.fontSize = fontSize;
+            fontHelper.fontStyle = FontStyle.Normal; 
+            fontHelper.wordWrap = wrap;
+            fontHelper.richText = false;
+            fontHelper.normal.textColor = textColor;
+
+            GUIContent uiContent = new GUIContent(_content);
+            fontHelper.Draw ( _rect,
+                              uiContent,
+                              false,
+                              false, 
+                              true,
+                              false );
         }
     }
 }

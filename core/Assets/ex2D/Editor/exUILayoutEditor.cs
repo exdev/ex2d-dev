@@ -203,7 +203,7 @@ class exUILayoutEditor : EditorWindow {
 
         int margin = 20;
         int hierarchy_width = 300;
-        int style_width = 250;
+        int style_width = 300;
         float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
 
         // hierarchy & scene
@@ -763,20 +763,20 @@ class exUILayoutEditor : EditorWindow {
                     int indentLevel = 0;
 
                     // size
-                    GUILayout.Label ( "size", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    GUILayout.Label ( "size", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
                     ++indentLevel;
                         exCSSUI.SizeField ( indentLevel, activeElement, "width", style.width, false );
                         exCSSUI.SizeField ( indentLevel, activeElement, "height", style.height, false );
-                        exCSSUI.MinSizeField ( indentLevel, activeElement, "minWidth", style.minWidth, false );
-                        exCSSUI.MinSizeField ( indentLevel, activeElement, "minHeight", style.minHeight, false );
-                        exCSSUI.MaxSizeField ( indentLevel, activeElement, "maxWidth", style.maxWidth, false );
-                        exCSSUI.MaxSizeField ( indentLevel, activeElement, "maxHeight", style.maxHeight, false );
+                        exCSSUI.MinSizeField ( indentLevel, activeElement, "min-width", style.minWidth, false );
+                        exCSSUI.MinSizeField ( indentLevel, activeElement, "min-height", style.minHeight, false );
+                        exCSSUI.MaxSizeField ( indentLevel, activeElement, "max-width", style.maxWidth, false );
+                        exCSSUI.MaxSizeField ( indentLevel, activeElement, "max-height", style.maxHeight, false );
                     --indentLevel;
 
                     EditorGUILayout.Space();
 
                     // position
-                    GUILayout.Label ( "position", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    GUILayout.Label ( "position", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
                     ++indentLevel;
                         exCSSUI.DisplayField ( indentLevel, activeElement, "display", ref style.display );
                         exCSSUI.PositionField ( indentLevel, activeElement, "position", ref style.position );
@@ -789,7 +789,7 @@ class exUILayoutEditor : EditorWindow {
                     EditorGUILayout.Space();
 
                     // margin
-                    GUILayout.Label ( "margin", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    GUILayout.Label ( "margin", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
                     ++indentLevel;
                         exCSSUI.SizeField ( indentLevel, activeElement, "top", style.marginTop, false );
                         if ( exCSSUI.LockableSizeField ( indentLevel, 
@@ -860,7 +860,7 @@ class exUILayoutEditor : EditorWindow {
                     EditorGUILayout.Space();
 
                     // padding
-                    GUILayout.Label ( "padding", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    GUILayout.Label ( "padding", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
                     ++indentLevel;
                         exCSSUI.SizeNoAutoField ( indentLevel, activeElement, "top", style.paddingTop, false );
                         if ( exCSSUI.LockableSizeNoAutoField ( indentLevel, 
@@ -931,7 +931,7 @@ class exUILayoutEditor : EditorWindow {
                     EditorGUILayout.Space();
 
                     // border
-                    GUILayout.Label ( "border", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    GUILayout.Label ( "border", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
                     ++indentLevel;
                         exCSSUI.ImageField ( indentLevel, activeElement, "image", style.borderImage, false );
                         exTextureInfo borderTextureInfo = style.borderImage.val as exTextureInfo;
@@ -1020,17 +1020,30 @@ class exUILayoutEditor : EditorWindow {
                     EditorGUILayout.Space();
 
                     // font
-                    GUILayout.Label ( "font", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    GUILayout.Label ( "font", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
                     ++indentLevel;
                         exCSSUI.FontField ( indentLevel, activeElement, "font", style.font, true );
                         exCSSUI.SizeNoAutoField ( indentLevel, activeElement, "size", style.fontSize, true );
+                    --indentLevel;
+
+                    EditorGUILayout.Space();
+
+                    // text
+                    GUILayout.Label ( "text", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
+                    ++indentLevel;
                         exCSSUI.ColorField ( indentLevel, activeElement, "color", style.textColor, true );
+                        exCSSUI.WhiteSpaceField ( indentLevel, activeElement, "white-space", ref style.whitespace );
+                        exCSSUI.AligmentField ( indentLevel, activeElement, "aligment", ref style.textAlign );
+                        exCSSUI.DecorationField ( indentLevel, activeElement, "decoration", ref style.textDecoration );
+                        exCSSUI.SizeNoPercentageField ( indentLevel, activeElement, "letter-spacing", style.letterSpacing, true );
+                        exCSSUI.SizeNoPercentageField ( indentLevel, activeElement, "word-spacing", style.wordSpacing, true );
+                        exCSSUI.SizeField ( indentLevel, activeElement, "line-height", style.lineHeight, true );
                     --indentLevel;
 
                     EditorGUILayout.Space();
 
                     // background
-                    GUILayout.Label ( "background", new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+                    GUILayout.Label ( "background", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
                     ++indentLevel;
                         exCSSUI.ImageField ( indentLevel, activeElement, "image", style.backgroundImage, false );
                         exCSSUI.ColorField ( indentLevel, activeElement, "color", style.backgroundColor, false );
@@ -1180,17 +1193,12 @@ class exUILayoutEditor : EditorWindow {
 
         // draw content 
         // DrawElementBorder ( _el, Color.white );
-        if ( _el.style.font.val != null ) {
-            if ( _el.style.font.type == exCSS_font.Type.TTF ) {
-                string text = _el.content.Replace ( "\n", " " );
-                text.Trim();
-                if ( string.IsNullOrEmpty(text) == false ) {
-                    Vector2 size = _el.style.CalcTextSize ( text, _el.width );
-                    _el.style.DrawText ( new Rect( _el.x, _el.y, size.x, size.y ), text );
-                }
-            }
-            else {
-                // TODO:
+        if ( _el.font != null ) {
+            string text = _el.content.Replace ( "\n", " " );
+            text.Trim();
+            if ( string.IsNullOrEmpty(text) == false ) {
+                Vector2 size = _el.CalcTextSize ( text, _el.width );
+                _el.DrawText ( new Rect( _el.x, _el.y, size.x, size.y ), text );
             }
         }
 
