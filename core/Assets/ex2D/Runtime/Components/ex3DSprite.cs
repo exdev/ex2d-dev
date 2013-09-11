@@ -87,6 +87,21 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
         }
     }
     
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Vector2 tiledSpacing_ = new Vector2(0f, 0f);
+    // ------------------------------------------------------------------ 
+
+    public Vector2 tiledSpacing {
+        get { return tiledSpacing_; }
+        set {
+            if ( tiledSpacing_ != value ) {
+                tiledSpacing_ = value;
+                UpdateBufferSize();
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+    
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////

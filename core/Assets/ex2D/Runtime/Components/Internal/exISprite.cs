@@ -50,6 +50,7 @@ public interface exISprite : exISpriteBase {
     exTextureInfo textureInfo { get; set; }
     bool useTextureOffset { get; set; }
     exSpriteType spriteType { get; set; }
+    Vector2 tiledSpacing { get; set; }
     
     void UpdateBufferSize ();   ///< internal use
 }

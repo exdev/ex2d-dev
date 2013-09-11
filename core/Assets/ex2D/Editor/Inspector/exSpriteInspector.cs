@@ -26,6 +26,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
     SerializedProperty textureInfoProp;
     SerializedProperty useTextureOffsetProp;
     SerializedProperty spriteTypeProp;
+    SerializedProperty tiledSpacingProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -49,6 +50,8 @@ class exSpriteInspector : exLayeredSpriteInspector {
 
         // textureInfo
         EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.BeginVertical();
+        GUILayout.Space(3);
         EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( textureInfoProp, new GUIContent("Texture Info") );
         if ( EditorGUI.EndChangeCheck() ) {
@@ -70,9 +73,14 @@ class exSpriteInspector : exLayeredSpriteInspector {
                 }
             }
         }
-        if ( serializedObject.isEditingMultipleObjects == false ) {
-            if ( GUILayout.Button("Edit...", GUILayout.Width(40), GUILayout.Height(15) ) ) {
-                EditorWindow.GetWindow<exTextureInfoEditor>().Edit( textureInfoProp.objectReferenceValue as exTextureInfo );
+        EditorGUILayout.EndVertical();
+        if ( GUILayout.Button("Refresh", GUILayout.Width(57), GUILayout.Height(16) ) ) {
+            foreach (Object obj in serializedObject.targetObjects) {
+                exSprite sp = obj as exSprite;
+                if (sp) {
+                    sp.textureInfo = sp.textureInfo;
+                    EditorUtility.SetDirty(sp);
+                }
             }
         }
         EditorGUILayout.EndHorizontal();
@@ -116,6 +124,12 @@ class exSpriteInspector : exLayeredSpriteInspector {
                                               new Vector3 ( indent_space, lastRect.yMax + preview_height, 0.0f ),
                                               },
                                               new Color( 0.8f, 0.8f, 0.8f, 1.0f ) );
+
+            // edit button
+            Rect editBtnPos = new Rect(previewRect.xMax + 2, previewRect.center.y - 10, 50, 20);
+            if ( GUI.Button( editBtnPos, "Edit...") ) {
+                EditorWindow.GetWindow<exTextureInfoEditor>().Edit( textureInfoProp.objectReferenceValue as exTextureInfo );
+            }
         }
         GUILayoutUtility.GetRect( preview_width, preview_height );
         EditorGUILayout.Space();
@@ -146,6 +160,35 @@ class exSpriteInspector : exLayeredSpriteInspector {
             }
         }
 
+        if (spriteTypeProp.enumValueIndex == (int)exSpriteType.Tiled) {
+            EditorGUI.indentLevel++;
+            // tiled spacing
+            EditorGUILayout.BeginHorizontal();
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField ( tiledSpacingProp, new GUIContent("Tiled Spacing"), true );
+            if ( EditorGUI.EndChangeCheck() ) {
+                foreach ( Object obj in serializedObject.targetObjects ) {
+                    exSprite sp = obj as exSprite;
+                    if ( sp ) {
+                        sp.tiledSpacing = tiledSpacingProp.vector2Value;
+                        EditorUtility.SetDirty(sp);
+                    }
+                }
+            }
+            if ( GUILayout.Button("Use Raw Size", GUILayout.Width(88), GUILayout.Height(16) ) ) {
+                foreach (Object obj in serializedObject.targetObjects) {
+                    exSprite sp = obj as exSprite;
+                    if (sp && sp.textureInfo != null) {
+                        exTextureInfo ti = sp.textureInfo;
+                        sp.tiledSpacing = new Vector2(ti.rawWidth - ti.width, ti.rawHeight - ti.height) / 2;
+                        EditorUtility.SetDirty(sp);
+                    }
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+            EditorGUI.indentLevel--;
+        }
+        
         EditorGUILayout.Space();
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
@@ -173,6 +216,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
         textureInfoProp = serializedObject.FindProperty("textureInfo_");
         useTextureOffsetProp = serializedObject.FindProperty("useTextureOffset_");
         spriteTypeProp = serializedObject.FindProperty("spriteType_");
+        tiledSpacingProp = serializedObject.FindProperty("tiledSpacing_");
     }
 }
 
