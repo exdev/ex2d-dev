@@ -10,6 +10,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
+using System.Collections.Generic;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
@@ -82,27 +83,27 @@ public class exTextureInfo : ScriptableObject {
     0  1  2  3 
     */
     public void SetDiceData ( Rect[] _tileRects, int[] _x, int[] _y, bool[] _rotated ) {
-        diceData = new int[_tileRects.Length * 6];
-        int dataIndex = 0;
+        List<int> data = new List<int> (_tileRects.Length * 6);
         for ( int i = 0; i < _tileRects.Length; ++i ) {
             Rect rect = _tileRects[i];
             if ( rect.width == 0 || rect.height == 0 ) {
-                diceData[dataIndex++] = -1;
+                data.Add( -1 );
                 continue;
             }
-        	diceData[dataIndex++] = (int)_tileRects[i].x;
-            diceData[dataIndex++] = (int)_tileRects[i].y;
-            diceData[dataIndex++] = (int)_tileRects[i].width;
-            diceData[dataIndex++] = (int)_tileRects[i].height;
+            data.Add( (int)_tileRects[i].x );   // trim_x
+            data.Add( (int)_tileRects[i].y );   // trim_y
+            data.Add( (int)_tileRects[i].width );
+            data.Add( (int)_tileRects[i].height );
             // TODO: compress max dice
             if ( _rotated[i] ) {
-                diceData[dataIndex++] = - _x[i];
+                data.Add( - _x[i] );
             }
             else {
-                diceData[dataIndex++] = _x[i];
+                data.Add( _x[i] );
             }
-            diceData[dataIndex++] = _y[i];
+            data.Add( _y[i] );
         }
+        diceData = data.ToArray();  // TrimExcess
     }
 }
 
