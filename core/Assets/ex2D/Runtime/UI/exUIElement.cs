@@ -39,6 +39,7 @@ public class exUIElement {
     public List<exUIElement> children = new List<exUIElement>();
 
     public List<exUIElement> computedElements { get { return computedElements_; } } 
+    public bool isContent { get { return isContent_; } }
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -105,6 +106,7 @@ public class exUIElement {
     [System.NonSerialized] public exCSS_display display = exCSS_display.Inline;
 
     bool dirty = false;
+    bool isContent_ = false;
     List<exUIElement> computedElements_ = new List<exUIElement>(); 
 
     // ------------------------------------------------------------------ 
@@ -325,7 +327,7 @@ public class exUIElement {
             ++lineChildCount;
 
             // do layout if they are not content-line-elements
-            if ( child.style != null )
+            if ( child.isContent == false )
                 child.Layout( child_x, child_y, width, height );
 
             // calculate max-height for the prev element
@@ -461,6 +463,7 @@ public class exUIElement {
                                                         letterSpacing );
                 // generate element
                 exUIElement newEL = new exUIElement();
+                newEL.isContent_ = true;
                 newEL.style = null;
                 newEL.display = exCSS_display.Inline; 
                 newEL.font = font;
@@ -540,36 +543,6 @@ public class exUIElement {
         else 
             _size_x = _last_line_width; 
         _size_y = lines * lineHeight;
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public void DrawText ( int _offset_x, int _width, string _text ) {
-        int last_line_width = 0; 
-        int lines = 0;
-        exTextUtility.WrapMode wrapMode = exTextUtility.WrapMode.None;
-
-        switch ( whitespace ) {
-        case exCSS_white_space.Normal:  wrapMode = exTextUtility.WrapMode.Word;     break;
-        case exCSS_white_space.Pre:     wrapMode = exTextUtility.WrapMode.Pre;      break;
-        case exCSS_white_space.NoWrap:  wrapMode = exTextUtility.WrapMode.None;     break;
-        case exCSS_white_space.PreWrap: wrapMode = exTextUtility.WrapMode.PreWrap;  break;
-        }
-
-        if ( font is Font ) {
-            exTextUtility.BuildTextMesh ( ref last_line_width,
-                                          ref lines,
-                                          _text,
-                                          _offset_x,
-                                          _width,
-                                          font as Font,
-                                          fontSize,
-                                          wrapMode,
-                                          wordSpacing,
-                                          letterSpacing );
-        }
     }
 }
 

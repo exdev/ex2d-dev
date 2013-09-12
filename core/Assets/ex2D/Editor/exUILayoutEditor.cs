@@ -1193,18 +1193,50 @@ class exUILayoutEditor : EditorWindow {
 
         // draw content 
         // DrawElementBorder ( _el, Color.white );
-        if ( _el.display == exCSS_display.Inline ) {
-            // TODO { 
-            // if ( _el.font != null ) {
-            //     int offset_x = (_el.parent != null) ? (_el.x - (_el.parent.x  + _el.marginLeft + _el.paddingLeft + _el.borderSizeLeft)) : 0;
-            //     int width = _el.width;
-            //     _el.DrawText ( offset_x, width, _el.content );
-            // }
-            // } TODO end 
+        if ( _el.isContent ) {
+            DrawText ( _el, _el.content );
         }
 
         for ( int i = 0; i < _el.computedElements.Count; ++i ) {
             DrawElements(_el.computedElements[i]);
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawText ( exUIElement _el, string _text ) {
+        if ( _el.font is Font ) {
+            Font ttfFont = _el.font as Font;
+            exList<Vector3> vertices = new exList<Vector3>( _text.Length * 4 );
+            exList<Vector2> uvs = new exList<Vector2>( _text.Length * 4 );
+            exTextUtility.BuildTextLine ( vertices,
+                                          uvs,
+                                          _text,
+                                          ttfFont,
+                                          _el.fontSize,
+                                          _el.wordSpacing,
+                                          _el.letterSpacing );
+
+            exEditorUtility.materialAlphaBlended.mainTexture = ttfFont.material.mainTexture;
+            exEditorUtility.materialAlphaBlended.SetPass(0);
+            GL.Begin(GL.QUADS);
+            GL.Color(_el.textColor);
+            for ( int i = 0; i < _text.Length; ++i ) {
+                GL.TexCoord2 ( uvs.buffer[i].x, uvs.buffer[i].y );
+                GL.Vertex3 ( vertices.buffer[i].x + _el.x, vertices.buffer[i].y + _el.y, 0.0f );
+
+                GL.TexCoord2 ( uvs.buffer[i+1].x, uvs.buffer[i+1].y );
+                GL.Vertex3 ( vertices.buffer[i+1].x + _el.x, vertices.buffer[i+1].y + _el.y, 0.0f );
+
+                GL.TexCoord2 ( uvs.buffer[i+2].x, uvs.buffer[i+2].y );
+                GL.Vertex3 ( vertices.buffer[i+2].x + _el.x, vertices.buffer[i+2].y + _el.y, 0.0f );
+
+                GL.TexCoord2 ( uvs.buffer[i+3].x, uvs.buffer[i+3].y );
+                GL.Vertex3 ( vertices.buffer[i+3].x + _el.x, vertices.buffer[i+3].y + _el.y, 0.0f );
+            }
+            GL.End();
         }
     }
 
