@@ -81,27 +81,27 @@ public class exTextureInfo : ScriptableObject {
     4  5  6  7 
     0  1  2  3 
     */
-    public void SetDiceData (Rect[] tileRects, int[] x, int[] y, bool[] rotated) {
-        diceData = new int[tileRects.Length * 6];
+    public void SetDiceData ( Rect[] _tileRects, int[] _x, int[] _y, bool[] _rotated ) {
+        diceData = new int[_tileRects.Length * 6];
         int dataIndex = 0;
-        for (int i = 0; i < tileRects.Length; ++i) {
-            Rect rect = tileRects[i];
-            if (rect.width == 0 || rect.height == 0) {
+        for ( int i = 0; i < _tileRects.Length; ++i ) {
+            Rect rect = _tileRects[i];
+            if ( rect.width == 0 || rect.height == 0 ) {
                 diceData[dataIndex++] = -1;
                 continue;
             }
-        	diceData[dataIndex++] = (int)tileRects[i].x;
-            diceData[dataIndex++] = (int)tileRects[i].y;
-            diceData[dataIndex++] = (int)tileRects[i].width;
-            diceData[dataIndex++] = (int)tileRects[i].height;
+        	diceData[dataIndex++] = (int)_tileRects[i].x;
+            diceData[dataIndex++] = (int)_tileRects[i].y;
+            diceData[dataIndex++] = (int)_tileRects[i].width;
+            diceData[dataIndex++] = (int)_tileRects[i].height;
             // TODO: compress max dice
-            if (rotated[i]) {
-                diceData[dataIndex++] = - x[i];
+            if ( _rotated[i] ) {
+                diceData[dataIndex++] = - _x[i];
             }
             else {
-                diceData[dataIndex++] = x[i];
+                diceData[dataIndex++] = _x[i];
             }
-            diceData[dataIndex++] = y[i];
+            diceData[dataIndex++] = _y[i];
         }
     }
 }
