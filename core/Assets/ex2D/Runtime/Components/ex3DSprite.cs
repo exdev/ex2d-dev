@@ -76,7 +76,7 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
                     customSize_ = true;
                 }
                 else if (value == exSpriteType.Diced) {
-                    if (textureInfo_ != null && textureInfo_.diceUnitX == 0 && textureInfo_.diceUnitY == 0) {
+                    if (textureInfo_ != null && textureInfo_.diceUnitWidth == 0 && textureInfo_.diceUnitHeight == 0) {
                         Debug.LogWarning ("The texture info does not diced!");
                     }
                 }

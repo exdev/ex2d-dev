@@ -43,8 +43,8 @@ public class exTextureInfo : ScriptableObject {
     public int borderTop = 0;
     public int borderBottom = 0;
     
-    public int diceUnitX = 0;
-    public int diceUnitY = 0;
+    public int diceUnitWidth = 0;
+    public int diceUnitHeight = 0;
 
     [SerializeField] private int[] diceData;
 
@@ -68,8 +68,8 @@ public class exTextureInfo : ScriptableObject {
 
     public bool isDiced {
         get {
-            exDebug.Assert((diceUnitX != 0) == (diceUnitY != 0));
-            return diceUnitX != 0 && diceUnitY != 0;
+            exDebug.Assert((diceUnitWidth != 0) == (diceUnitHeight != 0));
+            return diceUnitWidth != 0 && diceUnitHeight != 0;
         }
     }
 

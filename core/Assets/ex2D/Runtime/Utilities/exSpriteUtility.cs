@@ -22,6 +22,18 @@ namespace ex2D.Detail {
 
 public static class exSpriteUtility {
 
+    public static void GetDicingCount (exISprite _sprite, out int _colCount, out int _rowCount) {
+        exTextureInfo ti = _sprite.textureInfo;
+        if (ti != null && ti.diceUnitWidth > 0 && ti.diceUnitHeight > 0 && ti.width > 0 && ti.height > 0) {
+            _colCount = (int)Mathf.Ceil(ti.width / ti.diceUnitWidth);
+            _rowCount = (int)Mathf.Ceil(ti.height / ti.diceUnitHeight);
+        }
+        else {
+            _colCount = 1;
+            _rowCount = 1;
+        }
+    }
+
     public static void GetTilingCount (exISprite _sprite, out int _colCount, out int _rowCount) {
         exTextureInfo ti = _sprite.textureInfo;
         if (ti != null && ti.width + _sprite.tiledSpacing.x != 0 && ti.height + _sprite.tiledSpacing.y != 0) {
@@ -48,7 +60,7 @@ public static class exSpriteUtility {
                 }
             }
             else if (_spriteType == exSpriteType.Diced) {
-                if (_newTi.diceUnitX == 0 && _newTi.diceUnitY == 0) {
+                if (_newTi.diceUnitWidth == 0 && _newTi.diceUnitHeight == 0) {
                     Debug.LogWarning ("The texture info does not diced!");
                 }
                 (_sprite as exISprite).UpdateBufferSize ();

@@ -88,7 +88,7 @@ public class exSprite : exLayeredSprite, exISprite {
                     customSize_ = true;
                 }
                 else if (value == exSpriteType.Diced) {
-                    if (textureInfo_ != null && textureInfo_.diceUnitX == 0 && textureInfo_.diceUnitY == 0) {
+                    if (textureInfo_ != null && textureInfo_.diceUnitWidth == 0 && textureInfo_.diceUnitHeight == 0) {
                         Debug.LogWarning ("The texture info does not diced!");
                     }
                 }
@@ -224,8 +224,10 @@ public class exSprite : exLayeredSprite, exISprite {
                 SpriteBuilder.TiledUpdateBuffers (this, textureInfo_, useTextureOffset_, tiledSpacing_, Space.World, 
                                                   _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
                 break;
-            //case exSpriteType.Diced:
-            //    break;
+            case exSpriteType.Diced:
+                SpriteBuilder.DicedUpdateBuffers (this, textureInfo_, useTextureOffset_, tiledSpacing_, Space.World, 
+                                                  _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
+                break;
             }
             if ((updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null) {
                 exDebug.Assert (layer_ != null);
@@ -847,6 +849,45 @@ internal static class SpriteBuilder {
 
             // next row
             rowBottomLeft += verticalTileDis;
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    public static void DicedUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space, 
+                                           exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices, int _vbIndex, int _ibIndex) {
+        if (_vertices.Count == 0) {
+            return;
+        }
+        //SpriteBuilder.SimpleUpdateBuffers(_sprite, _textureInfo, _useTextureOffset, _space, 
+        //                                  _vertices, _uvs, _indices, _vbIndex, _ibIndex);
+
+        if ((_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
+            //TiledUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _tiledSpacing, _space, _vertices, _vbIndex);
+        }
+        
+        int colCount, rowCount;
+        exSpriteUtility.GetDicingCount((exISprite)_sprite, out colCount, out rowCount);
+        if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+            /* tile index:
+            8  9  10 11
+            4  5  6  7 
+            0  1  2  3 
+            */
+            int i = _ibIndex;
+            for (int v = _vbIndex; v < _vertices.Count; v += exMesh.QUAD_VERTEX_COUNT) {
+                _indices.buffer[i++] = v;
+                _indices.buffer[i++] = v + 1;
+                _indices.buffer[i++] = v + 2;
+                _indices.buffer[i++] = v + 2;
+                _indices.buffer[i++] = v + 3;
+                _indices.buffer[i++] = v;
+            }
+        }
+        
+        if ((_sprite.updateFlags & exUpdateFlags.UV) != 0) {
         }
     }
 }
