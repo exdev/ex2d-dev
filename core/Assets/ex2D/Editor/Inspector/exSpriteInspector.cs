@@ -87,51 +87,57 @@ class exSpriteInspector : exLayeredSpriteInspector {
         EditorGUILayout.Space();
 
         // draw preview rect
-        float preview_width = 100.0f;
-        float preview_height = 100.0f;
-        Rect lastRect = GUILayoutUtility.GetLastRect();
-        if ( Event.current.type == EventType.Repaint && serializedObject.isEditingMultipleObjects == false ) {
-            exTextureInfo textureInfo = textureInfoProp.objectReferenceValue as exTextureInfo;
+        if ( serializedObject.isEditingMultipleObjects == false ) {
+            float preview_width = 100.0f;
+            float preview_height = 100.0f;
+            Rect lastRect = GUILayoutUtility.GetLastRect();
+
             float indent_space = 20.0f;
             Rect previewRect = new Rect ( indent_space,
                                           lastRect.yMax,
                                           preview_width, 
                                           preview_height );
 
-            // draw Checker
-            Texture2D checker = exEditorUtility.textureCheckerboard;
-            GUI.DrawTextureWithTexCoords ( previewRect, 
-                                           checker, 
-                                           new Rect( 0.0f, 0.0f, 3.0f, 3.0f ) );
+            // preview
+            if ( Event.current.type == EventType.Repaint ) {
+                exTextureInfo textureInfo = textureInfoProp.objectReferenceValue as exTextureInfo;
 
-            // draw TextureInfo
-            if ( textureInfo != null ) {
-                float scale = exEditorUtility.CalculateTextureInfoScale(previewRect,textureInfo);
-                Rect pos = new Rect ( previewRect.center.x - textureInfo.width * 0.5f * scale + 2.0f,
-                                      previewRect.center.y - textureInfo.height * 0.5f * scale + 2.0f,
-                                      textureInfo.width * scale - 4.0f,
-                                      textureInfo.height * scale - 4.0f );
-                exEditorUtility.GUI_DrawTextureInfo ( pos,
-                                                      textureInfo,
-                                                      Color.white );
+                // draw Checker
+                Texture2D checker = exEditorUtility.textureCheckerboard;
+                GUI.DrawTextureWithTexCoords ( previewRect, 
+                                               checker, 
+                                               new Rect( 0.0f, 0.0f, 3.0f, 3.0f ) );
+
+                // draw TextureInfo
+                if ( textureInfo != null ) {
+                    float scale = exEditorUtility.CalculateTextureInfoScale(previewRect,textureInfo);
+                    Rect pos = new Rect ( previewRect.center.x - textureInfo.width * 0.5f * scale + 2.0f,
+                                          previewRect.center.y - textureInfo.height * 0.5f * scale + 2.0f,
+                                          textureInfo.width * scale - 4.0f,
+                                          textureInfo.height * scale - 4.0f );
+                    exEditorUtility.GUI_DrawTextureInfo ( pos,
+                                                          textureInfo,
+                                                          Color.white );
+                }
+
+                // draw border
+                exEditorUtility.GL_DrawRectLine ( new Vector3 [] {
+                                                  new Vector3 ( indent_space, lastRect.yMax, 0.0f ),
+                                                  new Vector3 ( indent_space + preview_width, lastRect.yMax, 0.0f ),
+                                                  new Vector3 ( indent_space + preview_width, lastRect.yMax + preview_height, 0.0f ),
+                                                  new Vector3 ( indent_space, lastRect.yMax + preview_height, 0.0f ),
+                                                  },
+                                                  new Color( 0.8f, 0.8f, 0.8f, 1.0f ) );
             }
-
-            // draw border
-            exEditorUtility.GL_DrawRectLine ( new Vector3 [] {
-                                              new Vector3 ( indent_space, lastRect.yMax, 0.0f ),
-                                              new Vector3 ( indent_space + preview_width, lastRect.yMax, 0.0f ),
-                                              new Vector3 ( indent_space + preview_width, lastRect.yMax + preview_height, 0.0f ),
-                                              new Vector3 ( indent_space, lastRect.yMax + preview_height, 0.0f ),
-                                              },
-                                              new Color( 0.8f, 0.8f, 0.8f, 1.0f ) );
+            GUILayoutUtility.GetRect( preview_width, preview_height );
 
             // edit button
-            Rect editBtnPos = new Rect(previewRect.xMax + 2, previewRect.center.y - 10, 50, 20);
+            Rect editBtnPos = new Rect(previewRect.xMax - 50 - 2, previewRect.yMax - 20 - 2, 50, 20);
             if ( GUI.Button( editBtnPos, "Edit...") ) {
                 EditorWindow.GetWindow<exTextureInfoEditor>().Edit( textureInfoProp.objectReferenceValue as exTextureInfo );
             }
         }
-        GUILayoutUtility.GetRect( preview_width, preview_height );
+
         EditorGUILayout.Space();
 
         // useTextureOffset
@@ -161,7 +167,6 @@ class exSpriteInspector : exLayeredSpriteInspector {
         }
 
         if (spriteTypeProp.enumValueIndex == (int)exSpriteType.Tiled) {
-            EditorGUI.indentLevel++;
             // tiled spacing
             EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginChangeCheck();
@@ -190,7 +195,6 @@ class exSpriteInspector : exLayeredSpriteInspector {
                 }
             }
             EditorGUILayout.EndHorizontal();
-            EditorGUI.indentLevel--;
         }
         
         EditorGUILayout.Space();
