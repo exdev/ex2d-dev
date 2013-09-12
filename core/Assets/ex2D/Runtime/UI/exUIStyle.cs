@@ -391,6 +391,8 @@ public class exUIStyle {
     public void Compute ( exUIElement _el, int _x, int _y, int _width, int _height ) {
         float val = 0.0f;
 
+        _el.display = display; 
+
         // ======================================================== 
         // margin 
         // ======================================================== 
@@ -428,8 +430,14 @@ public class exUIStyle {
         _el.marginBottom = Mathf.FloorToInt(val); 
 
         // ======================================================== 
-        // border-size 
+        // border
         // ======================================================== 
+
+        // border-color
+        _el.borderColor = borderColor.val;
+
+        // border-image
+        _el.borderImage = borderImage.val;
 
         // border-size-left
         _el.borderSizeLeft = Mathf.FloorToInt(borderSizeLeft.val);
@@ -470,6 +478,16 @@ public class exUIStyle {
         if ( paddingBottom.type == exCSS_size_noauto.Type.Percentage ) 
             val = paddingBottom.val/100.0f * (float)_height;
         _el.paddingBottom = Mathf.FloorToInt(val); 
+
+        // ======================================================== 
+        // background
+        // ======================================================== 
+
+        // background-color
+        _el.backgroundColor = backgroundColor.val;
+
+        // background-image
+        _el.backgroundImage = backgroundImage.val;
 
         // ======================================================== 
         // calculate inherit elements 
@@ -535,6 +553,9 @@ public class exUIStyle {
             if ( lineHeight.type == exCSS_size.Type.Percentage ) {
                 float parent_val = (_el.parent != null) ? (float)_el.parent.lineHeight : 0;
                 val = lineHeight.val/100.0f * parent_val;
+            }
+            else if ( lineHeight.type == exCSS_size.Type.Auto ) {
+                val = _el.fontSize;
             }
             _el.lineHeight = Mathf.FloorToInt(val);
         }

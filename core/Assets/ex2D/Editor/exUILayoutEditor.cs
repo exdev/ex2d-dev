@@ -1155,8 +1155,8 @@ class exUILayoutEditor : EditorWindow {
 
     void DrawElements ( exUIElement _el ) {
         // draw border
-        if ( _el.style.borderImage.val == null ) {
-            if ( _el.style.borderColor.val.a > 0.0f &&
+        if ( _el.borderImage == null ) {
+            if ( _el.borderColor.a > 0.0f &&
                  _el.borderSizeLeft > 0 && _el.borderSizeRight > 0 && _el.borderSizeTop > 0 && _el.borderSizeBottom > 0 ) 
             {
                 int x = _el.x - _el.paddingLeft - _el.borderSizeLeft;
@@ -1169,7 +1169,7 @@ class exUILayoutEditor : EditorWindow {
                     + _el.borderSizeTop + _el.borderSizeBottom;
                 exEditorUtility.GL_UI_DrawBorderRectangle ( x, y, width, height, 
                                                             _el.borderSizeTop, _el.borderSizeRight, _el.borderSizeBottom, _el.borderSizeLeft,
-                                                            _el.style.borderColor.val );
+                                                            _el.borderColor );
             }
         }
         else {
@@ -1177,14 +1177,14 @@ class exUILayoutEditor : EditorWindow {
         }
 
         // draw background
-        if ( _el.style.backgroundImage.val == null ) {
-            if ( _el.style.backgroundColor.val.a > 0.0f ) {
+        if ( _el.backgroundImage == null ) {
+            if ( _el.backgroundColor.a > 0.0f ) {
                 int x = _el.x - _el.paddingLeft;
                 int y = _el.y - _el.paddingTop;
                 int width = _el.width + _el.paddingLeft + _el.paddingRight; 
                 int height = _el.height + _el.paddingTop + _el.paddingBottom; 
                 exEditorUtility.GL_UI_DrawRectangle ( x, y, width, height, 
-                                                      _el.style.backgroundColor.val );
+                                                      _el.backgroundColor );
             }
         }
         else {
@@ -1193,17 +1193,18 @@ class exUILayoutEditor : EditorWindow {
 
         // draw content 
         // DrawElementBorder ( _el, Color.white );
-        if ( _el.font != null ) {
-            string text = _el.content.Replace ( "\n", " " );
-            text.Trim();
-            if ( string.IsNullOrEmpty(text) == false ) {
-                Vector2 size = _el.CalcTextSize ( text, _el.width );
-                _el.DrawText ( new Rect( _el.x, _el.y, size.x, size.y ), text );
-            }
+        if ( _el.display == exCSS_display.Inline ) {
+            // TODO { 
+            // if ( _el.font != null ) {
+            //     int offset_x = (_el.parent != null) ? (_el.x - (_el.parent.x  + _el.marginLeft + _el.paddingLeft + _el.borderSizeLeft)) : 0;
+            //     int width = _el.width;
+            //     _el.DrawText ( offset_x, width, _el.content );
+            // }
+            // } TODO end 
         }
 
-        for ( int i = 0; i < _el.children.Count; ++i ) {
-            DrawElements(_el.children[i]);
+        for ( int i = 0; i < _el.computedElements.Count; ++i ) {
+            DrawElements(_el.computedElements[i]);
         }
     }
 
