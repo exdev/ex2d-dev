@@ -197,14 +197,16 @@ class exSpriteInspector : exLayeredSpriteInspector {
             EditorGUILayout.EndHorizontal();
         }
         
-        EditorGUILayout.Space();
-        GUILayout.BeginHorizontal();
-        GUILayout.FlexibleSpace();
-            if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
-                EditorWindow.GetWindow<exSceneEditor>();
-            }
-        GUILayout.Space(5);
-        GUILayout.EndHorizontal();
+        // DISABLE { 
+        // EditorGUILayout.Space();
+        // GUILayout.BeginHorizontal();
+        // GUILayout.FlexibleSpace();
+        //     if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
+        //         EditorWindow.GetWindow<exSceneEditor>();
+        //     }
+        // GUILayout.Space(5);
+        // GUILayout.EndHorizontal();
+        // } DISABLE end 
     }
 
     // ------------------------------------------------------------------ 
