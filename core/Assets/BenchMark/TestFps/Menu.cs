@@ -32,6 +32,15 @@ public class Menu : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         setted = true;
+        if ( Application.isEditor == false ) {
+            Debug.Log(Screen.width + ":" + Screen.height);
+            if (Screen.height == 1024 || Screen.height == 2048) {
+                Camera.main.orthographicSize = 512;
+                Screen.SetResolution(768, 1024, true);
+            } else {
+                Camera.main.orthographicSize = Screen.height/2;
+            }
+        }
 	}
     void ApplyTextStyle (GUIStyle _style) {
         _style.font = textStyle.font;
