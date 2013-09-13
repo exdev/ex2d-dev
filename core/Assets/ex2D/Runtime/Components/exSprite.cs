@@ -225,7 +225,7 @@ public class exSprite : exLayeredSprite, exISprite {
                                                   _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
                 break;
             case exSpriteType.Diced:
-                SpriteBuilder.DicedUpdateBuffers (this, textureInfo_, useTextureOffset_, tiledSpacing_, Space.World, 
+                SpriteBuilder.DicedUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.World, 
                                                   _vertices, _uvs, _indices, vertexBufferIndex, indexBufferIndex);
                 break;
             }
