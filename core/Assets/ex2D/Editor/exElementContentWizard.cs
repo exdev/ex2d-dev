@@ -18,6 +18,7 @@ using System.IO;
 ///////////////////////////////////////////////////////////////////////////////
 
 class exElementContentWizard : ScriptableWizard {
+    public exUILayoutInfo curLayout;
     public exUIElement curEdit;
 
 	Vector2 scroll;
@@ -53,7 +54,11 @@ class exElementContentWizard : ScriptableWizard {
 
         //
         scroll = EditorGUILayout.BeginScrollView(scroll);		
-        curEdit.content = EditorGUILayout.TextArea(curEdit.content, GUILayout.Height(position.height - 50));		
+        EditorGUI.BeginChangeCheck();
+            curEdit.content = EditorGUILayout.TextArea(curEdit.content, GUILayout.Height(position.height - 50));		
+        if ( EditorGUI.EndChangeCheck() ) {
+            curLayout.Apply();
+        }
         EditorGUILayout.EndScrollView();
 
         GUILayout.Label( "Press Ctrl/Command + Enter to commit" );

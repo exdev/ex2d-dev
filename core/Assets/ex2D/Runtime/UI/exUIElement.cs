@@ -13,6 +13,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
@@ -38,8 +39,10 @@ public class exUIElement {
     public exUIStyle style = new exUIStyle();
     public List<exUIElement> children = new List<exUIElement>();
 
-    public List<exUIElement> computedElements { get { return computedElements_; } } 
     public bool isContent { get { return isContent_; } }
+
+    public List<exUIElement> normalFlows { get { return normalFlows_; } } 
+    List<exUIElement> normalFlows_ = new List<exUIElement>(); 
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -107,7 +110,23 @@ public class exUIElement {
 
     bool dirty = false;
     bool isContent_ = false;
-    List<exUIElement> computedElements_ = new List<exUIElement>(); 
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void GetPosition ( out int _x, out int _y ) {
+        _x = x;
+        _y = y;
+
+        exUIElement parentEL = parent_;
+        while ( parentEL != null ) {
+            _x += parentEL.x;
+            _y += parentEL.y;
+
+            parentEL = parentEL.parent;
+        }
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -199,7 +218,7 @@ public class exUIElement {
     // ------------------------------------------------------------------ 
 
     public int GetTotalWidth () {
-        return height 
+        return width 
             + marginLeft + marginRight 
             + borderSizeLeft + borderSizeRight
             + paddingLeft + paddingRight;
@@ -207,6 +226,8 @@ public class exUIElement {
 
     // ------------------------------------------------------------------ 
     // Desc: 
+    // _x is offset from parent-content-x
+    // _y is offset from parent-content-y
     // ------------------------------------------------------------------ 
 
     public void Layout ( int _x, int _y, int _width, int _height ) {
@@ -303,10 +324,9 @@ public class exUIElement {
         // layout content elemtns 
         // ======================================================== 
 
-        computedElements_.Clear();
-        int offset_x = (parent != null) ? (_x - parent.x) : 0;
-        BreakTextIntoElements ( content, offset_x, width );
-        computedElements_.AddRange( children );
+        normalFlows_.Clear();
+        BreakTextIntoElements ( content, _x, width );
+        normalFlows_.AddRange( children );
 
         // ======================================================== 
         // layout the children
@@ -316,38 +336,44 @@ public class exUIElement {
         int child_start_y = y;
         int child_x = child_start_x;
         int child_y = child_start_y;
+        int lineWidth = 0;
         int maxWidth = 0;
-        int maxHeight = 0;
+        int maxLineHeight = 0;
         int lineChildIndex = 0;
         int lineChildCount = 0;
 
-        for ( int i = 0; i < computedElements_.Count; ++i ) {
-            exUIElement child = computedElements_[i];
+        for ( int i = 0; i < normalFlows_.Count; ++i ) {
+            exUIElement child = normalFlows_[i];
             bool newLine = false;
-            ++lineChildCount;
+
+            // before-layout
+            if ( child.display == exCSS_display.Block ) {
+                child_x = child_start_x;
+                child_y = child_y + maxLineHeight;
+            }
 
             // do layout if they are not content-line-elements
             if ( child.isContent == false )
-                child.Layout( child_x, child_y, width, height );
-
-            // calculate max-height for the prev element
-            int childTotalHeight = child.GetTotalHeight();
-            if ( childTotalHeight > maxHeight ) {
-                maxHeight = childTotalHeight;
-            }
+                child.Layout( child_x - x, child_y - y, width, height );
 
             // advance the child 
             if ( child.display == exCSS_display.Block ) {
-                newLine = true;
+                child_y = child_y + child.GetTotalHeight();
+                maxLineHeight = 0;
             }
-            else if ( child.display == exCSS_display.InlineBlock ) 
-            {
+            else if ( child.display == exCSS_display.InlineBlock ) {
                 int childTotalWidth = child.GetTotalWidth();
-                if ( childTotalWidth > _width ) {
+                if ( (lineChildCount > 1) && childTotalWidth > _width ) {
                     newLine = true;
                 }
                 else {
                     child_x += childTotalWidth;
+
+                    // calculate max-height for the prev element
+                    int childTotalHeight = child.GetTotalHeight();
+                    if ( childTotalHeight > maxLineHeight ) {
+                        maxLineHeight = childTotalHeight;
+                    }
                 }
             }
             else if ( child.display == exCSS_display.Inline ) {
@@ -363,23 +389,39 @@ public class exUIElement {
                 }
                 child_y += advance_y;
             }
+            ++lineChildCount;
 
             //
             if ( newLine ) {
                 // TODO: re-layout last-line elements ( vertical aligement, based on max-height )
 
                 //
-                int lineWidth = child_x - child_start_x;
+                lineWidth = child_x - child_start_x;
                 if ( lineWidth > maxWidth )
                     maxWidth = lineWidth;
 
                 //
                 child_x = child_start_x;
-                child_y = child_y + maxHeight;
-                maxHeight = 0;
+                child_y = child_y + maxLineHeight;
+                maxLineHeight = 0;
                 lineChildIndex = i+1;
                 lineChildCount = 0;
+
+                // finalize child
+                child.x = child_x - x;
+                child.y = child_y - y;
             }
+        }
+
+        // end line-width check
+        lineWidth = child_x - child_start_x;
+        if ( lineWidth > maxWidth )
+            maxWidth = lineWidth;
+
+        if ( normalFlows_.Count > 0 ) {
+            exUIElement lastChild = normalFlows_[normalFlows_.Count-1];
+            if ( lastChild.display == exCSS_display.InlineBlock )
+                child_y = child_y + maxLineHeight;
         }
 
         // calculate the height after child
@@ -406,11 +448,11 @@ public class exUIElement {
         _advance_y = 0;
         _startFromZero = false;
 
-        if ( computedElements_.Count > 0 ) {
-            exUIElement lastChild = computedElements_[computedElements_.Count-1];
+        if ( normalFlows_.Count > 0 ) {
+            exUIElement lastChild = normalFlows_[normalFlows_.Count-1];
             _advance_x = lastChild.width;
-            for ( int i = 0; i < computedElements_.Count; ++i ) {
-                _advance_y += computedElements_[i].height;
+            for ( int i = 0; i < normalFlows_.Count; ++i ) {
+                _advance_y += normalFlows_[i].height;
             }
         }
         else {
@@ -418,7 +460,7 @@ public class exUIElement {
             _advance_y = height;
         }
 
-        if ( computedElements_.Count > 1 )
+        if ( normalFlows_.Count > 1 )
             _startFromZero = true;
     } 
 
@@ -427,6 +469,9 @@ public class exUIElement {
     // ------------------------------------------------------------------ 
 
     void BreakTextIntoElements ( string _text, int _offset_x, int _width ) {
+        if ( string.IsNullOrEmpty(_text) )
+            return;
+
         exTextUtility.WrapMode wrapMode = exTextUtility.WrapMode.None;
 
         switch ( whitespace ) {
@@ -446,13 +491,16 @@ public class exUIElement {
             int cur_index = 0;
             int cur_width = _width - _offset_x;
             bool firstLineCheck = (_offset_x > 0 && display == exCSS_display.InlineBlock);
+            StringBuilder builder = new StringBuilder(_text.Length);
 
             while ( finished == false ) {
-                int start_index = cur_index;
+                // int start_index = cur_index;
+                builder.Length = 0;
 
                 //
                 finished = exTextUtility.CalcTextLine ( ref last_line_width, 
                                                         ref cur_index,
+                                                        ref builder,
                                                         _text,
                                                         cur_index,
                                                         cur_width,
@@ -473,16 +521,13 @@ public class exUIElement {
                 newEL.letterSpacing = letterSpacing;
                 newEL.wordSpacing = wordSpacing;
                 newEL.lineHeight = lineHeight;
-                newEL.width = cur_width;
+                newEL.width = last_line_width;
                 newEL.height = lineHeight;
-                newEL.x = this.x + cur_x;
-                newEL.y = this.y + cur_y;
-                string lineContent = this.content.Substring( start_index, cur_index - start_index ); 
-                if ( whitespace != exCSS_white_space.Pre ) {
-                    lineContent = lineContent.Trim();
-                }
-                newEL.content = lineContent;
-                computedElements_.Add(newEL);
+                newEL.x = cur_x;
+                newEL.y = cur_y;
+                newEL.content = builder.ToString();
+                // newEL.content = builder.ToString( 0, cur_index - start_index );
+                normalFlows_.Add(newEL);
 
                 // if inline-block's first line exceed, it will start from next line 
                 if ( firstLineCheck ) {
@@ -503,101 +548,46 @@ public class exUIElement {
         }
     }
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
+    // // ------------------------------------------------------------------ 
+    // // Desc: 
+    // // ------------------------------------------------------------------ 
 
-    void CalcTextSize ( out int _last_line_width,
-                        out int _size_x,
-                        out int _size_y,
-                        string _text, 
-                        int _offset_x,
-                        int _width ) 
-    {
-        _last_line_width = 0; 
-        int lines = 0;
-        exTextUtility.WrapMode wrapMode = exTextUtility.WrapMode.None;
+    // void CalcTextSize ( out int _last_line_width,
+    //                     out int _size_x,
+    //                     out int _size_y,
+    //                     string _text, 
+    //                     int _offset_x,
+    //                     int _width ) 
+    // {
+    //     _last_line_width = 0; 
+    //     int lines = 0;
+    //     exTextUtility.WrapMode wrapMode = exTextUtility.WrapMode.None;
 
-        switch ( whitespace ) {
-        case exCSS_white_space.Normal:  wrapMode = exTextUtility.WrapMode.Word;     break;
-        case exCSS_white_space.Pre:     wrapMode = exTextUtility.WrapMode.Pre;      break;
-        case exCSS_white_space.NoWrap:  wrapMode = exTextUtility.WrapMode.None;     break;
-        case exCSS_white_space.PreWrap: wrapMode = exTextUtility.WrapMode.PreWrap;  break;
-        }
+    //     switch ( whitespace ) {
+    //     case exCSS_white_space.Normal:  wrapMode = exTextUtility.WrapMode.Word;     break;
+    //     case exCSS_white_space.Pre:     wrapMode = exTextUtility.WrapMode.Pre;      break;
+    //     case exCSS_white_space.NoWrap:  wrapMode = exTextUtility.WrapMode.None;     break;
+    //     case exCSS_white_space.PreWrap: wrapMode = exTextUtility.WrapMode.PreWrap;  break;
+    //     }
 
-        if ( font is Font ) {
-            exTextUtility.CalcTextSize ( ref _last_line_width,
-                                         ref lines,
-                                         _text,
-                                         _offset_x,
-                                         _width,
-                                         font as Font,
-                                         fontSize,
-                                         wrapMode,
-                                         wordSpacing,
-                                         letterSpacing );
-        }
+    //     if ( font is Font ) {
+    //         exTextUtility.CalcTextSize ( ref _last_line_width,
+    //                                      ref lines,
+    //                                      _text,
+    //                                      _offset_x,
+    //                                      _width,
+    //                                      font as Font,
+    //                                      fontSize,
+    //                                      wrapMode,
+    //                                      wordSpacing,
+    //                                      letterSpacing );
+    //     }
 
-        if ( lines > 1 )
-            _size_x = _width;
-        else 
-            _size_x = _last_line_width; 
-        _size_y = lines * lineHeight;
-    }
+    //     if ( lines > 1 )
+    //         _size_x = _width;
+    //     else 
+    //         _size_x = _last_line_width; 
+    //     _size_y = lines * lineHeight;
+    // }
 }
 
-
-// DELME { 
-// CalcTextSize
-// bool wrap = false; // TODO
-// Vector2 size = Vector2.zero;
-// GUIStyle fontHelper = exTextUtility.fontHelper;
-
-// if ( font is Font ) {
-//     fontHelper.font = font as Font;
-//     fontHelper.fontSize = fontSize;
-//     fontHelper.fontStyle = FontStyle.Normal; 
-//     fontHelper.wordWrap = wrap;
-//     fontHelper.richText = false;
-//     fontHelper.normal.textColor = textColor;
-
-//     GUIContent uiContent = new GUIContent(_text);
-
-//     if ( wrap == false ) {
-//         size = fontHelper.CalcSize (uiContent);
-//     }
-//     else {
-//         size.x = _width;
-//         size.y = fontHelper.CalcHeight( uiContent, _width );
-//     }
-// }
-
-// return size;
-// } DELME end 
-
-// DELME { 
-// DrawText
-// bool wrap = false;
-// switch ( whitespace ) {
-// case exCSS_white_space.Normal:  wrap = true;  break;
-// case exCSS_white_space.Pre:     wrap = true;  break;
-// case exCSS_white_space.NoWrap:  wrap = false; break;
-// case exCSS_white_space.PreWrap: wrap = true;  break;
-// }
-
-// GUIStyle fontHelper = exTextUtility.fontHelper;
-// if ( font is Font ) {
-//     fontHelper.font = font as Font;
-//     fontHelper.fontSize = fontSize;
-//     fontHelper.fontStyle = FontStyle.Normal; 
-//     fontHelper.wordWrap = wrap;
-//     fontHelper.richText = false;
-//     fontHelper.normal.textColor = textColor;
-//     fontHelper.Draw ( _rect,
-//                       new GUIContent(_content),
-//                       false,
-//                       false, 
-//                       true,
-//                       false );
-// }
-// } DELME end 

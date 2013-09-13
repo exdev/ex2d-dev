@@ -473,6 +473,7 @@ class exUILayoutEditor : EditorWindow {
                     if ( activeElement != null ) {
                         exElementContentWizard wizard = ScriptableWizard.DisplayWizard<exElementContentWizard>( "Edit "  + activeElement.name + " Content:" );
                         wizard.position = new Rect ( position.x + 50.0f, position.y + 100.0f, 400.0f, 400.0f );
+                        wizard.curLayout = curEdit;
                         wizard.curEdit = activeElement;
                     }
                 }
@@ -642,6 +643,8 @@ class exUILayoutEditor : EditorWindow {
             if ( isDeleted ) {
                 _el.children.RemoveAt(i);
                 --i;
+
+                curEdit.Apply();
                 EditorUtility.SetDirty ( curEdit );
             }
             cur_y += totalHeight;
@@ -1127,7 +1130,7 @@ class exUILayoutEditor : EditorWindow {
                                              }, Color.yellow );
 
             // draw layout
-            DrawElements ( curEdit.root );
+            DrawElements ( 0, 0, curEdit.root );
 
             // draw active element border-line again
             if ( activeElement != null ) {
@@ -1153,52 +1156,57 @@ class exUILayoutEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DrawElements ( exUIElement _el ) {
-        // draw border
-        if ( _el.borderImage == null ) {
-            if ( _el.borderColor.a > 0.0f &&
-                 _el.borderSizeLeft > 0 && _el.borderSizeRight > 0 && _el.borderSizeTop > 0 && _el.borderSizeBottom > 0 ) 
-            {
-                int x = _el.x - _el.paddingLeft - _el.borderSizeLeft;
-                int y = _el.y - _el.paddingTop - _el.borderSizeTop;
-                int width = _el.width 
-                    + _el.paddingLeft + _el.paddingRight 
-                    + _el.borderSizeLeft + _el.borderSizeRight;
-                int height = _el.height 
-                    + _el.paddingTop + _el.paddingBottom 
-                    + _el.borderSizeTop + _el.borderSizeBottom;
-                exEditorUtility.GL_UI_DrawBorderRectangle ( x, y, width, height, 
-                                                            _el.borderSizeTop, _el.borderSizeRight, _el.borderSizeBottom, _el.borderSizeLeft,
-                                                            _el.borderColor );
-            }
-        }
-        else {
-            // TODO:
-        }
+    void DrawElements ( int _x, int _y, exUIElement _el ) {
+        int element_x = _x + _el.x;
+        int element_y = _y + _el.y;
 
-        // draw background
-        if ( _el.backgroundImage == null ) {
-            if ( _el.backgroundColor.a > 0.0f ) {
-                int x = _el.x - _el.paddingLeft;
-                int y = _el.y - _el.paddingTop;
-                int width = _el.width + _el.paddingLeft + _el.paddingRight; 
-                int height = _el.height + _el.paddingTop + _el.paddingBottom; 
-                exEditorUtility.GL_UI_DrawRectangle ( x, y, width, height, 
-                                                      _el.backgroundColor );
-            }
-        }
-        else {
-            // TODO:
-        }
-
-        // draw content 
-        // DrawElementBorder ( _el, Color.white );
+        // draw content or child (NOTE: content-element will not have child) 
         if ( _el.isContent ) {
-            DrawText ( _el, _el.content );
+            DrawText ( element_x, element_y, _el, _el.content );
         }
+        else {
 
-        for ( int i = 0; i < _el.computedElements.Count; ++i ) {
-            DrawElements(_el.computedElements[i]);
+            // draw border
+            if ( _el.borderImage == null ) {
+                if ( _el.borderColor.a > 0.0f &&
+                     _el.borderSizeLeft > 0 && _el.borderSizeRight > 0 && _el.borderSizeTop > 0 && _el.borderSizeBottom > 0 ) 
+                {
+                    int x = element_x - _el.paddingLeft - _el.borderSizeLeft;
+                    int y = element_y - _el.paddingTop - _el.borderSizeTop;
+                    int width = _el.width 
+                        + _el.paddingLeft + _el.paddingRight 
+                        + _el.borderSizeLeft + _el.borderSizeRight;
+                    int height = _el.height 
+                        + _el.paddingTop + _el.paddingBottom 
+                        + _el.borderSizeTop + _el.borderSizeBottom;
+                    exEditorUtility.GL_UI_DrawBorderRectangle ( x, y, width, height, 
+                                                                _el.borderSizeTop, _el.borderSizeRight, _el.borderSizeBottom, _el.borderSizeLeft,
+                                                                _el.borderColor );
+                }
+            }
+            else {
+                // TODO:
+            }
+
+            // draw background
+            if ( _el.backgroundImage == null ) {
+                if ( _el.backgroundColor.a > 0.0f ) {
+                    int x = element_x - _el.paddingLeft;
+                    int y = element_y - _el.paddingTop;
+                    int width = _el.width + _el.paddingLeft + _el.paddingRight; 
+                    int height = _el.height + _el.paddingTop + _el.paddingBottom; 
+                    exEditorUtility.GL_UI_DrawRectangle ( x, y, width, height, 
+                                                          _el.backgroundColor );
+                }
+            }
+            else {
+                // TODO:
+            }
+
+            // DrawElementBorder ( _el, Color.white );
+            for ( int i = 0; i < _el.normalFlows.Count; ++i ) {
+                DrawElements( element_x, element_y, _el.normalFlows[i] );
+            }
         }
     }
 
@@ -1206,37 +1214,53 @@ class exUILayoutEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DrawText ( exUIElement _el, string _text ) {
+    void DrawText ( int _x, int _y, exUIElement _el, string _text ) {
         if ( _el.font is Font ) {
             Font ttfFont = _el.font as Font;
-            exList<Vector3> vertices = new exList<Vector3>( _text.Length * 4 );
-            exList<Vector2> uvs = new exList<Vector2>( _text.Length * 4 );
+            Vector3[] vertices = new Vector3[_text.Length * 4];
+            Vector2[] uvs = new Vector2[_text.Length * 4];
+
             exTextUtility.BuildTextLine ( vertices,
                                           uvs,
                                           _text,
                                           ttfFont,
+                                          _el.lineHeight,
                                           _el.fontSize,
                                           _el.wordSpacing,
                                           _el.letterSpacing );
 
-            exEditorUtility.materialAlphaBlended.mainTexture = ttfFont.material.mainTexture;
-            exEditorUtility.materialAlphaBlended.SetPass(0);
+            exEditorUtility.materialAlphaBlendedVertColor.mainTexture = ttfFont.material.mainTexture;
+            exEditorUtility.materialAlphaBlendedVertColor.SetPass(0);
             GL.Begin(GL.QUADS);
-            GL.Color(_el.textColor);
-            for ( int i = 0; i < _text.Length; ++i ) {
-                GL.TexCoord2 ( uvs.buffer[i].x, uvs.buffer[i].y );
-                GL.Vertex3 ( vertices.buffer[i].x + _el.x, vertices.buffer[i].y + _el.y, 0.0f );
+                GL.Color(_el.textColor);
+                for ( int i = 0; i < _text.Length; ++i ) {
+                    int idx = 4*i;
+                    GL.TexCoord2 ( uvs[idx].x, uvs[idx].y );
+                    GL.Vertex3 ( vertices[idx].x + _x, vertices[idx].y + _y, 0.0f );
 
-                GL.TexCoord2 ( uvs.buffer[i+1].x, uvs.buffer[i+1].y );
-                GL.Vertex3 ( vertices.buffer[i+1].x + _el.x, vertices.buffer[i+1].y + _el.y, 0.0f );
+                    GL.TexCoord2 ( uvs[idx+1].x, uvs[idx+1].y );
+                    GL.Vertex3 ( vertices[idx+1].x + _x, vertices[idx+1].y + _y, 0.0f );
 
-                GL.TexCoord2 ( uvs.buffer[i+2].x, uvs.buffer[i+2].y );
-                GL.Vertex3 ( vertices.buffer[i+2].x + _el.x, vertices.buffer[i+2].y + _el.y, 0.0f );
+                    GL.TexCoord2 ( uvs[idx+2].x, uvs[idx+2].y );
+                    GL.Vertex3 ( vertices[idx+2].x + _x, vertices[idx+2].y + _y, 0.0f );
 
-                GL.TexCoord2 ( uvs.buffer[i+3].x, uvs.buffer[i+3].y );
-                GL.Vertex3 ( vertices.buffer[i+3].x + _el.x, vertices.buffer[i+3].y + _el.y, 0.0f );
-            }
+                    GL.TexCoord2 ( uvs[idx+3].x, uvs[idx+3].y );
+                    GL.Vertex3 ( vertices[idx+3].x + _x, vertices[idx+3].y + _y, 0.0f );
+                }
             GL.End();
+
+            // DEBUG { 
+            // for ( int i = 0; i < _text.Length; ++i ) {
+            //     int idx = 4*i;
+            //     exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+            //                                       new Vector3 ( vertices[idx].x   + _x, vertices[idx].y   + _y, 0.0f ),
+            //                                       new Vector3 ( vertices[idx+1].x + _x, vertices[idx+1].y + _y, 0.0f ),
+            //                                       new Vector3 ( vertices[idx+2].x + _x, vertices[idx+2].y + _y, 0.0f ),
+            //                                       new Vector3 ( vertices[idx+3].x + _x, vertices[idx+3].y + _y, 0.0f ),
+            //                                       },
+            //                                       Color.white );
+            // }
+            // } DEBUG end 
         }
     }
 
@@ -1245,11 +1269,15 @@ class exUILayoutEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawElementBorder ( exUIElement _el, Color _color ) {
+        int x;
+        int y;
+        _el.GetPosition ( out x, out y );
+
         exEditorUtility.GL_DrawRectLine( new Vector3[] {
-                                         new Vector3( _el.x,             _el.y,              0.0f ),
-                                         new Vector3( _el.x + _el.width, _el.y,              0.0f ),
-                                         new Vector3( _el.x + _el.width, _el.y + _el.height, 0.0f ),
-                                         new Vector3( _el.x,             _el.y + _el.height, 0.0f ),
+                                         new Vector3( x,             y,              0.0f ),
+                                         new Vector3( x + _el.width, y,              0.0f ),
+                                         new Vector3( x + _el.width, y + _el.height, 0.0f ),
+                                         new Vector3( x,             y + _el.height, 0.0f ),
                                          }, _color );
     }
 
@@ -1263,8 +1291,12 @@ class exUILayoutEditor : EditorWindow {
                             Color _paddingColor,
                             Color _contentColor ) 
     {
-        float cur_x = _el.x;
-        float cur_y = _el.y;
+        int x;
+        int y;
+        _el.GetPosition ( out x, out y );
+
+        float cur_x = x;
+        float cur_y = y;
         float width = _el.width;
         float height = _el.height;
 

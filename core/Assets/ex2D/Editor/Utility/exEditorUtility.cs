@@ -85,6 +85,18 @@ public static class exEditorUtility {
         }
     }
 
+    // materialAlphaBlended
+    static Material materialAlphaBlendedVertColor_;
+    public static Material materialAlphaBlendedVertColor {
+        get {
+            if ( materialAlphaBlendedVertColor_ == null ) {
+                materialAlphaBlendedVertColor_ = new Material( Shader.Find("ex2D/Alpha Blended (Use Vertex Color)") );
+                materialAlphaBlendedVertColor_.hideFlags = HideFlags.HideAndDontSave;
+            }
+            return materialAlphaBlendedVertColor_;
+        }
+    }
+
     // textureCheckerboard
     static Texture2D textureCheckerboard_;
     public static Texture2D textureCheckerboard {
