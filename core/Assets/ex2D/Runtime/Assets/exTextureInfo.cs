@@ -46,7 +46,7 @@ public class exTextureInfo : ScriptableObject {
     public int diceUnitWidth = 0;
     public int diceUnitHeight = 0;
 
-    [SerializeField] private int[] diceData;
+    [SerializeField] private float[] diceData;
 
     public int rotatedWidth {
         get {
@@ -74,7 +74,7 @@ public class exTextureInfo : ScriptableObject {
     }
 
     public DiceEnumerator GetDiceEnumerator() {
-        return new DiceEnumerator(diceData);    // No GC
+        return new DiceEnumerator(diceData, diceUnitWidth, diceUnitHeight);    // No GC
     }
 
     /* tile index:
@@ -83,24 +83,23 @@ public class exTextureInfo : ScriptableObject {
     0  1  2  3 
     */
     public void SetDiceData ( Rect[] _tileRects, int[] _x, int[] _y, bool[] _rotated ) {
-        List<int> data = new List<int> (_tileRects.Length * 6);
+        List<float> data = new List<float> (_tileRects.Length * 6);
         for ( int i = 0; i < _tileRects.Length; ++i ) {
             Rect rect = _tileRects[i];
-            if ( rect.width == 0 || rect.height == 0 ) {
-                data.Add( -1 );
+            if ( rect.width <= 0 || rect.height <= 0 ) {
+                data.Add( DiceEnumerator.EMPTY );
                 continue;
             }
-            data.Add( (int)_tileRects[i].x );   // trim_x
-            data.Add( (int)_tileRects[i].y );   // trim_y
-            data.Add( (int)_tileRects[i].width );
-            data.Add( (int)_tileRects[i].height );
-            // TODO: compress max dice
-            if ( _rotated[i] ) {
-                data.Add( - _x[i] );
+            if (rect.width == diceUnitWidth && rect.height == diceUnitHeight) {
+                data.Add( _rotated[i] ? DiceEnumerator.MAX_ROTATED : DiceEnumerator.MAX );
             }
             else {
-                data.Add( _x[i] );
+                data.Add( (int)_tileRects[i].x );   // trim_x
+                data.Add( (int)_tileRects[i].y );   // trim_y
+                data.Add( (int) (_rotated[i] ? - _tileRects[i].width : _tileRects[i].width) );
+                data.Add( (int)_tileRects[i].height );
             }
+            data.Add( _x[i] );
             data.Add( _y[i] );
         }
         diceData = data.ToArray();  // TrimExcess
@@ -113,7 +112,7 @@ public class exTextureInfo : ScriptableObject {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-public struct DiceEnumerator : System.Collections.Generic.IEnumerator<DiceEnumerator.DiceData> {
+public struct DiceEnumerator : IEnumerator<DiceEnumerator.DiceData>, IEnumerable<DiceEnumerator.DiceData> {
 
     public enum SizeType {
         Max,
@@ -123,28 +122,58 @@ public struct DiceEnumerator : System.Collections.Generic.IEnumerator<DiceEnumer
 
     public struct DiceData {
         public SizeType sizeType;
-        public int trim_x;
-        public int trim_y;
-        public int width;
-        public int height;
-        public int x;
-        public int y;
+        public float trim_x;
+        public float trim_y;
+        public float width;
+        public float height;
+        public float x;
+        public float y;
         public bool rotated;
+        public float rotatedWidth {
+            get {
+                if ( rotated ) return height;
+                return width;
+            }
+        }
+        public float rotatedHeight {
+            get {
+                if ( rotated ) return width;
+                return height;
+            }
+        }
     }
-
-    private int[] diceData;
+    
+    // compressing tag
+    public const int EMPTY = -1;
+    public const int MAX = -2;
+    public const int MAX_ROTATED = -3;
+    
+    private float[] diceData;
     private int dataIndex;
+    
+    private int diceUnitWidth;
+    private int diceUnitHeight;
 
-    public DiceEnumerator (int[] _diceData) {
+    public DiceEnumerator (float[] _diceData, int _diceUnitWidth, int _diceUnitHeight) {
         diceData = _diceData;
+        diceUnitWidth = _diceUnitWidth;
+        diceUnitHeight = _diceUnitHeight;
         dataIndex = 0;
         Reset();
+    }
+
+    public IEnumerator<DiceData> GetEnumerator () {
+        return this;
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator () {
+        return this;
     }
 
     public DiceData Current {
         get {
             DiceData d = new DiceData();
-            if (diceData[dataIndex] == -1) {
+            if (diceData[dataIndex] == EMPTY) {
                 d.sizeType = SizeType.Empty;
                 return d;
             }
@@ -156,16 +185,21 @@ public struct DiceEnumerator : System.Collections.Generic.IEnumerator<DiceEnumer
                 d.height = diceData[dataIndex + 3];
                 d.x = diceData[dataIndex + 4];
                 d.y = diceData[dataIndex + 5];
+                if (d.width < 0) {
+                    d.rotated = true;
+                    d.width = -d.width;
+                }
             }
             else {
-                exDebug.Assert(diceData[dataIndex] == -2);
+                exDebug.Assert(diceData[dataIndex] == MAX || diceData[dataIndex] == MAX_ROTATED);
                 d.sizeType = SizeType.Max;
                 d.x = diceData[dataIndex + 1];
                 d.y = diceData[dataIndex + 2];
-            }
-            if (d.x < 0) {
-                d.rotated = true;
-                d.x = -d.x;
+                d.trim_x = 0;
+                d.trim_y = 0;
+                d.width = diceUnitWidth;
+                d.height = diceUnitHeight;
+                d.rotated = (diceData[dataIndex] == MAX_ROTATED);
             }
             return d;
         }
@@ -174,14 +208,18 @@ public struct DiceEnumerator : System.Collections.Generic.IEnumerator<DiceEnumer
     public bool MoveNext () {
         if (dataIndex == -1) {
             dataIndex = 0;
+            if (diceData == null) {
+                return false;
+            }
         }
         else if (diceData[dataIndex] >= 0) {
             dataIndex += 6;
         }
-        else if (diceData[dataIndex] == -2) {
-            dataIndex += 2;
+        else if (diceData[dataIndex] == MAX || diceData[dataIndex] == MAX_ROTATED) {
+            dataIndex += 1;
         }
         else {
+            exDebug.Assert (diceData[dataIndex] == EMPTY);
             dataIndex += 1;
         }
         return dataIndex < diceData.Length;
