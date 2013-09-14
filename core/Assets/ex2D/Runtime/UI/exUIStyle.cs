@@ -76,7 +76,7 @@ public class exCSS_size {
         Inherit
     }
     public Type type; 
-    float val_; 
+    [SerializeField] float val_; 
     public float val {
         set {
             if ( type == Type.Length )
@@ -100,7 +100,7 @@ public class exCSS_size_nopercentage {
         Inherit
     }
     public Type type; 
-    float val_; 
+    [SerializeField] float val_; 
     public float val {
         set {
             if ( type == Type.Length )
@@ -124,7 +124,7 @@ public class exCSS_size_noauto {
         Inherit
     }
     public Type type; 
-    float val_; 
+    [SerializeField] float val_; 
     public float val {
         set {
             if ( type == Type.Length )
@@ -147,7 +147,7 @@ public class exCSS_size_lengthonly {
         Inherit
     }
     public Type type; 
-    float val_; 
+    [SerializeField] float val_; 
     public float val {
         set {
             if ( type == Type.Length )
@@ -171,7 +171,7 @@ public class exCSS_min_size {
         Inherit
     }
     public Type type; 
-    float val_; 
+    [SerializeField] float val_; 
     public float val {
         set {
             if ( type == Type.Length )
@@ -196,7 +196,7 @@ public class exCSS_max_size {
         Inherit
     }
     public Type type; 
-    float val_; 
+    [SerializeField] float val_; 
     public float val {
         set {
             if ( type == Type.Length )

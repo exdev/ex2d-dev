@@ -193,7 +193,10 @@ public static class exCSSUI {
                                        GUILayout.Width(20),
                                        GUILayout.Height(20),
                                        } );
-            if ( EditorGUI.EndChangeCheck() ) changed = true;
+            if ( EditorGUI.EndChangeCheck() ) {
+                changed = true;
+                GUI.changed = true;
+            }
         EditorGUILayout.EndHorizontal ();
         return changed;
     }
@@ -261,7 +264,10 @@ public static class exCSSUI {
                                        GUILayout.Width(20),
                                        GUILayout.Height(20),
                                        } );
-            if ( EditorGUI.EndChangeCheck() ) changed = true;
+            if ( EditorGUI.EndChangeCheck() ) {
+                changed = true;
+                GUI.changed = true;
+            }
         EditorGUILayout.EndHorizontal ();
         return changed;
     }
@@ -325,7 +331,10 @@ public static class exCSSUI {
                                        GUILayout.Width(20),
                                        GUILayout.Height(20),
                                        } );
-            if ( EditorGUI.EndChangeCheck() ) changed = true;
+            if ( EditorGUI.EndChangeCheck() ) {
+                changed = true;
+                GUI.changed = true;
+            }
         EditorGUILayout.EndHorizontal ();
         return changed;
     }
@@ -388,7 +397,10 @@ public static class exCSSUI {
                                        GUILayout.Width(20),
                                        GUILayout.Height(20),
                                        } );
-            if ( EditorGUI.EndChangeCheck() ) changed = true;
+            if ( EditorGUI.EndChangeCheck() ) {
+                changed = true;
+                GUI.changed = true;
+            }
         EditorGUILayout.EndHorizontal ();
         return changed;
     }

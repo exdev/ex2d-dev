@@ -522,7 +522,11 @@ class exUILayoutEditor : EditorWindow {
                                                                   GUILayout.Height(400),
                                                                   GUILayout.MinHeight(400),
                                                                   GUILayout.MaxHeight(400),
+                                                                  GUILayout.Width(_width),
+                                                                  GUILayout.MinWidth(_width),
+                                                                  GUILayout.MaxWidth(_width),
                                                                   GUILayout.ExpandHeight(false), 
+                                                                  GUILayout.ExpandWidth(false), 
                                                                   } );        
                 if ( EditorGUI.EndChangeCheck() ) {
                     curEdit.Apply();
