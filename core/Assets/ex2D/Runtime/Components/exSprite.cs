@@ -102,7 +102,7 @@ public class exSprite : exLayeredSprite, exISprite {
     }
 
     // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 tiledSpacing_ = new Vector2(0f, 0f);
+    [SerializeField] protected Vector2 tiledSpacing_ = new Vector2(0.0f, 0.0f);
     // ------------------------------------------------------------------ 
 
     public Vector2 tiledSpacing {
@@ -296,8 +296,10 @@ public class exSprite : exLayeredSprite, exISprite {
         case exSpriteType.Tiled:
             SpriteBuilder.TiledUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, tiledSpacing_, _space, vertices, 0);
             break;
-        //case exSpriteType.Diced:
-        //    break;
+        case exSpriteType.Diced:
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vertices, 0);
+            SpriteBuilder.SimpleVertexBufferToDiced(this, textureInfo_, _space, vertices, 0);
+            break;
         }
 
         return vertices.ToArray();
@@ -709,14 +711,14 @@ internal static class SpriteBuilder {
             Vector2 uv3 = _uvs.buffer[_vbIndex + 3];
             Vector2 lastTileRawSize = new Vector2(_sprite.width % (_textureInfo.width + _tiledSpacing.x), _sprite.height % (_textureInfo.height + _tiledSpacing.y));
             Vector2 clippedUv2 = uv2;
-            if (0f < lastTileRawSize.y && lastTileRawSize.y < _textureInfo.height) {  // clipped last row
+            if (0.0f < lastTileRawSize.y && lastTileRawSize.y < _textureInfo.height) {  // clipped last row
                 float stepY = lastTileRawSize.y / _textureInfo.height;
                 if (_textureInfo.rotated == false)
                     clippedUv2.y = Mathf.Lerp(uv0.y, uv2.y, stepY);
                 else
                     clippedUv2.x = Mathf.Lerp(uv0.x, uv2.x, stepY);
             }
-            if (0f < lastTileRawSize.x && lastTileRawSize.x < _textureInfo.width) {   // clipped last column
+            if (0.0f < lastTileRawSize.x && lastTileRawSize.x < _textureInfo.width) {   // clipped last column
                 float stepX = lastTileRawSize.x / _textureInfo.width;
                 if (_textureInfo.rotated == false)
                     clippedUv2.x = Mathf.Lerp(uv0.x, uv2.x, stepX);
@@ -798,14 +800,14 @@ internal static class SpriteBuilder {
         
         Vector2 lastTileRawSize = new Vector2(_sprite.width % (_textureInfo.width + _tiledSpacing.x), _sprite.height % (_textureInfo.height + _tiledSpacing.y));
         Vector3 horizontalTileDis, verticalTileDis;
-        if (lastTileRawSize.x > 0f) {
+        if (lastTileRawSize.x > 0.0f) {
             float perc = lastTileRawSize.x / (_textureInfo.width + _tiledSpacing.x);
             horizontalTileDis = (v2 - v1) / (colCount - 1 + perc);
         }
         else {
             horizontalTileDis = (v2 - v1) / colCount;
         }
-        if (lastTileRawSize.y > 0f) {
+        if (lastTileRawSize.y > 0.0f) {
             float perc = lastTileRawSize.y / (_textureInfo.height + _tiledSpacing.y);
             verticalTileDis = (v1 - v0) / (rowCount - 1 + perc);
         }
@@ -822,12 +824,11 @@ internal static class SpriteBuilder {
         for (int r = 0; r < rowCount; ++r) {
             Vector3 bottomLeft = rowBottomLeft;
             Vector3 topLeft;
-            if (r < rowCount - 1 || lastTilePercent.y >= 1f || lastTilePercent.y == 0f) {
+            if (r < rowCount - 1 || lastTilePercent.y >= 1.0f || lastTilePercent.y == 0.0f) {
                 topLeft = bottomLeft + trimedTileBottomToTop;
             }
             else {
-                // clip last row
-                topLeft = v1;
+                topLeft = v1;   // clip last row
             }
 
             for (int c = 0; c < colCount; ++c) {
@@ -841,7 +842,7 @@ internal static class SpriteBuilder {
             }
             
             // clip last column
-            if (0f < lastTilePercent.x && lastTilePercent.x < 1f) {
+            if (0.0f < lastTilePercent.x && lastTilePercent.x < 1.0f) {
                 Vector3 clipped = trimedTileLeftToRight * (1.0f - lastTilePercent.x);
                 _vertices.buffer[i - 2] -= clipped;
                 _vertices.buffer[i - 1] -= clipped;
@@ -861,12 +862,10 @@ internal static class SpriteBuilder {
         if (_vertices.Count == 0) {
             return;
         }
-        //SpriteBuilder.SimpleUpdateBuffers(_sprite, _textureInfo, _useTextureOffset, _space, 
-        //                                  _vertices, _uvs, _indices, _vbIndex, _ibIndex);
-
         if ((_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
-            //
-            SimpleVertexBufferToDiced(_sprite, _textureInfo, _useTextureOffset, _space, _vertices, _vbIndex);
+            // get entire sprite
+            SimpleUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _space, _vertices, _vbIndex);
+            SimpleVertexBufferToDiced(_sprite, _textureInfo, _space, _vertices, _vbIndex);
         }
         
         int colCount, rowCount;
@@ -920,80 +919,74 @@ internal static class SpriteBuilder {
     // Desc:
     // ------------------------------------------------------------------ 
     
-    public static void SimpleVertexBufferToDiced (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space, 
-                                                exList<Vector3> _vertices, int _startIndex) {
+    public static void SimpleVertexBufferToDiced (exSpriteBase _sprite, exTextureInfo _ti, Space _space, 
+                                                    exList<Vector3> _vertices, int _startIndex) {
         /* tile index:
         8  9  10 11
         4  5  6  7 
         0  1  2  3 
         */
-        if (_vertices.Count == 0) {
-            return;
-        }
-        // get entire sprite
-        SimpleUpdateVertexBuffer(_sprite, _textureInfo, _useTextureOffset, _space, _vertices, _startIndex);
-        
         Vector3 v0 = _vertices.buffer [_startIndex + 0];
         Vector3 v1 = _vertices.buffer [_startIndex + 1];
         Vector3 v2 = _vertices.buffer [_startIndex + 2];
-        /*
+        
         int colCount, rowCount;
-        exSpriteUtility.GetTilingCount ((exISprite)_sprite, out colCount, out rowCount);
-        
-        Vector2 lastTileRawSize = new Vector2(_sprite.width % (_textureInfo.width + _tiledSpacing.x), _sprite.height % (_textureInfo.height + _tiledSpacing.y));
-        Vector3 horizontalTileDis, verticalTileDis;
-        if (lastTileRawSize.x > 0f) {
-            float perc = lastTileRawSize.x / (_textureInfo.width + _tiledSpacing.x);
-            horizontalTileDis = (v2 - v1) / (colCount - 1 + perc);
+        exSpriteUtility.GetDicingCount ((exISprite)_sprite, out colCount, out rowCount);
+
+        Vector2 lastTileRawSize = new Vector2(_ti.width % _ti.diceUnitWidth, _ti.height % _ti.diceUnitHeight);
+        Vector3 tileLeftToRight, tileBottomToTop;
+        if (lastTileRawSize.x > 0.0f) {
+            float perc = lastTileRawSize.x / _ti.diceUnitWidth;
+            tileLeftToRight = (v2 - v1) / (colCount - 1 + perc);
         }
         else {
-            horizontalTileDis = (v2 - v1) / colCount;
+            tileLeftToRight = (v2 - v1) / colCount;
         }
-        if (lastTileRawSize.y > 0f) {
-            float perc = lastTileRawSize.y / (_textureInfo.height + _tiledSpacing.y);
-            verticalTileDis = (v1 - v0) / (rowCount - 1 + perc);
+        if (lastTileRawSize.y > 0.0f) {
+            float perc = lastTileRawSize.y / _ti.diceUnitHeight;
+            tileBottomToTop = (v1 - v0) / (rowCount - 1 + perc);
         }
         else {
-            verticalTileDis = (v1 - v0) / rowCount;
+            tileBottomToTop = (v1 - v0) / rowCount;
         }
-        Vector2 lastTilePercent = new Vector2(lastTileRawSize.x / _textureInfo.width, lastTileRawSize.y / _textureInfo.height);
-        
-        Vector3 trimedTileBottomToTop = verticalTileDis / (_textureInfo.height + _tiledSpacing.y) * _textureInfo.height;
-        Vector3 trimedTileLeftToRight = horizontalTileDis / (_textureInfo.width + _tiledSpacing.x) * _textureInfo.width;
-        
+        Vector3 l2rStepPerTile = tileLeftToRight / _ti.diceUnitWidth;
+        Vector3 b2tStepPerTile = tileBottomToTop / _ti.diceUnitHeight;
+
         int i = _startIndex;
         Vector3 rowBottomLeft = v0;
+        DiceEnumerator diceEnumerator = _ti.GetDiceEnumerator();
         for (int r = 0; r < rowCount; ++r) {
             Vector3 bottomLeft = rowBottomLeft;
-            Vector3 topLeft;
-            if (r < rowCount - 1 || lastTilePercent.y >= 1f || lastTilePercent.y == 0f) {
-                topLeft = bottomLeft + trimedTileBottomToTop;
-            }
-            else {
-                // clip last row
-                topLeft = v1;
-            }
-
+            Vector3 topLeft = bottomLeft + tileBottomToTop;
             for (int c = 0; c < colCount; ++c) {
-                _vertices.buffer[i++] = bottomLeft;
-                _vertices.buffer[i++] = topLeft;
-                _vertices.buffer[i++] = topLeft + trimedTileLeftToRight;
-                _vertices.buffer[i++] = bottomLeft + trimedTileLeftToRight;
-                // next column
-                bottomLeft += horizontalTileDis;
-                topLeft += horizontalTileDis;
+                bool hasNextTile = diceEnumerator.MoveNext();
+                exDebug.Assert(hasNextTile);
+                DiceEnumerator.DiceData tile = diceEnumerator.Current;
+                if (tile.sizeType == DiceEnumerator.SizeType.Max) {
+                    _vertices.buffer[i++] = bottomLeft;
+                    _vertices.buffer[i++] = topLeft;
+                    topLeft += tileLeftToRight;     // next column
+                    _vertices.buffer[i++] = topLeft;
+                    bottomLeft += tileLeftToRight;  // next column
+                    _vertices.buffer[i++] = bottomLeft;
+                }
+                else if (tile.sizeType == DiceEnumerator.SizeType.Trimmed) {
+                    Vector3 offsetX = l2rStepPerTile * tile.trim_x;
+                    Vector3 offsetY = b2tStepPerTile * tile.trim_y;
+                    Vector3 offsetEndX = l2rStepPerTile * (tile.trim_x + tile.width);
+                    Vector3 offsetEndY = b2tStepPerTile * (tile.trim_y + tile.height);
+                    _vertices.buffer[i++] = bottomLeft + offsetX + offsetY;
+                    _vertices.buffer[i++] = bottomLeft + offsetX + offsetEndY;
+                    _vertices.buffer[i++] = bottomLeft + offsetEndX + offsetEndY;
+                    _vertices.buffer[i++] = bottomLeft + offsetEndX + offsetY;
+                    bottomLeft += tileLeftToRight;  // next column
+                    topLeft += tileLeftToRight;     // next column
+                }
             }
-            
-            // clip last column
-            if (0f < lastTilePercent.x && lastTilePercent.x < 1f) {
-                Vector3 clipped = trimedTileLeftToRight * (1.0f - lastTilePercent.x);
-                _vertices.buffer[i - 2] -= clipped;
-                _vertices.buffer[i - 1] -= clipped;
-            }
-
             // next row
-            rowBottomLeft += verticalTileDis;
-        }*/
+            rowBottomLeft += tileBottomToTop;
+        }
+        exDebug.Assert(diceEnumerator.MoveNext() == false);
     }
 }
 }

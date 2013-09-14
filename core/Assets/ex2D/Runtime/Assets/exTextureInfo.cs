@@ -94,10 +94,10 @@ public class exTextureInfo : ScriptableObject {
                 data.Add( _rotated[i] ? DiceEnumerator.MAX_ROTATED : DiceEnumerator.MAX );
             }
             else {
-                data.Add( (int)_tileRects[i].x );   // trim_x
-                data.Add( (int)_tileRects[i].y );   // trim_y
-                data.Add( (int) (_rotated[i] ? - _tileRects[i].width : _tileRects[i].width) );
-                data.Add( (int)_tileRects[i].height );
+                data.Add( _tileRects[i].x );   // trim_x
+                data.Add( _tileRects[i].y );   // trim_y
+                data.Add( _rotated[i] ? - _tileRects[i].width : _tileRects[i].width );
+                data.Add( _tileRects[i].height );
             }
             data.Add( _x[i] );
             data.Add( _y[i] );
