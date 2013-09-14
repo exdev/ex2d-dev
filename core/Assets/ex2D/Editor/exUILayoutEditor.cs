@@ -87,6 +87,7 @@ class exUILayoutEditor : EditorWindow {
     exRectSelection<Object> rectSelection = null;
 
     Vector2 hierarchyScrollPos = Vector2.zero;
+    Vector2 contentScrollPos = Vector2.zero;
     Vector2 styleScrollPos = Vector2.zero;
     exUIElement activeElement = null;
     exUIElement hoverElement = null;
@@ -467,26 +468,14 @@ class exUILayoutEditor : EditorWindow {
                                         } );
 
             EditorGUILayout.LabelField ( "Hierarchy", hierarchyStyles.boldLabel );
-            EditorGUILayout.BeginHorizontal ();
-                GUILayout.FlexibleSpace();
-                if ( GUILayout.Button ( "Edit" ) ) {
-                    if ( activeElement != null ) {
-                        exElementContentWizard wizard = ScriptableWizard.DisplayWizard<exElementContentWizard>( "Edit "  + activeElement.name + " Content:" );
-                        wizard.position = new Rect ( position.x + 50.0f, position.y + 100.0f, 400.0f, 400.0f );
-                        wizard.curLayout = curEdit;
-                        wizard.curEdit = activeElement;
-                    }
-                }
-            EditorGUILayout.EndHorizontal ();
-
             EditorGUILayout.Space ();
             EditorGUILayout.Space ();
 
-            hierarchyScrollPos = EditorGUILayout.BeginScrollView ( hierarchyScrollPos, 
+            hierarchyScrollPos = EditorGUILayout.BeginScrollView ( hierarchyScrollPos,
                                                                    new GUILayoutOption [] {
-                                                                   GUILayout.Width(_width), 
-                                                                   GUILayout.MinWidth(_width), 
-                                                                   GUILayout.MaxWidth(_width),
+                                                                   GUILayout.Width(_width + 20), 
+                                                                   GUILayout.MinWidth(_width + 20), 
+                                                                   GUILayout.MaxWidth(_width + 20),
                                                                    GUILayout.ExpandWidth(false),
                                                                    } );
 
@@ -496,6 +485,7 @@ class exUILayoutEditor : EditorWindow {
                 bool isDeleted = false;
                 float totalHeight = ElementField ( controlID, 10.0f, 0.0f, 0, curEdit.root, ref isDeleted );
                 totalHeight = Mathf.Min( _height, totalHeight );
+                Rect rect = GUILayoutUtility.GetRect ( _width, totalHeight );
 
 
                 // event process for layers
@@ -517,6 +507,32 @@ class exUILayoutEditor : EditorWindow {
                 }
 
             EditorGUILayout.EndScrollView();
+
+            // content
+            GUILayout.FlexibleSpace();
+            GUILayout.Space(20);
+            EditorGUILayout.LabelField ( "Content:" );
+            if ( activeElement != null ) {
+                EditorGUILayout.BeginHorizontal();
+                GUILayout.Space(10);
+                // contentScrollPos = EditorGUILayout.BeginScrollView(contentScrollPos);        
+                EditorGUI.BeginChangeCheck();
+                activeElement.content = EditorGUILayout.TextArea( activeElement.content, 
+                                                                  new GUILayoutOption [] {
+                                                                  GUILayout.Height(400),
+                                                                  GUILayout.MinHeight(400),
+                                                                  GUILayout.MaxHeight(400),
+                                                                  GUILayout.ExpandHeight(false), 
+                                                                  } );        
+                if ( EditorGUI.EndChangeCheck() ) {
+                    curEdit.Apply();
+                    EditorUtility.SetDirty(curEdit);
+                    Repaint();
+                }
+                // EditorGUILayout.EndScrollView();
+                EditorGUILayout.EndHorizontal();
+            }
+            GUILayout.Space(20);
 
         EditorGUILayout.EndVertical();
     }
@@ -635,6 +651,8 @@ class exUILayoutEditor : EditorWindow {
             return 0.0f;
         }
 
+        bool hasDirty = false;
+
         // children
         cur_y += height;
         for ( int i = 0; i < _el.children.Count; ++i ) {
@@ -644,10 +662,15 @@ class exUILayoutEditor : EditorWindow {
                 _el.children.RemoveAt(i);
                 --i;
 
-                curEdit.Apply();
-                EditorUtility.SetDirty ( curEdit );
+                hasDirty = true;
             }
             cur_y += totalHeight;
+        }
+
+        if ( hasDirty ) {
+            curEdit.Apply();
+            EditorUtility.SetDirty ( curEdit );
+            Repaint();
         }
 
         return (cur_y - _y);
@@ -731,6 +754,11 @@ class exUILayoutEditor : EditorWindow {
         // add layer button
         EditorGUILayout.BeginHorizontal( hierarchyStyles.toolbar, new GUILayoutOption[0]);
         GUILayout.FlexibleSpace();
+        // button 
+        if ( GUILayout.Button( "Apply", hierarchyStyles.toolbarButton ) ) {
+            curEdit.Apply();
+            Repaint();
+        }
         EditorGUILayout.EndHorizontal();
     }
 
@@ -1058,6 +1086,7 @@ class exUILayoutEditor : EditorWindow {
                         // apply layout
                         curEdit.Apply();
                         EditorUtility.SetDirty (curEdit);
+                        Repaint();
                     }
 
                 EditorGUILayout.EndScrollView();

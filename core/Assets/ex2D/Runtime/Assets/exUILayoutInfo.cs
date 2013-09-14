@@ -25,7 +25,7 @@ public class exUILayoutInfo : ScriptableObject {
     public int width = 0;
     public int height = 0;
 
-    public exUIElement root;
+    public exUIElement root = new exUIElement();
 
     ///////////////////////////////////////////////////////////////////////////////
     //

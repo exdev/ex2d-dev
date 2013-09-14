@@ -327,39 +327,39 @@ public class exUIElement {
         normalFlows_.Clear();
         BreakTextIntoElements ( content, _x, width );
         normalFlows_.AddRange( children );
+        // TODO: if child element is inline-element, just break it into this parent.
 
         // ======================================================== 
         // layout the children
         // ======================================================== 
 
-        int child_start_x = x;
-        int child_start_y = y;
-        int child_x = child_start_x;
-        int child_y = child_start_y;
+        int child_x = 0;
+        int child_y = 0;
         int lineWidth = 0;
         int maxWidth = 0;
         int maxLineHeight = 0;
         int lineChildIndex = 0;
         int lineChildCount = 0;
+        int yAdvancedIndex = -1;
 
         for ( int i = 0; i < normalFlows_.Count; ++i ) {
             exUIElement child = normalFlows_[i];
             bool newLine = false;
 
-            // before-layout
-            if ( child.display == exCSS_display.Block ) {
-                child_x = child_start_x;
-                child_y = child_y + maxLineHeight;
-            }
-
             // do layout if they are not content-line-elements
             if ( child.isContent == false )
-                child.Layout( child_x - x, child_y - y, width, height );
+                child.Layout( child_x, child_y, width, height );
 
             // advance the child 
             if ( child.display == exCSS_display.Block ) {
-                child_y = child_y + child.GetTotalHeight();
-                maxLineHeight = 0;
+                if ( lineChildCount > 1 ) {
+                    newLine = true;
+                }
+                else {
+                    child_y = child_y + child.GetTotalHeight();
+                    yAdvancedIndex = i;
+                    maxLineHeight = 0;
+                }
             }
             else if ( child.display == exCSS_display.InlineBlock ) {
                 int childTotalWidth = child.GetTotalWidth();
@@ -396,37 +396,37 @@ public class exUIElement {
                 // TODO: re-layout last-line elements ( vertical aligement, based on max-height )
 
                 //
-                lineWidth = child_x - child_start_x;
+                lineWidth = child_x;
                 if ( lineWidth > maxWidth )
                     maxWidth = lineWidth;
 
+                // finalize child
+                child.x = child.x - child_x;
+                child.y = child.y + maxLineHeight;
+
                 //
-                child_x = child_start_x;
+                child_x = 0;
                 child_y = child_y + maxLineHeight;
-                maxLineHeight = 0;
+
+                int childTotalHeight = child.GetTotalHeight();
+                if ( childTotalHeight > maxLineHeight ) {
+                    maxLineHeight = childTotalHeight;
+                }
                 lineChildIndex = i+1;
                 lineChildCount = 0;
-
-                // finalize child
-                child.x = child_x - x;
-                child.y = child_y - y;
             }
         }
 
         // end line-width check
-        lineWidth = child_x - child_start_x;
+        lineWidth = child_x;
         if ( lineWidth > maxWidth )
             maxWidth = lineWidth;
-
-        if ( normalFlows_.Count > 0 ) {
-            exUIElement lastChild = normalFlows_[normalFlows_.Count-1];
-            if ( lastChild.display == exCSS_display.InlineBlock )
-                child_y = child_y + maxLineHeight;
-        }
+        if ( yAdvancedIndex != normalFlows_.Count-1 )
+            child_y = child_y + maxLineHeight;
 
         // calculate the height after child
         if ( style.height.type == exCSS_size.Type.Auto ) {
-            height += child_y - child_start_y;  
+            height += child_y;
         }
         if ( style.width.type == exCSS_size.Type.Auto ) {
             if ( display == exCSS_display.InlineBlock ||
