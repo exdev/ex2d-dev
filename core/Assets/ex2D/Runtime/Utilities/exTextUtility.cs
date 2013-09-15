@@ -96,62 +96,48 @@ public static class exTextUtility {
         int cur_x = 0;
         char last_char = ' '; // a new line always shrink
 
-        for ( ; cur_index < _text.Length; ++cur_index ) {
+        while ( cur_index < _text.Length ) {
+            int next_index = cur_index+1;
             char cur_char = _text[cur_index];
 
             // process new-line
             if ( cur_char == '\n' ) {
-                // replace new-line as white-space in mode "wrap-none", "wrap-word" 
-                if ( _wrap == WrapMode.Word || _wrap == WrapMode.None ) {
-                    cur_char = ' ';
-                }
-                // advance y
-                else {
+                if ( _wrap == WrapMode.Pre || _wrap == WrapMode.PreWrap ) {
                     _end_x = cur_x;
                     _end_index = cur_index;
                     return false;
                 }
+                cur_char = ' ';
             }
 
             // process white-space
             if ( cur_char == ' ' ) {
-                // if last character is space, shrink it if not in "wrap-pre" mode
-                if ( _wrap != WrapMode.Pre ) {
-                    if ( last_char == ' ' ) {
-                        continue;
-                    }
-                }
-            }
-            // process wrap
-            else {
-                if ( last_char == ' ' &&
-                     ( _wrap == WrapMode.Word || _wrap == WrapMode.PreWrap ) )
+                bool doShrink = false;
+
+                // pre-wrap will shrink the started white-space
+                if ( (_wrap == WrapMode.PreWrap && cur_index == _start_index) ||
+                     _wrap == WrapMode.Word ||
+                     _wrap == WrapMode.None ) 
                 {
-                    int tmp_x = cur_x;
-                    char tmp_char = ' '; 
-                    for ( int j = cur_index; j < _text.Length; ++j ) {
-                        tmp_char = _text[j];
-                        if ( tmp_char == ' ' )
+                    doShrink = true;
+                }
+
+                //
+                if ( doShrink ) {
+                    while ( next_index < _text.Length ) {
+                        char next_char = _text[next_index];
+                        if ( next_char != ' ' && next_char != '\n' )
                             break;
-
-                        CharacterInfo tmp_charInfo;
-                        _font.GetCharacterInfo ( cur_char, out tmp_charInfo, _fontSize );
-
-                        tmp_x += (int)tmp_charInfo.width;
-                        if ( tmp_x > _width ) {
-                            _end_x = cur_x;
-                            _end_index = cur_index-1;
-                            return false;
-                        }
+                        ++next_index;
                     }
                 }
             }
 
-            // generate mesh
+            // get character info
             CharacterInfo charInfo;
             _font.GetCharacterInfo ( cur_char, out charInfo, _fontSize );
 
-            // advance x
+            // advance-x
             cur_x += (int)charInfo.width + _letterSpacing;
             if ( cur_char == ' ' )
                 cur_x += _wordSpacing;
@@ -159,6 +145,35 @@ public static class exTextUtility {
             //
             last_char = cur_char;
             _builder.Append(cur_char);
+            cur_index = next_index;
+
+            // check if wrap the next-word
+            if ( cur_char == ' ' && (_wrap == WrapMode.Word || _wrap == WrapMode.PreWrap) ) {
+
+                int tmp_x = cur_x;
+                int tmp_index = next_index;
+                if ( tmp_index >= _text.Length )
+                    break;
+
+                char tmp_char = _text[tmp_index];
+                while ( tmp_char != ' ' && tmp_char != '\n' ) {
+                    CharacterInfo tmp_charInfo;
+                    _font.GetCharacterInfo ( tmp_char, out tmp_charInfo, _fontSize );
+
+                    tmp_x += (int)tmp_charInfo.width + _letterSpacing;
+                    tmp_char = _text[tmp_index];
+
+                    if ( tmp_x > _width ) {
+                        _end_x = cur_x;
+                        _end_index = cur_index-1;
+                        return false;
+                    }
+
+                    ++tmp_index;
+                    if ( tmp_index >= _text.Length )
+                        break;
+                }
+            }
         }
 
         //
