@@ -42,11 +42,6 @@ public class exTextureInfo : ScriptableObject {
     public int borderRight = 0;
     public int borderTop = 0;
     public int borderBottom = 0;
-    
-    public int diceUnitWidth = 0;
-    public int diceUnitHeight = 0;
-
-    [SerializeField] private float[] diceData;
 
     public int rotatedWidth {
         get {
@@ -66,31 +61,95 @@ public class exTextureInfo : ScriptableObject {
         }
     }
 
+#if UNITY_EDITOR
+
+    private int editDiceUnitWidth_ = -1;    ///< not committed value, used for editor
+    public int editDiceUnitWidth {
+        get {
+            if (editDiceUnitWidth_ >= 0) {
+                return editDiceUnitWidth_;
+            }
+            return diceUnitWidth;
+        }
+        set {
+            editDiceUnitWidth_ = Mathf.Max(value, 0);
+        }
+    }
+    private int editDiceUnitHeight_ = -1;   ///< not committed value, used for editor
+    public int editDiceUnitHeight {
+        get {
+            if (editDiceUnitHeight_ >= 0) {
+                return editDiceUnitHeight_;
+            }
+            return diceUnitHeight;
+        }
+        set {
+            editDiceUnitHeight_ = Mathf.Max(value, 0);
+        }
+    }
+
+#endif
+
+    [SerializeField] private float[] diceData;
+
+    public int diceUnitWidth {  ///< committed value, used for rendering
+        get {
+            if (diceData != null && diceData.Length > 0) {
+                return (int)diceData[0];
+            }
+            return 0;
+        }
+    }
+    public int diceUnitHeight {  ///< committed value, used for rendering
+        get {
+            if (diceData != null && diceData.Length > 0) {
+                return (int)diceData[1];
+            }
+            return 0;
+        }
+    }
+
     public bool isDiced {
         get {
-            exDebug.Assert((diceUnitWidth != 0) == (diceUnitHeight != 0));
-            return diceUnitWidth != 0 && diceUnitHeight != 0;
+            if (diceData != null && diceData.Length > 0) {
+                exDebug.Assert(diceData[0] > 0 == diceData[1] > 0);
+                return diceData[0] > 0 && diceData[1] > 0;
+            }
+            return false;
         }
     }
 
     public DiceEnumerator GetDiceEnumerator() {
-        return new DiceEnumerator(diceData, diceUnitWidth, diceUnitHeight);    // No GC
+        return new DiceEnumerator(diceData);    // No GC
     }
-
+    
+#if UNITY_EDITOR
+    
     /* tile index:
     8  9  10 11
     4  5  6  7 
     0  1  2  3 
-    */
+     */
     public void SetDiceData ( Rect[] _tileRects, int[] _x, int[] _y, bool[] _rotated ) {
-        List<float> data = new List<float> (_tileRects.Length * 6);
+        diceData = null;
+        if (editDiceUnitWidth == 0 || editDiceUnitHeight == 0) {
+            return;
+        }
+        
+        List<float> data = new List<float>( _tileRects.Length * 6 + 2 );
+        
+        // save committed value
+        data.Add( editDiceUnitWidth );
+        data.Add( editDiceUnitHeight );
+        
+        bool hasTile = false;
         for ( int i = 0; i < _tileRects.Length; ++i ) {
             Rect rect = _tileRects[i];
             if ( rect.width <= 0 || rect.height <= 0 ) {
                 data.Add( DiceEnumerator.EMPTY );
                 continue;
             }
-            if (rect.width == diceUnitWidth && rect.height == diceUnitHeight) {
+            if (rect.width == editDiceUnitWidth && rect.height == editDiceUnitHeight) {
                 data.Add( _rotated[i] ? DiceEnumerator.MAX_ROTATED : DiceEnumerator.MAX );
             }
             else {
@@ -101,9 +160,16 @@ public class exTextureInfo : ScriptableObject {
             }
             data.Add( _x[i] );
             data.Add( _y[i] );
+            hasTile = true;
         }
-        diceData = data.ToArray();  // TrimExcess
+        if (hasTile == false) {
+            data.RemoveRange (2, data.Count - 2);
+        }
+        diceData = data.ToArray();
     }
+    
+#endif
+    
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -151,13 +217,13 @@ public struct DiceEnumerator : IEnumerator<DiceEnumerator.DiceData>, IEnumerable
     private float[] diceData;
     private int dataIndex;
     
-    private int diceUnitWidth;
-    private int diceUnitHeight;
+    //private float diceUnitWidth;
+    //private float diceUnitHeight;
 
-    public DiceEnumerator (float[] _diceData, int _diceUnitWidth, int _diceUnitHeight) {
+    public DiceEnumerator (float[] _diceData) {
         diceData = _diceData;
-        diceUnitWidth = _diceUnitWidth;
-        diceUnitHeight = _diceUnitHeight;
+        //diceUnitWidth = _diceData[0];
+        //diceUnitHeight = _diceData[1];
         dataIndex = 0;
         Reset();
     }
@@ -193,13 +259,13 @@ public struct DiceEnumerator : IEnumerator<DiceEnumerator.DiceData>, IEnumerable
             else {
                 exDebug.Assert(diceData[dataIndex] == MAX || diceData[dataIndex] == MAX_ROTATED);
                 d.sizeType = SizeType.Max;
-                d.x = diceData[dataIndex + 1];
+                /*d.x = diceData[dataIndex + 1];
                 d.y = diceData[dataIndex + 2];
                 d.trim_x = 0;
                 d.trim_y = 0;
                 d.width = diceUnitWidth;
                 d.height = diceUnitHeight;
-                d.rotated = (diceData[dataIndex] == MAX_ROTATED);
+                d.rotated = (diceData[dataIndex] == MAX_ROTATED);*/
             }
             return d;
         }
@@ -207,7 +273,7 @@ public struct DiceEnumerator : IEnumerator<DiceEnumerator.DiceData>, IEnumerable
     
     public bool MoveNext () {
         if (dataIndex == -1) {
-            dataIndex = 0;
+            dataIndex = 2;  // skip width and height
             if (diceData == null) {
                 return false;
             }

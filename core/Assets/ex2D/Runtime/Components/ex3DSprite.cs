@@ -76,8 +76,8 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
                     customSize_ = true;
                 }
                 else if (value == exSpriteType.Diced) {
-                    if (textureInfo_ != null && textureInfo_.diceUnitWidth == 0 && textureInfo_.diceUnitHeight == 0) {
-                        Debug.LogWarning ("The texture info does not diced!");
+                    if (textureInfo_ != null && (textureInfo_.diceUnitWidth == 0 || textureInfo_.diceUnitHeight == 0)) {
+                        Debug.LogWarning ("The texture info is not diced!");
                     }
                 }
                 spriteType_ = value;
@@ -204,8 +204,9 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
         case exSpriteType.Tiled:
             SpriteBuilder.TiledUpdateBuffers (this, textureInfo_, useTextureOffset_, tiledSpacing_, Space.Self, _vertices, _uvs, _indices, 0, 0);
             break;
-        //case exSpriteType.Diced:
-        //    break;
+        case exSpriteType.Diced:
+            SpriteBuilder.DicedUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.Self, _vertices, _uvs, _indices, 0, 0);
+            break;
         }
         if ((updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null) {
             Color32 color32 = new Color (color_.r, color_.g, color_.b, color_.a);
@@ -250,8 +251,10 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
         case exSpriteType.Tiled:
             SpriteBuilder.TiledUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, tiledSpacing_, _space, vb, 0);
             break;
-        //case exSpriteType.Diced:
-            //    break;
+        case exSpriteType.Diced:
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vb, 0);
+            SpriteBuilder.SimpleVertexBufferToDiced(this, textureInfo_, vb, 0);
+            break;
         }
 
         return vb.ToArray();

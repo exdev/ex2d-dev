@@ -64,9 +64,15 @@ class exSpriteInspector : exLayeredSpriteInspector {
                             sp.spriteType = exSpriteType.Sliced;
                             sp.customSize = true;
                         }
-                        else if (sp.spriteType == exSpriteType.Sliced) {
+                        else if ( sp.textureInfo.isDiced ) {
+                            sp.spriteType = exSpriteType.Diced;
+                        }
+                        else if ( sp.spriteType == exSpriteType.Sliced ) {
                             sp.spriteType = exSpriteType.Simple;
                             sp.customSize = false;
+                        }
+                        else if ( sp.spriteType == exSpriteType.Diced ) {
+                            sp.spriteType = exSpriteType.Simple;
                         }
                     }
                     EditorUtility.SetDirty(sp);

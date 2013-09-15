@@ -22,11 +22,10 @@ namespace ex2D.Detail {
 
 public static class exSpriteUtility {
 
-    public static void GetDicingCount (exISprite _sprite, out int _colCount, out int _rowCount) {
-        exTextureInfo ti = _sprite.textureInfo;
-        if (ti != null && ti.diceUnitWidth > 0 && ti.diceUnitHeight > 0 && ti.width > 0 && ti.height > 0) {
-            _colCount = (int)Mathf.Ceil(ti.width / ti.diceUnitWidth);
-            _rowCount = (int)Mathf.Ceil(ti.height / ti.diceUnitHeight);
+    public static void GetDicingCount (exTextureInfo _ti, out int _colCount, out int _rowCount) {
+        if (_ti != null && _ti.diceUnitWidth > 0 && _ti.diceUnitHeight > 0 && _ti.width > 0 && _ti.height > 0) {
+            _colCount = Mathf.Max((int)Mathf.Ceil((float)_ti.width / _ti.diceUnitWidth), 1);
+            _rowCount = Mathf.Max((int)Mathf.Ceil((float)_ti.height / _ti.diceUnitHeight), 1);
         }
         else {
             _colCount = 1;
@@ -60,9 +59,9 @@ public static class exSpriteUtility {
                 }
             }
             else if (_spriteType == exSpriteType.Diced) {
-                if (_newTi.diceUnitWidth == 0 && _newTi.diceUnitHeight == 0) {
-                    Debug.LogWarning ("The texture info does not diced!");
-                }
+                //if (_newTi.isDiced == false) {
+                //    Debug.LogWarning ("The texture info is not diced!");
+                //}
                 (_sprite as exISprite).UpdateBufferSize ();
                 _sprite.updateFlags |= exUpdateFlags.Vertex;
             }
@@ -169,7 +168,7 @@ public static partial class exISpriteExtends {
             _vertexCount = 4 * 4;
             _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
             break;
-        case exSpriteType.Tiled:
+        case exSpriteType.Tiled: {
             int colCount, rowCount;
             exSpriteUtility.GetTilingCount (_sprite, out colCount, out rowCount);
             int quadCount = colCount * rowCount;
@@ -177,7 +176,7 @@ public static partial class exISpriteExtends {
             const int maxVertex = exMesh.MAX_VERTEX_COUNT;
             //const int maxVertex = 40000;
             if (_vertexCount > maxVertex) {
-                Debug.LogWarning(_sprite.gameObject.name + " is too big. Consider using a bigger texture.");
+                Debug.LogWarning(_sprite.gameObject.name + " is too big. Consider using a bigger texture.", _sprite.gameObject);
                 int sqrCount = (int)Mathf.Sqrt(maxVertex / exMesh.QUAD_VERTEX_COUNT);
                 if (colCount > sqrCount) {
                     _sprite.width = (_sprite.textureInfo.width + _sprite.tiledSpacing.x) * sqrCount;
@@ -192,8 +191,36 @@ public static partial class exISpriteExtends {
             }
             _indexCount = quadCount * exMesh.QUAD_INDEX_COUNT;
             break;
-        //case exSpriteType.Diced:
-            //    break;
+        }
+        case exSpriteType.Diced: {
+            exTextureInfo ti = _sprite.textureInfo;
+            if (ti == null || ti.isDiced == false) {
+                _vertexCount = exMesh.QUAD_VERTEX_COUNT;
+                _indexCount = exMesh.QUAD_INDEX_COUNT;
+                return;
+            }
+            int quadCount = 0;
+            DiceEnumerator dice = _sprite.textureInfo.GetDiceEnumerator ();
+            while (dice.MoveNext()) {
+                if (dice.Current.sizeType != DiceEnumerator.SizeType.Empty) {
+                    ++quadCount;
+                }
+            }
+            if (quadCount == 0) {
+                quadCount = 1;
+            }
+            //int colCount, rowCount;
+            //exSpriteUtility.GetDicingCount (_sprite, out colCount, out rowCount);
+            //exDebug.Assert (quadCount <= colCount * rowCount);
+            _vertexCount = quadCount * exMesh.QUAD_VERTEX_COUNT;
+            _indexCount = quadCount * exMesh.QUAD_INDEX_COUNT;
+            if (_vertexCount > exMesh.MAX_VERTEX_COUNT) {
+                Debug.LogError("The texture info [" + _sprite.textureInfo.name + "] has too many dices! Please using a bigger dice value.", _sprite.textureInfo);
+                _vertexCount = exMesh.QUAD_VERTEX_COUNT;
+                _indexCount = exMesh.QUAD_INDEX_COUNT;
+            }
+            break;
+        }
         default:
             _vertexCount = exMesh.QUAD_VERTEX_COUNT;
             _indexCount = exMesh.QUAD_INDEX_COUNT;
