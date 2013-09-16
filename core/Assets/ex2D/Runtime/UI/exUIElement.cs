@@ -340,10 +340,9 @@ public class exUIElement {
 
         int cur_child_x = 0;
         int cur_child_y = 0;
-        int lineWidth = 0;
         int maxWidth = 0;
         int maxLineHeight = 0;
-        int lineChildIndex = 0;
+        // int lineChildIndex = 0;
         int lineChildCount = 0;
 
         for ( int i = 0; i < normalFlows_.Count; ++i ) {
@@ -412,92 +411,10 @@ public class exUIElement {
             ++lineChildCount;
         }
 
-        // end check
+        // end-line check
         if ( cur_child_x > maxWidth )
             maxWidth = cur_child_x;
         cur_child_y += maxLineHeight;
-
-        // for ( int i = 0; i < normalFlows_.Count; ++i ) {
-        //     exUIElement child = normalFlows_[i];
-        //     bool wrapToTheStart = false;
-
-        //     // do layout if they are not content-line-elements
-        //     if ( child.isContent == false )
-        //         child.Layout( cur_child_x, cur_child_y, width, height );
-
-        //     // advance the child 
-        //     if ( child.display == exCSS_display.Block ) {
-        //         if ( lineChildCount > 0 ) {
-        //             newLine = true;
-        //         }
-        //         else {
-        //             cur_child_y = cur_child_y + child.GetTotalHeight();
-        //             maxLineHeight = 0;
-        //         }
-        //     }
-        //     // NOTE: in the last step we add child's inline-element into the parent, this will make sure
-        //     //       inline element don't have child and only in one line.
-        //     else if ( child.display == exCSS_display.InlineBlock ) {
-        //         int childTotalWidth = child.GetTotalWidth();
-        //         if ( (lineChildCount > 0) && (cur_child_x + childTotalWidth) > _width ) {
-        //             newLine = true;
-        //         }
-        //         else {
-        //             cur_child_x += childTotalWidth;
-
-        //             // calculate max-height for the prev element
-        //             int childTotalHeight = child.GetTotalHeight();
-        //             if ( childTotalHeight > maxLineHeight ) {
-        //                 maxLineHeight = childTotalHeight;
-        //             }
-        //         }
-        //     }
-        //     else if ( child.display == exCSS_display.Inline ) {
-        //         if ( child.newLine ) {
-        //             cur_child_x = 0;
-        //             cur_child_y = child.y + maxLineHeight;
-        //             maxLineHeight = 0;
-        //         }
-        //         else {
-        //             cur_child_x += child.width;
-        //         }
-        //     }
-
-        //     //
-        //     if ( newLine ) {
-        //         // TODO: re-layout last-line elements ( vertical aligement, based on max-height )
-
-        //         //
-        //         lineWidth = cur_child_x;
-        //         if ( lineWidth > maxWidth )
-        //             maxWidth = lineWidth;
-
-        //         // finalize child
-        //         child.x = child.x - cur_child_x;
-        //         child.y = child.y + maxLineHeight;
-
-        //         // reset
-        //         cur_child_x = 0;
-        //         cur_child_y = child.y + maxLineHeight;
-
-        //         int childTotalHeight = child.GetTotalHeight();
-        //         if ( childTotalHeight > maxLineHeight ) {
-        //             maxLineHeight = childTotalHeight;
-        //         }
-        //         lineChildIndex = i+1;
-        //         lineChildCount = 0;
-        //     }
-
-        //     //
-        //     ++lineChildCount;
-        // }
-
-        // // end line-width check
-        // lineWidth = cur_child_x;
-        // if ( lineWidth > maxWidth )
-        //     maxWidth = lineWidth;
-        // if ( yAdvanced == false )
-        //     cur_child_y = cur_child_y + maxLineHeight;
 
         // calculate the height after child
         if ( style.height.type == exCSS_size.Type.Auto ) {
@@ -505,7 +422,8 @@ public class exUIElement {
         }
         if ( style.width.type == exCSS_size.Type.Auto ) {
             if ( display == exCSS_display.InlineBlock ||
-                 display == exCSS_display.Inline ) {
+                 display == exCSS_display.Inline ) 
+            {
                 width = maxWidth;
             }
         }
