@@ -94,7 +94,6 @@ public static class exTextUtility {
     {
         int cur_index = _start_index;
         int cur_x = 0;
-        char last_char = ' '; // a new line always shrink
 
         while ( cur_index < _text.Length ) {
             int next_index = cur_index+1;
@@ -113,12 +112,16 @@ public static class exTextUtility {
             // process white-space
             if ( cur_char == ' ' ) {
                 bool doShrink = false;
+                bool skipThis = false;
 
                 // pre-wrap will shrink the started white-space
-                if ( (_wrap == WrapMode.PreWrap && cur_index == _start_index) ||
-                     _wrap == WrapMode.Word ||
-                     _wrap == WrapMode.None ) 
+                if ( cur_index == _start_index &&
+                     ( _wrap == WrapMode.PreWrap || _wrap == WrapMode.Word || _wrap == WrapMode.None ) ) 
                 {
+                    skipThis = true;
+                    doShrink = true;
+                }
+                else if ( _wrap == WrapMode.Word || _wrap == WrapMode.None ) {
                     doShrink = true;
                 }
 
@@ -130,6 +133,10 @@ public static class exTextUtility {
                             break;
                         ++next_index;
                     }
+                }
+                if ( skipThis ) {
+                    cur_index = next_index;
+                    continue;
                 }
             }
 
@@ -143,7 +150,6 @@ public static class exTextUtility {
                 cur_x += _wordSpacing;
 
             //
-            last_char = cur_char;
             _builder.Append(cur_char);
             cur_index = next_index;
 
@@ -230,10 +236,10 @@ public static class exTextUtility {
 
             // build uv
             if ( charInfo.flipped ) {
-                _uvs[idx + 0] = new Vector2(charInfo.uv.xMax, charInfo.uv.yMax);
-                _uvs[idx + 1] = new Vector2(charInfo.uv.xMax, charInfo.uv.yMin);
-                _uvs[idx + 2] = new Vector2(charInfo.uv.xMin, charInfo.uv.yMin);
-                _uvs[idx + 3] = new Vector2(charInfo.uv.xMin, charInfo.uv.yMax);
+                _uvs[idx + 0] = new Vector2(charInfo.uv.xMax, charInfo.uv.yMin);
+                _uvs[idx + 1] = new Vector2(charInfo.uv.xMax, charInfo.uv.yMax);
+                _uvs[idx + 2] = new Vector2(charInfo.uv.xMin, charInfo.uv.yMax);
+                _uvs[idx + 3] = new Vector2(charInfo.uv.xMin, charInfo.uv.yMin);
             }
             else {
                 _uvs[idx + 0] = new Vector2(charInfo.uv.xMin, charInfo.uv.yMax);

@@ -87,7 +87,6 @@ class exUILayoutEditor : EditorWindow {
     exRectSelection<Object> rectSelection = null;
 
     Vector2 hierarchyScrollPos = Vector2.zero;
-    Vector2 contentScrollPos = Vector2.zero;
     Vector2 styleScrollPos = Vector2.zero;
     exUIElement activeElement = null;
     exUIElement hoverElement = null;
@@ -485,7 +484,7 @@ class exUILayoutEditor : EditorWindow {
                 bool isDeleted = false;
                 float totalHeight = ElementField ( controlID, 10.0f, 0.0f, 0, curEdit.root, ref isDeleted );
                 totalHeight = Mathf.Min( _height, totalHeight );
-                Rect rect = GUILayoutUtility.GetRect ( _width, totalHeight );
+                GUILayoutUtility.GetRect ( _width, totalHeight );
 
 
                 // event process for layers

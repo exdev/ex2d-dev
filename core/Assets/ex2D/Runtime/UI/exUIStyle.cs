@@ -391,8 +391,6 @@ public class exUIStyle {
     public void Compute ( exUIElement _el, int _x, int _y, int _width, int _height ) {
         float val = 0.0f;
 
-        _el.display = display; 
-
         // ======================================================== 
         // margin 
         // ======================================================== 

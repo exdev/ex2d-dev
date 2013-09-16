@@ -68,10 +68,11 @@ public class exUIElement {
     }
 
     // computed style
-    [System.NonSerialized] public int x = 0;
-    [System.NonSerialized] public int y = 0;
-    [System.NonSerialized] public int width = 0;
-    [System.NonSerialized] public int height = 0;
+    /*[System.NonSerialized]*/ public int x = 0;
+    /*[System.NonSerialized]*/ public int y = 0;
+    /*[System.NonSerialized]*/ public int width = 0;
+    /*[System.NonSerialized]*/ public int height = 0;
+    /*[System.NonSerialized]*/ public bool newLine = false;
 
     [System.NonSerialized] public int marginLeft = 0;
     [System.NonSerialized] public int marginRight = 0;
@@ -221,6 +222,18 @@ public class exUIElement {
 
     // ------------------------------------------------------------------ 
     // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void Layout_PreProcess () {
+        display = style.display; 
+
+        for ( int i = 0; i < children.Count; ++i ) {
+            children[i].Layout_PreProcess();
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
     // _x is offset from parent-content-x
     // _y is offset from parent-content-y
     // ------------------------------------------------------------------ 
@@ -319,109 +332,176 @@ public class exUIElement {
         // layout content elemtns 
         // ======================================================== 
 
-        normalFlows_.Clear();
-        BreakTextIntoElements ( content, _x, width );
-        normalFlows_.AddRange( children );
-        // TODO: if child element is inline-element, just break it into this parent.
+        AddElementsToNormalFlow ( _x, _y, width, height );
 
         // ======================================================== 
         // layout the children
         // ======================================================== 
 
-        int child_x = 0;
-        int child_y = 0;
+        int cur_child_x = 0;
+        int cur_child_y = 0;
         int lineWidth = 0;
         int maxWidth = 0;
         int maxLineHeight = 0;
         int lineChildIndex = 0;
         int lineChildCount = 0;
-        int yAdvancedIndex = -1;
 
         for ( int i = 0; i < normalFlows_.Count; ++i ) {
             exUIElement child = normalFlows_[i];
-            bool newLine = false;
+            bool needWrap = false;
+            bool needNextLine = false;
 
             // do layout if they are not content-line-elements
-            if ( child.isContent == false )
-                child.Layout( child_x, child_y, width, height );
-
-            // advance the child 
+            if ( child.isContent == false ) {
+                child.Layout( cur_child_x, cur_child_y, width, height );
+            }
+            
+            //
             if ( child.display == exCSS_display.Block ) {
-                if ( lineChildCount > 1 ) {
-                    newLine = true;
-                }
-                else {
-                    child_y = child_y + child.GetTotalHeight();
-                    yAdvancedIndex = i;
-                    maxLineHeight = 0;
-                }
+                needWrap = true;
+                needNextLine = true;
             }
             else if ( child.display == exCSS_display.InlineBlock ) {
                 int childTotalWidth = child.GetTotalWidth();
-                if ( (lineChildCount > 1) && childTotalWidth > _width ) {
-                    newLine = true;
-                }
-                else {
-                    child_x += childTotalWidth;
-
-                    // calculate max-height for the prev element
-                    int childTotalHeight = child.GetTotalHeight();
-                    if ( childTotalHeight > maxLineHeight ) {
-                        maxLineHeight = childTotalHeight;
-                    }
+                if ( (lineChildCount > 0) && (cur_child_x + childTotalWidth) > _width ) {
+                    needWrap = true;
+                    needNextLine = true;
                 }
             }
             else if ( child.display == exCSS_display.Inline ) {
-                int advance_x;
-                int advance_y;
-                bool startFromZero;
-                child.GetAdvance ( out advance_x, out advance_y, out startFromZero );
-                if ( startFromZero ) {
-                    child_x = advance_x;
+                if ( child.newLine ) {
+                    needWrap = true;
+                    needNextLine = true;
                 }
-                else {
-                    child_x += advance_x;
-                }
-                child_y += advance_y;
             }
-            ++lineChildCount;
 
-            //
-            if ( newLine ) {
-                // TODO: re-layout last-line elements ( vertical aligement, based on max-height )
+            // check if next-line
+            if ( needNextLine ) {
+                // TODO: adjust last line childrens
 
-                //
-                lineWidth = child_x;
-                if ( lineWidth > maxWidth )
-                    maxWidth = lineWidth;
+                // re-adjust y
+                if ( child.isContent == false )
+                    child.y = child.y + maxLineHeight;
 
-                // finalize child
-                child.x = child.x - child_x;
-                child.y = child.y + maxLineHeight;
+                cur_child_y += maxLineHeight;
+                maxLineHeight = 0;
 
-                //
-                child_x = 0;
-                child_y = child_y + maxLineHeight;
+                // check and store max-line-width
+                if ( cur_child_x > maxWidth )
+                    maxWidth = cur_child_x;
 
-                int childTotalHeight = child.GetTotalHeight();
-                if ( childTotalHeight > maxLineHeight ) {
-                    maxLineHeight = childTotalHeight;
-                }
-                lineChildIndex = i+1;
                 lineChildCount = 0;
             }
+
+            // check if wrap-x
+            if ( needWrap ) {
+                if ( child.isContent == false )
+                    child.x = child.x - cur_child_x;  // re-adjust y
+                cur_child_x = 0;
+            }
+
+            // advance-x
+            cur_child_x += child.GetTotalWidth();
+
+            // get max-line-height
+            int childTotalHeight = child.GetTotalHeight();
+            if ( childTotalHeight > maxLineHeight ) {
+                maxLineHeight = childTotalHeight;
+            }
+
+            ++lineChildCount;
         }
 
-        // end line-width check
-        lineWidth = child_x;
-        if ( lineWidth > maxWidth )
-            maxWidth = lineWidth;
-        if ( yAdvancedIndex != normalFlows_.Count-1 )
-            child_y = child_y + maxLineHeight;
+        // end check
+        if ( cur_child_x > maxWidth )
+            maxWidth = cur_child_x;
+        cur_child_y += maxLineHeight;
+
+        // for ( int i = 0; i < normalFlows_.Count; ++i ) {
+        //     exUIElement child = normalFlows_[i];
+        //     bool wrapToTheStart = false;
+
+        //     // do layout if they are not content-line-elements
+        //     if ( child.isContent == false )
+        //         child.Layout( cur_child_x, cur_child_y, width, height );
+
+        //     // advance the child 
+        //     if ( child.display == exCSS_display.Block ) {
+        //         if ( lineChildCount > 0 ) {
+        //             newLine = true;
+        //         }
+        //         else {
+        //             cur_child_y = cur_child_y + child.GetTotalHeight();
+        //             maxLineHeight = 0;
+        //         }
+        //     }
+        //     // NOTE: in the last step we add child's inline-element into the parent, this will make sure
+        //     //       inline element don't have child and only in one line.
+        //     else if ( child.display == exCSS_display.InlineBlock ) {
+        //         int childTotalWidth = child.GetTotalWidth();
+        //         if ( (lineChildCount > 0) && (cur_child_x + childTotalWidth) > _width ) {
+        //             newLine = true;
+        //         }
+        //         else {
+        //             cur_child_x += childTotalWidth;
+
+        //             // calculate max-height for the prev element
+        //             int childTotalHeight = child.GetTotalHeight();
+        //             if ( childTotalHeight > maxLineHeight ) {
+        //                 maxLineHeight = childTotalHeight;
+        //             }
+        //         }
+        //     }
+        //     else if ( child.display == exCSS_display.Inline ) {
+        //         if ( child.newLine ) {
+        //             cur_child_x = 0;
+        //             cur_child_y = child.y + maxLineHeight;
+        //             maxLineHeight = 0;
+        //         }
+        //         else {
+        //             cur_child_x += child.width;
+        //         }
+        //     }
+
+        //     //
+        //     if ( newLine ) {
+        //         // TODO: re-layout last-line elements ( vertical aligement, based on max-height )
+
+        //         //
+        //         lineWidth = cur_child_x;
+        //         if ( lineWidth > maxWidth )
+        //             maxWidth = lineWidth;
+
+        //         // finalize child
+        //         child.x = child.x - cur_child_x;
+        //         child.y = child.y + maxLineHeight;
+
+        //         // reset
+        //         cur_child_x = 0;
+        //         cur_child_y = child.y + maxLineHeight;
+
+        //         int childTotalHeight = child.GetTotalHeight();
+        //         if ( childTotalHeight > maxLineHeight ) {
+        //             maxLineHeight = childTotalHeight;
+        //         }
+        //         lineChildIndex = i+1;
+        //         lineChildCount = 0;
+        //     }
+
+        //     //
+        //     ++lineChildCount;
+        // }
+
+        // // end line-width check
+        // lineWidth = cur_child_x;
+        // if ( lineWidth > maxWidth )
+        //     maxWidth = lineWidth;
+        // if ( yAdvanced == false )
+        //     cur_child_y = cur_child_y + maxLineHeight;
 
         // calculate the height after child
         if ( style.height.type == exCSS_size.Type.Auto ) {
-            height += child_y;
+            height += cur_child_y;
         }
         if ( style.width.type == exCSS_size.Type.Auto ) {
             if ( display == exCSS_display.InlineBlock ||
@@ -435,29 +515,21 @@ public class exUIElement {
     }
 
     // ------------------------------------------------------------------ 
-    // Desc: This is for inline element 
+    // Desc: 
     // ------------------------------------------------------------------ 
 
-    void GetAdvance ( out int _advance_x, out int _advance_y, out bool _startFromZero ) {
-        _advance_x = 0;
-        _advance_y = 0;
-        _startFromZero = false;
+    void AddElementsToNormalFlow ( int _x, int _y, int _width, int _height ) {
+        normalFlows_.Clear();
+        BreakTextIntoElements ( content, _x, _width );
 
-        if ( normalFlows_.Count > 0 ) {
-            exUIElement lastChild = normalFlows_[normalFlows_.Count-1];
-            _advance_x = lastChild.width;
-            for ( int i = 0; i < normalFlows_.Count; ++i ) {
-                _advance_y += normalFlows_[i].height;
-            }
-        }
-        else {
-            _advance_x = width;
-            _advance_y = height;
-        }
-
-        if ( normalFlows_.Count > 1 )
-            _startFromZero = true;
-    } 
+        // TODO: if child element is inline-element, just break it into this parent.
+        // for ( int i = 0; i < children.Count; ++i ) {
+        //     exUIElement childEL = children[i];
+        //     if ( childEL.display == exCSS_display.Inline ) {
+        //     }
+        // }
+        normalFlows_.AddRange( children );
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -479,13 +551,13 @@ public class exUIElement {
         if ( font is Font ) {
             (font as Font).RequestCharactersInTexture ( _text, fontSize, FontStyle.Normal );
 
-            int last_line_width = 0;
+            int line_width = 0;
             bool finished = false;
-            int cur_x = _offset_x;
+            int cur_x = 0;
             int cur_y = 0;
             int cur_index = 0;
             int cur_width = _width - _offset_x;
-            bool firstLineCheck = (_offset_x > 0 && display == exCSS_display.InlineBlock);
+            bool firstLineCheck = (_offset_x > 0 && display != exCSS_display.Inline);
             StringBuilder builder = new StringBuilder(_text.Length);
 
             while ( finished == false ) {
@@ -493,7 +565,7 @@ public class exUIElement {
                 builder.Length = 0;
 
                 //
-                finished = exTextUtility.CalcTextLine ( ref last_line_width, 
+                finished = exTextUtility.CalcTextLine ( ref line_width, 
                                                         ref cur_index,
                                                         ref builder,
                                                         _text,
@@ -504,6 +576,18 @@ public class exUIElement {
                                                         wrapMode,
                                                         wordSpacing,
                                                         letterSpacing );
+
+                // if inline-block's first line exceed, it will start from next line 
+                if ( firstLineCheck ) {
+                    firstLineCheck = false;
+                    if ( finished == false || line_width > cur_width ) {
+                        cur_x = 0;
+                        cur_width = _width;
+                        cur_index = 0;
+                        continue;
+                    }
+                }
+
                 // generate element
                 exUIElement newEL = new exUIElement();
                 newEL.isContent_ = true;
@@ -516,23 +600,14 @@ public class exUIElement {
                 newEL.letterSpacing = letterSpacing;
                 newEL.wordSpacing = wordSpacing;
                 newEL.lineHeight = lineHeight;
-                newEL.width = last_line_width;
+                newEL.width = line_width;
                 newEL.height = lineHeight;
                 newEL.x = cur_x;
                 newEL.y = cur_y;
+                newEL.newLine = true;
                 newEL.content = builder.ToString();
                 // newEL.content = builder.ToString( 0, cur_index - start_index );
                 normalFlows_.Add(newEL);
-
-                // if inline-block's first line exceed, it will start from next line 
-                if ( firstLineCheck ) {
-                    if ( last_line_width > cur_width ) {
-                        cur_x = 0;
-                        cur_width = _width;
-                        continue;
-                    }
-                    firstLineCheck = false;
-                }
 
                 //
                 cur_x = 0;

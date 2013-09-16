@@ -55,6 +55,7 @@ public class exUILayoutInfo : ScriptableObject {
         if ( height < 0 )
             height = int.MaxValue;
 
+        root.Layout_PreProcess();
         root.Layout( 0, 0, width, height );
     }
 
