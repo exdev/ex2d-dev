@@ -111,6 +111,25 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public exUIElement Clone () {
+        exUIElement newEL = new exUIElement ();
+        newEL.name = name;
+        newEL.id = id;
+        newEL.content = content;
+        newEL.style = style.Clone();
+
+        for ( int i = 0; i < children.Count; ++i ) {
+            exUIElement childEL = children[i].Clone();
+            childEL.parent = newEL;
+        }
+
+        return newEL;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public void GetPosition ( out int _x, out int _y ) {
         _x = x;
         _y = y;
@@ -362,7 +381,7 @@ public class exUIElement {
             }
             else if ( child.display == exCSS_display.InlineBlock ) {
                 int childTotalWidth = child.GetTotalWidth();
-                if ( (lineChildCount > 0) && (cur_child_x + childTotalWidth) > _width ) {
+                if ( (lineChildCount > 0) && (cur_child_x + childTotalWidth) > width ) {
                     needWrap = true;
                     needNextLine = true;
                 }
@@ -499,6 +518,7 @@ public class exUIElement {
                 if ( firstLineCheck ) {
                     firstLineCheck = false;
                     if ( finished == false || line_width > cur_width ) {
+                        finished = false;
                         cur_x = 0;
                         cur_width = _width;
                         cur_index = 0;

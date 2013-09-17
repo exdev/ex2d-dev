@@ -420,6 +420,16 @@ class exUILayoutEditor : EditorWindow {
         // add layer button
         EditorGUILayout.BeginHorizontal( hierarchyStyles.toolbar, new GUILayoutOption[0]);
             debugElement = GUILayout.Toggle ( debugElement, "Debug", hierarchyStyles.toolbarButton );
+            if ( GUILayout.Button( "Clone", hierarchyStyles.toolbarButton ) ) {
+                if ( activeElement != null && activeElement != curEdit.root ) {
+                    exUIElement newEL = activeElement.Clone();
+                    newEL.parent = activeElement.parent;
+
+                    curEdit.Apply();
+                    EditorUtility.SetDirty(curEdit);
+                    Repaint();
+                }
+            }
 
             GUILayout.FlexibleSpace();
 
@@ -429,7 +439,9 @@ class exUILayoutEditor : EditorWindow {
                     int nextIdx = System.Math.Max(curIdx-1,0);
                     activeElement.parent.InsertAt ( nextIdx, activeElement );
 
+                    curEdit.Apply();
                     EditorUtility.SetDirty(curEdit);
+                    Repaint();
                 }
             }
             if ( GUILayout.Button( "DOWN", hierarchyStyles.toolbarButton ) ) {
@@ -438,7 +450,9 @@ class exUILayoutEditor : EditorWindow {
                     int nextIdx = System.Math.Min(curIdx+1, activeElement.parent.children.Count-1);
                     activeElement.parent.InsertAt ( nextIdx, activeElement );
 
+                    curEdit.Apply();
                     EditorUtility.SetDirty(curEdit);
+                    Repaint();
                 }
             }
             if ( GUILayout.Button( hierarchyStyles.iconToolbarPlus, 

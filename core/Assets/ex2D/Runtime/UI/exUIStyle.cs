@@ -388,6 +388,77 @@ public class exUIStyle {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public exUIStyle Clone () {
+        exUIStyle newStyle = new exUIStyle ();
+        newStyle.width = new exCSS_size ( width.type, width.val ); 
+        newStyle.height = new exCSS_size ( height.type, height.val ); 
+        newStyle.minWidth  = new exCSS_min_size( minWidth.type, minWidth.val );
+        newStyle.minHeight = new exCSS_min_size( minHeight.type, minHeight.val );
+        newStyle.maxWidth  = new exCSS_max_size( maxWidth.type, maxWidth.val );
+        newStyle.maxHeight = new exCSS_max_size( maxHeight.type, maxHeight.val );
+
+        // position
+        newStyle.display = display;
+        newStyle.position = position;
+        newStyle.top    = new exCSS_size( top.type, top.val );
+        newStyle.right  = new exCSS_size( right.type, right.val );
+        newStyle.bottom = new exCSS_size( bottom.type, bottom.val );
+        newStyle.left   = new exCSS_size( left.type, left.val );
+
+        // margin
+        newStyle.marginTop    = new exCSS_size( marginTop.type, marginTop.val );
+        newStyle.marginRight  = new exCSS_size( marginRight.type, marginRight.val );
+        newStyle.marginBottom = new exCSS_size( marginBottom.type, marginBottom.val );
+        newStyle.marginLeft   = new exCSS_size( marginLeft.type, marginLeft.val );
+        newStyle.lockMarginRight   = lockMarginRight;
+        newStyle.lockMarginBottom  = lockMarginBottom;
+        newStyle.lockMarginLeft    = lockMarginLeft;
+
+        // padding
+        newStyle.paddingTop    = new exCSS_size_noauto( paddingTop.type, paddingTop.val );
+        newStyle.paddingRight  = new exCSS_size_noauto( paddingRight.type, paddingRight.val );
+        newStyle.paddingBottom = new exCSS_size_noauto( paddingBottom.type, paddingBottom.val );
+        newStyle.paddingLeft   = new exCSS_size_noauto( paddingLeft.type, paddingLeft.val );
+        newStyle.lockPaddingRight   = lockPaddingRight;
+        newStyle.lockPaddingBottom  = lockPaddingBottom;
+        newStyle.lockPaddingLeft    = lockPaddingLeft;
+
+        // border
+        newStyle.borderImage    = new exCSS_image( borderImage.type, borderImage.val );
+        newStyle.borderColor    = new exCSS_color( borderColor.type, borderColor.val );
+        newStyle.borderSizeTop    = new exCSS_size_lengthonly( borderSizeTop.type, borderSizeTop.val );
+        newStyle.borderSizeRight  = new exCSS_size_lengthonly( borderSizeRight.type, borderSizeRight.val );
+        newStyle.borderSizeBottom = new exCSS_size_lengthonly( borderSizeBottom.type, borderSizeBottom.val );
+        newStyle.borderSizeLeft   = new exCSS_size_lengthonly( borderSizeLeft.type, borderSizeLeft.val );
+        newStyle.lockBorderSizeRight   = lockBorderSizeRight;
+        newStyle.lockBorderSizeBottom  = lockBorderSizeBottom;
+        newStyle.lockBorderSizeLeft    = lockBorderSizeLeft;
+
+        // background
+        newStyle.backgroundColor = new exCSS_color( backgroundColor.type, backgroundColor.val );
+        newStyle.backgroundImage = new exCSS_image( backgroundImage.type, backgroundImage.val );
+        newStyle.backgroundRepeat = backgroundRepeat;
+
+        // font
+        newStyle.font = new exCSS_font( font.type, font.val );
+        newStyle.fontSize = new exCSS_size_noauto( fontSize.type, fontSize.val );
+
+        // text
+        newStyle.textColor = new exCSS_color( textColor.type, textColor.val );
+        newStyle.whitespace = whitespace;
+        newStyle.textAlign = textAlign;
+        newStyle.textDecoration = textDecoration;
+        newStyle.letterSpacing = new exCSS_size_nopercentage( letterSpacing.type, letterSpacing.val );
+        newStyle.wordSpacing = new exCSS_size_nopercentage( wordSpacing.type, wordSpacing.val );
+        newStyle.lineHeight = new exCSS_size( lineHeight.type, lineHeight.val );
+
+        return newStyle;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public void Compute ( exUIElement _el, int _x, int _y, int _width, int _height ) {
         float val = 0.0f;
 
