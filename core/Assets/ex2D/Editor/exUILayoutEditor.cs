@@ -90,7 +90,12 @@ class exUILayoutEditor : EditorWindow {
     Vector2 styleScrollPos = Vector2.zero;
     exUIElement activeElement = null;
     exUIElement hoverElement = null;
+    exUIElement dropElement = null;
     bool debugElement = false;
+    bool selectInHierarchy = false;
+
+    List<exUIElement> selectedElements = new List<exUIElement>();
+    bool draggingElements = false;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -375,7 +380,9 @@ class exUILayoutEditor : EditorWindow {
                                                            } ); 
             GUI.enabled = true;
             if ( EditorGUI.EndChangeCheck () ) {
+                curEdit.Apply();
                 EditorUtility.SetDirty(curEdit);
+                Repaint();
             }
 
             GUILayout.FlexibleSpace();
@@ -578,6 +585,12 @@ class exUILayoutEditor : EditorWindow {
             else if ( hoverElement == _el ) {
                 exEditorUtility.GUI_DrawRect( rect, new Color( 0.0f, 0.5f, 1.0f, 0.5f ), new Color( 0.0f, 0.0f, 0.0f, 0.0f ) );
             }
+            else if ( selectedElements.IndexOf(_el) != -1 ) {
+                exEditorUtility.GUI_DrawRect( rect, new Color( 0.0f, 1.0f, 0.5f, 0.5f ), new Color( 0.0f, 0.0f, 0.0f, 0.0f ) );
+            }
+            else if ( dropElement == _el ) {
+                exEditorUtility.GUI_DrawRect( rect, new Color( 1.0f, 1.0f, 1.0f, 0.5f ), new Color( 0.0f, 0.0f, 0.0f, 0.0f ) );
+            }
             else {
                 hierarchyStyles.elementBackground.Draw(rect, false, false, false, false);
             }
@@ -641,6 +654,16 @@ class exUILayoutEditor : EditorWindow {
 
         // event process for _layer
         switch ( e.GetTypeForControl(_controlID) ) {
+        case EventType.MouseDrag:
+            if ( draggingElements && rect.Contains(e.mousePosition) ) {
+                if ( selectedElements.IndexOf(activeElement) != -1 ) {
+                    // TODO: check if it is children
+                    dropElement = _el;
+                    Repaint();
+                }
+            }
+            break;
+
         case EventType.MouseMove:
             if ( rect.Contains(e.mousePosition) ) {
                 hoverElement = _el;
@@ -658,7 +681,30 @@ class exUILayoutEditor : EditorWindow {
                     // draggingLayer = _layer; TODO
                 }
 
+                if ( selectedElements.IndexOf(activeElement) != -1 ) {
+                    draggingElements = true;
+                }
+                else {
+                    if ( e.control || e.command ) {
+                        if ( selectedElements.IndexOf(activeElement) == -1 ) {
+                            selectedElements.Add(activeElement);
+                        }
+                    }
+                    else {
+                        selectedElements.Clear();
+                        selectedElements.Add(activeElement);
+                    }
+                }
+
+                Repaint();
                 e.Use();
+            }
+            break;
+
+        case EventType.MouseUp:
+            if ( draggingElements ) {
+                draggingElements = false;
+                dropElement = null;
             }
             break;
         }
@@ -1178,11 +1224,6 @@ class exUILayoutEditor : EditorWindow {
             // draw layout
             DrawElements ( 0, 0, curEdit.root );
 
-            // draw active element border-line again
-            if ( activeElement != null ) {
-                DrawElementBorder ( activeElement, new Color( 0.0f, 1.0f, 0.2f )  );
-            }
-
             // draw hover element
             if ( debugElement && hoverElement != null ) {
                 float alpha = 0.78f;
@@ -1191,6 +1232,12 @@ class exUILayoutEditor : EditorWindow {
                                    new Color( 0.5f,  0.5f,  0.5f,  alpha ),
                                    new Color( 0.76f, 0.87f, 0.71f, alpha ),
                                    new Color( 0.6f,  0.75f, 0.89f, alpha ) );
+            }
+
+            // draw active element border-line again
+            if ( activeElement != null ) {
+                // DrawElementBorder ( activeElement, new Color( 0.0f, 1.0f, 0.2f )  );
+                DrawElementBorder ( activeElement, Color.white  );
             }
 
         GL.PopMatrix();
