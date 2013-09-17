@@ -26,7 +26,7 @@ public enum exOutlineType {
 
 ///////////////////////////////////////////////////////////////////////////////
 /// 
-/// A component to render exBitmapFont in the layer 
+/// A component to render exFont in the layer 
 /// 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -37,20 +37,17 @@ public class exSpriteFont : exLayeredSprite {
     // serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected exBitmapFont font_;
-    /// The referenced bitmap font asset
-    // ------------------------------------------------------------------ 
-
-    public exBitmapFont font {
+    /// 每个exSpriteFont都有单独的一个exFont实例
+    [SerializeField] protected exFont font_ = new exFont();
+    public exFont font {
         get { return font_; }
-        set {
+        protected set {
             if (ReferenceEquals(font_, value)) {
                 return;
             }
             if (value != null) {
                 if (value.texture == null) {
-                    Debug.LogWarning("invalid bitmap font texture");
+                    Debug.LogWarning("invalid font texture");
                 }
                 updateFlags |= exUpdateFlags.Text;
 
@@ -303,18 +300,13 @@ public class exSpriteFont : exLayeredSprite {
 
     protected override Texture texture {
         get {
-            if (font_ != null) {
-                return font_.texture;
-            }
-            else {
-                return null;
-            }
+            return font_.texture;
         }
     }
 
     public override bool visible {
         get {
-            return isOnEnabled && font_ != null && font_.texture != null && font_.charInfos.Count > 0;
+            return isOnEnabled && font_.isValid;
         }
     }
     
@@ -404,6 +396,25 @@ public class exSpriteFont : exLayeredSprite {
             UpdateCapacity();
         }
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    protected override void Show () {
+        base.Show();
+        font_.textureRebuildCallback = null;
+        font_.textureRebuildCallback += OnFontTextureRebuilt;
+    }
+
+    //// ------------------------------------------------------------------ 
+    //// Desc:
+    //// ------------------------------------------------------------------ 
+    // 这里不做优化，因为隐藏时就算重建贴图，消耗也只是加上updateFlag，只有显示时才会刷新
+    //protected override void Hide () {
+    //    base.Hide();
+    //    font_.textureRebuildCallback -= OnFontTextureRebuilt;
+    //}
 
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
@@ -696,6 +707,14 @@ public class exSpriteFont : exLayeredSprite {
             }
         }
     }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnFontTextureRebuilt () {
+        updateFlags |= exUpdateFlags.UV;
+    }
 }
 
 namespace ex2D.Detail {
@@ -710,7 +729,7 @@ namespace ex2D.Detail {
 
     internal struct SpriteFontParams {
         public string text;
-        public exBitmapFont font;
+        public exFont font;
         public Vector2 spacing;
         public TextAlignment textAlign;
         public bool useKerning;
