@@ -713,6 +713,16 @@ class exUILayoutEditor : EditorWindow {
 
         case EventType.MouseUp:
             if ( draggingElements ) {
+                if ( dropElement != null ) {
+                    for ( int i = 0; i < selectedElements.Count; ++i ) {
+                        selectedElements[i].parent = dropElement;
+                    }
+
+                    curEdit.Apply();
+                    EditorUtility.SetDirty(curEdit);
+                    Repaint();
+                }
+                
                 draggingElements = false;
                 dropElement = null;
                 selectedElements.Clear();
