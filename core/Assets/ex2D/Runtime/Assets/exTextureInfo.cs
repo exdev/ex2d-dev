@@ -88,6 +88,10 @@ public class exTextureInfo : ScriptableObject {
         }
     }
 
+    public bool shouldDiced {
+        get { return editDiceUnitWidth_ > 0 || editDiceUnitHeight_ > 0; }
+    }
+
 #endif
 
     [SerializeField] private float[] diceData;

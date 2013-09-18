@@ -537,8 +537,8 @@ class exTextureInfoEditor : EditorWindow {
             // draw diced line
             if ( editModeIndex == 3 ) {
                 if ( curEdit.editDiceUnitWidth != 0 && curEdit.height/curEdit.editDiceUnitHeight != 0 ) {
-                    int xCount = curEdit.width/curEdit.editDiceUnitWidth;  
-                    int yCount = curEdit.height/curEdit.editDiceUnitHeight;  
+                    int xCount = curEdit.width/curEdit.editDiceUnitWidth + 1;  
+                    int yCount = curEdit.height/curEdit.editDiceUnitHeight + 1;  
 
                     Vector2[] points = new Vector2[(xCount + yCount) * 2];
                     int idx = 0;

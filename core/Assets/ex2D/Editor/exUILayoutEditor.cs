@@ -657,9 +657,19 @@ class exUILayoutEditor : EditorWindow {
         case EventType.MouseDrag:
             if ( draggingElements && rect.Contains(e.mousePosition) ) {
                 if ( selectedElements.IndexOf(activeElement) != -1 ) {
-                    // TODO: check if it is children
-                    dropElement = _el;
-                    Repaint();
+
+                    bool canDrop = true;
+                    for ( int i = 0; i < selectedElements.Count; ++i ) {
+                        if ( selectedElements[i].IsAncestorOf(_el) ) {
+                            canDrop = false;
+                            break;
+                        } 
+                    }
+
+                    if ( canDrop ) {
+                        dropElement = _el;
+                        Repaint();
+                    }
                 }
             }
             break;
@@ -705,6 +715,7 @@ class exUILayoutEditor : EditorWindow {
             if ( draggingElements ) {
                 draggingElements = false;
                 dropElement = null;
+                selectedElements.Clear();
             }
             break;
         }
@@ -1254,10 +1265,13 @@ class exUILayoutEditor : EditorWindow {
         int element_y = _y + _el.y;
 
         // draw content or child (NOTE: content-element will not have child) 
-        if ( _el.isContent ) {
+        if ( _el.isContent || _el.isContentInline ) {
             DrawText ( element_x, element_y, _el, _el.content );
         }
         else {
+        
+            if ( _el.display == exCSS_display.Inline ) 
+                return;
 
             // draw border
             if ( _el.borderImage == null ) {
