@@ -85,6 +85,18 @@ public static class exEditorUtility {
         }
     }
 
+    // materialAlphaBlended
+    static Material materialAlphaBlendedVertColor_;
+    public static Material materialAlphaBlendedVertColor {
+        get {
+            if ( materialAlphaBlendedVertColor_ == null ) {
+                materialAlphaBlendedVertColor_ = new Material( Shader.Find("ex2D/Alpha Blended (Use Vertex Color)") );
+                materialAlphaBlendedVertColor_.hideFlags = HideFlags.HideAndDontSave;
+            }
+            return materialAlphaBlendedVertColor_;
+        }
+    }
+
     // textureCheckerboard
     static Texture2D textureCheckerboard_;
     public static Texture2D textureCheckerboard {
@@ -175,6 +187,32 @@ public static class exEditorUtility {
             return styleRectBorder_; 
         }
     }
+
+    //
+    public static Vector2[] resolutionList = new Vector2[] {
+        new Vector2 ( -1, -1 ),      // None
+        new Vector2 ( 320, 480 ),  // iPhone3 Tall
+        new Vector2 ( 480, 320 ),  // iPhone3 Wide
+        new Vector2 ( 640, 960 ),  // iPhone4 Tall
+        new Vector2 ( 960, 640 ),  // iPhone4 Wide
+        new Vector2 ( 640, 1136 ), // iPhone5 Tall
+        new Vector2 ( 1136, 640 ), // iPhone5 Wide
+        new Vector2 ( 768, 1024 ), // iPad Tall
+        new Vector2 ( 1024, 768 ), // iPad Wide
+        new Vector2 ( 0, 0 ), // Custom
+    };
+    public static string[] resolutionDescList = new string[] { 
+        "None",
+        "320 x 480 (iPhone3 Tall)",  // iPhone3 Tall
+        "480 x 320 (iPhone3 Wide)",  // iPhone3 Wide
+        "640 x 960 (iPhone4 Tall)",  // iPhone4 Tall
+        "960 x 640 (iPhone4 Wide)",  // iPhone4 Wide
+        "640 x 1136 (iPhone5 Tall)", // iPhone5 Tall
+        "1136 x 640 (iPhone5 Wide)", // iPhone5 Wide
+        "768 x 1024 (iPad Tall)",    // iPad Tall
+        "1024 x 768 (iPad Wide)",    // iPad Wide
+        "Custom",
+    };
 
     ///////////////////////////////////////////////////////////////////////////////
     // GUI draws helper 
@@ -402,8 +440,8 @@ public static class exEditorUtility {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void GL_DrawRectLine ( Vector3[] _points, Color _color ) {
-        if ( _points.Length < 4 ) {
+    public static void GL_DrawRectLine ( Vector3[] _points, Color _color, bool ignoreZ = true ) {
+        if ( _points.Length % 4 != 0 ) {
             Debug.LogWarning ("Failed to call GL_DrawRectLine, not enough points");
             return;
         }
@@ -411,19 +449,35 @@ public static class exEditorUtility {
         materialLine.SetPass(0);
         GL.Begin( GL.LINES );
             GL.Color(_color);
+            if (ignoreZ) {
+                for ( int i = 0; i < _points.Length; i += 4 ) {
+                    GL.Vertex3( _points[i+0].x, _points[i+0].y, 0.0f );
+                    GL.Vertex3( _points[i+1].x, _points[i+1].y, 0.0f );
 
-            for ( int i = 0; i < _points.Length; i += 4 ) {
-                GL.Vertex3( _points[i+0].x, _points[i+0].y, 0.0f );
-                GL.Vertex3( _points[i+1].x, _points[i+1].y, 0.0f );
+                    GL.Vertex3( _points[i+1].x, _points[i+1].y, 0.0f );
+                    GL.Vertex3( _points[i+2].x, _points[i+2].y, 0.0f );
 
-                GL.Vertex3( _points[i+1].x, _points[i+1].y, 0.0f );
-                GL.Vertex3( _points[i+2].x, _points[i+2].y, 0.0f );
+                    GL.Vertex3( _points[i+2].x, _points[i+2].y, 0.0f );
+                    GL.Vertex3( _points[i+3].x, _points[i+3].y, 0.0f );
 
-                GL.Vertex3( _points[i+2].x, _points[i+2].y, 0.0f );
-                GL.Vertex3( _points[i+3].x, _points[i+3].y, 0.0f );
+                    GL.Vertex3( _points[i+3].x, _points[i+3].y, 0.0f );
+                    GL.Vertex3( _points[i+0].x, _points[i+0].y, 0.0f );
+                }
+            }
+            else {
+                for ( int i = 0; i < _points.Length; i += 4 ) {
+                    GL.Vertex3( _points[i+0].x, _points[i+0].y, _points[i+0].z );
+                    GL.Vertex3( _points[i+1].x, _points[i+1].y, _points[i+1].z );
 
-                GL.Vertex3( _points[i+3].x, _points[i+3].y, 0.0f );
-                GL.Vertex3( _points[i+0].x, _points[i+0].y, 0.0f );
+                    GL.Vertex3( _points[i+1].x, _points[i+1].y, _points[i+1].z );
+                    GL.Vertex3( _points[i+2].x, _points[i+2].y, _points[i+2].z );
+
+                    GL.Vertex3( _points[i+2].x, _points[i+2].y, _points[i+2].z );
+                    GL.Vertex3( _points[i+3].x, _points[i+3].y, _points[i+3].z );
+
+                    GL.Vertex3( _points[i+3].x, _points[i+3].y, _points[i+3].z );
+                    GL.Vertex3( _points[i+0].x, _points[i+0].y, _points[i+0].z );
+                }
             }
         GL.End();
     }
@@ -514,6 +568,92 @@ public static class exEditorUtility {
                 GL.Vertex3 (  halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
             }
 
+        GL.End();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // GL_UI
+    ///////////////////////////////////////////////////////////////////////////////
+
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void GL_UI_DrawBorderRectangle ( float _x, float _y, float _width, float _height, 
+                                                   float _top, float _right, float _bottom, float _left, 
+                                                   Color _color ) 
+    {
+        //  
+        //  0--------------------------1
+        //  |   |                  |   |
+        //  |---4------------------5---|
+        //  |   |                  |   |
+        //  |   |                  |   |
+        //  |   |                  |   |
+        //  |---7------------------6---|
+        //  |   |                  |   |
+        //  3--------------------------2
+        //  
+
+        // GL.Vertex3( _x, _y, 0.0f ); // 0
+        // GL.Vertex3( _x + _width, _y, 0.0f ); // 1
+        // GL.Vertex3( _x + _width, _y + _height, 0.0f ); // 2
+        // GL.Vertex3( _x, _y + _height, 0.0f ); // 3
+        // GL.Vertex3( _x + _left, _y + _top, 0.0f ); // 4
+        // GL.Vertex3( _x + _width - _right, _y + _top , 0.0f ); // 5
+        // GL.Vertex3( _x + _width - _right, _y + _height - _bottom, 0.0f ); // 6
+        // GL.Vertex3( _x + _left, _y + _height - _bottom, 0.0f ); // 7
+
+        materialLine.SetPass(0);
+        GL.Begin(GL.TRIANGLES);
+            GL.Color(_color);
+            GL.Vertex3( _x, _y, 0.0f ); // 0
+            GL.Vertex3( _x + _width, _y, 0.0f ); // 1
+            GL.Vertex3( _x + _left, _y + _top, 0.0f ); // 4
+            GL.Vertex3( _x + _left, _y + _top, 0.0f ); // 4
+            GL.Vertex3( _x + _width, _y, 0.0f ); // 1
+            GL.Vertex3( _x + _width - _right, _y + _top , 0.0f ); // 5
+
+            GL.Vertex3( _x + _width - _right, _y + _top , 0.0f ); // 5
+            GL.Vertex3( _x + _width, _y, 0.0f ); // 1
+            GL.Vertex3( _x + _width - _right, _y + _height - _bottom, 0.0f ); // 6
+            GL.Vertex3( _x + _width - _right, _y + _height - _bottom, 0.0f ); // 6
+            GL.Vertex3( _x + _width, _y, 0.0f ); // 1
+            GL.Vertex3( _x + _width, _y + _height, 0.0f ); // 2
+
+            GL.Vertex3( _x, _y + _height, 0.0f ); // 3
+            GL.Vertex3( _x + _left, _y + _height - _bottom, 0.0f ); // 7
+            GL.Vertex3( _x + _width - _right, _y + _height - _bottom, 0.0f ); // 6
+            GL.Vertex3( _x, _y + _height, 0.0f ); // 3
+            GL.Vertex3( _x + _width - _right, _y + _height - _bottom, 0.0f ); // 6
+            GL.Vertex3( _x + _width, _y + _height, 0.0f ); // 2
+
+            GL.Vertex3( _x, _y + _height, 0.0f ); // 3
+            GL.Vertex3( _x, _y, 0.0f ); // 0
+            GL.Vertex3( _x + _left, _y + _top, 0.0f ); // 4
+            GL.Vertex3( _x, _y + _height, 0.0f ); // 3
+            GL.Vertex3( _x + _left, _y + _top, 0.0f ); // 4
+            GL.Vertex3( _x + _left, _y + _height - _bottom, 0.0f ); // 7
+        GL.End();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void GL_UI_DrawRectangle ( float _x, float _y, float _width, float _height, 
+                                             Color _color ) 
+    {
+        materialLine.SetPass(0);
+        GL.Begin(GL.TRIANGLES);
+            GL.Color(_color);
+            GL.Vertex3( _x, _y, 0.0f ); 
+            GL.Vertex3( _x + _width, _y, 0.0f );
+            GL.Vertex3( _x + _width, _y + _height , 0.0f );
+            GL.Vertex3( _x, _y, 0.0f ); 
+            GL.Vertex3( _x + _width, _y + _height , 0.0f );
+            GL.Vertex3( _x, _y + _height , 0.0f );
         GL.End();
     }
 

@@ -36,7 +36,7 @@ public enum Anchor {
 ///////////////////////////////////////////////////////////////////////////////
 
 [ExecuteInEditMode]
-public abstract class exSpriteBase : MonoBehaviour {
+public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
 
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -181,7 +181,7 @@ public abstract class exSpriteBase : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
     
     /// If OnEnable, isOnEnabled_ is true. If OnDisable, isOnEnabled_ is false.
-    [System.NonSerialized] protected bool isOnEnabled_;
+    [System.NonSerialized] protected bool isOnEnabled;
 
     [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
     
@@ -192,14 +192,14 @@ public abstract class exSpriteBase : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
     
     [System.NonSerialized] protected int vertexCount_ = -1;
-    public virtual int vertexCount {
+    public int vertexCount {
         get {
             return vertexCount_;
         }
     }
     
     [System.NonSerialized] protected int indexCount_ = -1;
-    public virtual int indexCount {
+    public int indexCount {
         get {
             return indexCount_;
         }
@@ -221,7 +221,7 @@ public abstract class exSpriteBase : MonoBehaviour {
     /// 当前sprite是否可见？只返回sprite自身属性，不一定真的显示在任一camera中。
     public virtual bool visible {
         get {
-            return isOnEnabled_;
+            return isOnEnabled;
         }
     }
 
@@ -230,14 +230,14 @@ public abstract class exSpriteBase : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
 
     void OnEnable () {
-        isOnEnabled_ = true;
+        isOnEnabled = true;
         if (visible) {
             Show();
         }
     }
 
     void OnDisable () {
-        isOnEnabled_ = false;
+        isOnEnabled = false;
         Hide();
     }
 
@@ -250,19 +250,6 @@ public abstract class exSpriteBase : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
 
 #region Functions used to update geometry buffer.
-
-    // ------------------------------------------------------------------ 
-    /// Add sprite's geometry data to buffers
-    // ------------------------------------------------------------------ 
-
-    internal virtual void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
-        _vertices.AddRange(vertexCount);
-        if (_colors32 != null) {
-            _colors32.AddRange(vertexCount);
-        }
-        _uvs.AddRange(vertexCount);
-        updateFlags |= exUpdateFlags.AllExcludeIndex;
-    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -315,6 +302,14 @@ public abstract class exSpriteBase : MonoBehaviour {
 
     internal abstract float GetScaleY (Space _space);
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void exISpriteBase.UpdateMaterial () {
+        UpdateMaterial ();
+    }
+    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 

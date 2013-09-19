@@ -21,7 +21,7 @@ using ex2D.Detail;
 ///////////////////////////////////////////////////////////////////////////////
 
 [AddComponentMenu("ex2D/3D Sprite")]
-public class ex3DSprite : exStandaloneSprite {
+public class ex3DSprite : exStandaloneSprite, exISprite {
 
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -35,36 +35,16 @@ public class ex3DSprite : exStandaloneSprite {
     public exTextureInfo textureInfo {
         get { return textureInfo_; }
         set {
-            // 如果用户在运行时改变了textureInfo，则这里需要重新赋值
-            // 假定不论textureInfo如何，都不改变index数量
-            exTextureInfo old = textureInfo_;
-            textureInfo_ = value;
             if (value != null) {
-                if (value.texture == null) {
-                    Debug.LogWarning("invalid textureInfo");
-                }
-                if (customSize_ == false && (value.width != width_ || value.height != height_)) {
-                    width_ = value.width;
-                    height_ = value.height;
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-                else if (useTextureOffset_) {
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-                updateFlags |= exUpdateFlags.UV;  // 换了texture，UV也会重算，不换texture就更要改UV，否则没有换textureInfo的必要了。
-
-                if (old == null || ReferenceEquals(old.texture, value.texture) == false) {
-                    // texture changed
-                    updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV);
-                    UpdateMaterial();
-                }
-                if (isOnEnabled_) {
-                    Show();
+                if (isOnEnabled) {
+                    Show ();
                 }
             }
-            else if (isOnEnabled_ && old != null) {
-                Hide();
+            else if (isOnEnabled && textureInfo_ != null) {
+                Hide ();
             }
+            // 如果用户在运行时改变了textureInfo，则需要重新设置textureInfo
+            exSpriteUtility.SetTextureInfo (this, ref textureInfo_, value, useTextureOffset_, spriteType_);
         }
     }
     
@@ -92,28 +72,36 @@ public class ex3DSprite : exStandaloneSprite {
         get { return spriteType_; }
         set {
             if ( spriteType_ != value ) {
+                if (value == exSpriteType.Tiled) {
+                    customSize_ = true;
+                }
+                else if (value == exSpriteType.Diced) {
+                    if (textureInfo_ != null && (textureInfo_.diceUnitWidth == 0 || textureInfo_.diceUnitHeight == 0)) {
+                        Debug.LogWarning ("The texture info is not diced!");
+                    }
+                }
                 spriteType_ = value;
                 UpdateBufferSize ();
                 updateFlags |= exUpdateFlags.All;
             }
         }
     }
-
+    
     // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 tilling_ = new Vector2(10.0f, 10.0f);
+    [SerializeField] protected Vector2 tiledSpacing_ = new Vector2(0f, 0f);
     // ------------------------------------------------------------------ 
 
-    public Vector2 tilling {
-        get { return tilling_; }
+    public Vector2 tiledSpacing {
+        get { return tiledSpacing_; }
         set {
-            if ( tilling_ != value ) {
-                tilling_ = value;
-                UpdateBufferSize ();
-                updateFlags |= exUpdateFlags.All;
+            if ( tiledSpacing_ != value ) {
+                tiledSpacing_ = value;
+                UpdateBufferSize();
+                updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV);
             }
         }
     }
-
+    
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -130,9 +118,12 @@ public class ex3DSprite : exStandaloneSprite {
     }
 
     public override bool customSize {
-        get { return customSize_; }
+        get { return spriteType_ == exSpriteType.Tiled || customSize_; }
         set {
-            if (customSize_ != value) {
+            if (spriteType_ == exSpriteType.Tiled) {
+                customSize_ = true;
+            }
+            else if (customSize_ != value) {
                 customSize_ = value;
                 if (customSize_ == false && textureInfo_ != null) {
                     if (textureInfo_.width != width_ || textureInfo_.height != height_) {
@@ -156,6 +147,10 @@ public class ex3DSprite : exStandaloneSprite {
         }
         set {
             base.width = value;
+            if (spriteType_ == exSpriteType.Tiled) {
+                UpdateBufferSize ();
+                updateFlags |= exUpdateFlags.UV;
+            }
         }
     }
 
@@ -170,12 +165,16 @@ public class ex3DSprite : exStandaloneSprite {
         }
         set {
             base.height = value;
+            if (spriteType_ == exSpriteType.Tiled) {
+                UpdateBufferSize ();
+                updateFlags |= exUpdateFlags.UV;
+            }
         }
     }
     
     public override bool visible {
         get {
-            return isOnEnabled_ && textureInfo_ != null;
+            return isOnEnabled && textureInfo_ != null;
         }
     }
 
@@ -184,8 +183,6 @@ public class ex3DSprite : exStandaloneSprite {
     ///////////////////////////////////////////////////////////////////////////////
 
     // TODO: check border change if sliced
-
-#region Functions used to update geometry buffer
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -204,11 +201,12 @@ public class ex3DSprite : exStandaloneSprite {
         case exSpriteType.Sliced:
             SpriteBuilder.SlicedUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.Self, _vertices, _uvs, _indices, 0, 0);
             break;
-        //case exSpriteType.Tiled:
-        //    TiledUpdateBuffers (_vertices, _uvs, _indices);
-        //    break;
-        //case exSpriteType.Diced:
-        //    break;
+        case exSpriteType.Tiled:
+            SpriteBuilder.TiledUpdateBuffers (this, textureInfo_, useTextureOffset_, tiledSpacing_, Space.Self, _vertices, _uvs, _indices, 0, 0);
+            break;
+        case exSpriteType.Diced:
+            SpriteBuilder.DicedUpdateBuffers (this, textureInfo_, useTextureOffset_, Space.Self, _vertices, _uvs, _indices, 0, 0);
+            break;
         }
         if ((updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null) {
             Color32 color32 = new Color (color_.r, color_.g, color_.b, color_.a);
@@ -229,8 +227,6 @@ public class ex3DSprite : exStandaloneSprite {
         
     }
     
-#endregion // Functions used to update geometry buffer
-    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
@@ -240,25 +236,28 @@ public class ex3DSprite : exStandaloneSprite {
             return new Vector3[0];
         }
 
-        exList<Vector3> vertices = exList<Vector3>.GetTempList();
-        UpdateVertexAndIndexCount();
-        vertices.AddRange(vertexCount);
+        exList<Vector3> vb = exList<Vector3>.GetTempList();
+        UpdateBufferSize();
+        vb.AddRange(vertexCount_);
 
         switch (spriteType_) {
-            case exSpriteType.Simple:
-            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
+        case exSpriteType.Simple:
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vb, 0);
             break;
-            case exSpriteType.Sliced:
-            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, vertices, 0, _space);
-            SpriteBuilder.SlicedUpdateVertexBuffer(this, textureInfo_, vertices, 0);
+        case exSpriteType.Sliced:
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vb, 0);
+            SpriteBuilder.SimpleVertexBufferToSliced(this, textureInfo_, vb, 0);
             break;
-            //case exSpriteType.Tiled:
-            //    break;
-            //case exSpriteType.Diced:
-            //    break;
+        case exSpriteType.Tiled:
+            SpriteBuilder.TiledUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, tiledSpacing_, _space, vb, 0);
+            break;
+        case exSpriteType.Diced:
+            SpriteBuilder.SimpleUpdateVertexBuffer(this, textureInfo_, useTextureOffset_, _space, vb, 0);
+            SpriteBuilder.SimpleVertexBufferToDiced(this, textureInfo_, vb, 0);
+            break;
         }
 
-        return vertices.ToArray();
+        return vb.ToArray();
     }
     
     // ------------------------------------------------------------------ 
@@ -266,70 +265,19 @@ public class ex3DSprite : exStandaloneSprite {
     // ------------------------------------------------------------------ 
 
     protected override void UpdateVertexAndIndexCount () {
-        SpriteBuilder.GetVertexAndIndexCount(spriteType_, out vertexCount_, out indexCount_);
+        this.GetVertexAndIndexCount(out vertexCount_, out indexCount_);
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void exISprite.UpdateBufferSize () {
+        UpdateBufferSize ();
     }
     
     ///////////////////////////////////////////////////////////////////////////////
     // Other functions
     ///////////////////////////////////////////////////////////////////////////////
     
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public Vector2 GetTextureOffset () {
-        Vector2 anchorOffset = Vector2.zero;
-        if (useTextureOffset_) {
-            switch (anchor_) {
-                case Anchor.TopLeft:
-                anchorOffset.x = textureInfo_.trim_x;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
-                break;
-                case Anchor.TopCenter:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
-                break;
-                case Anchor.TopRight:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height);
-                break;
-                //
-                case Anchor.MidLeft:
-                anchorOffset.x = textureInfo_.trim_x;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
-                break;
-                case Anchor.MidCenter:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
-                break;
-                case Anchor.MidRight:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
-                break;
-                //
-                case Anchor.BotLeft:
-                anchorOffset.x = textureInfo_.trim_x;
-                anchorOffset.y = textureInfo_.trim_y;
-                break;
-                case Anchor.BotCenter:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffset.y = textureInfo_.trim_y;
-                break;
-                case Anchor.BotRight:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width);
-                anchorOffset.y = textureInfo_.trim_y;
-                break;
-                //
-                default:
-                anchorOffset.x = textureInfo_.trim_x - (textureInfo_.rawWidth - textureInfo_.width) * 0.5f;
-                anchorOffset.y = textureInfo_.trim_y - (textureInfo_.rawHeight - textureInfo_.height) * 0.5f;
-                break;
-            }
-            Vector2 customSizeScale = new Vector2 (width_ / textureInfo_.width, height_ / textureInfo_.height);
-            anchorOffset.x *= customSizeScale.x;
-            anchorOffset.y *= customSizeScale.y;
-        }
-        return anchorOffset;
-    } 
 }

@@ -638,14 +638,21 @@ partial class exAtlasEditor : EditorWindow {
 
                 Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( textureInfo.rawTextureGUID );
                 bool selected = selectedObjects.IndexOf(textureInfo) != -1;
-                DrawAtlasElement ( MapTextureInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), textureInfo ),
-                                   rawTexture, 
-                                   textureInfo.trim_x,
-                                   textureInfo.trim_y,
-                                   textureInfo.width,
-                                   textureInfo.height,
-                                   textureInfo.rotated,
-                                   selected );
+
+
+                if ( textureInfo.isDiced ) {
+                    // TODO:
+                }
+                else {
+                    DrawAtlasElement ( MapTextureInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), textureInfo ),
+                                       rawTexture, 
+                                       textureInfo.trim_x,
+                                       textureInfo.trim_y,
+                                       textureInfo.width,
+                                       textureInfo.height,
+                                       textureInfo.rotated,
+                                       selected );
+                }
             }
             foreach ( exBitmapFont bitmapFont in curEdit.bitmapFonts ) {
                 if ( bitmapFont == null )

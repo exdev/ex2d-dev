@@ -104,9 +104,18 @@ public class ex2DRenderer : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
-
-    [System.NonSerialized] public static ex2DRenderer instance;
-
+    
+    [System.NonSerialized] private static ex2DRenderer instance_;
+    public static ex2DRenderer instance {
+        get {
+            if (instance_ == null) {
+                instance_ = Object.FindObjectOfType (typeof(ex2DRenderer)) as ex2DRenderer;
+                // TODO: if not found, create new one ?
+            }
+            return instance_;
+        }
+    }
+    
     private Camera cachedCamera;
     
     private static Dictionary<MaterialTableKey, Material> materialTable = new Dictionary<MaterialTableKey, Material>(MaterialTableKey.Comparer.instance);
@@ -124,8 +133,8 @@ public class ex2DRenderer : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void Awake () {
-        if (!instance) {
-            instance = this;
+        if (instance_ == null) {
+            instance_ = this;
         }
         cachedCamera = camera;
     }
@@ -137,8 +146,8 @@ public class ex2DRenderer : MonoBehaviour {
     void OnEnable () {
 #if UNITY_EDITOR
         if (!UnityEditor.EditorApplication.isPlaying) {
-            if (!instance) {
-                instance = this;
+            if (instance_ == null) {
+                instance_ = this;
             }
             cachedCamera = camera;
         }
@@ -159,7 +168,9 @@ public class ex2DRenderer : MonoBehaviour {
     void OnDisable () {
 #if UNITY_EDITOR
         if (!UnityEditor.EditorApplication.isPlaying) {
-            instance = null;
+            if (ReferenceEquals(this, instance_)) {
+                instance_ = null;
+            }
         }
 #endif
     }
@@ -169,7 +180,9 @@ public class ex2DRenderer : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void OnDestroy () {
-        instance = null;
+        if (ReferenceEquals(this, instance_)) {
+            instance_ = null;
+        }
         cachedCamera = null;
     }
 
@@ -188,7 +201,9 @@ public class ex2DRenderer : MonoBehaviour {
 
 #if EX_DEBUG
     void Reset () {
-        instance = this;
+        if (instance_ == null) {
+            instance_ = this;
+        }
     }
 #endif
 

@@ -1,4 +1,4 @@
-// ======================================================================================
+﻿// ======================================================================================
 // File         : exSpriteBaseInspector.cs
 // Author       : Wu Jie 
 // Last Change  : 07/04/2013 | 15:34:38 PM | Thursday,July
@@ -14,6 +14,7 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using ex2D.Detail;
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoardPatternInspector
@@ -74,7 +75,7 @@ class exSpriteBaseInspector : Editor {
                 foreach ( Object obj in serializedObject.targetObjects ) {
                     exSpriteBase sp = obj as exSpriteBase;
                     if ( sp ) {
-                        sp.width = widthProp.floatValue;
+                        sp.width = Mathf.Max(widthProp.floatValue, 0f);
                         EditorUtility.SetDirty(sp);
                     }
                 }
@@ -87,7 +88,7 @@ class exSpriteBaseInspector : Editor {
                 foreach ( Object obj in serializedObject.targetObjects ) {
                     exSpriteBase sp = obj as exSpriteBase;
                     if ( sp ) {
-                        sp.height = heightProp.floatValue;
+                        sp.height = Mathf.Max(heightProp.floatValue, 0f);
                         EditorUtility.SetDirty(sp);
                     }
                 }
@@ -177,15 +178,7 @@ class exSpriteBaseInspector : Editor {
 
 	protected virtual void OnSceneGUI () {
         exSpriteBase sprite = target as exSpriteBase;
-        Vector3[] vertices = sprite.GetWorldVertices();
-        if (vertices.Length > 0) {
-            Vector3[] vertices2 = new Vector3[vertices.Length+1];
-            for ( int i = 0; i < vertices.Length; ++i )
-                vertices2[i] = vertices[i];
-            vertices2[vertices.Length] = vertices[0];
-
-            Handles.DrawPolyLine( vertices2 );
-        }
+        DrawBoundingRect(sprite, false);
         ProcessSceneEditorHandles ();
     }
 
@@ -193,7 +186,56 @@ class exSpriteBaseInspector : Editor {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public static void DrawBoundingRect ( exSpriteBase _node, bool ignoreZ ) {
+        if (_node.vertexCount < 1000) {
+            Vector3[] vertices = _node.GetWorldVertices();
+            if (vertices.Length > 0) {
+                exISprite sprite = _node as exISprite;
+                if ( sprite != null && sprite.spriteType == exSpriteType.Sliced) {
+                    Vector3[] rectVertices = new Vector3[16];
+                    rectVertices[0] = vertices[0];
+                    rectVertices[1] = vertices[4];
+                    rectVertices[2] = vertices[7];
+                    rectVertices[3] = vertices[3];
+                    rectVertices[4] = vertices[8];
+                    rectVertices[5] = vertices[12];
+                    rectVertices[6] = vertices[15];
+                    rectVertices[7] = vertices[11];
+                    rectVertices[8] = vertices[0];
+                    rectVertices[9] = vertices[12];
+                    rectVertices[10] = vertices[13];
+                    rectVertices[11] = vertices[1];
+                    rectVertices[12] = vertices[2];
+                    rectVertices[13] = vertices[14];
+                    rectVertices[14] = vertices[15];
+                    rectVertices[15] = vertices[3];
+                    vertices = rectVertices;
+                }
+                exEditorUtility.GL_DrawRectLine(vertices, Color.white, ignoreZ);
+            }
+        }
+        else {
+            Vector3[] vertices = _node.GetLocalVertices();
+            if (vertices.Length > 0) {
+                Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
+                Matrix4x4 l2w = _node.transform.localToWorldMatrix;
+                vertices = new Vector3[4] {
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMin, 0)),
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMax, 0)),
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMax, 0)),
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMin, 0)),
+                };
+                exEditorUtility.GL_DrawRectLine(vertices, Color.white, ignoreZ);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void ProcessSceneEditorHandles () {
+        // TODO: 由于mesh的transform，exLayeredSprite的控制点会有一定的z位移
         exSpriteBase spriteBase = target as exSpriteBase;
         Transform trans = spriteBase.transform;
         if ( trans ) {
@@ -217,7 +259,7 @@ class exSpriteBaseInspector : Editor {
                 Vector3[] vertices = spriteBase.GetLocalVertices();
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
                 Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
-                Vector3 size = new Vector3( spriteBase.width, spriteBase.height, 0.0f );
+                Vector3 size = new Vector3( aabb.width, aabb.height, 0.0f );
 
                 Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,
                                                                  center.y + size.y * 0.5f,
@@ -352,13 +394,9 @@ class exSpriteBaseInspector : Editor {
 
                 if ( changed ) {
                     //center.z = originalCenterZ;
-                    exSprite sprite = spriteBase as exSprite;
+                    exISprite sprite = spriteBase as exISprite;
                     if (sprite != null) {
-                        ApplySpriteScale (sprite, sprite.spriteType, sprite.textureInfo, sprite.GetTextureOffset(), size, center);
-                    }
-                    else {
-                        ex3DSprite sprite3d = spriteBase as ex3DSprite;
-                        ApplySpriteScale (sprite3d, sprite3d.spriteType, sprite3d.textureInfo, sprite3d.GetTextureOffset(), size, center);
+                        ApplySpriteScale (sprite, size, center);
                     }
                 }
             }
@@ -367,6 +405,45 @@ class exSpriteBaseInspector : Editor {
         }
     }
     
+    // ------------------------------------------------------------------ 
+    // Apply exSprite or ex3DSprite change 
+    // ------------------------------------------------------------------ 
+
+    public static void ApplySpriteScale (exISprite _sprite, Vector3 _size, Vector3 _center) {
+        if (_sprite.spriteType == exSpriteType.Sliced && _sprite.textureInfo != null && _sprite.textureInfo.hasBorder) {
+            _size.x = Mathf.Max(_size.x, _sprite.textureInfo.borderLeft + _sprite.textureInfo.borderRight);
+            _size.y = Mathf.Max(_size.y, _sprite.textureInfo.borderBottom + _sprite.textureInfo.borderTop);
+        }
+
+        _sprite.width = _size.x;
+        _sprite.height = _size.y;
+
+        Vector3 offset = new Vector3( -_sprite.offset.x, -_sprite.offset.y, 0.0f );
+        Vector3 anchorOffset = Vector3.zero;
+
+        switch (_sprite.anchor) {
+        case Anchor.TopLeft:    anchorOffset = new Vector3( -_size.x*0.5f,  _size.y*0.5f, 0.0f ); break;
+        case Anchor.TopCenter:  anchorOffset = new Vector3(          0.0f,  _size.y*0.5f, 0.0f ); break;
+        case Anchor.TopRight:   anchorOffset = new Vector3(  _size.x*0.5f,  _size.y*0.5f, 0.0f ); break;
+        case Anchor.MidLeft:    anchorOffset = new Vector3( -_size.x*0.5f,          0.0f, 0.0f ); break;
+        case Anchor.MidCenter:  anchorOffset = new Vector3(          0.0f,          0.0f, 0.0f ); break;
+        case Anchor.MidRight:   anchorOffset = new Vector3(  _size.x*0.5f,          0.0f, 0.0f ); break;
+        case Anchor.BotLeft:    anchorOffset = new Vector3( -_size.x*0.5f, -_size.y*0.5f, 0.0f ); break;
+        case Anchor.BotCenter:  anchorOffset = new Vector3(          0.0f, -_size.y*0.5f, 0.0f ); break;
+        case Anchor.BotRight:   anchorOffset = new Vector3(  _size.x*0.5f, -_size.y*0.5f, 0.0f ); break;
+        }
+
+        Vector3 scaledOffset = offset + anchorOffset - (Vector3)_sprite.GetTextureOffset();
+        Transform trans = _sprite.transform;
+        Vector3 lossyScale = trans.lossyScale;
+        scaledOffset.x *= lossyScale.x;
+        scaledOffset.y *= lossyScale.y;
+        Vector3 newPos = _center + trans.rotation * scaledOffset;
+        Vector3 localPos = trans.InverseTransformPoint (newPos);
+        localPos.z = 0; // keep z unchagned
+        trans.position = trans.TransformPoint (localPos);
+    }
+
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
@@ -380,45 +457,6 @@ class exSpriteBaseInspector : Editor {
         shearProp = serializedObject.FindProperty("shear_");
         colorProp = serializedObject.FindProperty("color_");
         shaderProp = serializedObject.FindProperty("shader_");
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Apply exSprite or ex3DSprite change 
-    // ------------------------------------------------------------------ 
-
-    public static void ApplySpriteScale (exSpriteBase _sprite, exSpriteType _spriteType, exTextureInfo _textureInfo, Vector3 _textureOffset, Vector3 _size, Vector3 _center) {
-        if (_spriteType == exSpriteType.Sliced && _textureInfo != null && _textureInfo.hasBorder) {
-            _size.x = Mathf.Max(_size.x, _textureInfo.borderLeft + _textureInfo.borderRight);
-            _size.y = Mathf.Max(_size.y, _textureInfo.borderBottom + _textureInfo.borderTop);
-        }
-
-        _sprite.width = _size.x;
-        _sprite.height = _size.y;
-
-        Vector3 offset = new Vector3( _sprite.offset.x, _sprite.offset.y, 0.0f );
-        Vector3 anchorOffset = Vector3.zero;
-
-        switch (_sprite.anchor) {
-            case Anchor.TopLeft:    anchorOffset = new Vector3( -_size.x*0.5f,  _size.y*0.5f, 0.0f ); break;
-            case Anchor.TopCenter:  anchorOffset = new Vector3(         0.0f,  _size.y*0.5f, 0.0f ); break;
-            case Anchor.TopRight:   anchorOffset = new Vector3(  _size.x*0.5f,  _size.y*0.5f, 0.0f ); break;
-            case Anchor.MidLeft:    anchorOffset = new Vector3( -_size.x*0.5f,         0.0f, 0.0f ); break;
-            case Anchor.MidCenter:  anchorOffset = new Vector3(         0.0f,         0.0f, 0.0f ); break;
-            case Anchor.MidRight:   anchorOffset = new Vector3(  _size.x*0.5f,         0.0f, 0.0f ); break;
-            case Anchor.BotLeft:    anchorOffset = new Vector3( -_size.x*0.5f, -_size.y*0.5f, 0.0f ); break;
-            case Anchor.BotCenter:  anchorOffset = new Vector3(         0.0f, -_size.y*0.5f, 0.0f ); break;
-            case Anchor.BotRight:   anchorOffset = new Vector3(  _size.x*0.5f, -_size.y*0.5f, 0.0f ); break;
-        }
-
-        Vector3 scaledOffset = offset + anchorOffset - _textureOffset;
-        Vector3 lossyScale = _sprite.transform.lossyScale;
-        scaledOffset.x *= lossyScale.x;
-        scaledOffset.y *= lossyScale.y;
-        
-        Vector3 newPos = _center + _sprite.transform.rotation * scaledOffset;
-        Vector3 localPos = _sprite.transform.InverseTransformPoint (newPos);
-        localPos.z = 0; // keep z unchagned
-        _sprite.transform.position = _sprite.transform.TransformPoint (localPos);
     }
 }
 

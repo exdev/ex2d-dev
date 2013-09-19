@@ -10,6 +10,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
+using System.Collections.Generic;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
@@ -58,5 +59,251 @@ public class exTextureInfo : ScriptableObject {
         get {
             return borderLeft != 0 || borderRight != 0 || borderTop != 0 || borderBottom != 0;
         }
+    }
+
+#if UNITY_EDITOR
+
+    private int editDiceUnitWidth_ = -1;    ///< not committed value, used for editor
+    public int editDiceUnitWidth {
+        get {
+            if (editDiceUnitWidth_ >= 0) {
+                return editDiceUnitWidth_;
+            }
+            return diceUnitWidth;
+        }
+        set {
+            editDiceUnitWidth_ = Mathf.Max(value, 0);
+        }
+    }
+    private int editDiceUnitHeight_ = -1;   ///< not committed value, used for editor
+    public int editDiceUnitHeight {
+        get {
+            if (editDiceUnitHeight_ >= 0) {
+                return editDiceUnitHeight_;
+            }
+            return diceUnitHeight;
+        }
+        set {
+            editDiceUnitHeight_ = Mathf.Max(value, 0);
+        }
+    }
+
+    public bool shouldDiced {
+        get { return editDiceUnitWidth_ > 0 || editDiceUnitHeight_ > 0; }
+    }
+
+#endif
+
+    [SerializeField] private float[] diceData;
+
+    public int diceUnitWidth {  ///< committed value, used for rendering
+        get {
+            if (diceData != null && diceData.Length > 0) {
+                return (int)diceData[0];
+            }
+            return 0;
+        }
+    }
+    public int diceUnitHeight {  ///< committed value, used for rendering
+        get {
+            if (diceData != null && diceData.Length > 0) {
+                return (int)diceData[1];
+            }
+            return 0;
+        }
+    }
+
+    public bool isDiced {
+        get {
+            if (diceData != null && diceData.Length > 0) {
+                exDebug.Assert(diceData[0] > 0 == diceData[1] > 0);
+                return diceData[0] > 0 && diceData[1] > 0;
+            }
+            return false;
+        }
+    }
+
+    public DiceEnumerator GetDiceEnumerator() {
+        return new DiceEnumerator(diceData);    // No GC
+    }
+    
+#if UNITY_EDITOR
+    
+    /* tile index:
+    8  9  10 11
+    4  5  6  7 
+    0  1  2  3 
+     */
+    public void SetDiceData ( Rect[] _tileRects, int[] _x, int[] _y, bool[] _rotated ) {
+        diceData = null;
+        if (editDiceUnitWidth == 0 || editDiceUnitHeight == 0) {
+            return;
+        }
+        
+        List<float> data = new List<float>( _tileRects.Length * 6 + 2 );
+        
+        // save committed value
+        data.Add( editDiceUnitWidth );
+        data.Add( editDiceUnitHeight );
+        
+        bool hasTile = false;
+        for ( int i = 0; i < _tileRects.Length; ++i ) {
+            Rect rect = _tileRects[i];
+            if ( rect.width <= 0 || rect.height <= 0 ) {
+                data.Add( DiceEnumerator.EMPTY );
+                continue;
+            }
+            if (rect.width == editDiceUnitWidth && rect.height == editDiceUnitHeight) {
+                data.Add( _rotated[i] ? DiceEnumerator.MAX_ROTATED : DiceEnumerator.MAX );
+            }
+            else {
+                data.Add( _tileRects[i].x );   // trim_x
+                data.Add( _tileRects[i].y );   // trim_y
+                data.Add( _rotated[i] ? - _tileRects[i].width : _tileRects[i].width );
+                data.Add( _tileRects[i].height );
+            }
+            data.Add( _x[i] );
+            data.Add( _y[i] );
+            hasTile = true;
+        }
+        if (hasTile == false) {
+            data.RemoveRange (2, data.Count - 2);
+        }
+        diceData = data.ToArray();
+    }
+    
+#endif
+    
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+/// The dice data enumerator. Use struct type to avoid GC.
+//
+///////////////////////////////////////////////////////////////////////////////
+
+public struct DiceEnumerator : IEnumerator<DiceEnumerator.DiceData>, IEnumerable<DiceEnumerator.DiceData> {
+
+    public enum SizeType {
+        Max,
+        Empty,
+        Trimmed,
+    }
+
+    public struct DiceData {
+        public SizeType sizeType;
+        public float trim_x;
+        public float trim_y;
+        public float width;
+        public float height;
+        public float x;
+        public float y;
+        public bool rotated;
+        public float rotatedWidth {
+            get {
+                if ( rotated ) return height;
+                return width;
+            }
+        }
+        public float rotatedHeight {
+            get {
+                if ( rotated ) return width;
+                return height;
+            }
+        }
+    }
+    
+    // compressing tag
+    public const int EMPTY = -1;
+    public const int MAX = -2;
+    public const int MAX_ROTATED = -3;
+    
+    private float[] diceData;
+    private int dataIndex;
+    
+    //private float diceUnitWidth;
+    //private float diceUnitHeight;
+
+    public DiceEnumerator (float[] _diceData) {
+        diceData = _diceData;
+        //diceUnitWidth = _diceData[0];
+        //diceUnitHeight = _diceData[1];
+        dataIndex = 0;
+        Reset();
+    }
+
+    public IEnumerator<DiceData> GetEnumerator () {
+        return this;
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator () {
+        return this;
+    }
+
+    public DiceData Current {
+        get {
+            DiceData d = new DiceData();
+            if (diceData[dataIndex] == EMPTY) {
+                d.sizeType = SizeType.Empty;
+                return d;
+            }
+            if (diceData[dataIndex] >= 0) {
+                d.sizeType = SizeType.Trimmed;
+                d.trim_x = diceData[dataIndex];
+                d.trim_y = diceData[dataIndex + 1];
+                d.width = diceData[dataIndex + 2];
+                d.height = diceData[dataIndex + 3];
+                d.x = diceData[dataIndex + 4];
+                d.y = diceData[dataIndex + 5];
+                if (d.width < 0) {
+                    d.rotated = true;
+                    d.width = -d.width;
+                }
+            }
+            else {
+                exDebug.Assert(diceData[dataIndex] == MAX || diceData[dataIndex] == MAX_ROTATED);
+                d.sizeType = SizeType.Max;
+                /*d.x = diceData[dataIndex + 1];
+                d.y = diceData[dataIndex + 2];
+                d.trim_x = 0;
+                d.trim_y = 0;
+                d.width = diceUnitWidth;
+                d.height = diceUnitHeight;
+                d.rotated = (diceData[dataIndex] == MAX_ROTATED);*/
+            }
+            return d;
+        }
+    }
+    
+    public bool MoveNext () {
+        if (dataIndex == -1) {
+            dataIndex = 2;  // skip width and height
+            if (diceData == null) {
+                return false;
+            }
+        }
+        else if (diceData[dataIndex] >= 0) {
+            dataIndex += 6;
+        }
+        else if (diceData[dataIndex] == MAX || diceData[dataIndex] == MAX_ROTATED) {
+            dataIndex += 1;
+        }
+        else {
+            exDebug.Assert (diceData[dataIndex] == EMPTY);
+            dataIndex += 1;
+        }
+        return dataIndex < diceData.Length;
+    }
+
+    public void Dispose () {
+        diceData = null;
+    }
+
+    object System.Collections.IEnumerator.Current {
+        get { return Current; }
+    }
+
+    public void Reset () {
+        dataIndex = -1;
     }
 }

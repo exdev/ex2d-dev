@@ -914,6 +914,7 @@ public class exLayer : MonoBehaviour
             }
             // insert range into _indices
             int indexCount = _sprite.indexCount;
+            exDebug.Assert(indexCount > 0);
             _mesh.indices.AddRange(indexCount);
             for (int i = _mesh.indices.Count - 1 - indexCount; i >= _sprite.indexBufferIndex ; --i) {
                 _mesh.indices.buffer[i + indexCount] = _mesh.indices.buffer[i];

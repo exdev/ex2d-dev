@@ -359,9 +359,14 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     /// Add sprite's geometry data to buffers
     // ------------------------------------------------------------------ 
 
-    internal override void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
+    internal virtual void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
         vertexBufferIndex = _vertices.Count;
-        base.FillBuffers (_vertices, _uvs, _colors32);
+        _vertices.AddRange(vertexCount_);
+        if (_colors32 != null) {
+            _colors32.AddRange(vertexCount_);
+        }
+        _uvs.AddRange(vertexCount_);
+        updateFlags |= exUpdateFlags.AllExcludeIndex;
     }
     
 #if UNITY_EDITOR
