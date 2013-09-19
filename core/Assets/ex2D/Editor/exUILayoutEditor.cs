@@ -92,7 +92,6 @@ class exUILayoutEditor : EditorWindow {
     exUIElement hoverElement = null;
     exUIElement dropElement = null;
     bool debugElement = false;
-    bool selectInHierarchy = false;
 
     List<exUIElement> selectedElements = new List<exUIElement>();
     bool draggingElements = false;
