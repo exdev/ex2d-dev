@@ -50,6 +50,12 @@ public class exRectSelection<T> {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public Vector2 GetSelectStartPoint () { return selectStartPoint; }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public exRectSelection ( System.Func<Vector2,T> _pickObjectCallback,
                              System.Func<Rect,T[]> _pickRectObjectsCallback,
                              System.Action<T,T[]> _confirmSelectionCallback,
@@ -241,7 +247,7 @@ public class exRectSelection<T> {
 
     Rect FromToRect ( Vector2 _start, Vector2 _end ) {
         Rect result = new Rect(_start.x, _start.y, _end.x - _start.x, _end.y - _start.y);
-        if (( result.width < 0f )) {
+        if ( result.width < 0f ) {
             result.x += result.width;
             result.width = -result.width;
         }

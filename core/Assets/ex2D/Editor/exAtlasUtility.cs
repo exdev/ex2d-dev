@@ -37,6 +37,9 @@ public static class exAtlasUtility {
         public int height = 1;
         public bool rotated = false;
 
+        public int dicedX = -1;
+        public int dicedY = -1;
+
         // raw referenced
         public exTextureInfo textureInfo = null; 
         public exFont.CharInfo charInfo = null;
@@ -57,11 +60,16 @@ public static class exAtlasUtility {
 
         public void Apply () {
             if ( textureInfo != null ) {
-                textureInfo.x = x;
-                textureInfo.y = y;
-                textureInfo.width = width;
-                textureInfo.height = height;
-                textureInfo.rotated = rotated;
+                if ( textureInfo.shouldDiced ) {
+                    textureInfo.AddDiceData( new Rect( dicedX, dicedY, width, height ), x, y, rotated );
+                }
+                else {
+                    textureInfo.x = x;
+                    textureInfo.y = y;
+                    textureInfo.width = width;
+                    textureInfo.height = height;
+                    textureInfo.rotated = rotated;
+                }
 
                 EditorUtility.SetDirty(textureInfo);
             }
@@ -216,15 +224,37 @@ public static class exAtlasUtility {
     public static List<Element> GetElementList ( exAtlas _atlas ) {
         List<Element> elements = new List<Element>();
         foreach ( exTextureInfo info in _atlas.textureInfos ) {
-            Element el = new Element();
-            el.x = 0;
-            el.y = 0;
-            el.rotated = false;
-            el.textureInfo = info;
-            el.id = info.name;
-            el.width = info.width;
-            el.height = info.height;
-            elements.Add(el);
+            if ( info.shouldDiced ) {
+                int xCount = info.width/info.editDiceUnitWidth;
+                int yCount = info.height/info.editDiceUnitHeight;
+
+                for ( int x = 0; x < xCount; ++x ) {
+                    for ( int y = 0; y < yCount; ++y ) {
+                        Element el = new Element();
+                        el.x = 0;
+                        el.y = 0;
+                        el.rotated = false;
+                        el.textureInfo = info;
+                        el.id = info.name + "[" + x + "][" + y + "]";
+                        el.width = info.editDiceUnitWidth;
+                        el.height = info.editDiceUnitHeight;
+                        el.dicedX = x * info.editDiceUnitWidth;
+                        el.dicedY = y * info.editDiceUnitHeight;
+                        elements.Add(el);
+                    }
+                }
+            }
+            else {
+                Element el = new Element();
+                el.x = 0;
+                el.y = 0;
+                el.rotated = false;
+                el.textureInfo = info;
+                el.id = info.name;
+                el.width = info.width;
+                el.height = info.height;
+                elements.Add(el);
+            }
         }
         foreach ( exBitmapFont bitmapFont in _atlas.bitmapFonts ) {
             foreach ( exFont.CharInfo info in bitmapFont.charInfos ) {

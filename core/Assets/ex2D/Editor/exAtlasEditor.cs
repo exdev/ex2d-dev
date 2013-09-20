@@ -638,14 +638,30 @@ partial class exAtlasEditor : EditorWindow {
 
                 Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( textureInfo.rawTextureGUID );
                 bool selected = selectedObjects.IndexOf(textureInfo) != -1;
-                DrawAtlasElement ( MapTextureInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), textureInfo ),
-                                   rawTexture, 
-                                   textureInfo.trim_x,
-                                   textureInfo.trim_y,
-                                   textureInfo.width,
-                                   textureInfo.height,
-                                   textureInfo.rotated,
-                                   selected );
+
+
+                if ( textureInfo.isDiced ) {
+                    foreach (DiceEnumerator.DiceData dice in textureInfo.GetDiceEnumerator()) {
+                        DrawAtlasElement ( MapDicedInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), dice ),
+                                           rawTexture, 
+                                           dice.trim_x,
+                                           dice.trim_y,
+                                           dice.width,
+                                           dice.height,
+                                           dice.rotated,
+                                           selected );
+                    }
+                }
+                else {
+                    DrawAtlasElement ( MapTextureInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), textureInfo ),
+                                       rawTexture, 
+                                       textureInfo.trim_x,
+                                       textureInfo.trim_y,
+                                       textureInfo.width,
+                                       textureInfo.height,
+                                       textureInfo.rotated,
+                                       selected );
+                }
             }
             foreach ( exBitmapFont bitmapFont in curEdit.bitmapFonts ) {
                 if ( bitmapFont == null )
@@ -1037,6 +1053,23 @@ partial class exAtlasEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    Rect MapDicedInfo ( Rect _atlasRect, DiceEnumerator.DiceData _diceData ) {
+        Rect rect = new Rect ( _diceData.x * curEdit.scale,
+                               _diceData.y * curEdit.scale,
+                               _diceData.rotatedWidth * curEdit.scale,
+                               _diceData.rotatedHeight * curEdit.scale );
+
+        rect.x = _atlasRect.x + rect.x;
+        rect.y = _atlasRect.y + _atlasRect.height - rect.y - rect.height;
+        rect = exGeometryUtility.Rect_FloorToInt(rect);
+
+        return rect;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     Rect MapTextureInfo ( Rect _atlasRect, exTextureInfo _textureInfo ) {
         Rect rect = new Rect ( _textureInfo.x * curEdit.scale,
                                _textureInfo.y * curEdit.scale,
@@ -1077,6 +1110,13 @@ partial class exAtlasEditor : EditorWindow {
 
         try {
             EditorUtility.DisplayProgressBar( "Layout Elements...", "Layout Elements...", 0.5f  );    
+
+            // clear diced data before layout
+            foreach ( exTextureInfo info in curEdit.textureInfos ) {
+                if ( info.shouldDiced ) {
+                    info.ClearDiceData();
+                }
+            }
 
             // sort texture info
             List<exAtlasUtility.Element> elements = exAtlasUtility.GetElementList(curEdit);

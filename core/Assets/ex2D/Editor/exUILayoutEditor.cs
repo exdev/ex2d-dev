@@ -90,7 +90,11 @@ class exUILayoutEditor : EditorWindow {
     Vector2 styleScrollPos = Vector2.zero;
     exUIElement activeElement = null;
     exUIElement hoverElement = null;
+    exUIElement dropElement = null;
     bool debugElement = false;
+
+    List<exUIElement> selectedElements = new List<exUIElement>();
+    bool draggingElements = false;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -375,7 +379,9 @@ class exUILayoutEditor : EditorWindow {
                                                            } ); 
             GUI.enabled = true;
             if ( EditorGUI.EndChangeCheck () ) {
+                curEdit.Apply();
                 EditorUtility.SetDirty(curEdit);
+                Repaint();
             }
 
             GUILayout.FlexibleSpace();
@@ -578,6 +584,12 @@ class exUILayoutEditor : EditorWindow {
             else if ( hoverElement == _el ) {
                 exEditorUtility.GUI_DrawRect( rect, new Color( 0.0f, 0.5f, 1.0f, 0.5f ), new Color( 0.0f, 0.0f, 0.0f, 0.0f ) );
             }
+            else if ( selectedElements.IndexOf(_el) != -1 ) {
+                exEditorUtility.GUI_DrawRect( rect, new Color( 0.0f, 1.0f, 0.5f, 0.5f ), new Color( 0.0f, 0.0f, 0.0f, 0.0f ) );
+            }
+            else if ( dropElement == _el ) {
+                exEditorUtility.GUI_DrawRect( rect, new Color( 1.0f, 1.0f, 1.0f, 0.5f ), new Color( 0.0f, 0.0f, 0.0f, 0.0f ) );
+            }
             else {
                 hierarchyStyles.elementBackground.Draw(rect, false, false, false, false);
             }
@@ -641,6 +653,26 @@ class exUILayoutEditor : EditorWindow {
 
         // event process for _layer
         switch ( e.GetTypeForControl(_controlID) ) {
+        case EventType.MouseDrag:
+            if ( draggingElements && rect.Contains(e.mousePosition) ) {
+                if ( selectedElements.IndexOf(activeElement) != -1 ) {
+
+                    bool canDrop = true;
+                    for ( int i = 0; i < selectedElements.Count; ++i ) {
+                        if ( selectedElements[i].IsAncestorOf(_el) ) {
+                            canDrop = false;
+                            break;
+                        } 
+                    }
+
+                    if ( canDrop ) {
+                        dropElement = _el;
+                        Repaint();
+                    }
+                }
+            }
+            break;
+
         case EventType.MouseMove:
             if ( rect.Contains(e.mousePosition) ) {
                 hoverElement = _el;
@@ -658,7 +690,41 @@ class exUILayoutEditor : EditorWindow {
                     // draggingLayer = _layer; TODO
                 }
 
+                if ( selectedElements.IndexOf(activeElement) != -1 ) {
+                    draggingElements = true;
+                }
+                else {
+                    if ( e.control || e.command ) {
+                        if ( selectedElements.IndexOf(activeElement) == -1 ) {
+                            selectedElements.Add(activeElement);
+                        }
+                    }
+                    else {
+                        selectedElements.Clear();
+                        selectedElements.Add(activeElement);
+                    }
+                }
+
+                Repaint();
                 e.Use();
+            }
+            break;
+
+        case EventType.MouseUp:
+            if ( draggingElements ) {
+                if ( dropElement != null ) {
+                    for ( int i = 0; i < selectedElements.Count; ++i ) {
+                        selectedElements[i].parent = dropElement;
+                    }
+
+                    curEdit.Apply();
+                    EditorUtility.SetDirty(curEdit);
+                    Repaint();
+                }
+                
+                draggingElements = false;
+                dropElement = null;
+                selectedElements.Clear();
             }
             break;
         }
@@ -1178,11 +1244,6 @@ class exUILayoutEditor : EditorWindow {
             // draw layout
             DrawElements ( 0, 0, curEdit.root );
 
-            // draw active element border-line again
-            if ( activeElement != null ) {
-                DrawElementBorder ( activeElement, new Color( 0.0f, 1.0f, 0.2f )  );
-            }
-
             // draw hover element
             if ( debugElement && hoverElement != null ) {
                 float alpha = 0.78f;
@@ -1191,6 +1252,12 @@ class exUILayoutEditor : EditorWindow {
                                    new Color( 0.5f,  0.5f,  0.5f,  alpha ),
                                    new Color( 0.76f, 0.87f, 0.71f, alpha ),
                                    new Color( 0.6f,  0.75f, 0.89f, alpha ) );
+            }
+
+            // draw active element border-line again
+            if ( activeElement != null ) {
+                // DrawElementBorder ( activeElement, new Color( 0.0f, 1.0f, 0.2f )  );
+                DrawElementBorder ( activeElement, Color.white  );
             }
 
         GL.PopMatrix();
@@ -1207,10 +1274,13 @@ class exUILayoutEditor : EditorWindow {
         int element_y = _y + _el.y;
 
         // draw content or child (NOTE: content-element will not have child) 
-        if ( _el.isContent ) {
+        if ( _el.isContent || _el.isContentInline ) {
             DrawText ( element_x, element_y, _el, _el.content );
         }
         else {
+        
+            if ( _el.display == exCSS_display.Inline ) 
+                return;
 
             // draw border
             if ( _el.borderImage == null ) {
