@@ -934,11 +934,16 @@ namespace ex2D.Detail {
             
             int colCount, rowCount;
             exSpriteUtility.GetDicingCount (_textureInfo, out colCount, out rowCount);
-    
-            Vector2 lastTileRawSize = new Vector2(_textureInfo.width % _textureInfo.diceUnitWidth, _textureInfo.height % _textureInfo.diceUnitHeight);
+            Vector2 lastTileRawSize = new Vector2();
+            if (_textureInfo.diceUnitWidth > 0) {
+                lastTileRawSize.x = _textureInfo.width % _textureInfo.diceUnitWidth;
+            }
+            if (_textureInfo.diceUnitHeight > 0) {
+                lastTileRawSize.y = _textureInfo.height % _textureInfo.diceUnitHeight;
+            }
             Vector3 tileLeftToRight, tileBottomToTop;
             if (lastTileRawSize.x > 0.0f) {
-                float perc = lastTileRawSize.x / _textureInfo.editDiceUnitWidth;
+                float perc = lastTileRawSize.x / _textureInfo.diceUnitWidth;
                 tileLeftToRight = (v2 - v1) / (colCount - 1 + perc);
             }
             else {
@@ -961,32 +966,34 @@ namespace ex2D.Detail {
                 Vector3 bottomLeft = rowBottomLeft;
                 Vector3 topLeft = bottomLeft + tileBottomToTop;
                 for (int c = 0; c < colCount; ++c) {
-                        diceEnumerator.MoveNext ();
-                    //if (hasNext) {
-                        DiceEnumerator.DiceData tile = diceEnumerator.Current;
-                        if (tile.sizeType == DiceEnumerator.SizeType.Max) {
-                            _vertices.buffer[i++] = bottomLeft;
-                            _vertices.buffer[i++] = topLeft;
-                            _vertices.buffer[i++] = topLeft + tileLeftToRight;
-                            _vertices.buffer[i++] = bottomLeft + tileLeftToRight;
-                        }
-                        else if (tile.sizeType == DiceEnumerator.SizeType.Trimmed) {
-                            Vector3 offsetX = l2rStepPerTile * tile.trim_x;
-                            Vector3 offsetY = b2tStepPerTile * tile.trim_y;
-                            Vector3 offsetEndX = l2rStepPerTile * (tile.trim_x + tile.width);
-                            Vector3 offsetEndY = b2tStepPerTile * (tile.trim_y + tile.height);
-                            _vertices.buffer[i++] = bottomLeft + offsetX + offsetY;
-                            _vertices.buffer[i++] = bottomLeft + offsetX + offsetEndY;
-                            _vertices.buffer[i++] = bottomLeft + offsetEndX + offsetEndY;
-                            _vertices.buffer[i++] = bottomLeft + offsetEndX + offsetY;
-                        }
-                        bottomLeft += tileLeftToRight;  // next column
-                        topLeft += tileLeftToRight;     // next column
-                    //}
-                    //else {
-                        // need rebuild dice data
-                    //    break;
-                    //}
+#if EX_DEBUG
+                    bool hasNext = diceEnumerator.MoveNext ();
+                    if (hasNext == false) {
+		                Debug.LogError("Not enough dice data");
+                        break;
+	                }
+#else
+                    diceEnumerator.MoveNext ();
+#endif
+                    DiceEnumerator.DiceData tile = diceEnumerator.Current;
+                    if (tile.sizeType == DiceEnumerator.SizeType.Max) {
+                        _vertices.buffer[i++] = bottomLeft;
+                        _vertices.buffer[i++] = topLeft;
+                        _vertices.buffer[i++] = topLeft + tileLeftToRight;
+                        _vertices.buffer[i++] = bottomLeft + tileLeftToRight;
+                    }
+                    else if (tile.sizeType == DiceEnumerator.SizeType.Trimmed) {
+                        Vector3 offsetX = l2rStepPerTile * tile.trim_x;
+                        Vector3 offsetY = b2tStepPerTile * tile.trim_y;
+                        Vector3 offsetEndX = l2rStepPerTile * (tile.trim_x + tile.width);
+                        Vector3 offsetEndY = b2tStepPerTile * (tile.trim_y + tile.height);
+                        _vertices.buffer[i++] = bottomLeft + offsetX + offsetY;
+                        _vertices.buffer[i++] = bottomLeft + offsetX + offsetEndY;
+                        _vertices.buffer[i++] = bottomLeft + offsetEndX + offsetEndY;
+                        _vertices.buffer[i++] = bottomLeft + offsetEndX + offsetY;
+                    }
+                    bottomLeft += tileLeftToRight;  // next column
+                    topLeft += tileLeftToRight;     // next column
                 }
                 // next row
                 rowBottomLeft += tileBottomToTop;

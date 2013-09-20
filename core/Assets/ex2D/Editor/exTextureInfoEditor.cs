@@ -536,24 +536,31 @@ class exTextureInfoEditor : EditorWindow {
             
             // draw diced line
             if ( editModeIndex == 3 ) {
-                if ( curEdit.editDiceUnitWidth != 0 && curEdit.height/curEdit.editDiceUnitHeight != 0 ) {
-                    int xCount = curEdit.width/curEdit.editDiceUnitWidth + 1;  
-                    int yCount = curEdit.height/curEdit.editDiceUnitHeight + 1;  
-
-                    Vector2[] points = new Vector2[(xCount + yCount) * 2];
-                    int idx = 0;
-                    for ( int x = 0; x < xCount; ++x ) {
-                        points[idx]   = new Vector2( -half_width + x * curEdit.editDiceUnitWidth, -half_height );
-                        points[idx+1] = new Vector2( -half_width + x * curEdit.editDiceUnitWidth,  half_height );
-                        idx += 2;
+                if ( curEdit.editDiceUnitWidth != 0 ) {
+                    int xCount = (int)Mathf.Ceil((float)curEdit.width/curEdit.editDiceUnitWidth) - 1;
+                    if (xCount > 0) {
+                        Vector2[] points = new Vector2[xCount * 2];
+                        int idx = 0;
+                        for ( int x = 1; x <= xCount; ++x ) {
+                            points[idx]   = new Vector2( -half_width + x * curEdit.editDiceUnitWidth, -half_height );
+                            points[idx+1] = new Vector2( -half_width + x * curEdit.editDiceUnitWidth,  half_height );
+                            idx += 2;
+                        }
+                        exEditorUtility.GL_DrawLines ( points, dicedColor );
                     }
-                    for ( int y = 0; y < yCount; ++y ) {
-                        points[idx]   = new Vector2( -half_width, -half_height + y * curEdit.editDiceUnitHeight );
-                        points[idx+1] = new Vector2(  half_width, -half_height + y * curEdit.editDiceUnitHeight );
-                        idx += 2;
+                }
+                if ( curEdit.editDiceUnitHeight != 0 ) {
+                    int yCount = (int)Mathf.Ceil((float)curEdit.height/curEdit.editDiceUnitHeight) - 1;
+                    if (yCount > 0) {
+                        Vector2[] points = new Vector2[yCount * 2];
+                        int idx = 0;
+                        for ( int y = 1; y <= yCount; ++y ) {
+                            points[idx]   = new Vector2( -half_width, -half_height + y * curEdit.editDiceUnitHeight );
+                            points[idx+1] = new Vector2(  half_width, -half_height + y * curEdit.editDiceUnitHeight );
+                            idx += 2;
+                        }
+                        exEditorUtility.GL_DrawLines ( points, dicedColor );
                     }
-
-                    exEditorUtility.GL_DrawLines ( points, dicedColor );
                 }
             }
         GL.PopMatrix();
