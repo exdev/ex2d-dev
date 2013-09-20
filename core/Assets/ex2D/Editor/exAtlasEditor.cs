@@ -642,14 +642,16 @@ partial class exAtlasEditor : EditorWindow {
 
                 if ( textureInfo.isDiced ) {
                     foreach (DiceEnumerator.DiceData dice in textureInfo.GetDiceEnumerator()) {
-                        DrawAtlasElement ( MapDicedInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), dice ),
-                                           rawTexture, 
-                                           dice.trim_x,
-                                           dice.trim_y,
-                                           dice.width,
-                                           dice.height,
-                                           dice.rotated,
-                                           selected );
+                        if (dice.sizeType != DiceEnumerator.SizeType.Empty) {
+                            DrawAtlasElement ( MapDicedInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), dice ),
+                                               rawTexture, 
+                                               dice.trim_x,
+                                               dice.trim_y,
+                                               dice.width,
+                                               dice.height,
+                                               dice.rotated,
+                                               selected );
+                        }
                     }
                 }
                 else {

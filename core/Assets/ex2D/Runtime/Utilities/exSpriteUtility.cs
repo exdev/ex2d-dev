@@ -23,13 +23,15 @@ namespace ex2D.Detail {
 public static class exSpriteUtility {
 
     public static void GetDicingCount (exTextureInfo _ti, out int _colCount, out int _rowCount) {
-        if (_ti != null && _ti.diceUnitWidth > 0 && _ti.diceUnitHeight > 0 && _ti.width > 0 && _ti.height > 0) {
-            _colCount = Mathf.Max((int)Mathf.Ceil((float)_ti.width / _ti.diceUnitWidth), 1);
-            _rowCount = Mathf.Max((int)Mathf.Ceil((float)_ti.height / _ti.diceUnitHeight), 1);
-        }
-        else {
-            _colCount = 1;
-            _rowCount = 1;
+        _colCount = 1;
+        _rowCount = 1;
+        if (_ti != null) {
+            if (_ti.diceUnitWidth > 0 && _ti.width > 0) {
+                _colCount = (int)Mathf.Ceil((float)_ti.width / _ti.diceUnitWidth);
+            }
+            if (_ti.diceUnitHeight > 0 && _ti.height > 0) {
+                _rowCount = (int)Mathf.Ceil((float)_ti.height / _ti.diceUnitHeight);
+            }
         }
     }
 
