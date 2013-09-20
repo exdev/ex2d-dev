@@ -64,7 +64,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
             foreach ( Object obj in serializedObject.targetObjects ) {
                 exSpriteFont sp = obj as exSpriteFont;
                 if ( sp ) {
-                    sp.font = fontProp.objectReferenceValue as exBitmapFont;
+                    //sp.font = fontProp.objectReferenceValue as exBitmapFont;
                     EditorUtility.SetDirty(sp);
                 }
             }

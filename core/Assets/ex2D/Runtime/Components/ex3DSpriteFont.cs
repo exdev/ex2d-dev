@@ -16,7 +16,7 @@ using ex2D.Detail;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// 
-/// A component to render exBitmapFont in the scene 
+/// A component to render exFont in the scene 
 /// 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -27,20 +27,16 @@ public class ex3DSpriteFont : exStandaloneSprite {
     // serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected exBitmapFont font_;
-    /// The referenced bitmap font asset
-    // ------------------------------------------------------------------ 
-
-    public exBitmapFont font {
+    [SerializeField] protected exFont font_ = new exFont();
+    public exFont font {
         get { return font_; }
-        set {
+        protected set {
             if (ReferenceEquals(font_, value)) {
                 return;
             }
             if (value != null) {
                 if (value.texture == null) {
-                    Debug.LogWarning("invalid bitmap font texture");
+                    Debug.LogWarning("invalid font texture");
                 }
                 updateFlags |= exUpdateFlags.Text;
 
@@ -289,18 +285,13 @@ public class ex3DSpriteFont : exStandaloneSprite {
 
     protected override Texture texture {
         get {
-            if (font_ != null) {
-                return font_.texture;
-            }
-            else {
-                return null;
-            }
+            return font_.texture;
         }
     }
     
     public override bool visible {
         get {
-            return isOnEnabled && font_ != null && font_.texture != null;
+            return isOnEnabled && font_.isValid;
         }
     }
 
@@ -389,10 +380,27 @@ public class ex3DSpriteFont : exStandaloneSprite {
     protected override void UpdateVertexAndIndexCount () {
         SpriteFontBuilder.GetVertexAndIndexCount (text_, out vertexCount_, out indexCount_);
     }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    protected override void Show () {
+        base.Show();
+        font_.textureRebuildCallback = null;
+        font_.textureRebuildCallback += OnFontTextureRebuilt;
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Public Functions
+    // Other Functions
     ///////////////////////////////////////////////////////////////////////////////
+        
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
 
+    void OnFontTextureRebuilt () {
+        updateFlags |= exUpdateFlags.UV;
+    }
 }
 //#endif

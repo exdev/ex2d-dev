@@ -962,9 +962,7 @@ namespace ex2D.Detail {
                 Vector3 topLeft = bottomLeft + tileBottomToTop;
                 for (int c = 0; c < colCount; ++c) {
                         diceEnumerator.MoveNext ();
-    //#if EX_DEBUG
                     //if (hasNext) {
-    //#endif
                         DiceEnumerator.DiceData tile = diceEnumerator.Current;
                         if (tile.sizeType == DiceEnumerator.SizeType.Max) {
                             _vertices.buffer[i++] = bottomLeft;

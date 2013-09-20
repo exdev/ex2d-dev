@@ -30,7 +30,7 @@ using System.Collections.Generic;
     [System.Serializable]
     public class CharInfo {
         public int id = -1;                ///< the char value
-        public int trim_x = -1;            ///< the trim offset x of the raw texture (used in atlas-font drawing in editor)
+        public int trim_x = -1; // TODO: UNITY_EDITOR ///< the trim offset x of the raw texture (used in atlas-font drawing in editor)
         public int trim_y = -1;            ///< the trim offset y of the raw texture (used in atlas-font drawing in editor)
         public int x = -1;                 ///< the x pos
         public int y = -1;                 ///< the y pos
@@ -72,11 +72,11 @@ using System.Collections.Generic;
     [SerializeField] private Font dynamicFont_;
     /// The referenced dynamic font asset
     // ------------------------------------------------------------------ 
-    /*public */Font dynamicFont {
+    public Font dynamicFont {
         get {
             return dynamicFont_;
         }
-        /*private */set {
+        private set {
             if (dynamicFont_ != null && dynamicFontRegistered) {
                 dynamicFontRegistered = false;
                 dynamicFont_.textureRebuildCallback -= OnFontTextureRebuilt;
@@ -89,46 +89,29 @@ using System.Collections.Generic;
     [SerializeField] private exBitmapFont bitmapFont_;
     /// The referenced bitmap font asset
     // ------------------------------------------------------------------ 
-    /*public */exBitmapFont bitmapFont {
+    public exBitmapFont bitmapFont {
         get {
             return bitmapFont_;
         }
-        /*private */set {
+        private set {
             bitmapFont_ = value;
         }
     }
-
-    void OnFontTextureRebuilt () {
-        exDebug.Assert(dynamicFontRegistered);
-        if (textureRebuildCallback != null) {
-            textureRebuildCallback();
-        }
+    
+    public void Set (exBitmapFont _bitmapFont) {
+        dynamicFont = null;
+        bitmapFont = _bitmapFont;
     }
 
-    public Texture2D texture {
-        get {
-            if (bitmapFont_ != null) {
-                return bitmapFont_.texture;
-            }
-            else if (dynamicFont_ != null) {
-                return dynamicFont_.material.mainTexture as Texture2D;
-            }
-            return null;
-        }
+    public void Set (Font _dynamicFont) {
+        bitmapFont = null;
+        dynamicFont = _dynamicFont;
     }
 
-    public bool isValid {
-        get {
-            if (texture != null) {
-                if (bitmapFont_ != null) {
-                    return bitmapFont_.charInfos.Count > 0;
-                }
-                else if (dynamicFont_ != null) {
-                    return dynamicFont_.characterInfo.Length > 0;
-                }
-            }
-            return false;
-        }
+    public void Clear () {
+        bitmapFont = null;
+        dynamicFont = null;
+        textureRebuildCallback = null;
     }
     
     // ------------------------------------------------------------------ 
@@ -151,21 +134,43 @@ using System.Collections.Generic;
             }
         }
     }
-    
-    public void Set (exBitmapFont _bitmapFont) {
-        dynamicFont = null;
-        bitmapFont = _bitmapFont;
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] private int dynamicFontSize_;
+    /// the space of the line
+    // ------------------------------------------------------------------ 
+    public int fontSize {
+        get {
+            if (bitmapFont_ != null) {
+                return bitmapFont_.size;
+            }
+            return dynamicFontSize_;
+        }
+        set {
+            if (bitmapFont_ != null) {
+                bitmapFont_.size = value;
+            }
+            else {
+                dynamicFontSize_ = value;
+            }
+        }
     }
 
-    public void Set (Font _dynamicFont) {
-        bitmapFont = null;
-        dynamicFont = _dynamicFont;
+    [SerializeField] private FontStyle dynamicFontStyle_ = FontStyle.Normal;
+    public FontStyle fontStyle {
+        get {
+            return dynamicFontStyle_;
+        }
+        set {
+            dynamicFontStyle_ = value;
+        }
     }
 
-    public void Clear () {
-        bitmapFont = null;
-        dynamicFont = null;
-        textureRebuildCallback = null;
+    void OnFontTextureRebuilt () {
+        exDebug.Assert(dynamicFontRegistered);
+        if (textureRebuildCallback != null) {
+            textureRebuildCallback();
+        }
     }
 
     [System.NonSerialized] public Font.FontTextureRebuildCallback textureRebuildCallback;
@@ -198,53 +203,67 @@ using System.Collections.Generic;
         }
     }*/
 
+    public Texture2D texture {
+        get {
+            if (bitmapFont_ != null) {
+                return bitmapFont_.texture;
+            }
+            else if (dynamicFont_ != null) {
+                return dynamicFont_.material.mainTexture as Texture2D;
+            }
+            return null;
+        }
+    }
+
+    public bool isValid {
+        get {
+            if (texture != null) {
+                if (bitmapFont_ != null) {
+                    return bitmapFont_.charInfos.Count > 0;
+                }
+                else if (dynamicFont_ != null) {
+                    return dynamicFont_.characterInfo.Length > 0;
+                }
+            }
+            return false;
+        }
+    }
+
     public CharInfo GetCharInfo ( char _symbol ) {
         if (bitmapFont_ != null) {
             return bitmapFont_.GetCharInfo(_symbol);
         }
-        
-        // create and build idToCharInfo table if null
-        if ( charInfoTable == null || charInfoTable.Count == 0 ) {
-            RebuildCharInfoTable ();
-        }
+        if (dynamicFont_ != null) {
+            //// yes, Unity's GetCharacterInfo have y problem, you should get lowest character j's y-offset adjust it.
+            //CharacterInfo jCharInfo;
+            //dynamicFont_.RequestCharactersInTexture("j", dynamicFontSize_, dynamicFontStyle_);
+            //dynamicFont_.GetCharacterInfo('j', out jCharInfo, dynamicFontSize_, dynamicFontStyle_);
+            //float ttf_offset = (dynamicFontSize_ + jCharInfo.vert.yMax);
 
-        CharInfo charInfo;
-        if ( charInfoTable.TryGetValue (_symbol, out charInfo) )
+            CharacterInfo dynamicCharInfo;
+            dynamicFont_.GetCharacterInfo(_symbol, out dynamicCharInfo, dynamicFontSize_, dynamicFontStyle_);
+
+            Texture texture = dynamicFont_.material.mainTexture;
+            CharInfo charInfo = new CharInfo(); // TODO: use static char info
+            charInfo.id = _symbol;
+            charInfo.trim_x = 0;
+            charInfo.trim_y = 0;
+            charInfo.x = (int)dynamicCharInfo.uv.x * texture.width;  // TODO: save uv in char info
+            charInfo.y = (int)dynamicCharInfo.uv.y * texture.height;
+            charInfo.width = (int)dynamicCharInfo.vert.width;
+            charInfo.height = (int)dynamicCharInfo.vert.height;
+            charInfo.xoffset = (int)dynamicCharInfo.vert.x;
+            charInfo.yoffset = (int)dynamicCharInfo.vert.y;
+            charInfo.xadvance = (int)dynamicCharInfo.width;
+            charInfo.rotated = dynamicCharInfo.flipped;
             return charInfo;
+        }
         return null;
     }
-    
-    // ------------------------------------------------------------------ 
-    /// Rebuild the kerningTable to store key <first char, second char> to value kerning amount
-    // ------------------------------------------------------------------ 
-
-    public void RebuildKerningTable () {
-        // 如果大部分字符的kerning数量都在10个以下，可以直接线性存到CharInfo里。
-        if ( kerningTable == null ) {
-            kerningTable = new Dictionary<KerningTableKey,int> (kernings.Count, KerningTableKey.Comparer.instance);
-        }
-        kerningTable.Clear();
-        for ( int i = 0; i < kernings.Count; ++i ) {
-            KerningInfo k = kernings [i];
-            kerningTable[new KerningTableKey((char)k.first, (char)k.second)] = k.amount;
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    /// \param _first the first character
-    /// \param _second the second character
-    /// \return the kerning amount
-    /// Get the kerning amount between first and sceond character
-    // ------------------------------------------------------------------ 
 
     public int GetKerning ( char _first, char _second ) {
-        if ( kerningTable == null ) {
-            RebuildKerningTable ();
-        }
-
-        int amount;
-        if ( kerningTable.TryGetValue (new KerningTableKey (_first, _second), out amount) ) {
-            return amount;
+        if (bitmapFont_ != null) {
+            return bitmapFont_.GetKerning(_first, _second);
         }
         return 0;
     }

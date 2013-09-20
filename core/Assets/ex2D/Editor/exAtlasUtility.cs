@@ -39,7 +39,7 @@ public static class exAtlasUtility {
 
         // raw referenced
         public exTextureInfo textureInfo = null; 
-        public exBitmapFont.CharInfo charInfo = null;
+        public exFont.CharInfo charInfo = null;
 
         public int rotatedWidth {
             get {
@@ -227,7 +227,7 @@ public static class exAtlasUtility {
             elements.Add(el);
         }
         foreach ( exBitmapFont bitmapFont in _atlas.bitmapFonts ) {
-            foreach ( exBitmapFont.CharInfo info in bitmapFont.charInfos ) {
+            foreach ( exFont.CharInfo info in bitmapFont.charInfos ) {
                 Element el = new Element();
                 el.x = 0;
                 el.y = 0;
@@ -1056,7 +1056,7 @@ public static class exAtlasUtility {
                 rawTexture = exTextureUtility.ApplyContourBleed( rawTexture );
             }
 
-            foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+            foreach ( exFont.CharInfo charInfo in bitmapFont.charInfos ) {
 
                 // copy raw texture into atlas texture
                 exTextureUtility.Fill( atlasTexture

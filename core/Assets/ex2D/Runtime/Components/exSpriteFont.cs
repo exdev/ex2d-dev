@@ -71,7 +71,7 @@ public class exSpriteFont : exLayeredSprite {
             font_ = value;
         }
     }
-
+    // TODO: set font
     // ------------------------------------------------------------------ 
     [SerializeField] protected string text_ = "Hello World!";
     /// The text to rendered. 
@@ -1009,7 +1009,7 @@ namespace ex2D.Detail {
                     }
                 }
                 
-                exBitmapFont.CharInfo ci = sfp.font.GetCharInfo(c);
+                exFont.CharInfo ci = sfp.font.GetCharInfo(c);
                 if (ci == null) {
                     // character is not present, it will not display
                     // Debug.Log("character is not present: " + c, this);

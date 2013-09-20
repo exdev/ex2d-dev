@@ -653,7 +653,7 @@ partial class exAtlasEditor : EditorWindow {
                 
                 Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( bitmapFont.rawTextureGUID );
                 bool selected = selectedObjects.IndexOf(bitmapFont) != -1;
-                foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+                foreach ( exFont.CharInfo charInfo in bitmapFont.charInfos ) {
                     DrawAtlasElement ( MapCharInfo ( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), charInfo ), 
                                        rawTexture,
                                        charInfo.trim_x,
@@ -1002,7 +1002,7 @@ partial class exAtlasEditor : EditorWindow {
             if ( bitmapFont == null )
                 continue;
 
-            foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+            foreach ( exFont.CharInfo charInfo in bitmapFont.charInfos ) {
                 Rect charInfoRect = MapCharInfo ( atlasRect, charInfo );
                 if ( exGeometryUtility.RectRect_Contains( _rect, charInfoRect ) != 0 ||
                      exGeometryUtility.RectRect_Intersect( _rect, charInfoRect ) )
@@ -1054,7 +1054,7 @@ partial class exAtlasEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    Rect MapCharInfo ( Rect _atlasRect, exBitmapFont.CharInfo _charInfo ) {
+    Rect MapCharInfo ( Rect _atlasRect, exFont.CharInfo _charInfo ) {
         Rect rect = new Rect ( _charInfo.x * curEdit.scale,
                                _charInfo.y * curEdit.scale,
                                _charInfo.rotatedWidth * curEdit.scale,
