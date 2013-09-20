@@ -349,7 +349,6 @@ public static class exTextUtility {
     {
         int cur_x = 0;
         int cur_y = 0;
-        int baseLineOffset = _font.baseLine - _fontSize;
 
         //
         for ( int i = 0; i < _text.Length; ++i ) {
@@ -365,7 +364,7 @@ public static class exTextUtility {
             if ( charInfo != null ) {
                 int idx = 4*i;
                 float x = cur_x + charInfo.xoffset;
-                float y = cur_y + charInfo.yoffset + baseLineOffset;
+                float y = cur_y + charInfo.yoffset;
 
                 Vector2 texelSize = _font.texture.texelSize;
                 Vector2 start = new Vector2( charInfo.x * texelSize.x, 
