@@ -37,6 +37,9 @@ public static class exAtlasUtility {
         public int height = 1;
         public bool rotated = false;
 
+        public int dicedX = -1;
+        public int dicedY = -1;
+
         // raw referenced
         public exTextureInfo textureInfo = null; 
         public exBitmapFont.CharInfo charInfo = null;
@@ -58,7 +61,7 @@ public static class exAtlasUtility {
         public void Apply () {
             if ( textureInfo != null ) {
                 if ( textureInfo.shouldDiced ) {
-                    // TODO:
+                    textureInfo.AddDiceData( new Rect( dicedX, dicedY, width, height ), x, y, rotated );
                 }
                 else {
                     textureInfo.x = x;
@@ -228,13 +231,15 @@ public static class exAtlasUtility {
                 for ( int x = 0; x < xCount; ++x ) {
                     for ( int y = 0; y < yCount; ++y ) {
                         Element el = new Element();
-                        el.x = x * info.editDiceUnitWidth;
-                        el.y = y * info.editDiceUnitHeight;
+                        el.x = 0;
+                        el.y = 0;
                         el.rotated = false;
                         el.textureInfo = info;
                         el.id = info.name + "[" + x + "][" + y + "]";
                         el.width = info.editDiceUnitWidth;
                         el.height = info.editDiceUnitHeight;
+                        el.dicedX = x * info.editDiceUnitWidth;
+                        el.dicedY = y * info.editDiceUnitHeight;
                         elements.Add(el);
                     }
                 }
