@@ -1137,7 +1137,22 @@ class exUILayoutEditor : EditorWindow {
                     GUILayout.Label ( "font", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
                     ++indentLevel;
                         exCSSUI.FontField ( indentLevel, activeElement, "font", style.font, true );
+                        GUI.enabled = (style.font.type == exCSS_font.Type.TTF) ? true : false;
+                        if ( style.font.type == exCSS_font.Type.BitmapFont ) {
+                            if ( style.fontSize.type != exCSS_size_noauto.Type.Length ) {
+                                style.fontSize.type = exCSS_size_noauto.Type.Length;
+                                GUI.changed = true;
+                            }
+
+                            exBitmapFont bitmapFont = style.font.val as exBitmapFont;
+                            int bitmapFontSize = (bitmapFont == null) ? 0 : bitmapFont.size;
+                            if ( style.fontSize.val != bitmapFontSize ) {
+                                style.fontSize.val = bitmapFontSize;
+                                GUI.changed = true;
+                            }
+                        }
                         exCSSUI.SizeNoAutoField ( indentLevel, activeElement, "size", style.fontSize, true );
+                        GUI.enabled = true;
                     --indentLevel;
 
                     EditorGUILayout.Space();
@@ -1331,11 +1346,15 @@ class exUILayoutEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawText ( int _x, int _y, exUIElement _el, string _text ) {
+        if ( _el.font == null )
+            return;
+
+        Vector3[] vertices = new Vector3[_text.Length * 4];
+        Vector2[] uvs = new Vector2[_text.Length * 4];
+        Texture2D texture = null;
+
         if ( _el.font is Font ) {
             Font ttfFont = _el.font as Font;
-            Vector3[] vertices = new Vector3[_text.Length * 4];
-            Vector2[] uvs = new Vector2[_text.Length * 4];
-
             exTextUtility.BuildTextLine ( vertices,
                                           uvs,
                                           _text,
@@ -1344,40 +1363,57 @@ class exUILayoutEditor : EditorWindow {
                                           _el.fontSize,
                                           _el.wordSpacing,
                                           _el.letterSpacing );
+            texture = ttfFont.material.mainTexture as Texture2D;
 
-            exEditorUtility.materialAlphaBlendedVertColor.mainTexture = ttfFont.material.mainTexture;
+            exEditorUtility.materialAlphaBlendedVertColor.mainTexture = texture;
             exEditorUtility.materialAlphaBlendedVertColor.SetPass(0);
-            GL.Begin(GL.QUADS);
-                GL.Color(_el.textColor);
-                for ( int i = 0; i < _text.Length; ++i ) {
-                    int idx = 4*i;
-                    GL.TexCoord2 ( uvs[idx].x, uvs[idx].y );
-                    GL.Vertex3 ( vertices[idx].x + _x, vertices[idx].y + _y, 0.0f );
-
-                    GL.TexCoord2 ( uvs[idx+1].x, uvs[idx+1].y );
-                    GL.Vertex3 ( vertices[idx+1].x + _x, vertices[idx+1].y + _y, 0.0f );
-
-                    GL.TexCoord2 ( uvs[idx+2].x, uvs[idx+2].y );
-                    GL.Vertex3 ( vertices[idx+2].x + _x, vertices[idx+2].y + _y, 0.0f );
-
-                    GL.TexCoord2 ( uvs[idx+3].x, uvs[idx+3].y );
-                    GL.Vertex3 ( vertices[idx+3].x + _x, vertices[idx+3].y + _y, 0.0f );
-                }
-            GL.End();
-
-            // DEBUG { 
-            // for ( int i = 0; i < _text.Length; ++i ) {
-            //     int idx = 4*i;
-            //     exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-            //                                       new Vector3 ( vertices[idx].x   + _x, vertices[idx].y   + _y, 0.0f ),
-            //                                       new Vector3 ( vertices[idx+1].x + _x, vertices[idx+1].y + _y, 0.0f ),
-            //                                       new Vector3 ( vertices[idx+2].x + _x, vertices[idx+2].y + _y, 0.0f ),
-            //                                       new Vector3 ( vertices[idx+3].x + _x, vertices[idx+3].y + _y, 0.0f ),
-            //                                       },
-            //                                       Color.white );
-            // }
-            // } DEBUG end 
         }
+        else if ( _el.font is exBitmapFont ) {
+            exBitmapFont bitmapFont = _el.font as exBitmapFont;
+            exTextUtility.BuildTextLine ( vertices,
+                                          uvs,
+                                          _text,
+                                          bitmapFont,
+                                          _el.lineHeight,
+                                          _el.fontSize,
+                                          _el.wordSpacing,
+                                          _el.letterSpacing );
+            texture = bitmapFont.texture;
+
+            exEditorUtility.materialAlphaBlended.mainTexture = texture;
+            exEditorUtility.materialAlphaBlended.SetPass(0);
+        }
+
+        GL.Begin(GL.QUADS);
+        GL.Color(_el.textColor);
+        for ( int i = 0; i < _text.Length; ++i ) {
+            int idx = 4*i;
+            GL.TexCoord2 ( uvs[idx].x, uvs[idx].y );
+            GL.Vertex3 ( vertices[idx].x + _x, vertices[idx].y + _y, 0.0f );
+
+            GL.TexCoord2 ( uvs[idx+1].x, uvs[idx+1].y );
+            GL.Vertex3 ( vertices[idx+1].x + _x, vertices[idx+1].y + _y, 0.0f );
+
+            GL.TexCoord2 ( uvs[idx+2].x, uvs[idx+2].y );
+            GL.Vertex3 ( vertices[idx+2].x + _x, vertices[idx+2].y + _y, 0.0f );
+
+            GL.TexCoord2 ( uvs[idx+3].x, uvs[idx+3].y );
+            GL.Vertex3 ( vertices[idx+3].x + _x, vertices[idx+3].y + _y, 0.0f );
+        }
+        GL.End();
+
+        // DEBUG { 
+        // for ( int i = 0; i < _text.Length; ++i ) {
+        //     int idx = 4*i;
+        //     exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+        //                                       new Vector3 ( vertices[idx].x   + _x, vertices[idx].y   + _y, 0.0f ),
+        //                                       new Vector3 ( vertices[idx+1].x + _x, vertices[idx+1].y + _y, 0.0f ),
+        //                                       new Vector3 ( vertices[idx+2].x + _x, vertices[idx+2].y + _y, 0.0f ),
+        //                                       new Vector3 ( vertices[idx+3].x + _x, vertices[idx+3].y + _y, 0.0f ),
+        //                                       },
+        //                                       Color.white );
+        // }
+        // } DEBUG end 
     }
 
     // ------------------------------------------------------------------ 

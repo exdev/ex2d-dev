@@ -232,31 +232,7 @@ public class exCSS_image {
         Inherit
     }
     public Type type;
-    public exTextureInfo src1; 
-    public Texture2D src2; 
-    public Object val {
-        set {
-            if ( value is Texture2D ) {
-                src1 = null; 
-                src2 = value as Texture2D; 
-            }
-            else if ( value is exTextureInfo ) {
-                src1 = value as exTextureInfo; 
-                src2 = null;
-            }
-            else {
-                src1 = null;
-                src2 = null;
-            }
-        }
-        get { 
-            if ( src1 != null )
-                return src1;
-            else if ( src2 != null )
-                return src2;
-            return null;
-        }
-    }
+    public Object val; 
     public exCSS_image ( Type _type, Object _val ) { 
         type = _type; 
         val = _val;
@@ -272,31 +248,7 @@ public class exCSS_font {
         Inherit
     }
     public Type type;
-    public Font src1; 
-    public exBitmapFont src2; 
-    public Object val {
-        set {
-            if ( value is Font ) {
-                src1 = value as Font; 
-                src2 = null; 
-            }
-            else if ( value is exBitmapFont ) {
-                src1 = null;
-                src2 = value as exBitmapFont; 
-            }
-            else {
-                src1 = null;
-                src2 = null;
-            }
-        }
-        get { 
-            if ( src1 != null )
-                return src1;
-            else if ( src2 != null )
-                return src2;
-            return null;
-        }
-    }
+    public Object val;
     public exCSS_font ( Type _type, Object _val ) { 
         type = _type; 
         val = _val;
@@ -367,7 +319,7 @@ public class exUIStyle {
     public exCSS_size_noauto fontSize = new exCSS_size_noauto( exCSS_size_noauto.Type.Inherit, 16.0f );
 
     // text
-    public exCSS_color textColor = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 255 ) );
+    public exCSS_color textColor = new exCSS_color( exCSS_color.Type.Color, new Color( 255, 255, 255, 255 ) );
     public exCSS_white_space whitespace = exCSS_white_space.Normal;
     public exCSS_alignment textAlign = exCSS_alignment.Left;
     public exCSS_decoration textDecoration = exCSS_decoration.None;
@@ -624,7 +576,13 @@ public class exUIStyle {
                 val = lineHeight.val/100.0f * parent_val;
             }
             else if ( lineHeight.type == exCSS_size.Type.Auto ) {
-                val = _el.fontSize;
+                exBitmapFont bitmapFont = _el.font as exBitmapFont;
+                if ( bitmapFont != null ) {
+                    val = bitmapFont.lineHeight;
+                } 
+                else {
+                    val = _el.fontSize;
+                }
             }
             _el.lineHeight = Mathf.FloorToInt(val);
         }
