@@ -88,7 +88,7 @@ public class exTextureInfo : ScriptableObject {
             editDiceUnitHeight_ = Mathf.Max(value, 0);
         }
     }
-    // TODO: dice width or dice height can == 0
+    
     public bool shouldDiced {
         get { return editDiceUnitWidth_ > 0 || editDiceUnitHeight_ > 0; }
     }
@@ -250,13 +250,13 @@ public struct DiceEnumerator : IEnumerator<DiceEnumerator.DiceData>, IEnumerable
     private List<int> diceData;
     private int dataIndex;
     
-    //private float diceUnitWidth;
-    //private float diceUnitHeight;
+    private float diceUnitWidth;
+    private float diceUnitHeight;
 
     public DiceEnumerator (List<int> _diceData) {
         diceData = _diceData;
-        //diceUnitWidth = _diceData[0];
-        //diceUnitHeight = _diceData[1];
+        diceUnitWidth = _diceData[0];
+        diceUnitHeight = _diceData[1];
         dataIndex = 0;
         Reset();
     }
@@ -274,6 +274,7 @@ public struct DiceEnumerator : IEnumerator<DiceEnumerator.DiceData>, IEnumerable
             DiceData d = new DiceData();
             if (diceData[dataIndex] == EMPTY) {
                 d.sizeType = SizeType.Empty;
+
                 return d;
             }
             if (diceData[dataIndex] >= 0) {
@@ -294,11 +295,11 @@ public struct DiceEnumerator : IEnumerator<DiceEnumerator.DiceData>, IEnumerable
                 d.sizeType = SizeType.Max;
                 d.x = diceData[dataIndex + 1];
                 d.y = diceData[dataIndex + 2];
-                /*d.trim_x = 0;
+                d.trim_x = 0;
                 d.trim_y = 0;
-                d.width = diceUnitWidth;
-                d.height = diceUnitHeight;
-                d.rotated = (diceData[dataIndex] == MAX_ROTATED);*/
+                d.width = (int)diceUnitWidth;
+                d.height = (int)diceUnitHeight;
+                d.rotated = (diceData[dataIndex] == MAX_ROTATED);
             }
             return d;
         }
