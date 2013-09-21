@@ -95,6 +95,9 @@ using System.Collections.Generic;
         }
         private set {
             bitmapFont_ = value;
+            if (bitmapFont_.texture == null) {
+                Debug.LogWarning("invalid font texture");
+            }
         }
     }
     

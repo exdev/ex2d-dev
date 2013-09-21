@@ -39,39 +39,7 @@ public class exSpriteFont : exLayeredSprite {
 
     /// 每个exSpriteFont都有单独的一个exFont实例
     [SerializeField] protected exFont font_ = new exFont();
-    public exFont font {
-        get { return font_; }
-        protected set {
-            if (ReferenceEquals(font_, value)) {
-                return;
-            }
-            if (value != null) {
-                if (value.texture == null) {
-                    Debug.LogWarning("invalid font texture");
-                }
-                updateFlags |= exUpdateFlags.Text;
 
-                if (font_ == null || ReferenceEquals(font_.texture, value.texture) == false) {
-                    // texture changed
-                    font_ = value;
-                    UpdateMaterial();   // 前面update过text了
-                    return;
-                }
-                if (layer_ != null && isOnEnabled && visible == false) {
-                    font_ = value;
-                    if (visible) {
-                        Show();
-                    }
-                }
-            }
-            else if (layer_ != null && visible) {
-                // become invisible
-                Hide();
-            }
-            font_ = value;
-        }
-    }
-    // TODO: set font
     // ------------------------------------------------------------------ 
     [SerializeField] protected string text_ = "Hello World!";
     /// The text to rendered. 
@@ -419,6 +387,16 @@ public class exSpriteFont : exLayeredSprite {
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
+    
+    public void SetFont (exBitmapFont _bitmapFont) {
+        font_.Set(_bitmapFont);
+        UpdateTexture();
+    }
+
+    public void SetFont (Font _dynamicFont) {
+        font_.Set(_dynamicFont);
+        UpdateTexture();
+    }
 
     //            // update outline
     //            if ( useOutline_ ) {
@@ -626,6 +604,21 @@ public class exSpriteFont : exLayeredSprite {
     //        }
     //    }
     
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void UpdateTexture () {
+        if (font_.texture != null) {
+            updateFlags |= exUpdateFlags.Text;
+            UpdateMaterial();
+        }
+        else if (layer_ != null) {
+            // become invisible
+            Hide();
+        }
+    }
+
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
