@@ -65,8 +65,6 @@ public class exTextureInfo : ScriptableObject {
 
 #if UNITY_EDITOR
 
-    //[SerializeField]
-    //[HideInInspector]
     private int editDiceUnitWidth_ = -1;    ///< not committed value, used for editor
     public int editDiceUnitWidth {
         get {
@@ -80,8 +78,6 @@ public class exTextureInfo : ScriptableObject {
         }
     }
 
-    //[SerializeField]
-    //[HideInInspector]
     private int editDiceUnitHeight_ = -1;   ///< not committed value, used for editor
     public int editDiceUnitHeight {
         get {
@@ -200,7 +196,7 @@ public class exTextureInfo : ScriptableObject {
         }
         public int trim_y {
             get {
-                int row = enumerator.tileIndex / enumerator.rowCount;
+                int row = enumerator.tileIndex / enumerator.columnCount;
                 return enumerator.textureInfo.trim_y + row * enumerator.textureInfo.diceUnitHeight + offset_y;
             }
         }
@@ -209,7 +205,11 @@ public class exTextureInfo : ScriptableObject {
 
 #if UNITY_EDITOR
 
-    private Dice[] editDiceDatas = null;  ///< not committed value, used for editor
+    // dice index:
+    // 8  9  10 11
+    // 4  5  6  7 
+    // 0  1  2  3  
+    public Dice[] editDiceDatas = null;  ///< not committed value, used for editor
 
     // ------------------------------------------------------------------ 
     /// Start commit dice data

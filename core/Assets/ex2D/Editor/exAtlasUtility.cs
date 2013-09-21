@@ -254,7 +254,7 @@ public static class exAtlasUtility {
                         el.id = info.name + "[" + x + "][" + y + "]";
                         el.width = width;
                         el.height = height;
-                        el.dicedID = x * xCount + y;
+                        el.dicedID = y * xCount + x;
                         elements.Add(el);
                     }
                 }
