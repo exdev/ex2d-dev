@@ -93,8 +93,9 @@ public class exTextureInfo : ScriptableObject {
 
     public int diceEditXCount {
         get {
-            if (editDiceUnitWidth_ > 0 && width > 0) {
-                return Mathf.CeilToInt((float)width / editDiceUnitWidth_);
+            int dw = (editDiceUnitWidth_ == -1) ? diceUnitWidth : editDiceUnitWidth_;
+            if (dw > 0 && width > 0) {
+                return Mathf.CeilToInt((float)width / dw);
             }
             else {
                 return 1;
@@ -104,8 +105,9 @@ public class exTextureInfo : ScriptableObject {
 
     public int diceEditYCount {
         get {
-            if (editDiceUnitWidth_ > 0 && width > 0) {
-                return Mathf.CeilToInt((float)height / editDiceUnitHeight_);
+            int dh = (editDiceUnitHeight_ == -1) ? diceUnitHeight : editDiceUnitHeight_;
+            if (dh > 0 && height > 0) {
+                return Mathf.CeilToInt((float)height / dh);
             }
             else {
                 return 1;
@@ -114,7 +116,7 @@ public class exTextureInfo : ScriptableObject {
     }
 
     public bool shouldDiced {
-        get { return editDiceUnitWidth_ > 0 || editDiceUnitHeight_ > 0; }
+        get { return editDiceUnitWidth > 0 || editDiceUnitHeight > 0; }
     }
 
 #endif
@@ -236,6 +238,12 @@ public class exTextureInfo : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public void CommitDiceData () {
+        if (editDiceUnitWidth_ == -1) {
+            editDiceUnitWidth_ = diceUnitWidth;    // keep dice value
+        }
+        if (editDiceUnitHeight_ == -1) {
+            editDiceUnitHeight_ = diceUnitHeight;  // keep dice value
+        }
         diceData.Clear();
         if ( shouldDiced == false ) {
             return;
