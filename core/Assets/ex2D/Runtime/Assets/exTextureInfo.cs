@@ -1,4 +1,4 @@
-// ======================================================================================
+﻿// ======================================================================================
 // File         : exTextureInfo.cs
 // Author       : Wu Jie 
 // Last Change  : 02/17/2013 | 21:39:05 PM | Sunday,February
@@ -103,7 +103,7 @@ public class exTextureInfo : ScriptableObject {
 
     [SerializeField]
     //[HideInInspector]
-    private List<int> diceData = new List<int>();
+    private List<int> diceData = new List<int>();   // TODO: use array
 
     public int diceUnitWidth {  ///< committed value, used for rendering
         get {
@@ -143,7 +143,11 @@ public class exTextureInfo : ScriptableObject {
         Trimmed,
     }
 
-    public struct Dice {  ///< the dice data used in dice enumerator
+    // ------------------------------------------------------------------ 
+    /// The dice data
+    // ------------------------------------------------------------------ 
+
+    public struct Dice {            
         public DiceType sizeType;
         public int offset_x;
         public int offset_y;
@@ -183,78 +187,54 @@ public class exTextureInfo : ScriptableObject {
 
 #if UNITY_EDITOR
 
-    public void ClearDiceData () {
-        diceData.Clear();
+    private Dice[] editDiceDatas = null;  ///< not committed value, used for editor
+
+    // ------------------------------------------------------------------ 
+    /// Start commit dice data
+    // ------------------------------------------------------------------ 
+
+    public void CreateDiceData () {
+        int xCount = 1;
+        int yCount = 1;
+        if (editDiceUnitWidth > 0 && width > 0) {
+            xCount = Mathf.CeilToInt((float)width / editDiceUnitWidth);
+        }
+        if (editDiceUnitHeight > 0 && height > 0) {
+            yCount = Mathf.CeilToInt((float)height / editDiceUnitHeight);
+        }
+        // TODO: add xCount and yCount properties for exTextureInfo
+        editDiceDatas = new Dice[xCount * yCount];
     }
-    
-    /* tile index:
-    8  9  10 11
-    4  5  6  7 
-    0  1  2  3 
-     */
-    public void AddDiceData ( Rect _rect, int _x, int _y, bool _rotated ) {
+
+    // ------------------------------------------------------------------ 
+    // tile index:
+    // 8  9  10 11
+    // 4  5  6  7 
+    // 0  1  2  3  
+    // NOTE: 这里的_diceData.sizeType无用，可以为任意值
+    // ------------------------------------------------------------------ 
+
+    public void AddDiceData (int _tileIndex, Dice _dice) {
+        editDiceDatas[_tileIndex] = _dice;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Save committed value
+    // ------------------------------------------------------------------ 
+
+    public void CommitDiceData () {
+        diceData.Clear();
         if ( shouldDiced == false ) {
             return;
         }
-        //Debug.Log("rect " + _rect + " " + _x + " " + _y);
-        if ( diceData.Count == 0 ) {
-            // save committed value
-            diceData.Add( editDiceUnitWidth_ == 0 ? width : editDiceUnitWidth_ );
-            diceData.Add( editDiceUnitHeight_ == 0 ? height : editDiceUnitHeight_ );
+        diceData.Add( editDiceUnitWidth_ == 0 ? width : editDiceUnitWidth_ );
+        diceData.Add( editDiceUnitHeight_ == 0 ? height : editDiceUnitHeight_ );
+        foreach (Dice dice in editDiceDatas) {
+           DiceEnumerator.AddDiceData(this, diceData, dice);
         }
-        
-        if ( _rect.width <= 0 || _rect.height <= 0 ) {
-            diceData.Add( DiceEnumerator.EMPTY );
-        }
-        else {
-            if ( _rect.width == diceUnitWidth && _rect.height == diceUnitHeight ) {
-                diceData.Add( _rotated ? DiceEnumerator.MAX_ROTATED : DiceEnumerator.MAX );
-                // TODO: use y instead of this flag
-            }
-            else {
-                diceData.Add( (int)_rect.x );   // trim_x
-                diceData.Add( (int)_rect.y );   // trim_y
-                diceData.Add( _rotated ? (int)-_rect.width : (int)_rect.width );
-                diceData.Add( (int)_rect.height );
-            }
-            diceData.Add( _x );
-            diceData.Add( _y );
-        }
-        
-        // DELME { 
-        // List<float> data = new List<float>( _tileRects.Length * 6 + 2 );
-        // 
-        // // save committed value
-        // data.Add( editDiceUnitWidth );
-        // data.Add( editDiceUnitHeight );
-        // 
-        // bool hasTile = false;
-        // for ( int i = 0; i < _tileRects.Length; ++i ) {
-        //     Rect rect = _tileRects[i];
-        //     if ( rect.width <= 0 || rect.height <= 0 ) {
-        //         data.Add( DiceEnumerator.EMPTY );
-        //         continue;
-        //     }
-        //     if (rect.width == editDiceUnitWidth && rect.height == editDiceUnitHeight) {
-        //         data.Add( _rotated[i] ? DiceEnumerator.MAX_ROTATED : DiceEnumerator.MAX );
-        //     }
-        //     else {
-        //         data.Add( _tileRects[i].x );   // trim_x
-        //         data.Add( _tileRects[i].y );   // trim_y
-        //         data.Add( _rotated[i] ? - _tileRects[i].width : _tileRects[i].width );
-        //         data.Add( _tileRects[i].height );
-        //     }
-        //     data.Add( _x[i] );
-        //     data.Add( _y[i] );
-        //     hasTile = true;
-        // }
-        // if (hasTile == false) {
-        //     data.RemoveRange (2, data.Count - 2);
-        // }
-        // diceData = data;
-        // } DELME end 
+        // TODO: trim last empty tile
     }
-    
+
 #endif
 
 }
@@ -301,6 +281,27 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
 
     public IEnumerator<exTextureInfo.Dice> GetEnumerator () { return this; }
     IEnumerator IEnumerable.GetEnumerator () { return this; }
+
+    public static void AddDiceData ( exTextureInfo _textureInfo, List<int> _diceData, exTextureInfo.Dice _dice ) {
+        //Debug.Log("rect " + _rect + " " + _x + " " + _y);
+        if ( _dice.width <= 0 || _dice.height <= 0 ) {
+            _diceData.Add( DiceEnumerator.EMPTY );
+        }
+        else {
+            if ( _dice.width == _textureInfo.diceUnitWidth && _dice.height == _textureInfo.diceUnitHeight ) {
+                _diceData.Add( _dice.rotated ? DiceEnumerator.MAX_ROTATED : DiceEnumerator.MAX );
+                // TODO: use y instead of this flag
+            }
+            else {
+                _diceData.Add( _dice.offset_x );
+                _diceData.Add( _dice.offset_y );
+                _diceData.Add( _dice.rotated ? - _dice.width : _dice.width );
+                _diceData.Add( _dice.height );
+            }
+            _diceData.Add( _dice.x );
+            _diceData.Add( _dice.y );
+        }
+    }
 
     public exTextureInfo.Dice Current {
         get {
