@@ -65,49 +65,63 @@ public class exTextureInfo : ScriptableObject {
 
 #if UNITY_EDITOR
 
-    private int editDiceUnitWidth_ = -1;    ///< not committed value, used for editor
-    public int editDiceUnitWidth {
+    private int rawEditorDiceUnitWidth_ = -1;    ///< not committed value, used for editor
+    public int rawEditorDiceUnitWidth {
         get {
-            if (editDiceUnitWidth_ >= 0) {
-                return editDiceUnitWidth_;
+            if (rawEditorDiceUnitWidth_ != -1) {
+                return rawEditorDiceUnitWidth_;
             }
             return diceUnitWidth;
         }
         set {
-            editDiceUnitWidth_ = Mathf.Max(value, 0);
+            rawEditorDiceUnitWidth_ = Mathf.Max(value, 0);
         }
     }
 
-    private int editDiceUnitHeight_ = -1;   ///< not committed value, used for editor
-    public int editDiceUnitHeight {
+    private int rawEditorDiceUnitHeight_ = -1;   ///< not committed value, used for editor
+    public int rawEditorDiceUnitHeight {
         get {
-            if (editDiceUnitHeight_ >= 0) {
-                return editDiceUnitHeight_;
+            if (rawEditorDiceUnitHeight_ != -1) {
+                return rawEditorDiceUnitHeight_;
             }
             return diceUnitHeight;
         }
         set {
-            editDiceUnitHeight_ = Mathf.Max(value, 0);
+            rawEditorDiceUnitHeight_ = Mathf.Max(value, 0);
+        }
+    }
+    
+    public int editorDiceUnitWidth {
+        get {
+            if (rawEditorDiceUnitWidth_ == 0) {
+                return width;
+            }
+            return rawEditorDiceUnitWidth;
+        }
+    }
+    public int editorDiceUnitHeight {
+        get {
+            if (rawEditorDiceUnitHeight_ == 0) {
+                return height;
+            }
+            return rawEditorDiceUnitHeight;
         }
     }
 
-    public int diceEditXCount {
+    public int editorDiceXCount {
         get {
-            int dw = (editDiceUnitWidth_ == -1) ? diceUnitWidth : editDiceUnitWidth_;
-            if (dw > 0 && width > 0) {
-                return Mathf.CeilToInt((float)width / dw);
+            if (editorDiceUnitWidth > 0 && width > 0) {
+                return Mathf.CeilToInt((float)width / editorDiceUnitWidth);
             }
             else {
                 return 1;
             }
         }
     }
-
-    public int diceEditYCount {
+    public int editorDiceYCount {
         get {
-            int dh = (editDiceUnitHeight_ == -1) ? diceUnitHeight : editDiceUnitHeight_;
-            if (dh > 0 && height > 0) {
-                return Mathf.CeilToInt((float)height / dh);
+            if (editorDiceUnitHeight > 0 && height > 0) {
+                return Mathf.CeilToInt((float)height / editorDiceUnitHeight);
             }
             else {
                 return 1;
@@ -116,13 +130,12 @@ public class exTextureInfo : ScriptableObject {
     }
 
     public bool shouldDiced {
-        get { return editDiceUnitWidth > 0 || editDiceUnitHeight > 0; }
+        get { return rawEditorDiceUnitWidth > 0 || rawEditorDiceUnitHeight > 0; }
     }
 
 #endif
 
     [SerializeField]
-    //[HideInInspector]
     private List<int> diceData = new List<int>();   // TODO: use array
 
     public int diceUnitWidth {  ///< committed value, used for rendering
@@ -169,36 +182,34 @@ public class exTextureInfo : ScriptableObject {
 
     public struct Dice {            
         public DiceType sizeType;
-        public int offset_x;
-        public int offset_y;
-        public int width;
-        public int height;
-        public int x;
-        public int y;
-        public bool rotated;
+        public int offset_x;    ///< 当前格子的左下角坐标经过trim后的偏移，为0相当于没有trim
+        public int offset_y;    ///< 当前格子的左下角坐标经过trim后的偏移，为0相当于没有trim
+        public int width;       ///< 当前格子的宽度
+        public int height;      ///< 当前格子的高度
+        public int x;           ///< 当前格子在atlas中的UV起始点
+        public int y;           ///< 当前格子在atlas中的UV起始点
+        public bool rotated;    ///< if rotate the texture in atlas
         public int rotatedWidth {
             get {
-                if ( rotated ) return height;
-                return width;
+                return rotated ? height : width;
             }
         }
         public int rotatedHeight {
             get {
-                if ( rotated ) return width;
-                return height;
+                return rotated ? width : height;
             }
         }
 #if UNITY_EDITOR
         public DiceEnumerator enumerator;
-        public int trim_x {
+        public int trim_x {      ///< 当前格子在rawTexture中的UV起始点
             get {
-                int col = enumerator.tileIndex % enumerator.columnCount;
+                int col = enumerator.diceIndex % enumerator.columnCount;
                 return enumerator.textureInfo.trim_x + col * enumerator.textureInfo.diceUnitWidth + offset_x;
             }
         }
-        public int trim_y {
+        public int trim_y {      ///< 当前格子在rawTexture中的UV起始点
             get {
-                int row = enumerator.tileIndex / enumerator.columnCount;
+                int row = enumerator.diceIndex / enumerator.columnCount;
                 return enumerator.textureInfo.trim_y + row * enumerator.textureInfo.diceUnitHeight + offset_y;
             }
         }
@@ -207,30 +218,41 @@ public class exTextureInfo : ScriptableObject {
 
 #if UNITY_EDITOR
 
-    // dice index:
-    // 8  9  10 11
-    // 4  5  6  7 
-    // 0  1  2  3  
-    public Dice[] editDiceDatas = null;  ///< not committed value, used for editor
+    private Dice[] editorDiceDatas = null;  ///< not committed value, used for editor
 
     // ------------------------------------------------------------------ 
     /// Start commit dice data
     // ------------------------------------------------------------------ 
 
     public void CreateDiceData () {
-        editDiceDatas = new Dice[diceEditXCount * diceEditYCount];
+        editorDiceDatas = new Dice[editorDiceXCount * editorDiceYCount];
     }
 
     // ------------------------------------------------------------------ 
-    // tile index:
+    // dice index:
     // 8  9  10 11
     // 4  5  6  7 
     // 0  1  2  3  
     // NOTE: 这里的_diceData.sizeType无用，可以为任意值
     // ------------------------------------------------------------------ 
 
-    public void AddDiceData (int _tileIndex, Dice _dice) {
-        editDiceDatas[_tileIndex] = _dice;
+    public void SetDiceData (int _diceIndex, Dice _dice) {
+        int editorDiceCount = editorDiceXCount * editorDiceYCount;
+        if (editorDiceDatas == null) {
+            editorDiceDatas = new Dice[editorDiceCount];
+            // decompress data
+            int diceID = 0;
+            foreach (Dice dice in dices) {
+                if (diceID >= editorDiceDatas.Length) {
+                    break;
+                }
+                editorDiceDatas[diceID++] = dice;
+            }
+        }
+        else if (editorDiceDatas.Length != editorDiceCount) {
+            System.Array.Resize(ref editorDiceDatas, editorDiceCount);
+        }
+        editorDiceDatas[_diceIndex] = _dice;
     }
 
     // ------------------------------------------------------------------ 
@@ -238,22 +260,22 @@ public class exTextureInfo : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public void CommitDiceData () {
-        if (editDiceUnitWidth_ == -1) {
-            editDiceUnitWidth_ = diceUnitWidth;    // keep dice value
+        if (rawEditorDiceUnitWidth_ == -1) {
+            rawEditorDiceUnitWidth_ = diceUnitWidth;    // keep dice value
         }
-        if (editDiceUnitHeight_ == -1) {
-            editDiceUnitHeight_ = diceUnitHeight;  // keep dice value
+        if (rawEditorDiceUnitHeight_ == -1) {
+            rawEditorDiceUnitHeight_ = diceUnitHeight;  // keep dice value
         }
         diceData.Clear();
-        if ( shouldDiced == false ) {
+        if (shouldDiced == false) {
             return;
         }
-        diceData.Add( editDiceUnitWidth_ == 0 ? width : editDiceUnitWidth_ );
-        diceData.Add( editDiceUnitHeight_ == 0 ? height : editDiceUnitHeight_ );
-        foreach (Dice dice in editDiceDatas) {
+        diceData.Add (editorDiceUnitWidth);
+        diceData.Add (editorDiceUnitHeight);
+        foreach (Dice dice in editorDiceDatas) {
            DiceEnumerator.AddDiceData(this, diceData, dice);
         }
-        // TODO: trim last empty tile
+        // TODO: trim last empty dice
     }
 
 #endif
@@ -283,7 +305,7 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
 #if UNITY_EDITOR
     public int columnCount;
     public int rowCount;
-    public int tileIndex;     ///< current tile index
+    public int diceIndex;     ///< current dice index
     public exTextureInfo textureInfo;
 #endif
 
@@ -295,7 +317,7 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
         dataIndex = -1;
 #if UNITY_EDITOR
         exSpriteUtility.GetDicingCount(textureInfo, out columnCount, out rowCount);
-        tileIndex = -1;
+        diceIndex = -1;
 #endif
         Reset();
     }
@@ -361,7 +383,7 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
     }
     
     public bool MoveNext () {
-        ++tileIndex;
+        ++diceIndex;
         if (dataIndex == -1) {
             dataIndex = 2;  // skip width and height
             if (diceData == null) {
@@ -392,7 +414,7 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
     public void Reset () {
         dataIndex = -1;
 #if UNITY_EDITOR
-        tileIndex = -1;
+        diceIndex = -1;
 #endif
     }
 }

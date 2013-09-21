@@ -870,7 +870,7 @@ namespace ex2D.Detail {
             //int colCount, rowCount;
             //exSpriteUtility.GetDicingCount(_textureInfo, out colCount, out rowCount);
             if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
-                /* tile index:
+                /* dice index:
                 8  9  10 11
                 4  5  6  7 
                 0  1  2  3 
@@ -919,7 +919,7 @@ namespace ex2D.Detail {
         // ------------------------------------------------------------------ 
         
         public static void SimpleVertexBufferToDiced (exSpriteBase _sprite, exTextureInfo _textureInfo, exList<Vector3> _vertices, int _startIndex) {
-            /* tile index:
+            /* dice index:
             8  9  10 11
             4  5  6  7 
             0  1  2  3 
@@ -941,30 +941,30 @@ namespace ex2D.Detail {
             if (_textureInfo.diceUnitHeight > 0) {
                 lastTileRawSize.y = _textureInfo.height % _textureInfo.diceUnitHeight;
             }
-            Vector3 tileLeftToRight, tileBottomToTop;
+            Vector3 diceLeftToRight, diceBottomToTop;
             if (lastTileRawSize.x > 0.0f) {
                 float perc = lastTileRawSize.x / _textureInfo.diceUnitWidth;
-                tileLeftToRight = (v2 - v1) / (colCount - 1 + perc);
+                diceLeftToRight = (v2 - v1) / (colCount - 1 + perc);
             }
             else {
-                tileLeftToRight = (v2 - v1) / colCount;
+                diceLeftToRight = (v2 - v1) / colCount;
             }
             if (lastTileRawSize.y > 0.0f) {
                 float perc = lastTileRawSize.y / _textureInfo.diceUnitHeight;
-                tileBottomToTop = (v1 - v0) / (rowCount - 1 + perc);
+                diceBottomToTop = (v1 - v0) / (rowCount - 1 + perc);
             }
             else {
-                tileBottomToTop = (v1 - v0) / rowCount;
+                diceBottomToTop = (v1 - v0) / rowCount;
             }
-            Vector3 l2rStepPerTile = tileLeftToRight / _textureInfo.diceUnitWidth;
-            Vector3 b2tStepPerTile = tileBottomToTop / _textureInfo.diceUnitHeight;
+            Vector3 l2rStepPerTile = diceLeftToRight / _textureInfo.diceUnitWidth;
+            Vector3 b2tStepPerTile = diceBottomToTop / _textureInfo.diceUnitHeight;
     
             int i = _startIndex;
             Vector3 rowBottomLeft = v0;
             DiceEnumerator diceEnumerator = _textureInfo.dices;
             for (int r = 0; r < rowCount; ++r) {
                 Vector3 bottomLeft = rowBottomLeft;
-                Vector3 topLeft = bottomLeft + tileBottomToTop;
+                Vector3 topLeft = bottomLeft + diceBottomToTop;
                 for (int c = 0; c < colCount; ++c) {
 #if EX_DEBUG
                     bool hasNext = diceEnumerator.MoveNext ();
@@ -975,28 +975,28 @@ namespace ex2D.Detail {
 #else
                     diceEnumerator.MoveNext ();
 #endif
-                    exTextureInfo.Dice tile = diceEnumerator.Current;
-                    if (tile.sizeType == exTextureInfo.DiceType.Max) {
+                    exTextureInfo.Dice dice = diceEnumerator.Current;
+                    if (dice.sizeType == exTextureInfo.DiceType.Max) {
                         _vertices.buffer[i++] = bottomLeft;
                         _vertices.buffer[i++] = topLeft;
-                        _vertices.buffer[i++] = topLeft + tileLeftToRight;
-                        _vertices.buffer[i++] = bottomLeft + tileLeftToRight;
+                        _vertices.buffer[i++] = topLeft + diceLeftToRight;
+                        _vertices.buffer[i++] = bottomLeft + diceLeftToRight;
                     }
-                    else if (tile.sizeType == exTextureInfo.DiceType.Trimmed) {
-                        Vector3 offsetX = l2rStepPerTile * tile.offset_x;
-                        Vector3 offsetY = b2tStepPerTile * tile.offset_y;
-                        Vector3 offsetEndX = l2rStepPerTile * (tile.offset_x + tile.width);
-                        Vector3 offsetEndY = b2tStepPerTile * (tile.offset_y + tile.height);
+                    else if (dice.sizeType == exTextureInfo.DiceType.Trimmed) {
+                        Vector3 offsetX = l2rStepPerTile * dice.offset_x;
+                        Vector3 offsetY = b2tStepPerTile * dice.offset_y;
+                        Vector3 offsetEndX = l2rStepPerTile * (dice.offset_x + dice.width);
+                        Vector3 offsetEndY = b2tStepPerTile * (dice.offset_y + dice.height);
                         _vertices.buffer[i++] = bottomLeft + offsetX + offsetY;
                         _vertices.buffer[i++] = bottomLeft + offsetX + offsetEndY;
                         _vertices.buffer[i++] = bottomLeft + offsetEndX + offsetEndY;
                         _vertices.buffer[i++] = bottomLeft + offsetEndX + offsetY;
                     }
-                    bottomLeft += tileLeftToRight;  // next column
-                    topLeft += tileLeftToRight;     // next column
+                    bottomLeft += diceLeftToRight;  // next column
+                    topLeft += diceLeftToRight;     // next column
                 }
                 // next row
-                rowBottomLeft += tileBottomToTop;
+                rowBottomLeft += diceBottomToTop;
             }
             exDebug.Assert(diceEnumerator.MoveNext() == false, string.Format("row: {0} col: {1} ", rowCount, colCount));
         }

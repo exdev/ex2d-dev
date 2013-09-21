@@ -173,6 +173,12 @@ public class ex2DRenderer : MonoBehaviour {
             }
         }
 #endif
+        for ( int i = 0; i < layerList.Count; ++i ) {
+            exLayer layer = layerList[i];
+            if ( layer != null ) {
+                layer.DestroyMeshes();
+            }
+        }
     }
 
     // ------------------------------------------------------------------ 

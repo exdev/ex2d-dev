@@ -336,11 +336,11 @@ class exTextureInfoEditor : EditorWindow {
         case 3:
             dicedColor = EditorGUILayout.ColorField ( "Color", dicedColor );
             EditorGUI.BeginChangeCheck();
-                int dicedX = EditorGUILayout.IntField ( "Dice X", curEdit.editDiceUnitWidth );
-                curEdit.editDiceUnitWidth = Mathf.Clamp ( dicedX, 0, curEdit.width );
+                int dicedX = EditorGUILayout.IntField ( "Dice X", curEdit.rawEditorDiceUnitWidth );
+                curEdit.rawEditorDiceUnitWidth = Mathf.Clamp ( dicedX, 0, curEdit.width );
 
-                int dicedY = EditorGUILayout.IntField ( "Dice Y", curEdit.editDiceUnitHeight );
-                curEdit.editDiceUnitHeight = Mathf.Clamp ( dicedY, 0, curEdit.height );
+                int dicedY = EditorGUILayout.IntField ( "Dice Y", curEdit.rawEditorDiceUnitHeight );
+                curEdit.rawEditorDiceUnitHeight = Mathf.Clamp ( dicedY, 0, curEdit.height );
 
             if ( EditorGUI.EndChangeCheck() ) {
                 EditorUtility.SetDirty(curEdit);
@@ -544,31 +544,27 @@ class exTextureInfoEditor : EditorWindow {
             
             // draw diced line
             if ( editModeIndex == 3 ) {
-                if ( curEdit.editDiceUnitWidth != 0 ) {
-                    int xCount = Mathf.CeilToInt((float)curEdit.width/curEdit.editDiceUnitWidth) - 1;
-                    if (xCount > 0) {
-                        Vector2[] points = new Vector2[xCount * 2];
-                        int idx = 0;
-                        for ( int x = 1; x <= xCount; ++x ) {
-                            points[idx]   = new Vector2( trim_start_x + x * curEdit.editDiceUnitWidth, trim_start_y );
-                            points[idx+1] = new Vector2( trim_start_x + x * curEdit.editDiceUnitWidth, trim_end_y );
-                            idx += 2;
-                        }
-                        exEditorUtility.GL_DrawLines ( points, dicedColor );
+                int xCount = curEdit.editorDiceXCount - 1;
+                if (xCount > 0) {
+                    Vector2[] points = new Vector2[xCount * 2];
+                    int idx = 0;
+                    for ( int x = 1; x <= xCount; ++x ) {
+                        points[idx]   = new Vector2( trim_start_x + x * curEdit.editorDiceUnitWidth, trim_start_y );
+                        points[idx+1] = new Vector2( trim_start_x + x * curEdit.editorDiceUnitWidth, trim_end_y );
+                        idx += 2;
                     }
+                    exEditorUtility.GL_DrawLines ( points, dicedColor );
                 }
-                if ( curEdit.editDiceUnitHeight != 0 ) {
-                    int yCount = Mathf.CeilToInt((float)curEdit.height/curEdit.editDiceUnitHeight) - 1;
-                    if (yCount > 0) {
-                        Vector2[] points = new Vector2[yCount * 2];
-                        int idx = 0;
-                        for ( int y = 1; y <= yCount; ++y ) {
-                            points[idx]   = new Vector2( trim_start_x, trim_end_y + y * curEdit.editDiceUnitHeight );
-                            points[idx+1] = new Vector2( trim_end_x, trim_end_y + y * curEdit.editDiceUnitHeight );
-                            idx += 2;
-                        }
-                        exEditorUtility.GL_DrawLines ( points, dicedColor );
+                int yCount = curEdit.editorDiceYCount - 1;
+                if (yCount > 0) {
+                    Vector2[] points = new Vector2[yCount * 2];
+                    int idx = 0;
+                    for ( int y = 1; y <= yCount; ++y ) {
+                        points[idx]   = new Vector2( trim_start_x, trim_end_y + y * curEdit.editorDiceUnitHeight );
+                        points[idx+1] = new Vector2( trim_end_x, trim_end_y + y * curEdit.editorDiceUnitHeight );
+                        idx += 2;
                     }
+                    exEditorUtility.GL_DrawLines ( points, dicedColor );
                 }
             }
         GL.PopMatrix();

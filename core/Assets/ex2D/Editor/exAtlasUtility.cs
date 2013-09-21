@@ -67,7 +67,7 @@ public static class exAtlasUtility {
                     dice.x = x;
                     dice.y = y;
                     dice.rotated = rotated;
-                    textureInfo.AddDiceData( dicedID, dice );
+                    textureInfo.SetDiceData( dicedID, dice );
                 }
                 else {
                     textureInfo.x = x;
@@ -231,10 +231,10 @@ public static class exAtlasUtility {
         List<Element> elements = new List<Element>();
         foreach ( exTextureInfo info in _atlas.textureInfos ) {
             if ( info.shouldDiced ) {
-                int xCount = info.diceEditXCount;
-                int yCount = info.diceEditYCount;
-                int unitWidth = (info.editDiceUnitWidth == 0 ? info.width : info.editDiceUnitWidth);
-                int unitHeight = (info.editDiceUnitHeight == 0 ? info.height : info.editDiceUnitHeight);
+                int xCount = info.editorDiceXCount;
+                int yCount = info.editorDiceYCount;
+                int unitWidth = info.editorDiceUnitWidth;
+                int unitHeight = info.editorDiceUnitHeight;
 
                 for ( int x = 0; x < xCount; ++x ) {
                     for ( int y = 0; y < yCount; ++y ) {
