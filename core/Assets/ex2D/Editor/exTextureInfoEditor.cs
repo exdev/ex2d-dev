@@ -537,7 +537,7 @@ class exTextureInfoEditor : EditorWindow {
             // draw diced line
             if ( editModeIndex == 3 ) {
                 if ( curEdit.editDiceUnitWidth != 0 ) {
-                    int xCount = (int)Mathf.Ceil((float)curEdit.width/curEdit.editDiceUnitWidth) - 1;
+                    int xCount = Mathf.CeilToInt((float)curEdit.width/curEdit.editDiceUnitWidth) - 1;
                     if (xCount > 0) {
                         Vector2[] points = new Vector2[xCount * 2];
                         int idx = 0;
@@ -550,7 +550,7 @@ class exTextureInfoEditor : EditorWindow {
                     }
                 }
                 if ( curEdit.editDiceUnitHeight != 0 ) {
-                    int yCount = (int)Mathf.Ceil((float)curEdit.height/curEdit.editDiceUnitHeight) - 1;
+                    int yCount = Mathf.CeilToInt((float)curEdit.height/curEdit.editDiceUnitHeight) - 1;
                     if (yCount > 0) {
                         Vector2[] points = new Vector2[yCount * 2];
                         int idx = 0;

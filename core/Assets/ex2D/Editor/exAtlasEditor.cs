@@ -1009,11 +1009,26 @@ partial class exAtlasEditor : EditorWindow {
             if ( textureInfo == null )
                 continue;
 
-            Rect textureInfoRect = MapTextureInfo ( atlasRect, textureInfo );
-            if ( exGeometryUtility.RectRect_Contains( _rect, textureInfoRect ) != 0 ||
-                 exGeometryUtility.RectRect_Intersect( _rect, textureInfoRect ) )
-            {
-                objects.Add (textureInfo);
+            if ( textureInfo.isDiced ) {
+                foreach (exTextureInfo.Dice dice in textureInfo.dices) {
+                    if (dice.sizeType != exTextureInfo.DiceType.Empty) {
+                        Rect dicedInfoRect = MapDicedInfo ( atlasRect, dice );
+                        if ( exGeometryUtility.RectRect_Contains( _rect, dicedInfoRect ) != 0 ||
+                             exGeometryUtility.RectRect_Intersect( _rect, dicedInfoRect ) )
+                        {
+                            objects.Add (textureInfo);
+                            break;
+                        }
+                    }
+                }
+            }
+            else {
+                Rect textureInfoRect = MapTextureInfo ( atlasRect, textureInfo );
+                if ( exGeometryUtility.RectRect_Contains( _rect, textureInfoRect ) != 0 ||
+                     exGeometryUtility.RectRect_Intersect( _rect, textureInfoRect ) )
+                {
+                    objects.Add (textureInfo);
+                }
             }
         }
         foreach ( exBitmapFont bitmapFont in curEdit.bitmapFonts ) {
@@ -1115,9 +1130,7 @@ partial class exAtlasEditor : EditorWindow {
 
             // clear diced data before layout
             foreach ( exTextureInfo info in curEdit.textureInfos ) {
-                if ( info.shouldDiced ) {
-                    info.ClearDiceData();
-                }
+                info.ClearDiceData();
             }
 
             // sort texture info

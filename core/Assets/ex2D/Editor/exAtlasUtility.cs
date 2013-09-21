@@ -229,21 +229,32 @@ public static class exAtlasUtility {
                 int xCount = 1;
                 int yCount = 1;
                 if (info.editDiceUnitWidth > 0 && info.width > 0) {
-                    xCount = (int)Mathf.Ceil((float)info.width / info.editDiceUnitWidth);
+                    xCount = Mathf.CeilToInt((float)info.width / info.editDiceUnitWidth);
                 }
                 if (info.editDiceUnitHeight > 0 && info.height > 0) {
-                    yCount = (int)Mathf.Ceil((float)info.height / info.editDiceUnitHeight);
+                    yCount = Mathf.CeilToInt((float)info.height / info.editDiceUnitHeight);
                 }
+                int unitWidth = (info.editDiceUnitWidth == 0 ? info.width : info.editDiceUnitWidth);
+                int unitHeight = (info.editDiceUnitHeight == 0 ? info.height : info.editDiceUnitHeight);
+
                 for ( int x = 0; x < xCount; ++x ) {
                     for ( int y = 0; y < yCount; ++y ) {
+                        int width = unitWidth;
+                        if ( x == xCount-1 )
+                            width = info.width - unitWidth * x;
+
+                        int height = unitHeight;
+                        if ( y == yCount-1 )
+                            height = info.height - unitHeight * y;
+
                         Element el = new Element();
                         el.x = 0;
                         el.y = 0;
                         el.rotated = false;
                         el.textureInfo = info;
                         el.id = info.name + "[" + x + "][" + y + "]";
-                        el.width = (info.editDiceUnitWidth == 0 ? info.width : info.editDiceUnitWidth);
-                        el.height = (info.editDiceUnitHeight == 0 ? info.height : info.editDiceUnitHeight);
+                        el.width = width;
+                        el.height = height;
                         //el.dicedX = x * info.editDiceUnitWidth;
                         //el.dicedY = y * info.editDiceUnitHeight;
                         elements.Add(el);
@@ -1042,17 +1053,36 @@ public static class exAtlasUtility {
             }
 
             // copy raw texture into atlas texture
-            exTextureUtility.Fill( atlasTexture
-                                 , rawTexture
-                                 , textureInfo.name
-                                 , textureInfo.x
-                                 , textureInfo.y
-                                 , textureInfo.trim_x
-                                 , textureInfo.trim_y
-                                 , textureInfo.width
-                                 , textureInfo.height
-                                 , textureInfo.rotated
-                                 );
+            if ( textureInfo.isDiced ) {
+                foreach (exTextureInfo.Dice dice in textureInfo.dices) {
+                    if (dice.sizeType != exTextureInfo.DiceType.Empty) {
+                        exTextureUtility.Fill( atlasTexture
+                                               , rawTexture
+                                               , textureInfo.name + "[" + dice.offset_x + "]" + "[" + dice.offset_y + "]"
+                                               , dice.x
+                                               , dice.y
+                                               , dice.trim_x
+                                               , dice.trim_y
+                                               , dice.width
+                                               , dice.height
+                                               , dice.rotated
+                                             );
+                    }
+                }
+            }
+            else {
+                exTextureUtility.Fill( atlasTexture
+                                       , rawTexture
+                                       , textureInfo.name
+                                       , textureInfo.x
+                                       , textureInfo.y
+                                       , textureInfo.trim_x
+                                       , textureInfo.trim_y
+                                       , textureInfo.width
+                                       , textureInfo.height
+                                       , textureInfo.rotated
+                                     );
+            }
 
             //
             if ( _atlas.useContourBleed ) {
