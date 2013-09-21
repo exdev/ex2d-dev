@@ -1056,6 +1056,8 @@ public static class exAtlasUtility {
             if ( textureInfo.isDiced ) {
                 foreach (exTextureInfo.Dice dice in textureInfo.dices) {
                     if (dice.sizeType != exTextureInfo.DiceType.Empty) {
+                        Debug.Log( string.Format ( "Fill diced data [{0}][{1}] = {2}, {3}, rotate = {4}, trim_x = {5}, trim_y = {6}", 
+                                                   dice.x, dice.y, dice.width, dice.height, dice.rotated, dice.trim_x, dice.trim_y )  );
                         exTextureUtility.Fill( atlasTexture
                                                , rawTexture
                                                , textureInfo.name + "[" + dice.offset_x + "]" + "[" + dice.offset_y + "]"
