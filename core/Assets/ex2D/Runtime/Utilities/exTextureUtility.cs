@@ -105,7 +105,8 @@ public static class exTextureUtility {
     /// fill the source texture to target texture
     // ------------------------------------------------------------------ 
 
-    public static void Fill ( Texture2D _dest, 
+    public static void Fill ( ref Color32[] _destPixels, 
+                              int _destWidth,
                               Texture2D _src, 
                               string _name,
                               int _destX,
@@ -115,15 +116,22 @@ public static class exTextureUtility {
                               int _srcWidth,
                               int _srcHeight,
                               bool _rotated ) {
+        Color32[] srcPixels = _src.GetPixels32(0);
         if ( _rotated == false ) {
-            _dest.SetPixels( _destX, _destY, _srcWidth, _srcHeight, 
-                             _src.GetPixels( _srcX, _srcY, _srcWidth, _srcHeight ) );
+            for ( int j = 0; j < _srcHeight; ++j ) {
+                for ( int i = 0; i < _srcWidth; ++i ) {
+                    int src_x = _srcX + i;
+                    int src_y = _srcY + j;
+                    int dest_x = _destX + i;
+                    int dest_y = _destY + j;
+                    Color32 pixel = srcPixels[src_x + src_y*_src.width];
+                    _destPixels[dest_x + dest_y*_destWidth] = pixel;
+                }
+            }
         }
         else {
             int destWidth = _srcHeight;
             int destHeight = _srcWidth;
-            Color32[] srcPixels = _src.GetPixels32(0);
-
             for ( int j = 0; j < destHeight; ++j ) {
                 for ( int i = 0; i < destWidth; ++i ) {
                     int src_x = _srcX + j;
@@ -131,7 +139,7 @@ public static class exTextureUtility {
                     int dest_x = _destX + i;
                     int dest_y = _destY + j;
                     Color32 pixel = srcPixels[src_x + src_y*_src.width];
-                    _dest.SetPixel( dest_x, dest_y, pixel );
+                    _destPixels[dest_x + dest_y*_destWidth] = pixel;
 
                     // DEBUG { 
                     // try {
@@ -169,24 +177,30 @@ public static class exTextureUtility {
     private static readonly int[] bleedXOffsets = new [] { -1,  0,  1, -1,  1, -1,  0,  1 };
     private static readonly int[] bleedYOffsets = new [] { -1, -1, -1,  0,  0,  1,  1,  1 };
 
-    public static Texture2D ApplyContourBleed ( Texture2D _tex ) {
-        // Extract pixel buffer to be modified
-        Color32[] pixels = _tex.GetPixels32(0);
+    public static void ApplyContourBleed ( ref Color32[] _result, Color32[] _srcPixels, int _textureWidth, Rect _rect ) {
+        int start_x = (int)_rect.x;
+        int end_x = (int)(_rect.x + _rect.width);
+        int start_y = (int)_rect.y;
+        int end_y = (int)(_rect.y + _rect.height);
 
-        for ( int x = 0; x < _tex.width; ++x ) {
-            for ( int y = 0; y < _tex.height; ++y ) {
+        for ( int x = start_x; x < end_x; ++x ) {
+            for ( int y = start_y; y < end_y; ++y ) {
+
                 // only try to bleed into purely transparent pixels
-                if ( pixels[x + y * _tex.width].a == 0 ) {
+                if ( _srcPixels[x + y * _textureWidth].a == 0 ) {
                     // sample all around to find any non-purely transparent pixels
                     for ( int i = 0; i < bleedXOffsets.Length; i++ ) {
                         int sampleX = x + bleedXOffsets[i];
                         int sampleY = y + bleedYOffsets[i];
-						// check to stay within texture bounds
-                        if (sampleX >= 0 && sampleX < _tex.width && sampleY >= 0 && sampleY < _tex.height) {
-                            Color32 color = pixels[sampleX + sampleY * _tex.width];
+
+                        // check to stay within texture bounds
+                        if (sampleX >= start_x && sampleX < end_x && sampleY >= start_y && sampleY < end_y) {
+                            Color32 color = _srcPixels[sampleX + sampleY * _textureWidth];
+
                             if (color.a != 0) {
                                 // Copy RGB color channels to purely transparent pixel, but preserving its 0 alpha
-                                pixels[x + y * _tex.width] = new Color32(color.r, color.g, color.b, 0);
+                                _result[x + y * _textureWidth] = new Color32(color.r, color.g, color.b, 0);
+                                // _result[x + y * _textureWidth] = new Color32( 255, 255, 255, 255 );
                                 break;
                             }
                         }
@@ -194,11 +208,6 @@ public static class exTextureUtility {
                 }
             }
         }
-
-        // Copy modified pixel buffer to new texture (to preserve original element texture and allow user to uncheck the option)
-        Texture2D tex = new Texture2D(_tex.width, _tex.height, _tex.format, false);
-        tex.SetPixels32(pixels);
-        return tex;
     }
 
     // ------------------------------------------------------------------ 
