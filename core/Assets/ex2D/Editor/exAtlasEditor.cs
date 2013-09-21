@@ -641,8 +641,8 @@ partial class exAtlasEditor : EditorWindow {
 
 
                 if ( textureInfo.isDiced ) {
-                    foreach (DiceEnumerator.DiceData dice in textureInfo.GetDiceEnumerator()) {
-                        if (dice.sizeType != DiceEnumerator.SizeType.Empty) {
+                    foreach (exTextureInfo.Dice dice in textureInfo.dices) {
+                        if (dice.sizeType != exTextureInfo.DiceType.Empty) {
                             DrawAtlasElement ( MapDicedInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), dice ),
                                                rawTexture, 
                                                dice.trim_x,
@@ -1055,7 +1055,7 @@ partial class exAtlasEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    Rect MapDicedInfo ( Rect _atlasRect, DiceEnumerator.DiceData _diceData ) {
+    Rect MapDicedInfo ( Rect _atlasRect, exTextureInfo.Dice _diceData ) {
         Rect rect = new Rect ( _diceData.x * curEdit.scale,
                                _diceData.y * curEdit.scale,
                                _diceData.rotatedWidth * curEdit.scale,

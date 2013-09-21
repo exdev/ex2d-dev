@@ -894,7 +894,7 @@ namespace ex2D.Detail {
                 else {
                     texelSize = new Vector2(1.0f / _textureInfo.rawWidth, 1.0f / _textureInfo.rawHeight);
                 }
-                foreach (DiceEnumerator.DiceData dice in _textureInfo.GetDiceEnumerator()) {
+                foreach (exTextureInfo.Dice dice in _textureInfo.dices) {
                     Vector2 start = new Vector2(dice.x * texelSize.x, dice.y * texelSize.y);
                     Vector2 end = new Vector2((dice.x + dice.rotatedWidth) * texelSize.x, 
                                               (dice.y + dice.rotatedHeight) * texelSize.y);
@@ -961,7 +961,7 @@ namespace ex2D.Detail {
     
             int i = _startIndex;
             Vector3 rowBottomLeft = v0;
-            DiceEnumerator diceEnumerator = _textureInfo.GetDiceEnumerator();
+            DiceEnumerator diceEnumerator = _textureInfo.dices;
             for (int r = 0; r < rowCount; ++r) {
                 Vector3 bottomLeft = rowBottomLeft;
                 Vector3 topLeft = bottomLeft + tileBottomToTop;
@@ -975,18 +975,18 @@ namespace ex2D.Detail {
 #else
                     diceEnumerator.MoveNext ();
 #endif
-                    DiceEnumerator.DiceData tile = diceEnumerator.Current;
-                    if (tile.sizeType == DiceEnumerator.SizeType.Max) {
+                    exTextureInfo.Dice tile = diceEnumerator.Current;
+                    if (tile.sizeType == exTextureInfo.DiceType.Max) {
                         _vertices.buffer[i++] = bottomLeft;
                         _vertices.buffer[i++] = topLeft;
                         _vertices.buffer[i++] = topLeft + tileLeftToRight;
                         _vertices.buffer[i++] = bottomLeft + tileLeftToRight;
                     }
-                    else if (tile.sizeType == DiceEnumerator.SizeType.Trimmed) {
-                        Vector3 offsetX = l2rStepPerTile * tile.trim_x;
-                        Vector3 offsetY = b2tStepPerTile * tile.trim_y;
-                        Vector3 offsetEndX = l2rStepPerTile * (tile.trim_x + tile.width);
-                        Vector3 offsetEndY = b2tStepPerTile * (tile.trim_y + tile.height);
+                    else if (tile.sizeType == exTextureInfo.DiceType.Trimmed) {
+                        Vector3 offsetX = l2rStepPerTile * tile.offset_x;
+                        Vector3 offsetY = b2tStepPerTile * tile.offset_y;
+                        Vector3 offsetEndX = l2rStepPerTile * (tile.offset_x + tile.width);
+                        Vector3 offsetEndY = b2tStepPerTile * (tile.offset_y + tile.height);
                         _vertices.buffer[i++] = bottomLeft + offsetX + offsetY;
                         _vertices.buffer[i++] = bottomLeft + offsetX + offsetEndY;
                         _vertices.buffer[i++] = bottomLeft + offsetEndX + offsetEndY;

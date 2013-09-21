@@ -202,9 +202,9 @@ public static partial class exISpriteExtends {
                 return;
             }
             int quadCount = 0;
-            DiceEnumerator dice = _sprite.textureInfo.GetDiceEnumerator ();
+            DiceEnumerator dice = _sprite.textureInfo.dices;
             while (dice.MoveNext()) {
-                if (dice.Current.sizeType != DiceEnumerator.SizeType.Empty) {
+                if (dice.Current.sizeType != exTextureInfo.DiceType.Empty) {
                     ++quadCount;
                 }
             }
