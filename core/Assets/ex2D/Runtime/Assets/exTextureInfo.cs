@@ -364,6 +364,24 @@ public partial class exTextureInfo : ScriptableObject {
     }
 
     private Dice[] editorDiceDatas = null;  ///< not committed value, used for editor
+    
+    private void UpdateDiceData () {
+        int editorDiceCount = editorDiceXCount * editorDiceYCount;
+        if (editorDiceDatas == null) {
+            editorDiceDatas = new Dice[editorDiceCount];
+            // decompress data
+            int diceID = 0;
+            foreach (Dice dice in dices) {
+                if (diceID >= editorDiceDatas.Length) {
+                    break;
+                }
+                editorDiceDatas[diceID++] = dice;
+            }
+        }
+        else if (editorDiceDatas.Length != editorDiceCount) {
+            System.Array.Resize(ref editorDiceDatas, editorDiceCount);
+        }
+    }
 
     // ------------------------------------------------------------------ 
     /// Start commit dice data
@@ -382,22 +400,13 @@ public partial class exTextureInfo : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public void SetDiceData (int _diceIndex, Dice _dice) {
-        int editorDiceCount = editorDiceXCount * editorDiceYCount;
-        if (editorDiceDatas == null) {
-            editorDiceDatas = new Dice[editorDiceCount];
-            // decompress data
-            int diceID = 0;
-            foreach (Dice dice in dices) {
-                if (diceID >= editorDiceDatas.Length) {
-                    break;
-                }
-                editorDiceDatas[diceID++] = dice;
-            }
-        }
-        else if (editorDiceDatas.Length != editorDiceCount) {
-            System.Array.Resize(ref editorDiceDatas, editorDiceCount);
-        }
+        UpdateDiceData();
         editorDiceDatas[_diceIndex] = _dice;
+    }
+
+    public Dice GetDiceData (int _diceIndex) {
+        UpdateDiceData();
+        return editorDiceDatas[_diceIndex];
     }
 
     // ------------------------------------------------------------------ 
