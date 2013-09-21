@@ -20,7 +20,7 @@ using ex2D.Detail;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-public class exTextureInfo : ScriptableObject {
+public partial class exTextureInfo : ScriptableObject {
     public string rawTextureGUID = "";
     public string rawAtlasGUID = "";
     public Texture2D texture; ///< the atlas or raw texture
@@ -62,78 +62,6 @@ public class exTextureInfo : ScriptableObject {
             return borderLeft != 0 || borderRight != 0 || borderTop != 0 || borderBottom != 0;
         }
     }
-
-#if UNITY_EDITOR
-
-    private int rawEditorDiceUnitWidth_ = -1;    ///< not committed value, used for editor
-    public int rawEditorDiceUnitWidth {
-        get {
-            if (rawEditorDiceUnitWidth_ != -1) {
-                return rawEditorDiceUnitWidth_;
-            }
-            return diceUnitWidth;
-        }
-        set {
-            rawEditorDiceUnitWidth_ = Mathf.Max(value, 0);
-        }
-    }
-
-    private int rawEditorDiceUnitHeight_ = -1;   ///< not committed value, used for editor
-    public int rawEditorDiceUnitHeight {
-        get {
-            if (rawEditorDiceUnitHeight_ != -1) {
-                return rawEditorDiceUnitHeight_;
-            }
-            return diceUnitHeight;
-        }
-        set {
-            rawEditorDiceUnitHeight_ = Mathf.Max(value, 0);
-        }
-    }
-    
-    public int editorDiceUnitWidth {
-        get {
-            if (rawEditorDiceUnitWidth_ == 0) {
-                return width;
-            }
-            return rawEditorDiceUnitWidth;
-        }
-    }
-    public int editorDiceUnitHeight {
-        get {
-            if (rawEditorDiceUnitHeight_ == 0) {
-                return height;
-            }
-            return rawEditorDiceUnitHeight;
-        }
-    }
-
-    public int editorDiceXCount {
-        get {
-            if (editorDiceUnitWidth > 0 && width > 0) {
-                return Mathf.CeilToInt((float)width / editorDiceUnitWidth);
-            }
-            else {
-                return 1;
-            }
-        }
-    }
-    public int editorDiceYCount {
-        get {
-            if (editorDiceUnitHeight > 0 && height > 0) {
-                return Mathf.CeilToInt((float)height / editorDiceUnitHeight);
-            }
-            else {
-                return 1;
-            }
-        }
-    }
-
-    public bool shouldDiced {
-        get { return rawEditorDiceUnitWidth > 0 || rawEditorDiceUnitHeight > 0; }
-    }
-
-#endif
 
     [SerializeField]
     private List<int> diceData = new List<int>();   // TODO: use array
@@ -215,71 +143,6 @@ public class exTextureInfo : ScriptableObject {
         }
 #endif
     }
-
-#if UNITY_EDITOR
-
-    private Dice[] editorDiceDatas = null;  ///< not committed value, used for editor
-
-    // ------------------------------------------------------------------ 
-    /// Start commit dice data
-    // ------------------------------------------------------------------ 
-
-    public void CreateDiceData () {
-        editorDiceDatas = new Dice[editorDiceXCount * editorDiceYCount];
-    }
-
-    // ------------------------------------------------------------------ 
-    // dice index:
-    // 8  9  10 11
-    // 4  5  6  7 
-    // 0  1  2  3  
-    // NOTE: 这里的_diceData.sizeType无用，可以为任意值
-    // ------------------------------------------------------------------ 
-
-    public void SetDiceData (int _diceIndex, Dice _dice) {
-        int editorDiceCount = editorDiceXCount * editorDiceYCount;
-        if (editorDiceDatas == null) {
-            editorDiceDatas = new Dice[editorDiceCount];
-            // decompress data
-            int diceID = 0;
-            foreach (Dice dice in dices) {
-                if (diceID >= editorDiceDatas.Length) {
-                    break;
-                }
-                editorDiceDatas[diceID++] = dice;
-            }
-        }
-        else if (editorDiceDatas.Length != editorDiceCount) {
-            System.Array.Resize(ref editorDiceDatas, editorDiceCount);
-        }
-        editorDiceDatas[_diceIndex] = _dice;
-    }
-
-    // ------------------------------------------------------------------ 
-    /// Save committed value
-    // ------------------------------------------------------------------ 
-
-    public void CommitDiceData () {
-        if (rawEditorDiceUnitWidth_ == -1) {
-            rawEditorDiceUnitWidth_ = diceUnitWidth;    // keep dice value
-        }
-        if (rawEditorDiceUnitHeight_ == -1) {
-            rawEditorDiceUnitHeight_ = diceUnitHeight;  // keep dice value
-        }
-        diceData.Clear();
-        if (shouldDiced == false) {
-            return;
-        }
-        diceData.Add (editorDiceUnitWidth);
-        diceData.Add (editorDiceUnitHeight);
-        foreach (Dice dice in editorDiceDatas) {
-           DiceEnumerator.AddDiceData(this, diceData, dice);
-        }
-        // TODO: trim last empty dice
-    }
-
-#endif
-
 }
 
 namespace ex2D.Detail {
@@ -313,9 +176,9 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
         diceData = _diceData;
         diceUnitWidth = _diceData[0];
         diceUnitHeight = _diceData[1];
-        textureInfo = _textureInfo;
         dataIndex = -1;
 #if UNITY_EDITOR
+        textureInfo = _textureInfo;
         exSpriteUtility.GetDicingCount(textureInfo, out columnCount, out rowCount);
         diceIndex = -1;
 #endif
@@ -383,7 +246,9 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
     }
     
     public bool MoveNext () {
+#if UNITY_EDITOR
         ++diceIndex;
+#endif
         if (dataIndex == -1) {
             dataIndex = 2;  // skip width and height
             if (diceData == null) {
@@ -419,3 +284,144 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
     }
 }
 }
+
+#if UNITY_EDITOR
+
+///////////////////////////////////////////////////////////////////////////////
+///
+/// The texture-info helper for editor
+///
+///////////////////////////////////////////////////////////////////////////////
+
+public partial class exTextureInfo : ScriptableObject {
+
+    private int rawEditorDiceUnitWidth_ = -1;    ///< not committed value, used for editor
+    public int rawEditorDiceUnitWidth {
+        get {
+            if (rawEditorDiceUnitWidth_ != -1) {
+                return rawEditorDiceUnitWidth_;
+            }
+            return diceUnitWidth;
+        }
+        set {
+            rawEditorDiceUnitWidth_ = Mathf.Max(value, 0);
+        }
+    }
+
+    private int rawEditorDiceUnitHeight_ = -1;   ///< not committed value, used for editor
+    public int rawEditorDiceUnitHeight {
+        get {
+            if (rawEditorDiceUnitHeight_ != -1) {
+                return rawEditorDiceUnitHeight_;
+            }
+            return diceUnitHeight;
+        }
+        set {
+            rawEditorDiceUnitHeight_ = Mathf.Max(value, 0);
+        }
+    }
+    
+    public int editorDiceUnitWidth {
+        get {
+            if (rawEditorDiceUnitWidth_ == 0) {
+                return width;
+            }
+            return rawEditorDiceUnitWidth;
+        }
+    }
+    public int editorDiceUnitHeight {
+        get {
+            if (rawEditorDiceUnitHeight_ == 0) {
+                return height;
+            }
+            return rawEditorDiceUnitHeight;
+        }
+    }
+
+    public int editorDiceXCount {
+        get {
+            if (editorDiceUnitWidth > 0 && width > 0) {
+                return Mathf.CeilToInt((float)width / editorDiceUnitWidth);
+            }
+            else {
+                return 1;
+            }
+        }
+    }
+    public int editorDiceYCount {
+        get {
+            if (editorDiceUnitHeight > 0 && height > 0) {
+                return Mathf.CeilToInt((float)height / editorDiceUnitHeight);
+            }
+            else {
+                return 1;
+            }
+        }
+    }
+
+    public bool shouldDiced {
+        get { return rawEditorDiceUnitWidth > 0 || rawEditorDiceUnitHeight > 0; }
+    }
+
+    private Dice[] editorDiceDatas = null;  ///< not committed value, used for editor
+
+    // ------------------------------------------------------------------ 
+    /// Start commit dice data
+    // ------------------------------------------------------------------ 
+
+    public void CreateDiceData () {
+        editorDiceDatas = new Dice[editorDiceXCount * editorDiceYCount];
+    }
+
+    // ------------------------------------------------------------------ 
+    // dice index:
+    // 8  9  10 11
+    // 4  5  6  7 
+    // 0  1  2  3  
+    // NOTE: 这里的_diceData.sizeType无用，可以为任意值
+    // ------------------------------------------------------------------ 
+
+    public void SetDiceData (int _diceIndex, Dice _dice) {
+        int editorDiceCount = editorDiceXCount * editorDiceYCount;
+        if (editorDiceDatas == null) {
+            editorDiceDatas = new Dice[editorDiceCount];
+            // decompress data
+            int diceID = 0;
+            foreach (Dice dice in dices) {
+                if (diceID >= editorDiceDatas.Length) {
+                    break;
+                }
+                editorDiceDatas[diceID++] = dice;
+            }
+        }
+        else if (editorDiceDatas.Length != editorDiceCount) {
+            System.Array.Resize(ref editorDiceDatas, editorDiceCount);
+        }
+        editorDiceDatas[_diceIndex] = _dice;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Save committed value
+    // ------------------------------------------------------------------ 
+
+    public void CommitDiceData () {
+        if (rawEditorDiceUnitWidth_ == -1) {
+            rawEditorDiceUnitWidth_ = diceUnitWidth;    // keep dice value
+        }
+        if (rawEditorDiceUnitHeight_ == -1) {
+            rawEditorDiceUnitHeight_ = diceUnitHeight;  // keep dice value
+        }
+        diceData.Clear();
+        if (shouldDiced == false) {
+            return;
+        }
+        diceData.Add (editorDiceUnitWidth);
+        diceData.Add (editorDiceUnitHeight);
+        foreach (Dice dice in editorDiceDatas) {
+           DiceEnumerator.AddDiceData(this, diceData, dice);
+        }
+        // TODO: trim last empty dice
+    }
+}
+
+#endif
