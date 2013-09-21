@@ -232,31 +232,7 @@ public class exCSS_image {
         Inherit
     }
     public Type type;
-    public exTextureInfo src1; 
-    public Texture2D src2; 
-    public Object val {
-        set {
-            if ( value is Texture2D ) {
-                src1 = null; 
-                src2 = value as Texture2D; 
-            }
-            else if ( value is exTextureInfo ) {
-                src1 = value as exTextureInfo; 
-                src2 = null;
-            }
-            else {
-                src1 = null;
-                src2 = null;
-            }
-        }
-        get { 
-            if ( src1 != null )
-                return src1;
-            else if ( src2 != null )
-                return src2;
-            return null;
-        }
-    }
+    public Object val; 
     public exCSS_image ( Type _type, Object _val ) { 
         type = _type; 
         val = _val;
@@ -272,31 +248,7 @@ public class exCSS_font {
         Inherit
     }
     public Type type;
-    public Font src1; 
-    public exBitmapFont src2; 
-    public Object val {
-        set {
-            if ( value is Font ) {
-                src1 = value as Font; 
-                src2 = null; 
-            }
-            else if ( value is exBitmapFont ) {
-                src1 = null;
-                src2 = value as exBitmapFont; 
-            }
-            else {
-                src1 = null;
-                src2 = null;
-            }
-        }
-        get { 
-            if ( src1 != null )
-                return src1;
-            else if ( src2 != null )
-                return src2;
-            return null;
-        }
-    }
+    public Object val;
     public exCSS_font ( Type _type, Object _val ) { 
         type = _type; 
         val = _val;
@@ -367,7 +319,7 @@ public class exUIStyle {
     public exCSS_size_noauto fontSize = new exCSS_size_noauto( exCSS_size_noauto.Type.Inherit, 16.0f );
 
     // text
-    public exCSS_color textColor = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 255 ) );
+    public exCSS_color textColor = new exCSS_color( exCSS_color.Type.Color, new Color( 255, 255, 255, 255 ) );
     public exCSS_white_space whitespace = exCSS_white_space.Normal;
     public exCSS_alignment textAlign = exCSS_alignment.Left;
     public exCSS_decoration textDecoration = exCSS_decoration.None;
@@ -461,6 +413,38 @@ public class exUIStyle {
 
     public void Compute ( exUIElement _el, int _x, int _y, int _width, int _height ) {
         float val = 0.0f;
+
+        // ======================================================== 
+        // min, max width & height 
+        // ======================================================== 
+
+        val = minWidth.val;
+        if ( minWidth.type == exCSS_min_size.Type.Percentage ) 
+            val = minWidth.val/100.0f * (float)_width;
+        _el.minWidth = Mathf.FloorToInt(val); 
+
+        val = minHeight.val;
+        if ( minHeight.type == exCSS_min_size.Type.Percentage ) 
+            val = minHeight.val/100.0f * (float)_height;
+        _el.minHeight = Mathf.FloorToInt(val); 
+
+        val = maxWidth.val;
+        if ( maxWidth.type == exCSS_max_size.Type.Percentage ) 
+            val = maxWidth.val/100.0f * (float)_width;
+
+        if ( maxWidth.type == exCSS_max_size.Type.None )
+            _el.maxWidth = int.MaxValue;
+        else 
+            _el.maxWidth = Mathf.FloorToInt(val); 
+
+        val = maxHeight.val;
+        if ( maxHeight.type == exCSS_max_size.Type.Percentage ) 
+            val = maxHeight.val/100.0f * (float)_height;
+
+        if ( maxHeight.type == exCSS_max_size.Type.None )
+            _el.maxHeight = int.MaxValue;
+        else 
+            _el.maxHeight = Mathf.FloorToInt(val); 
 
         // ======================================================== 
         // margin 
@@ -624,7 +608,13 @@ public class exUIStyle {
                 val = lineHeight.val/100.0f * parent_val;
             }
             else if ( lineHeight.type == exCSS_size.Type.Auto ) {
-                val = _el.fontSize;
+                exBitmapFont bitmapFont = _el.font as exBitmapFont;
+                if ( bitmapFont != null ) {
+                    val = bitmapFont.lineHeight;
+                } 
+                else {
+                    val = _el.fontSize;
+                }
             }
             _el.lineHeight = Mathf.FloorToInt(val);
         }

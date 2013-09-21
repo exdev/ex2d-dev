@@ -10,7 +10,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
+using ex2D.Detail;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
@@ -63,7 +65,9 @@ public class exTextureInfo : ScriptableObject {
 
 #if UNITY_EDITOR
 
-    [SerializeField] private int editDiceUnitWidth_ = -1;    ///< not committed value, used for editor
+    [SerializeField]
+    //[HideInInspector]
+    private int editDiceUnitWidth_ = -1;    ///< not committed value, used for editor
     public int editDiceUnitWidth {
         get {
             if (editDiceUnitWidth_ >= 0) {
@@ -76,7 +80,9 @@ public class exTextureInfo : ScriptableObject {
         }
     }
 
-    [SerializeField] private int editDiceUnitHeight_ = -1;   ///< not committed value, used for editor
+    [SerializeField]
+    //[HideInInspector]
+    private int editDiceUnitHeight_ = -1;   ///< not committed value, used for editor
     public int editDiceUnitHeight {
         get {
             if (editDiceUnitHeight_ >= 0) {
@@ -88,14 +94,16 @@ public class exTextureInfo : ScriptableObject {
             editDiceUnitHeight_ = Mathf.Max(value, 0);
         }
     }
-    // TODO: dice width or dice height can == 0
+    
     public bool shouldDiced {
         get { return editDiceUnitWidth_ > 0 || editDiceUnitHeight_ > 0; }
     }
 
 #endif
 
-    [SerializeField] private List<int> diceData = new List<int>();
+    [SerializeField]
+    //[HideInInspector]
+    private List<int> diceData = new List<int>();
 
     public int diceUnitWidth {  ///< committed value, used for rendering
         get {
@@ -123,10 +131,56 @@ public class exTextureInfo : ScriptableObject {
         }
     }
 
-    public DiceEnumerator GetDiceEnumerator() {
-        return new DiceEnumerator(diceData);    // No GC
+    public DiceEnumerator dices {  ///< get dice enumerator
+        get {
+            return new DiceEnumerator(diceData, this);    // No GC
+        }
     }
     
+    public enum DiceType {
+        Empty,
+        Max,
+        Trimmed,
+    }
+
+    public struct Dice {  ///< the dice data used in dice enumerator
+        public DiceType sizeType;
+        public int offset_x;
+        public int offset_y;
+        public int width;
+        public int height;
+        public int x;
+        public int y;
+        public bool rotated;
+        public int rotatedWidth {
+            get {
+                if ( rotated ) return height;
+                return width;
+            }
+        }
+        public int rotatedHeight {
+            get {
+                if ( rotated ) return width;
+                return height;
+            }
+        }
+#if UNITY_EDITOR
+        public DiceEnumerator enumerator;
+        public int trim_x {
+            get {
+                int col = enumerator.tileIndex % enumerator.columnCount;
+                return enumerator.textureInfo.trim_x + col * enumerator.textureInfo.diceUnitWidth + offset_x;
+            }
+        }
+        public int trim_y {
+            get {
+                int row = enumerator.tileIndex / enumerator.rowCount;
+                return enumerator.textureInfo.trim_y + row * enumerator.textureInfo.diceUnitHeight + offset_y;
+            }
+        }
+#endif
+    }
+
 #if UNITY_EDITOR
 
     public void ClearDiceData () {
@@ -142,18 +196,18 @@ public class exTextureInfo : ScriptableObject {
         if ( shouldDiced == false ) {
             return;
         }
-
+        //Debug.Log("rect " + _rect + " " + _x + " " + _y);
         if ( diceData.Count == 0 ) {
             // save committed value
-            diceData.Add( editDiceUnitWidth_ );
-            diceData.Add( editDiceUnitHeight_ );
+            diceData.Add( editDiceUnitWidth_ == 0 ? width : editDiceUnitWidth_ );
+            diceData.Add( editDiceUnitHeight_ == 0 ? height : editDiceUnitHeight_ );
         }
         
         if ( _rect.width <= 0 || _rect.height <= 0 ) {
             diceData.Add( DiceEnumerator.EMPTY );
         }
         else {
-            if ( _rect.width == editDiceUnitWidth_ && _rect.height == editDiceUnitHeight_ ) {
+            if ( _rect.width == diceUnitWidth && _rect.height == diceUnitHeight ) {
                 diceData.Add( _rotated ? DiceEnumerator.MAX_ROTATED : DiceEnumerator.MAX );
                 // TODO: use y instead of this flag
             }
@@ -202,8 +256,10 @@ public class exTextureInfo : ScriptableObject {
     }
     
 #endif
-    
+
 }
+
+namespace ex2D.Detail {
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -211,37 +267,8 @@ public class exTextureInfo : ScriptableObject {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-public struct DiceEnumerator : IEnumerator<DiceEnumerator.DiceData>, IEnumerable<DiceEnumerator.DiceData> {
+public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTextureInfo.Dice> {
 
-    public enum SizeType {
-        Max,
-        Empty,
-        Trimmed,
-    }
-
-    public struct DiceData {
-        public SizeType sizeType;
-        public int trim_x;
-        public int trim_y;
-        public int width;
-        public int height;
-        public int x;
-        public int y;
-        public bool rotated;
-        public float rotatedWidth {
-            get {
-                if ( rotated ) return height;
-                return width;
-            }
-        }
-        public float rotatedHeight {
-            get {
-                if ( rotated ) return width;
-                return height;
-            }
-        }
-    }
-    
     // compressing tag
     public const int EMPTY = -1;
     public const int MAX = -2;
@@ -249,37 +276,46 @@ public struct DiceEnumerator : IEnumerator<DiceEnumerator.DiceData>, IEnumerable
     
     private List<int> diceData;
     private int dataIndex;
+    private int diceUnitWidth;
+    private int diceUnitHeight;
     
-    //private float diceUnitWidth;
-    //private float diceUnitHeight;
+#if UNITY_EDITOR
+    public int columnCount;
+    public int rowCount;
+    public int tileIndex;     ///< current tile index
+    public exTextureInfo textureInfo;
+#endif
 
-    public DiceEnumerator (List<int> _diceData) {
+    public DiceEnumerator (List<int> _diceData, exTextureInfo _textureInfo) {
         diceData = _diceData;
-        //diceUnitWidth = _diceData[0];
-        //diceUnitHeight = _diceData[1];
-        dataIndex = 0;
+        diceUnitWidth = _diceData[0];
+        diceUnitHeight = _diceData[1];
+        textureInfo = _textureInfo;
+        dataIndex = -1;
+#if UNITY_EDITOR
+        exSpriteUtility.GetDicingCount(textureInfo, out columnCount, out rowCount);
+        tileIndex = -1;
+#endif
         Reset();
     }
 
-    public IEnumerator<DiceData> GetEnumerator () {
-        return this;
-    }
+    public IEnumerator<exTextureInfo.Dice> GetEnumerator () { return this; }
+    IEnumerator IEnumerable.GetEnumerator () { return this; }
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator () {
-        return this;
-    }
-
-    public DiceData Current {
+    public exTextureInfo.Dice Current {
         get {
-            DiceData d = new DiceData();
+            exTextureInfo.Dice d = new exTextureInfo.Dice();
+#if UNITY_EDITOR
+            d.enumerator = this;
+#endif
             if (diceData[dataIndex] == EMPTY) {
-                d.sizeType = SizeType.Empty;
+                d.sizeType = exTextureInfo.DiceType.Empty;
                 return d;
             }
             if (diceData[dataIndex] >= 0) {
-                d.sizeType = SizeType.Trimmed;
-                d.trim_x = diceData[dataIndex];
-                d.trim_y = diceData[dataIndex + 1];
+                d.sizeType = exTextureInfo.DiceType.Trimmed;
+                d.offset_x = diceData[dataIndex];
+                d.offset_y = diceData[dataIndex + 1];
                 d.width = diceData[dataIndex + 2];
                 d.height = diceData[dataIndex + 3];
                 d.x = diceData[dataIndex + 4];
@@ -291,20 +327,19 @@ public struct DiceEnumerator : IEnumerator<DiceEnumerator.DiceData>, IEnumerable
             }
             else {
                 exDebug.Assert(diceData[dataIndex] == MAX || diceData[dataIndex] == MAX_ROTATED);
-                d.sizeType = SizeType.Max;
+                d.sizeType = exTextureInfo.DiceType.Max;
                 d.x = diceData[dataIndex + 1];
                 d.y = diceData[dataIndex + 2];
-                /*d.trim_x = 0;
-                d.trim_y = 0;
                 d.width = diceUnitWidth;
                 d.height = diceUnitHeight;
-                d.rotated = (diceData[dataIndex] == MAX_ROTATED);*/
+                d.rotated = (diceData[dataIndex] == MAX_ROTATED);
             }
             return d;
         }
     }
     
     public bool MoveNext () {
+        ++tileIndex;
         if (dataIndex == -1) {
             dataIndex = 2;  // skip width and height
             if (diceData == null) {
@@ -334,5 +369,9 @@ public struct DiceEnumerator : IEnumerator<DiceEnumerator.DiceData>, IEnumerable
 
     public void Reset () {
         dataIndex = -1;
+#if UNITY_EDITOR
+        tileIndex = -1;
+#endif
     }
+}
 }

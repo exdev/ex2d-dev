@@ -77,6 +77,7 @@ public static class exBitmapFontUtility {
             }
             else if ( words[0] == "common" ) {
                 _bitmapFont.lineHeight = int.Parse ( ParseValue( words, "lineHeight" ) ); 
+                _bitmapFont.baseLine = int.Parse ( ParseValue( words, "base" ) ); 
                 // _bitmapFont.width = int.Parse ( ParseValue( words, "scaleW" ) ); 
                 // _bitmapFont.height = int.Parse ( ParseValue( words, "scaleH" ) ); 
 

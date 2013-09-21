@@ -37,8 +37,8 @@ public static class exAtlasUtility {
         public int height = 1;
         public bool rotated = false;
 
-        public int dicedX = -1;
-        public int dicedY = -1;
+        //public int dicedX = -1;
+        //public int dicedY = -1;
 
         // raw referenced
         public exTextureInfo textureInfo = null; 
@@ -61,7 +61,8 @@ public static class exAtlasUtility {
         public void Apply () {
             if ( textureInfo != null ) {
                 if ( textureInfo.shouldDiced ) {
-                    textureInfo.AddDiceData( new Rect( dicedX, dicedY, width, height ), x, y, rotated );
+                    //textureInfo.AddDiceData( new Rect( dicedX, dicedY, width, height ), x, y, rotated );
+                    textureInfo.AddDiceData( new Rect( 0.0f, 0.0f, width, height ), x, y, rotated );
                 }
                 else {
                     textureInfo.x = x;
@@ -241,10 +242,10 @@ public static class exAtlasUtility {
                         el.rotated = false;
                         el.textureInfo = info;
                         el.id = info.name + "[" + x + "][" + y + "]";
-                        el.width = info.editDiceUnitWidth;
-                        el.height = info.editDiceUnitHeight;
-                        el.dicedX = x * info.editDiceUnitWidth;
-                        el.dicedY = y * info.editDiceUnitHeight;
+                        el.width = (info.editDiceUnitWidth == 0 ? info.width : info.editDiceUnitWidth);
+                        el.height = (info.editDiceUnitHeight == 0 ? info.height : info.editDiceUnitHeight);
+                        //el.dicedX = x * info.editDiceUnitWidth;
+                        //el.dicedY = y * info.editDiceUnitHeight;
                         elements.Add(el);
                     }
                 }

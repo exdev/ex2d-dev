@@ -87,6 +87,7 @@ public class exBitmapFont : ScriptableObject {
     public List<exFont.CharInfo> charInfos = new List<exFont.CharInfo>(); ///< the list of the character information
     public List<KerningInfo> kernings = new List<KerningInfo>(); ///< the list of the kerning information 
 
+    public int baseLine;   ///< the base-line of the text when draw
     public int lineHeight; ///< the space of the line
     public int size;       ///< the size in pixel of the font 
 
@@ -108,6 +109,7 @@ public class exBitmapFont : ScriptableObject {
         charInfos.Clear();
         kernings.Clear();
 
+        baseLine = 0;
         lineHeight = 0;
         size = 0;
 

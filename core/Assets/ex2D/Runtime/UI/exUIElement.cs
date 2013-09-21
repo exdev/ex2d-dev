@@ -69,10 +69,15 @@ public class exUIElement {
     }
 
     // computed style
-    /*[System.NonSerialized]*/ public int x = 0;
-    /*[System.NonSerialized]*/ public int y = 0;
-    /*[System.NonSerialized]*/ public int width = 0;
-    /*[System.NonSerialized]*/ public int height = 0;
+    [System.NonSerialized] public int x = 0;
+    [System.NonSerialized] public int y = 0;
+    [System.NonSerialized] public int width = 0;
+    [System.NonSerialized] public int height = 0;
+
+    [System.NonSerialized] public int minWidth = 0;
+    [System.NonSerialized] public int maxWidth = 0;
+    [System.NonSerialized] public int minHeight = 0;
+    [System.NonSerialized] public int maxHeight = 0;
 
     [System.NonSerialized] public int marginLeft = 0;
     [System.NonSerialized] public int marginRight = 0;
@@ -298,7 +303,9 @@ public class exUIElement {
                    - paddingLeft - paddingRight;
             width = System.Math.Max ( width, 0 );
         }
+        width = System.Math.Min ( System.Math.Max ( width, minWidth ), maxWidth );
 
+        // NOTE: auto-margin is a little wested when we have style.width.type == exCSS_size_push.Type.Push
         if ( style.display == exCSS_display.Block ) {
             if ( style.width.type != exCSS_size.Type.Auto &&
                  ( style.marginLeft.type == exCSS_size.Type.Auto || style.marginRight.type == exCSS_size.Type.Auto ) ) 
@@ -329,11 +336,6 @@ public class exUIElement {
             }
         }
 
-        if ( style.minWidth.type == exCSS_min_size.Type.Length )
-            width = System.Math.Max ( width, (int)style.minWidth.val );
-        if ( style.maxWidth.type == exCSS_max_size.Type.Length )
-            width = System.Math.Min ( width, (int)style.maxWidth.val );
-
         // ======================================================== 
         // property relate with content-height 
         // http://www.w3.org/TR/CSS2/visudet.html#Computing_heights_and_margins
@@ -349,11 +351,7 @@ public class exUIElement {
         else if ( style.height.type == exCSS_size.Type.Auto ) {
             height = 0;
         }
-
-        if ( style.minHeight.type == exCSS_min_size.Type.Length )
-            height = System.Math.Max ( height, (int)style.minHeight.val );
-        if ( style.maxHeight.type == exCSS_max_size.Type.Length )
-            height = System.Math.Min ( height, (int)style.maxHeight.val );
+        height = System.Math.Min ( System.Math.Max ( height, minHeight ), maxHeight );
 
         // ======================================================== 
         // calculate position
@@ -374,7 +372,7 @@ public class exUIElement {
 
         int cur_child_x = 0;
         int cur_child_y = 0;
-        int maxWidth = 0;
+        int maxLineWidth = 0;
         int maxLineHeight = 0;
         // int lineChildIndex = 0;
         int lineChildCount = 0;
@@ -445,8 +443,8 @@ public class exUIElement {
                 maxLineHeight = 0;
 
                 // check and store max-line-width
-                if ( cur_child_x > maxWidth )
-                    maxWidth = cur_child_x;
+                if ( cur_child_x > maxLineWidth )
+                    maxLineWidth = cur_child_x;
 
                 lineChildCount = 0;
             }
@@ -470,19 +468,21 @@ public class exUIElement {
         }
 
         // end-line check
-        if ( cur_child_x > maxWidth )
-            maxWidth = cur_child_x;
+        if ( cur_child_x > maxLineWidth )
+            maxLineWidth = cur_child_x;
         cur_child_y += maxLineHeight;
 
         // calculate the height after child
         if ( style.height.type == exCSS_size.Type.Auto ) {
             height += cur_child_y;
+            height = System.Math.Min ( System.Math.Max ( height, minHeight ), maxHeight );
         }
         if ( style.width.type == exCSS_size.Type.Auto ) {
             if ( display == exCSS_display.InlineBlock ||
                  display == exCSS_display.Inline ) 
             {
-                width = maxWidth;
+                width = maxLineWidth;
+                width = System.Math.Min ( System.Math.Max ( width, minWidth ), maxWidth );
             }
         }
 
@@ -590,48 +590,75 @@ public class exUIElement {
             _x = line_width;
             _y = cur_y;
         }
+        else if ( font is exBitmapFont ) {
+            bool finished = false;
+            int line_width = 0;
+            int cur_x = 0;
+            int cur_y = _y;
+            int cur_index = 0;
+            int cur_width = _width - _x;
+            bool firstLineCheck = (_x > 0 && display != exCSS_display.Inline);
+            StringBuilder builder = new StringBuilder(_text.Length);
+
+            while ( finished == false ) {
+                // int start_index = cur_index;
+                builder.Length = 0;
+
+                //
+                finished = exTextUtility.CalcTextLine ( ref line_width, 
+                                                        ref cur_index,
+                                                        ref builder,
+                                                        _text,
+                                                        cur_index,
+                                                        cur_width,
+                                                        font as exBitmapFont,
+                                                        fontSize,
+                                                        wrapMode,
+                                                        wordSpacing,
+                                                        letterSpacing );
+
+                // if inline-block's first line exceed, it will start from next line 
+                if ( firstLineCheck ) {
+                    firstLineCheck = false;
+                    if ( finished == false || line_width > cur_width ) {
+                        finished = false;
+                        cur_x = 0;
+                        cur_width = _width;
+                        cur_index = 0;
+                        continue;
+                    }
+                }
+
+                // generate element
+                exUIElement newEL = new exUIElement();
+                newEL.isContent_ = true;
+                newEL.style = null;
+                newEL.display = exCSS_display.Inline; 
+                newEL.font = font;
+                newEL.fontSize = fontSize;
+                newEL.textColor = textColor;
+                newEL.whitespace = whitespace; 
+                newEL.letterSpacing = letterSpacing;
+                newEL.wordSpacing = wordSpacing;
+                newEL.lineHeight = lineHeight;
+                newEL.width = line_width;
+                newEL.height = lineHeight;
+                newEL.x = cur_x;
+                newEL.y = cur_y;
+                newEL.content = builder.ToString();
+                // newEL.content = builder.ToString( 0, cur_index - start_index );
+                normalFlows_.Add(newEL);
+
+                //
+                cur_x = 0;
+                cur_y += lineHeight;
+                cur_width = _width;
+                ++cur_index;
+            }
+
+            _x = line_width;
+            _y = cur_y;
+        }
     }
-
-    // // ------------------------------------------------------------------ 
-    // // Desc: 
-    // // ------------------------------------------------------------------ 
-
-    // void CalcTextSize ( out int _last_line_width,
-    //                     out int _size_x,
-    //                     out int _size_y,
-    //                     string _text, 
-    //                     int _offset_x,
-    //                     int _width ) 
-    // {
-    //     _last_line_width = 0; 
-    //     int lines = 0;
-    //     exTextUtility.WrapMode wrapMode = exTextUtility.WrapMode.None;
-
-    //     switch ( whitespace ) {
-    //     case exCSS_white_space.Normal:  wrapMode = exTextUtility.WrapMode.Word;     break;
-    //     case exCSS_white_space.Pre:     wrapMode = exTextUtility.WrapMode.Pre;      break;
-    //     case exCSS_white_space.NoWrap:  wrapMode = exTextUtility.WrapMode.None;     break;
-    //     case exCSS_white_space.PreWrap: wrapMode = exTextUtility.WrapMode.PreWrap;  break;
-    //     }
-
-    //     if ( font is Font ) {
-    //         exTextUtility.CalcTextSize ( ref _last_line_width,
-    //                                      ref lines,
-    //                                      _text,
-    //                                      _offset_x,
-    //                                      _width,
-    //                                      font as Font,
-    //                                      fontSize,
-    //                                      wrapMode,
-    //                                      wordSpacing,
-    //                                      letterSpacing );
-    //     }
-
-    //     if ( lines > 1 )
-    //         _size_x = _width;
-    //     else 
-    //         _size_x = _last_line_width; 
-    //     _size_y = lines * lineHeight;
-    // }
 }
 
