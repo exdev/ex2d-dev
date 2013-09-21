@@ -575,7 +575,6 @@ public static class exEditorUtility {
     // GL_UI
     ///////////////////////////////////////////////////////////////////////////////
 
-
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
@@ -635,6 +634,225 @@ public static class exEditorUtility {
             GL.Vertex3( _x, _y + _height, 0.0f ); // 3
             GL.Vertex3( _x + _left, _y + _top, 0.0f ); // 4
             GL.Vertex3( _x + _left, _y + _height - _bottom, 0.0f ); // 7
+        GL.End();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void GL_UI_DrawBorderTexture ( float _x, float _y, float _width, float _height, 
+                                                 float _top, float _right, float _bottom, float _left, 
+                                                 float _s0, float _t0, float _s1, float _t1,
+                                                 Texture2D _texture,
+                                                 Color _color,
+                                                 bool _rotated ) 
+    {
+        //  
+        //  0---1------------------2---3
+        //  |   |                  |   |
+        //  4---5------------------6---7
+        //  |   |                  |   |
+        //  |   |                  |   |
+        //  |   |                  |   |
+        //  8---9------------------10--11
+        //  |   |                  |   |
+        //  12--13-----------------14--15
+        //  
+
+        // GL.Vertex3( _x,            _y, 0.0f ); // 0
+        // GL.Vertex3( _x + x_step_1, _y, 0.0f ); // 1
+        // GL.Vertex3( _x + x_step_2, _y, 0.0f ); // 2
+        // GL.Vertex3( _x + _width,   _y, 0.0f ); // 3
+
+        // GL.Vertex3( _x,            _y + y_step_1, 0.0f ); // 4
+        // GL.Vertex3( _x + x_step_1, _y + y_step_1, 0.0f ); // 5
+        // GL.Vertex3( _x + x_step_2, _y + y_step_1, 0.0f ); // 6
+        // GL.Vertex3( _x + _width,   _y + y_step_1, 0.0f ); // 7
+
+        // GL.Vertex3( _x,            _y + y_step_2, 0.0f ); // 8 
+        // GL.Vertex3( _x + x_step_1, _y + y_step_2, 0.0f ); // 9 
+        // GL.Vertex3( _x + x_step_2, _y + y_step_2, 0.0f ); // 10
+        // GL.Vertex3( _x + _width,   _y + y_step_2, 0.0f ); // 11
+
+        // GL.Vertex3( _x,            _y + _height, 0.0f ); // 12
+        // GL.Vertex3( _x + x_step_1, _y + _height, 0.0f ); // 13
+        // GL.Vertex3( _x + x_step_2, _y + _height, 0.0f ); // 14
+        // GL.Vertex3( _x + _width,   _y + _height, 0.0f ); // 15
+
+        // GL.TexCoord2 ( s0, t0 ); // 0
+        // GL.TexCoord2 ( s1, t0 ); // 1
+        // GL.TexCoord2 ( s2, t0 ); // 2
+        // GL.TexCoord2 ( s3, t0 ); // 3
+
+        // GL.TexCoord2 ( s0, t1 ); // 4
+        // GL.TexCoord2 ( s1, t1 ); // 5
+        // GL.TexCoord2 ( s2, t1 ); // 6
+        // GL.TexCoord2 ( s3, t1 ); // 7
+
+        // GL.TexCoord2 ( s0, t2 ); // 8 
+        // GL.TexCoord2 ( s1, t2 ); // 9 
+        // GL.TexCoord2 ( s2, t2 ); // 10
+        // GL.TexCoord2 ( s3, t2 ); // 11
+
+        // GL.TexCoord2 ( s0, t3 ); // 12
+        // GL.TexCoord2 ( s1, t3 ); // 13
+        // GL.TexCoord2 ( s2, t3 ); // 14
+        // GL.TexCoord2 ( s3, t3 ); // 15
+
+        float x_step_1 = _left;
+        float x_step_2 = _width - _right;
+        float y_step_1 = _top;
+        float y_step_2 = _height - _bottom;
+
+        float s0, s1, s2, s3;
+        float t0, t1, t2, t3;
+        if ( _rotated == false ) {
+            s0 = _s0;
+            s1 = s0 + _left * _texture.texelSize.x;
+            s2 = _s1 - _right * _texture.texelSize.x;
+            s3 = _s1;
+
+            t0 = _t0;
+            t1 = t0 + _bottom * _texture.texelSize.y;
+            t2 = _t1 - _top * _texture.texelSize.y;
+            t3 = _t1;
+        }
+        else {
+            // TODO { 
+            s0 = _s0;
+            s1 = s0 + x_step_1 * _texture.texelSize.x;
+            s2 = s0 + x_step_2 * _texture.texelSize.x;
+            s3 = _s1;
+
+            t0 = _t0;
+            t1 = t0 + y_step_1 * _texture.texelSize.y;
+            t2 = t0 + y_step_2 * _texture.texelSize.y;
+            t3 = _t1;
+            // } TODO end 
+        }
+
+        materialAlphaBlended.mainTexture = _texture;
+        materialAlphaBlended.SetPass(0);
+        GL.Begin(GL.TRIANGLES);
+            GL.Color(_color);
+
+            GL.TexCoord2 ( s0, t0 ); // 0
+            GL.Vertex3( _x,            _y, 0.0f ); // 0
+            GL.TexCoord2 ( s1, t0 ); // 1
+            GL.Vertex3( _x + x_step_1, _y, 0.0f ); // 1
+            GL.TexCoord2 ( s0, t1 ); // 4
+            GL.Vertex3( _x,            _y + y_step_1, 0.0f ); // 4
+            GL.TexCoord2 ( s0, t1 ); // 4
+            GL.Vertex3( _x,            _y + y_step_1, 0.0f ); // 4
+            GL.TexCoord2 ( s1, t0 ); // 1
+            GL.Vertex3( _x + x_step_1, _y, 0.0f ); // 1
+            GL.TexCoord2 ( s1, t1 ); // 5
+            GL.Vertex3( _x + x_step_1, _y + y_step_1, 0.0f ); // 5
+
+            GL.TexCoord2 ( s1, t0 ); // 1
+            GL.Vertex3( _x + x_step_1, _y, 0.0f ); // 1
+            GL.TexCoord2 ( s2, t0 ); // 2
+            GL.Vertex3( _x + x_step_2, _y, 0.0f ); // 2
+            GL.TexCoord2 ( s1, t1 ); // 5
+            GL.Vertex3( _x + x_step_1, _y + y_step_1, 0.0f ); // 5
+            GL.TexCoord2 ( s1, t1 ); // 5
+            GL.Vertex3( _x + x_step_1, _y + y_step_1, 0.0f ); // 5
+            GL.TexCoord2 ( s2, t0 ); // 2
+            GL.Vertex3( _x + x_step_2, _y, 0.0f ); // 2
+            GL.TexCoord2 ( s2, t1 ); // 6
+            GL.Vertex3( _x + x_step_2, _y + y_step_1, 0.0f ); // 6
+
+            GL.TexCoord2 ( s2, t0 ); // 2
+            GL.Vertex3( _x + x_step_2, _y, 0.0f ); // 2
+            GL.TexCoord2 ( s3, t0 ); // 3
+            GL.Vertex3( _x + _width,   _y, 0.0f ); // 3
+            GL.TexCoord2 ( s2, t1 ); // 6
+            GL.Vertex3( _x + x_step_2, _y + y_step_1, 0.0f ); // 6
+            GL.TexCoord2 ( s2, t1 ); // 6
+            GL.Vertex3( _x + x_step_2, _y + y_step_1, 0.0f ); // 6
+            GL.TexCoord2 ( s3, t0 ); // 3
+            GL.Vertex3( _x + _width,   _y, 0.0f ); // 3
+            GL.TexCoord2 ( s3, t1 ); // 7
+            GL.Vertex3( _x + _width,   _y + y_step_1, 0.0f ); // 7
+
+            GL.TexCoord2 ( s0, t1 ); // 4
+            GL.Vertex3( _x,            _y + y_step_1, 0.0f ); // 4
+            GL.TexCoord2 ( s1, t1 ); // 5
+            GL.Vertex3( _x + x_step_1, _y + y_step_1, 0.0f ); // 5
+            GL.TexCoord2 ( s0, t2 ); // 8 
+            GL.Vertex3( _x,            _y + y_step_2, 0.0f ); // 8 
+            GL.TexCoord2 ( s0, t2 ); // 8 
+            GL.Vertex3( _x,            _y + y_step_2, 0.0f ); // 8 
+            GL.TexCoord2 ( s1, t1 ); // 5
+            GL.Vertex3( _x + x_step_1, _y + y_step_1, 0.0f ); // 5
+            GL.TexCoord2 ( s1, t2 ); // 9 
+            GL.Vertex3( _x + x_step_1, _y + y_step_2, 0.0f ); // 9 
+
+            GL.TexCoord2 ( s1, t1 ); // 5
+            GL.Vertex3( _x + x_step_1, _y + y_step_1, 0.0f ); // 5
+            GL.TexCoord2 ( s2, t1 ); // 6
+            GL.Vertex3( _x + x_step_2, _y + y_step_1, 0.0f ); // 6
+            GL.TexCoord2 ( s1, t2 ); // 9 
+            GL.Vertex3( _x + x_step_1, _y + y_step_2, 0.0f ); // 9 
+            GL.TexCoord2 ( s1, t2 ); // 9 
+            GL.Vertex3( _x + x_step_1, _y + y_step_2, 0.0f ); // 9 
+            GL.TexCoord2 ( s2, t1 ); // 6
+            GL.Vertex3( _x + x_step_2, _y + y_step_1, 0.0f ); // 6
+            GL.TexCoord2 ( s2, t2 ); // 10
+            GL.Vertex3( _x + x_step_2, _y + y_step_2, 0.0f ); // 10
+
+            GL.TexCoord2 ( s2, t1 ); // 6
+            GL.Vertex3( _x + x_step_2, _y + y_step_1, 0.0f ); // 6
+            GL.TexCoord2 ( s3, t1 ); // 7
+            GL.Vertex3( _x + _width,   _y + y_step_1, 0.0f ); // 7
+            GL.TexCoord2 ( s2, t2 ); // 10
+            GL.Vertex3( _x + x_step_2, _y + y_step_2, 0.0f ); // 10
+            GL.TexCoord2 ( s2, t2 ); // 10
+            GL.Vertex3( _x + x_step_2, _y + y_step_2, 0.0f ); // 10
+            GL.TexCoord2 ( s3, t1 ); // 7
+            GL.Vertex3( _x + _width,   _y + y_step_1, 0.0f ); // 7
+            GL.TexCoord2 ( s3, t2 ); // 11
+            GL.Vertex3( _x + _width,   _y + y_step_2, 0.0f ); // 11
+
+            GL.TexCoord2 ( s0, t2 ); // 8 
+            GL.Vertex3( _x,            _y + y_step_2, 0.0f ); // 8 
+            GL.TexCoord2 ( s1, t2 ); // 9 
+            GL.Vertex3( _x + x_step_1, _y + y_step_2, 0.0f ); // 9 
+            GL.TexCoord2 ( s0, t3 ); // 12
+            GL.Vertex3( _x,            _y + _height, 0.0f ); // 12
+            GL.TexCoord2 ( s0, t3 ); // 12
+            GL.Vertex3( _x,            _y + _height, 0.0f ); // 12
+            GL.TexCoord2 ( s1, t2 ); // 9 
+            GL.Vertex3( _x + x_step_1, _y + y_step_2, 0.0f ); // 9 
+            GL.TexCoord2 ( s1, t3 ); // 13
+            GL.Vertex3( _x + x_step_1, _y + _height, 0.0f ); // 13
+
+            GL.TexCoord2 ( s1, t2 ); // 9 
+            GL.Vertex3( _x + x_step_1, _y + y_step_2, 0.0f ); // 9 
+            GL.TexCoord2 ( s2, t2 ); // 10
+            GL.Vertex3( _x + x_step_2, _y + y_step_2, 0.0f ); // 10
+            GL.TexCoord2 ( s1, t3 ); // 13
+            GL.Vertex3( _x + x_step_1, _y + _height, 0.0f ); // 13
+            GL.TexCoord2 ( s1, t3 ); // 13
+            GL.Vertex3( _x + x_step_1, _y + _height, 0.0f ); // 13
+            GL.TexCoord2 ( s2, t2 ); // 10
+            GL.Vertex3( _x + x_step_2, _y + y_step_2, 0.0f ); // 10
+            GL.TexCoord2 ( s2, t3 ); // 14
+            GL.Vertex3( _x + x_step_2, _y + _height, 0.0f ); // 14
+
+            GL.TexCoord2 ( s2, t2 ); // 10
+            GL.Vertex3( _x + x_step_2, _y + y_step_2, 0.0f ); // 10
+            GL.TexCoord2 ( s3, t2 ); // 11
+            GL.Vertex3( _x + _width,   _y + y_step_2, 0.0f ); // 11
+            GL.TexCoord2 ( s2, t3 ); // 14
+            GL.Vertex3( _x + x_step_2, _y + _height, 0.0f ); // 14
+            GL.TexCoord2 ( s2, t3 ); // 14
+            GL.Vertex3( _x + x_step_2, _y + _height, 0.0f ); // 14
+            GL.TexCoord2 ( s3, t2 ); // 11
+            GL.Vertex3( _x + _width,   _y + y_step_2, 0.0f ); // 11
+            GL.TexCoord2 ( s3, t3 ); // 15
+            GL.Vertex3( _x + _width,   _y + _height, 0.0f ); // 15
         GL.End();
     }
 

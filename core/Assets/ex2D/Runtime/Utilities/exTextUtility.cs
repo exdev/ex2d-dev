@@ -216,8 +216,12 @@ public static class exTextUtility {
             if ( charInfo != null ) {
                 // get the line-width
                 line_width = cur_x + (int)charInfo.width + _letterSpacing;
-                if ( cur_char == ' ' )
+                // NOTE: in BitmapFont, space have zero width...
+                if ( cur_char == ' ' ) {
                     line_width += _wordSpacing;
+                    line_width -= (int)charInfo.width;
+                    line_width += (int)charInfo.xadvance;
+                }
 
                 // advance-x
                 cur_x += (int)charInfo.xadvance + _letterSpacing;

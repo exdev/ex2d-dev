@@ -69,10 +69,15 @@ public class exUIElement {
     }
 
     // computed style
-    /*[System.NonSerialized]*/ public int x = 0;
-    /*[System.NonSerialized]*/ public int y = 0;
-    /*[System.NonSerialized]*/ public int width = 0;
-    /*[System.NonSerialized]*/ public int height = 0;
+    [System.NonSerialized] public int x = 0;
+    [System.NonSerialized] public int y = 0;
+    [System.NonSerialized] public int width = 0;
+    [System.NonSerialized] public int height = 0;
+
+    [System.NonSerialized] public int minWidth = 0;
+    [System.NonSerialized] public int maxWidth = 0;
+    [System.NonSerialized] public int minHeight = 0;
+    [System.NonSerialized] public int maxHeight = 0;
 
     [System.NonSerialized] public int marginLeft = 0;
     [System.NonSerialized] public int marginRight = 0;
@@ -298,7 +303,9 @@ public class exUIElement {
                    - paddingLeft - paddingRight;
             width = System.Math.Max ( width, 0 );
         }
+        width = System.Math.Min ( System.Math.Max ( width, minWidth ), maxWidth );
 
+        // NOTE: auto-margin is a little wested when we have style.width.type == exCSS_size_push.Type.Push
         if ( style.display == exCSS_display.Block ) {
             if ( style.width.type != exCSS_size.Type.Auto &&
                  ( style.marginLeft.type == exCSS_size.Type.Auto || style.marginRight.type == exCSS_size.Type.Auto ) ) 
@@ -329,11 +336,6 @@ public class exUIElement {
             }
         }
 
-        if ( style.minWidth.type == exCSS_min_size.Type.Length )
-            width = System.Math.Max ( width, (int)style.minWidth.val );
-        if ( style.maxWidth.type == exCSS_max_size.Type.Length )
-            width = System.Math.Min ( width, (int)style.maxWidth.val );
-
         // ======================================================== 
         // property relate with content-height 
         // http://www.w3.org/TR/CSS2/visudet.html#Computing_heights_and_margins
@@ -349,11 +351,7 @@ public class exUIElement {
         else if ( style.height.type == exCSS_size.Type.Auto ) {
             height = 0;
         }
-
-        if ( style.minHeight.type == exCSS_min_size.Type.Length )
-            height = System.Math.Max ( height, (int)style.minHeight.val );
-        if ( style.maxHeight.type == exCSS_max_size.Type.Length )
-            height = System.Math.Min ( height, (int)style.maxHeight.val );
+        height = System.Math.Min ( System.Math.Max ( height, minHeight ), maxHeight );
 
         // ======================================================== 
         // calculate position
@@ -374,7 +372,7 @@ public class exUIElement {
 
         int cur_child_x = 0;
         int cur_child_y = 0;
-        int maxWidth = 0;
+        int maxLineWidth = 0;
         int maxLineHeight = 0;
         // int lineChildIndex = 0;
         int lineChildCount = 0;
@@ -445,8 +443,8 @@ public class exUIElement {
                 maxLineHeight = 0;
 
                 // check and store max-line-width
-                if ( cur_child_x > maxWidth )
-                    maxWidth = cur_child_x;
+                if ( cur_child_x > maxLineWidth )
+                    maxLineWidth = cur_child_x;
 
                 lineChildCount = 0;
             }
@@ -470,19 +468,21 @@ public class exUIElement {
         }
 
         // end-line check
-        if ( cur_child_x > maxWidth )
-            maxWidth = cur_child_x;
+        if ( cur_child_x > maxLineWidth )
+            maxLineWidth = cur_child_x;
         cur_child_y += maxLineHeight;
 
         // calculate the height after child
         if ( style.height.type == exCSS_size.Type.Auto ) {
             height += cur_child_y;
+            height = System.Math.Min ( System.Math.Max ( height, minHeight ), maxHeight );
         }
         if ( style.width.type == exCSS_size.Type.Auto ) {
             if ( display == exCSS_display.InlineBlock ||
                  display == exCSS_display.Inline ) 
             {
-                width = maxWidth;
+                width = maxLineWidth;
+                width = System.Math.Min ( System.Math.Max ( width, minWidth ), maxWidth );
             }
         }
 

@@ -1137,7 +1137,7 @@ class exUILayoutEditor : EditorWindow {
                     GUILayout.Label ( "font", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
                     ++indentLevel;
                         exCSSUI.FontField ( indentLevel, activeElement, "font", style.font, true );
-                        GUI.enabled = (style.font.type == exCSS_font.Type.TTF) ? true : false;
+                        GUI.enabled = (style.font.type != exCSS_font.Type.BitmapFont) ? true : false;
                         if ( style.font.type == exCSS_font.Type.BitmapFont ) {
                             if ( style.fontSize.type != exCSS_size_noauto.Type.Length ) {
                                 style.fontSize.type = exCSS_size_noauto.Type.Length;
@@ -1298,25 +1298,50 @@ class exUILayoutEditor : EditorWindow {
                 return;
 
             // draw border
-            if ( _el.borderImage == null ) {
-                if ( _el.borderColor.a > 0.0f &&
-                     _el.borderSizeLeft > 0 && _el.borderSizeRight > 0 && _el.borderSizeTop > 0 && _el.borderSizeBottom > 0 ) 
-                {
-                    int x = element_x - _el.paddingLeft - _el.borderSizeLeft;
-                    int y = element_y - _el.paddingTop - _el.borderSizeTop;
-                    int width = _el.width 
-                        + _el.paddingLeft + _el.paddingRight 
-                        + _el.borderSizeLeft + _el.borderSizeRight;
-                    int height = _el.height 
-                        + _el.paddingTop + _el.paddingBottom 
-                        + _el.borderSizeTop + _el.borderSizeBottom;
+            if ( _el.borderColor.a > 0.0f &&
+                 _el.borderSizeLeft > 0 && _el.borderSizeRight > 0 && _el.borderSizeTop > 0 && _el.borderSizeBottom > 0 ) 
+            {
+                int x = element_x - _el.paddingLeft - _el.borderSizeLeft;
+                int y = element_y - _el.paddingTop - _el.borderSizeTop;
+                int width = _el.width 
+                    + _el.paddingLeft + _el.paddingRight 
+                    + _el.borderSizeLeft + _el.borderSizeRight;
+                int height = _el.height 
+                    + _el.paddingTop + _el.paddingBottom 
+                    + _el.borderSizeTop + _el.borderSizeBottom;
+
+                if ( _el.borderImage == null ) {
                     exEditorUtility.GL_UI_DrawBorderRectangle ( x, y, width, height, 
                                                                 _el.borderSizeTop, _el.borderSizeRight, _el.borderSizeBottom, _el.borderSizeLeft,
                                                                 _el.borderColor );
                 }
-            }
-            else {
-                // TODO:
+                else {
+                    float s0 = 0.0f; 
+                    float t0 = 0.0f;
+                    float s1 = 1.0f;
+                    float t1 = 1.0f;
+                    Texture2D texture = _el.borderImage as Texture2D; 
+                    bool rotated = false;
+
+                    if ( texture == null ) {
+                        exTextureInfo textureInfo = _el.borderImage as exTextureInfo;
+                        if ( textureInfo != null ) {
+                            texture = textureInfo.texture;
+                            s0 = textureInfo.x * texture.texelSize.x;
+                            t0 = textureInfo.y * texture.texelSize.y;
+                            s1 = (textureInfo.x + textureInfo.rotatedWidth) * texture.texelSize.x;
+                            t1 = (textureInfo.y + textureInfo.rotatedHeight) * texture.texelSize.y;
+                            rotated = textureInfo.rotated;
+                        }
+                    }
+
+                    exEditorUtility.GL_UI_DrawBorderTexture ( x, y, width, height, 
+                                                              _el.borderSizeTop, _el.borderSizeRight, _el.borderSizeBottom, _el.borderSizeLeft,
+                                                              s0, t0, s1, t1,
+                                                              texture,
+                                                              _el.borderColor,
+                                                              rotated );
+                }
             }
 
             // draw background

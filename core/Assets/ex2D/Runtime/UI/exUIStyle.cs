@@ -415,6 +415,38 @@ public class exUIStyle {
         float val = 0.0f;
 
         // ======================================================== 
+        // min, max width & height 
+        // ======================================================== 
+
+        val = minWidth.val;
+        if ( minWidth.type == exCSS_min_size.Type.Percentage ) 
+            val = minWidth.val/100.0f * (float)_width;
+        _el.minWidth = Mathf.FloorToInt(val); 
+
+        val = minHeight.val;
+        if ( minHeight.type == exCSS_min_size.Type.Percentage ) 
+            val = minHeight.val/100.0f * (float)_height;
+        _el.minHeight = Mathf.FloorToInt(val); 
+
+        val = maxWidth.val;
+        if ( maxWidth.type == exCSS_max_size.Type.Percentage ) 
+            val = maxWidth.val/100.0f * (float)_width;
+
+        if ( maxWidth.type == exCSS_max_size.Type.None )
+            _el.maxWidth = int.MaxValue;
+        else 
+            _el.maxWidth = Mathf.FloorToInt(val); 
+
+        val = maxHeight.val;
+        if ( maxHeight.type == exCSS_max_size.Type.Percentage ) 
+            val = maxHeight.val/100.0f * (float)_height;
+
+        if ( maxHeight.type == exCSS_max_size.Type.None )
+            _el.maxHeight = int.MaxValue;
+        else 
+            _el.maxHeight = Mathf.FloorToInt(val); 
+
+        // ======================================================== 
         // margin 
         // ======================================================== 
 
