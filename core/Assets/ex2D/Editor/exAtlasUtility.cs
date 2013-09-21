@@ -231,14 +231,8 @@ public static class exAtlasUtility {
         List<Element> elements = new List<Element>();
         foreach ( exTextureInfo info in _atlas.textureInfos ) {
             if ( info.shouldDiced ) {
-                int xCount = 1;
-                int yCount = 1;
-                if (info.editDiceUnitWidth > 0 && info.width > 0) {
-                    xCount = Mathf.CeilToInt((float)info.width / info.editDiceUnitWidth);
-                }
-                if (info.editDiceUnitHeight > 0 && info.height > 0) {
-                    yCount = Mathf.CeilToInt((float)info.height / info.editDiceUnitHeight);
-                }
+                int xCount = info.diceEditXCount;
+                int yCount = info.diceEditYCount;
                 int unitWidth = (info.editDiceUnitWidth == 0 ? info.width : info.editDiceUnitWidth);
                 int unitHeight = (info.editDiceUnitHeight == 0 ? info.height : info.editDiceUnitHeight);
 

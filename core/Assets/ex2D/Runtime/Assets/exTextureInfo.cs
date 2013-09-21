@@ -65,7 +65,7 @@ public class exTextureInfo : ScriptableObject {
 
 #if UNITY_EDITOR
 
-    [SerializeField]
+    //[SerializeField]
     //[HideInInspector]
     private int editDiceUnitWidth_ = -1;    ///< not committed value, used for editor
     public int editDiceUnitWidth {
@@ -80,7 +80,7 @@ public class exTextureInfo : ScriptableObject {
         }
     }
 
-    [SerializeField]
+    //[SerializeField]
     //[HideInInspector]
     private int editDiceUnitHeight_ = -1;   ///< not committed value, used for editor
     public int editDiceUnitHeight {
@@ -94,7 +94,29 @@ public class exTextureInfo : ScriptableObject {
             editDiceUnitHeight_ = Mathf.Max(value, 0);
         }
     }
-    
+
+    public int diceEditXCount {
+        get {
+            if (editDiceUnitWidth_ > 0 && width > 0) {
+                return Mathf.CeilToInt((float)width / editDiceUnitWidth_);
+            }
+            else {
+                return 1;
+            }
+        }
+    }
+
+    public int diceEditYCount {
+        get {
+            if (editDiceUnitWidth_ > 0 && width > 0) {
+                return Mathf.CeilToInt((float)height / editDiceUnitHeight_);
+            }
+            else {
+                return 1;
+            }
+        }
+    }
+
     public bool shouldDiced {
         get { return editDiceUnitWidth_ > 0 || editDiceUnitHeight_ > 0; }
     }
@@ -194,16 +216,7 @@ public class exTextureInfo : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public void CreateDiceData () {
-        int xCount = 1;
-        int yCount = 1;
-        if (editDiceUnitWidth > 0 && width > 0) {
-            xCount = Mathf.CeilToInt((float)width / editDiceUnitWidth);
-        }
-        if (editDiceUnitHeight > 0 && height > 0) {
-            yCount = Mathf.CeilToInt((float)height / editDiceUnitHeight);
-        }
-        // TODO: add xCount and yCount properties for exTextureInfo
-        editDiceDatas = new Dice[xCount * yCount];
+        editDiceDatas = new Dice[diceEditXCount * diceEditYCount];
     }
 
     // ------------------------------------------------------------------ 
