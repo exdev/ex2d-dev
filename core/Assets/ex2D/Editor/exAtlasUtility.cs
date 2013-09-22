@@ -59,9 +59,7 @@ public static class exAtlasUtility {
         public void Apply () {
             if ( textureInfo != null ) {
                 if ( textureInfo.shouldDiced ) {
-                    exTextureInfo.Dice dice = new exTextureInfo.Dice();
-                    dice.offset_x = 0;
-                    dice.offset_y = 0;
+                    exTextureInfo.Dice dice = textureInfo.GetDiceData( dicedID );
                     dice.width = width;
                     dice.height = height;
                     dice.x = x;
@@ -231,32 +229,20 @@ public static class exAtlasUtility {
         List<Element> elements = new List<Element>();
         foreach ( exTextureInfo info in _atlas.textureInfos ) {
             if ( info.shouldDiced ) {
-                int xCount = info.editorDiceXCount;
-                int yCount = info.editorDiceYCount;
-                int unitWidth = info.editorDiceUnitWidth;
-                int unitHeight = info.editorDiceUnitHeight;
+                int editorDiceCount = info.editorDiceXCount * info.editorDiceYCount;
+                for ( int diceIndex = 0; diceIndex < editorDiceCount; ++diceIndex ) {
+                    exTextureInfo.Dice dice = info.GetDiceData(diceIndex);
 
-                for ( int x = 0; x < xCount; ++x ) {
-                    for ( int y = 0; y < yCount; ++y ) {
-                        int width = unitWidth;
-                        if ( x == xCount-1 )
-                            width = info.width - unitWidth * x;
-
-                        int height = unitHeight;
-                        if ( y == yCount-1 )
-                            height = info.height - unitHeight * y;
-
-                        Element el = new Element();
-                        el.x = 0;
-                        el.y = 0;
-                        el.rotated = false;
-                        el.textureInfo = info;
-                        el.id = info.name + "[" + x + "][" + y + "]";
-                        el.width = width;
-                        el.height = height;
-                        el.dicedID = y * xCount + x;
-                        elements.Add(el);
-                    }
+                    Element el = new Element();
+                    el.x = 0;
+                    el.y = 0;
+                    el.rotated = false;
+                    el.textureInfo = info;
+                    el.id = info.name + "@" + diceIndex;
+                    el.dicedID = diceIndex;
+                    el.width = dice.width;
+                    el.height = dice.height;
+                    elements.Add(el);
                 }
             }
             else {
@@ -687,7 +673,9 @@ public static class exAtlasUtility {
                 bool trimmed = false;
                 Rect trimRect = new Rect ( 0, 0, rawTexture.width, rawTexture.height );
                 if ( _atlas.trimElements ) {
-                    Rect trimResult = exTextureUtility.GetTrimTextureRect(rawTexture,_atlas.trimThreshold);
+                    Rect trimResult = exTextureUtility.GetTrimTextureRect( rawTexture, 
+                                                                           _atlas.trimThreshold,
+                                                                           new Rect( 0, 0, rawTexture.width, rawTexture.height )  );
                     if ( trimResult.width > 0 && trimResult.height > 0 ) {
                         trimmed = true;
                         trimRect = trimResult;
@@ -731,6 +719,26 @@ public static class exAtlasUtility {
                     textureInfo.trim = trimmed;
                     textureInfo.trimThreshold = _atlas.trimThreshold;
                     EditorUtility.SetDirty(textureInfo);
+                }
+
+                // trim diced data
+                if ( textureInfo.shouldDiced ) {
+                    textureInfo.BeginDiceData();
+                    int editorDiceCount = textureInfo.editorDiceXCount * textureInfo.editorDiceYCount;
+                    for ( int diceIndex = 0; diceIndex < editorDiceCount; ++diceIndex ) {
+                        exTextureInfo.Dice dice = textureInfo.GetDiceData(diceIndex);
+                        Rect trimResult = exTextureUtility.GetTrimTextureRect( rawTexture, 
+                                                                               textureInfo.trimThreshold, 
+                                                                               new Rect( dice.trim_x, dice.trim_y, dice.width, dice.height ) );
+                        //
+                        dice.offset_x = (int)(trimResult.x - dice.trim_x);
+                        dice.offset_y = (int)(trimResult.y - dice.trim_y);
+                        dice.width = (int)trimResult.width;
+                        dice.height = (int)trimResult.height;
+
+                        textureInfo.SetDiceData( diceIndex, dice );
+                    }
+                    textureInfo.EndDiceData();
                 }
 
                 if ( _atlas.textureInfos.IndexOf(textureInfo) == -1 )
@@ -867,7 +875,9 @@ public static class exAtlasUtility {
             //
             Rect trimRect = new Rect ( 0, 0, rawTexture.width, rawTexture.height );
             if ( textureInfo.trim ) {
-                trimRect = exTextureUtility.GetTrimTextureRect(rawTexture,textureInfo.trimThreshold);
+                trimRect = exTextureUtility.GetTrimTextureRect( rawTexture,
+                                                                textureInfo.trimThreshold,
+                                                                new Rect(0, 0, rawTexture.width, rawTexture.height) );
             }
             textureInfo.rawAtlasGUID = exEditorUtility.AssetToGUID(_atlas);
             textureInfo.name = rawTexture.name;

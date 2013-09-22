@@ -364,8 +364,12 @@ public partial class exTextureInfo : ScriptableObject {
     }
 
     private Dice[] editorDiceDatas = null;  ///< not committed value, used for editor
+
+    // ------------------------------------------------------------------ 
+    /// Start commit dice data
+    // ------------------------------------------------------------------ 
     
-    private void UpdateDiceData () {
+    public void BeginDiceData () {
         int editorDiceCount = editorDiceXCount * editorDiceYCount;
         if (editorDiceDatas == null) {
             editorDiceDatas = new Dice[editorDiceCount];
@@ -384,14 +388,6 @@ public partial class exTextureInfo : ScriptableObject {
     }
 
     // ------------------------------------------------------------------ 
-    /// Start commit dice data
-    // ------------------------------------------------------------------ 
-
-    public void CreateDiceData () {
-        editorDiceDatas = new Dice[editorDiceXCount * editorDiceYCount];
-    }
-
-    // ------------------------------------------------------------------ 
     // dice index:
     // 8  9  10 11
     // 4  5  6  7 
@@ -400,12 +396,10 @@ public partial class exTextureInfo : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public void SetDiceData (int _diceIndex, Dice _dice) {
-        UpdateDiceData();
         editorDiceDatas[_diceIndex] = _dice;
     }
 
     public Dice GetDiceData (int _diceIndex) {
-        UpdateDiceData();
         return editorDiceDatas[_diceIndex];
     }
 
@@ -413,7 +407,7 @@ public partial class exTextureInfo : ScriptableObject {
     /// Save committed value
     // ------------------------------------------------------------------ 
 
-    public void CommitDiceData () {
+    public void EndDiceData () {
         if (rawEditorDiceUnitWidth_ == -1) {
             rawEditorDiceUnitWidth_ = diceUnitWidth;    // keep dice value
         }
