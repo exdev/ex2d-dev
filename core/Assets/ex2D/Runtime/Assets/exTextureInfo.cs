@@ -109,7 +109,7 @@ public partial class exTextureInfo : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public struct Dice {            
-        public DiceType sizeType;
+        public DiceType sizeType;   ///< 当前格子的尺寸类型。只有用DiceEnumerator遍历时才有值
         public int offset_x;    ///< 当前格子的左下角坐标经过trim后的偏移，为0相当于没有trim
         public int offset_y;    ///< 当前格子的左下角坐标经过trim后的偏移，为0相当于没有trim
         public int width;       ///< 当前格子的宽度
@@ -356,7 +356,10 @@ public partial class exTextureInfo : ScriptableObject {
     }
 
     public bool shouldDiced {
-        get { return rawEditorDiceUnitWidth > 0 || rawEditorDiceUnitHeight > 0; }
+        get { 
+            return (rawEditorDiceUnitWidth > 0 && rawEditorDiceUnitWidth < width) || 
+                    (rawEditorDiceUnitHeight > 0 && rawEditorDiceUnitHeight < height);
+        }
     }
 
     private Dice[] editorDiceDatas = null;  ///< not committed value, used for editor
@@ -444,10 +447,21 @@ public partial class exTextureInfo : ScriptableObject {
         }
         diceData.Add (editorDiceUnitWidth);
         diceData.Add (editorDiceUnitHeight);
-        foreach (Dice dice in editorDiceDatas) {
-           DiceEnumerator.AddDiceData(this, diceData, dice);
+
+        int lastVisible = editorDiceDatas.Length - 1;   // used for trimming
+        for (; lastVisible >= 0; --lastVisible) {
+            Dice dice = editorDiceDatas[lastVisible];
+            if (dice.width > 0 && dice.height > 0) {
+                break;
+            }
         }
-        // TODO: trim last empty dice
+        int visibleCount = lastVisible + 1;
+        foreach (Dice dice in editorDiceDatas) {
+            if (visibleCount-- <= 0) {
+                break;  // trim end empty dice
+            }
+            DiceEnumerator.AddDiceData(this, diceData, dice);
+        }
     }
 }
 
