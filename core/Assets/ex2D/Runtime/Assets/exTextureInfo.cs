@@ -392,9 +392,9 @@ public partial class exTextureInfo : ScriptableObject {
                 dice.x = 0;
                 dice.y = 0;
                 dice.rotated = false;
-                dice.trim_x = trim_x + x * diceUnitWidth;
-                dice.trim_y = trim_y + y * diceUnitHeight;
-                editorDiceDatas[x + y * yCount] = dice;
+                dice.trim_x = trim_x + x * unitWidth;
+                dice.trim_y = trim_y + y * unitHeight;
+                editorDiceDatas[x + y * xCount] = dice;
             }
         }
         EndDiceData ();
@@ -406,21 +406,8 @@ public partial class exTextureInfo : ScriptableObject {
     
     public void BeginDiceData () {
         int editorDiceCount = editorDiceXCount * editorDiceYCount;
-        if (editorDiceDatas == null) {
-            editorDiceDatas = new Dice[editorDiceCount];
-            // decompress data
-            if (isDiced) {
-                int diceID = 0;
-                foreach (Dice dice in dices) {
-                    if (diceID >= editorDiceDatas.Length) {
-                        break;
-                    }
-                    editorDiceDatas[diceID++] = dice;
-                }
-            }
-        }
-        else if (editorDiceDatas.Length != editorDiceCount) {
-            System.Array.Resize(ref editorDiceDatas, editorDiceCount);
+        if (editorDiceDatas == null || editorDiceDatas.Length != editorDiceCount) {
+            Debug.LogError("You should GenerateDiceData first");
         }
     }
 
