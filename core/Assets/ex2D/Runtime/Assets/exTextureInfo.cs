@@ -128,19 +128,8 @@ public partial class exTextureInfo : ScriptableObject {
             }
         }
 #if UNITY_EDITOR
-        public DiceEnumerator enumerator;
-        public int trim_x {      ///< 当前格子在rawTexture中的UV起始点
-            get {
-                int col = enumerator.diceIndex % enumerator.columnCount;
-                return enumerator.textureInfo.trim_x + col * enumerator.textureInfo.diceUnitWidth + offset_x;
-            }
-        }
-        public int trim_y {      ///< 当前格子在rawTexture中的UV起始点
-            get {
-                int row = enumerator.diceIndex / enumerator.columnCount;
-                return enumerator.textureInfo.trim_y + row * enumerator.textureInfo.diceUnitHeight + offset_y;
-            }
-        }
+        public int trim_x;      ///< 当前格子在rawTexture中的UV起始点
+        public int trim_y;      ///< 当前格子在rawTexture中的UV起始点
 #endif
     }
 }
@@ -167,7 +156,6 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
     
 #if UNITY_EDITOR
     public int columnCount;
-    public int rowCount;
     public int diceIndex;     ///< current dice index
     public exTextureInfo textureInfo;
 #endif
@@ -179,6 +167,7 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
         dataIndex = -1;
 #if UNITY_EDITOR
         textureInfo = _textureInfo;
+        int rowCount;
         exSpriteUtility.GetDicingCount(textureInfo, out columnCount, out rowCount);
         diceIndex = -1;
 #endif
@@ -213,7 +202,10 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
         get {
             exTextureInfo.Dice d = new exTextureInfo.Dice();
 #if UNITY_EDITOR
-            d.enumerator = this;
+            int col = diceIndex % columnCount;
+            d.trim_x = textureInfo.trim_x + col * textureInfo.diceUnitWidth;
+            int row = diceIndex / columnCount;
+            d.trim_y = textureInfo.trim_y + row * textureInfo.diceUnitHeight;
 #endif
             if (diceData[dataIndex] == EMPTY) {
                 d.sizeType = exTextureInfo.DiceType.Empty;
@@ -241,6 +233,10 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
                 d.height = diceUnitHeight;
                 d.rotated = (diceData[dataIndex] == MAX_ROTATED);
             }
+#if UNITY_EDITOR
+            d.trim_x += d.offset_x;
+            d.trim_y += d.offset_y;
+#endif
             return d;
         }
     }
@@ -396,6 +392,8 @@ public partial class exTextureInfo : ScriptableObject {
                 dice.x = 0;
                 dice.y = 0;
                 dice.rotated = false;
+                dice.trim_x = trim_x + x * diceUnitWidth;
+                dice.trim_y = trim_y + y * diceUnitHeight;
                 editorDiceDatas[x + y * yCount] = dice;
             }
         }
