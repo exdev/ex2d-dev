@@ -27,10 +27,10 @@ public static class exSpriteUtility {
         _rowCount = 1;
         if (_ti != null) {
             if (_ti.diceUnitWidth > 0 && _ti.width > 0) {
-                _colCount = (int)Mathf.Ceil((float)_ti.width / _ti.diceUnitWidth);
+                _colCount = Mathf.CeilToInt((float)_ti.width / _ti.diceUnitWidth);
             }
             if (_ti.diceUnitHeight > 0 && _ti.height > 0) {
-                _rowCount = (int)Mathf.Ceil((float)_ti.height / _ti.diceUnitHeight);
+                _rowCount = Mathf.CeilToInt((float)_ti.height / _ti.diceUnitHeight);
             }
         }
     }
@@ -38,8 +38,8 @@ public static class exSpriteUtility {
     public static void GetTilingCount (exISprite _sprite, out int _colCount, out int _rowCount) {
         exTextureInfo ti = _sprite.textureInfo;
         if (ti != null && ti.width + _sprite.tiledSpacing.x != 0 && ti.height + _sprite.tiledSpacing.y != 0) {
-            _colCount = Mathf.Max((int)Mathf.Ceil(_sprite.width / (ti.width + _sprite.tiledSpacing.x)), 1);
-            _rowCount = Mathf.Max((int)Mathf.Ceil(_sprite.height / (ti.height + _sprite.tiledSpacing.y)), 1);
+            _colCount = Mathf.Max(Mathf.CeilToInt(_sprite.width / (ti.width + _sprite.tiledSpacing.x)), 1);
+            _rowCount = Mathf.Max(Mathf.CeilToInt(_sprite.height / (ti.height + _sprite.tiledSpacing.y)), 1);
         }
         else {
             _colCount = 1;

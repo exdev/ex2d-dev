@@ -336,11 +336,11 @@ class exTextureInfoEditor : EditorWindow {
         case 3:
             dicedColor = EditorGUILayout.ColorField ( "Color", dicedColor );
             EditorGUI.BeginChangeCheck();
-                int dicedX = EditorGUILayout.IntField ( "Dice X", curEdit.editDiceUnitWidth );
-                curEdit.editDiceUnitWidth = Mathf.Clamp ( dicedX, 0, curEdit.width );
+                int dicedX = EditorGUILayout.IntField ( "Dice X", curEdit.rawEditorDiceUnitWidth );
+                curEdit.rawEditorDiceUnitWidth = Mathf.Clamp ( dicedX, 0, curEdit.width );
 
-                int dicedY = EditorGUILayout.IntField ( "Dice Y", curEdit.editDiceUnitHeight );
-                curEdit.editDiceUnitHeight = Mathf.Clamp ( dicedY, 0, curEdit.height );
+                int dicedY = EditorGUILayout.IntField ( "Dice Y", curEdit.rawEditorDiceUnitHeight );
+                curEdit.rawEditorDiceUnitHeight = Mathf.Clamp ( dicedY, 0, curEdit.height );
 
             if ( EditorGUI.EndChangeCheck() ) {
                 EditorUtility.SetDirty(curEdit);
@@ -472,10 +472,13 @@ class exTextureInfoEditor : EditorWindow {
                                 editCamera.transform.position.y + (_rect.height * 0.5f) / scale );
 
             // draw texture info
-            exEditorUtility.GL_DrawTextureInfo ( curEdit, Vector2.zero, Color.white );
+            // exEditorUtility.GL_DrawTextureInfo ( curEdit, Vector2.zero, Color.white );
+            Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( curEdit.rawTextureGUID );
+            if ( rawTexture != null )
+                exEditorUtility.GL_DrawTexture ( Vector2.zero, new Vector2( rawTexture.width, rawTexture.height ), rawTexture, new Rect(0.0f, 0.0f, 1.0f, 1.0f), Color.white );
             
-            float half_width = curEdit.width * 0.5f;
-            float half_height = curEdit.height * 0.5f;
+            float half_width = curEdit.rawWidth * 0.5f;
+            float half_height = curEdit.rawHeight * 0.5f;
             int trim_left  = curEdit.trim_x;
             int trim_right = curEdit.rawWidth - curEdit.trim_x - curEdit.width;
             int trim_top   = curEdit.rawHeight - curEdit.trim_y - curEdit.height;
@@ -483,14 +486,14 @@ class exTextureInfoEditor : EditorWindow {
 
             // draw pixel grid
             if ( showPixelGrid ) {
-                Vector2[] points = new Vector2[(curEdit.width + curEdit.height) * 2];
+                Vector2[] points = new Vector2[(curEdit.rawWidth + curEdit.rawHeight + 2) * 2];
                 int idx = 0;
-                for ( int x = 0; x < curEdit.width; ++x ) {
+                for ( int x = 0; x < curEdit.rawWidth + 1; ++x ) {
                     points[idx]   = new Vector2( -half_width + x, -half_height );
                     points[idx+1] = new Vector2( -half_width + x,  half_height );
                     idx += 2;
                 }
-                for ( int y = 0; y < curEdit.height; ++y ) {
+                for ( int y = 0; y < curEdit.rawHeight + 1; ++y ) {
                     points[idx]   = new Vector2( -half_width, -half_height + y );
                     points[idx+1] = new Vector2(  half_width, -half_height + y );
                     idx += 2;
@@ -502,65 +505,66 @@ class exTextureInfoEditor : EditorWindow {
             // draw raw-texture bounding 
             if ( showRawRect ) {
                 exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                                  new Vector3 ( -half_width - trim_left,  -half_height - trim_bot, 0.0f ),
-                                                  new Vector3 ( -half_width - trim_left,   half_height + trim_top, 0.0f ),
-                                                  new Vector3 (  half_width + trim_right,  half_height + trim_top, 0.0f ),
-                                                  new Vector3 (  half_width + trim_right, -half_height - trim_bot, 0.0f ),
+                                                  new Vector3 ( -half_width,  -half_height, 0.0f ),
+                                                  new Vector3 ( -half_width,   half_height, 0.0f ),
+                                                  new Vector3 (  half_width,   half_height, 0.0f ),
+                                                  new Vector3 (  half_width,  -half_height, 0.0f ),
                                                   }, 
                                                   rawRectColor );
             }
 
+            float trim_start_x = -half_width + trim_left;
+            float trim_start_y =  half_height - trim_top;
+            float trim_end_x   =  half_width - trim_right;
+            float trim_end_y   = -half_height + trim_bot;
+
             // draw trimed bounding 
             if ( showTrimRect ) {
                 exEditorUtility.GL_DrawRectLine ( new Vector3[] {
-                                                  new Vector3 ( -half_width, -half_height, 0.0f ),
-                                                  new Vector3 ( -half_width,  half_height, 0.0f ),
-                                                  new Vector3 (  half_width,  half_height, 0.0f ),
-                                                  new Vector3 (  half_width, -half_height, 0.0f ),
+                                                  new Vector3 ( trim_start_x, trim_end_y, 0.0f ),
+                                                  new Vector3 ( trim_start_x, trim_start_y, 0.0f ),
+                                                  new Vector3 ( trim_end_x,   trim_start_y, 0.0f ),
+                                                  new Vector3 ( trim_end_x,   trim_end_y, 0.0f ),
                                                   }, 
                                                   trimRectColor );
             }
 
             // draw sliced line
             if ( editModeIndex == 2 ) {
-                float left   = -half_width  + curEdit.borderLeft;
-                float right  =  half_width  - curEdit.borderRight;
-                float top    =  half_height - curEdit.borderTop;
-                float bottom = -half_height + curEdit.borderBottom;
+                float left   = trim_start_x  + curEdit.borderLeft;
+                float right  = trim_end_x  - curEdit.borderRight;
+                float top    = trim_start_y - curEdit.borderTop;
+                float bottom = trim_end_y + curEdit.borderBottom;
 
-                exEditorUtility.GL_DrawLine ( left, -half_height, left, half_height, slicedColor );
-                exEditorUtility.GL_DrawLine ( right, -half_height, right, half_height, slicedColor );
-                exEditorUtility.GL_DrawLine ( -half_width, top, half_width, top, slicedColor );
-                exEditorUtility.GL_DrawLine ( -half_width, bottom, half_width, bottom, slicedColor );
+                exEditorUtility.GL_DrawLine ( left, trim_start_y, left, trim_end_y, slicedColor );
+                exEditorUtility.GL_DrawLine ( right, trim_start_y, right, trim_end_y, slicedColor );
+                exEditorUtility.GL_DrawLine ( trim_start_x, top, trim_end_x, top, slicedColor );
+                exEditorUtility.GL_DrawLine ( trim_start_x, bottom, trim_end_x, bottom, slicedColor );
             }
             
             // draw diced line
             if ( editModeIndex == 3 ) {
-                if ( curEdit.editDiceUnitWidth != 0 ) {
-                    int xCount = (int)Mathf.Ceil((float)curEdit.width/curEdit.editDiceUnitWidth) - 1;
-                    if (xCount > 0) {
-                        Vector2[] points = new Vector2[xCount * 2];
-                        int idx = 0;
-                        for ( int x = 1; x <= xCount; ++x ) {
-                            points[idx]   = new Vector2( -half_width + x * curEdit.editDiceUnitWidth, -half_height );
-                            points[idx+1] = new Vector2( -half_width + x * curEdit.editDiceUnitWidth,  half_height );
-                            idx += 2;
-                        }
-                        exEditorUtility.GL_DrawLines ( points, dicedColor );
+                int xCount = curEdit.editorDiceXCount - 1;
+                if (xCount > 0) {
+                    Vector2[] points = new Vector2[xCount * 2];
+                    int idx = 0;
+                    for ( int x = 1; x <= xCount; ++x ) {
+                        points[idx]   = new Vector2( trim_start_x + x * curEdit.editorDiceUnitWidth, trim_start_y );
+                        points[idx+1] = new Vector2( trim_start_x + x * curEdit.editorDiceUnitWidth, trim_end_y );
+                        idx += 2;
                     }
+                    exEditorUtility.GL_DrawLines ( points, dicedColor );
                 }
-                if ( curEdit.editDiceUnitHeight != 0 ) {
-                    int yCount = (int)Mathf.Ceil((float)curEdit.height/curEdit.editDiceUnitHeight) - 1;
-                    if (yCount > 0) {
-                        Vector2[] points = new Vector2[yCount * 2];
-                        int idx = 0;
-                        for ( int y = 1; y <= yCount; ++y ) {
-                            points[idx]   = new Vector2( -half_width, -half_height + y * curEdit.editDiceUnitHeight );
-                            points[idx+1] = new Vector2(  half_width, -half_height + y * curEdit.editDiceUnitHeight );
-                            idx += 2;
-                        }
-                        exEditorUtility.GL_DrawLines ( points, dicedColor );
+                int yCount = curEdit.editorDiceYCount - 1;
+                if (yCount > 0) {
+                    Vector2[] points = new Vector2[yCount * 2];
+                    int idx = 0;
+                    for ( int y = 1; y <= yCount; ++y ) {
+                        points[idx]   = new Vector2( trim_start_x, trim_end_y + y * curEdit.editorDiceUnitHeight );
+                        points[idx+1] = new Vector2( trim_end_x, trim_end_y + y * curEdit.editorDiceUnitHeight );
+                        idx += 2;
                     }
+                    exEditorUtility.GL_DrawLines ( points, dicedColor );
                 }
             }
         GL.PopMatrix();

@@ -36,9 +36,7 @@ public static class exAtlasUtility {
         public int width = 1;
         public int height = 1;
         public bool rotated = false;
-
-        //public int dicedX = -1;
-        //public int dicedY = -1;
+        public int dicedID = -1;
 
         // raw referenced
         public exTextureInfo textureInfo = null; 
@@ -61,8 +59,15 @@ public static class exAtlasUtility {
         public void Apply () {
             if ( textureInfo != null ) {
                 if ( textureInfo.shouldDiced ) {
-                    //textureInfo.AddDiceData( new Rect( dicedX, dicedY, width, height ), x, y, rotated );
-                    textureInfo.AddDiceData( new Rect( 0.0f, 0.0f, width, height ), x, y, rotated );
+                    exTextureInfo.Dice dice = new exTextureInfo.Dice();
+                    dice.offset_x = 0;
+                    dice.offset_y = 0;
+                    dice.width = width;
+                    dice.height = height;
+                    dice.x = x;
+                    dice.y = y;
+                    dice.rotated = rotated;
+                    textureInfo.SetDiceData( dicedID, dice );
                 }
                 else {
                     textureInfo.x = x;
@@ -226,26 +231,30 @@ public static class exAtlasUtility {
         List<Element> elements = new List<Element>();
         foreach ( exTextureInfo info in _atlas.textureInfos ) {
             if ( info.shouldDiced ) {
-                int xCount = 1;
-                int yCount = 1;
-                if (info.editDiceUnitWidth > 0 && info.width > 0) {
-                    xCount = (int)Mathf.Ceil((float)info.width / info.editDiceUnitWidth);
-                }
-                if (info.editDiceUnitHeight > 0 && info.height > 0) {
-                    yCount = (int)Mathf.Ceil((float)info.height / info.editDiceUnitHeight);
-                }
+                int xCount = info.editorDiceXCount;
+                int yCount = info.editorDiceYCount;
+                int unitWidth = info.editorDiceUnitWidth;
+                int unitHeight = info.editorDiceUnitHeight;
+
                 for ( int x = 0; x < xCount; ++x ) {
                     for ( int y = 0; y < yCount; ++y ) {
+                        int width = unitWidth;
+                        if ( x == xCount-1 )
+                            width = info.width - unitWidth * x;
+
+                        int height = unitHeight;
+                        if ( y == yCount-1 )
+                            height = info.height - unitHeight * y;
+
                         Element el = new Element();
                         el.x = 0;
                         el.y = 0;
                         el.rotated = false;
                         el.textureInfo = info;
                         el.id = info.name + "[" + x + "][" + y + "]";
-                        el.width = (info.editDiceUnitWidth == 0 ? info.width : info.editDiceUnitWidth);
-                        el.height = (info.editDiceUnitHeight == 0 ? info.height : info.editDiceUnitHeight);
-                        //el.dicedX = x * info.editDiceUnitWidth;
-                        //el.dicedY = y * info.editDiceUnitHeight;
+                        el.width = width;
+                        el.height = height;
+                        el.dicedID = y * xCount + x;
                         elements.Add(el);
                     }
                 }
@@ -1014,6 +1023,7 @@ public static class exAtlasUtility {
         atlasTexture.Apply(false);
 
         string rawAtlasGUID = exEditorUtility.AssetToGUID(_atlas);
+        Color32[] pixels = new Color32[atlasTexture.width * atlasTexture.height];
 
         // fill raw texture-info to atlas
         _progress( 0.4f, "Filling texture-info to atlas" );
@@ -1035,34 +1045,38 @@ public static class exAtlasUtility {
             if ( dirty )
                 EditorUtility.SetDirty(textureInfo);
 
-            // NOTE: we do this because the texture already been trimmed, and only this way to make texture have better filter
-            // apply contour bleed
-            if ( _atlas.useContourBleed ) {
-                rawTexture = exTextureUtility.ApplyContourBleed( rawTexture );
-            }
-
             // copy raw texture into atlas texture
-            exTextureUtility.Fill( atlasTexture
-                                 , rawTexture
-                                 , textureInfo.name
-                                 , textureInfo.x
-                                 , textureInfo.y
-                                 , textureInfo.trim_x
-                                 , textureInfo.trim_y
-                                 , textureInfo.width
-                                 , textureInfo.height
-                                 , textureInfo.rotated
-                                 );
-
-            //
-            if ( _atlas.useContourBleed ) {
-                Object.DestroyImmediate(rawTexture);
+            if ( textureInfo.isDiced ) {
+                foreach (exTextureInfo.Dice dice in textureInfo.dices) {
+                    if (dice.sizeType != exTextureInfo.DiceType.Empty) {
+                        exTextureUtility.Fill( ref pixels
+                                               , atlasTexture.width
+                                               , rawTexture
+                                               , textureInfo.name + "[" + dice.offset_x + "]" + "[" + dice.offset_y + "]"
+                                               , dice.x
+                                               , dice.y
+                                               , dice.trim_x
+                                               , dice.trim_y
+                                               , dice.width
+                                               , dice.height
+                                               , dice.rotated
+                                             );
+                    }
+                }
             }
-
-            // apply padding bleed
-            if ( _atlas.usePaddingBleed ) {
-                exTextureUtility.ApplyPaddingBleed( atlasTexture,
-                                                    new Rect( textureInfo.x, textureInfo.y, textureInfo.width, textureInfo.height ) );
+            else {
+                exTextureUtility.Fill( ref pixels
+                                       , atlasTexture.width
+                                       , rawTexture
+                                       , textureInfo.name
+                                       , textureInfo.x
+                                       , textureInfo.y
+                                       , textureInfo.trim_x
+                                       , textureInfo.trim_y
+                                       , textureInfo.width
+                                       , textureInfo.height
+                                       , textureInfo.rotated
+                                     );
             }
         }
 
@@ -1086,6 +1100,7 @@ public static class exAtlasUtility {
             if ( dirty )
                 EditorUtility.SetDirty(bitmapFont);
 
+<<<<<<< HEAD
             // NOTE: we do this because the texture already been trimmed, and only this way to make texture have better filter
             // apply contour bleed
             if ( _atlas.useContourBleed ) {
@@ -1093,9 +1108,13 @@ public static class exAtlasUtility {
             }
 
             foreach ( exFont.CharInfo charInfo in bitmapFont.charInfos ) {
+=======
+            foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+>>>>>>> origin/dev
 
                 // copy raw texture into atlas texture
-                exTextureUtility.Fill( atlasTexture
+                exTextureUtility.Fill( ref pixels
+                                       , atlasTexture.width
                                        , rawTexture
                                        , bitmapFont.name + "@" + charInfo.id
                                        , charInfo.x
@@ -1115,15 +1134,15 @@ public static class exAtlasUtility {
                 // }
                 // } DISABLE end 
             }
-
-            //
-            if ( _atlas.useContourBleed ) {
-                Object.DestroyImmediate(rawTexture);
-            }
         }
+        atlasTexture.SetPixels32(pixels);
+
+        //
+        _progress( 0.8f, "Bleed the texture" );
+        ApplyBleed ( _atlas, atlasTexture );
 
         // write new atlas texture to disk
-        _progress( 0.8f, "Importing atlas texture" );
+        _progress( 1.0f, "Importing atlas texture" );
         File.WriteAllBytes(atlasTexturePath, atlasTexture.EncodeToPNG());
         AssetDatabase.ImportAsset( atlasTexturePath, ImportAssetOptions.ForceSynchronousImport );
 
@@ -1140,5 +1159,94 @@ public static class exAtlasUtility {
 
         EditorUtility.SetDirty(_atlas);
         AssetDatabase.SaveAssets();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    static void ApplyBleed ( exAtlas _atlas, Texture2D _atlasTexture ) {
+        //
+        if ( _atlas.useContourBleed ) {
+            Color32[] srcPixels = _atlasTexture.GetPixels32(0);
+            Color32[] result = new Color32[srcPixels.Length];
+            for ( int i = 0; i < srcPixels.Length; ++i ) {
+                result[i] = srcPixels[i];
+            }
+
+            foreach ( exTextureInfo textureInfo in _atlas.textureInfos ) {
+                // copy raw texture into atlas texture
+                if ( textureInfo.isDiced ) {
+                    foreach (exTextureInfo.Dice dice in textureInfo.dices) {
+                        if (dice.sizeType != exTextureInfo.DiceType.Empty) {
+                            exTextureUtility.ApplyContourBleed ( ref result, 
+                                                                 srcPixels,
+                                                                 _atlasTexture.width,
+                                                                 new Rect( dice.x, dice.y, dice.rotatedWidth, dice.rotatedHeight ) );
+                        }
+                    }
+                }
+                else {
+                    exTextureUtility.ApplyContourBleed ( ref result, 
+                                                         srcPixels, 
+                                                         _atlasTexture.width,
+                                                         new Rect( textureInfo.x, textureInfo.y, textureInfo.rotatedWidth, textureInfo.rotatedHeight ) );
+                }
+            }
+
+            foreach ( exBitmapFont bitmapFont in _atlas.bitmapFonts ) {
+                foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+                    exTextureUtility.ApplyContourBleed( ref result, 
+                                                        srcPixels, 
+                                                        _atlasTexture.width,
+                                                        new Rect( charInfo.x, charInfo.y, charInfo.rotatedWidth, charInfo.rotatedHeight ) ); 
+                }
+            }
+
+            _atlasTexture.SetPixels32(result);
+        }
+
+        //
+        if ( _atlas.usePaddingBleed ) {
+            Color32[] srcPixels = _atlasTexture.GetPixels32(0);
+            Color32[] result = new Color32[srcPixels.Length];
+            for ( int i = 0; i < srcPixels.Length; ++i ) {
+                result[i] = srcPixels[i];
+            }
+
+            foreach ( exTextureInfo textureInfo in _atlas.textureInfos ) {
+                // copy raw texture into atlas texture
+                if ( textureInfo.isDiced ) {
+                    foreach (exTextureInfo.Dice dice in textureInfo.dices) {
+                        if (dice.sizeType != exTextureInfo.DiceType.Empty) {
+                            exTextureUtility.ApplyPaddingBleed ( ref result, 
+                                                                 srcPixels,
+                                                                 _atlasTexture.width,
+                                                                 _atlasTexture.height,
+                                                                 new Rect( dice.x, dice.y, dice.rotatedWidth, dice.rotatedHeight ) );
+                        }
+                    }
+                }
+                else {
+                    exTextureUtility.ApplyPaddingBleed ( ref result, 
+                                                         srcPixels, 
+                                                         _atlasTexture.width,
+                                                         _atlasTexture.height,
+                                                         new Rect( textureInfo.x, textureInfo.y, textureInfo.rotatedWidth, textureInfo.rotatedHeight ) );
+                }
+            }
+
+            foreach ( exBitmapFont bitmapFont in _atlas.bitmapFonts ) {
+                foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+                    exTextureUtility.ApplyPaddingBleed( ref result, 
+                                                        srcPixels, 
+                                                        _atlasTexture.width,
+                                                        _atlasTexture.height,
+                                                        new Rect( charInfo.x, charInfo.y, charInfo.rotatedWidth, charInfo.rotatedHeight ) ); 
+                }
+            }
+
+            _atlasTexture.SetPixels32(result);
+        }
     }
 }
