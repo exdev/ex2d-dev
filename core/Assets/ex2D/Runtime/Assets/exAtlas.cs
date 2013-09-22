@@ -73,7 +73,7 @@ public class exAtlas : ScriptableObject {
     public bool customBuildColor = false; ///< use buildColor as background color for transparent pixels
     public Color buildColor = new Color(1.0f, 1.0f, 1.0f, 0.0f); ///< the color of transparent pixels in atlas texture
     public bool useContourBleed = true; ///< extends the color of pixels at the edge of transparent pixels to prevent bilinear filtering artifacts
-    public bool usePaddingBleed = false; ///< extends the color and alpha of pixels on border of each element into the surrounding padding area
+    public bool usePaddingBleed = true; ///< extends the color and alpha of pixels on border of each element into the surrounding padding area
     public bool trimElements = true; ///< trim all element when importing
     [SerializeField] public int trimThreshold_ = 1; ///< 
     public int trimThreshold {

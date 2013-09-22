@@ -178,6 +178,9 @@ public static class exTextureUtility {
     private static readonly int[] bleedYOffsets = new [] { -1, -1, -1,  0,  0,  1,  1,  1 };
 
     public static void ApplyContourBleed ( ref Color32[] _result, Color32[] _srcPixels, int _textureWidth, Rect _rect ) {
+        if ( _rect.width == 0 || _rect.height == 0 )
+            return;
+
         int start_x = (int)_rect.x;
         int end_x = (int)(_rect.x + _rect.width);
         int start_y = (int)_rect.y;
@@ -227,7 +230,7 @@ public static class exTextureUtility {
     /// or transparent) values when it exceeds the bounds of the element.
     // ------------------------------------------------------------------ 
 
-    public static void ApplyPaddingBleed( Texture2D _tex, Rect _rect ) {
+    public static void ApplyPaddingBleed ( ref Color32[] _result, Color32[] _srcPixels, int _textureWidth, int _textureHeight, Rect _rect ) {
         // exAtlas allows bitmap font put in into atlas texture. Some font character didn't have
         // width and height (), they still need one element represent otherwise sprite will not index
         // on it and get null
@@ -243,35 +246,64 @@ public static class exTextureUtility {
         // of one, but the performance could be greatly improved.  That stands *only* if
         // Get/SetPixels32() make a copy of the data, otherwise there is no performance
         // cost to the current algorithm.  It might be worth investigating that...
-        
-        // Extract pixel buffer to be modified
-        Color32[] pixels = _tex.GetPixels32(0);
+
+        int start_x = (int)_rect.x;
+        int end_x = (int)(_rect.x + _rect.width);
+        int start_y = (int)_rect.y;
+        int end_y = (int)(_rect.y + _rect.height);
+
+        int yMin = start_y;
+        int yMax = end_y-1;
+        int xMin = start_x;
+        int xMax = end_x-1;
         
         // Copy top and bottom rows of pixels
-        for ( int x = (int)_rect.xMin; x < (int)_rect.xMax; ++x ) {
-            int yMin = (int)_rect.yMin;
-            if (yMin - 1 >= 0) // Clamp
-                pixels[x + (yMin - 1) * _tex.width] = pixels[x + yMin * _tex.width];
+        for ( int x = start_x; x < end_x; ++x ) {
+            // ignore clamp
+            if ( yMin - 1 >= 0 ) {
+                Color32 color = _srcPixels[x + yMin * _textureWidth];
+                _result[x + (yMin - 1) * _textureWidth] = color;
+            }
 
-            int yMax = (int)_rect.yMax - 1;
-            if (yMax + 1 < _tex.height) // Clamp
-                pixels[x + (yMax + 1) * _tex.width] = pixels[x + yMax * _tex.width];
+            // ignore clamp
+            if ( yMax + 1 < _textureHeight ) {
+                Color32 color = _srcPixels[x + yMax * _textureWidth];
+                _result[x + (yMax + 1) * _textureWidth] = color;
+            }
         }
 
         // Copy left and right columns of pixels (plus 2 extra pixels for corners)
-        int startY = System.Math.Max((int)_rect.yMin - 1, 0); // Clamp
-        int endY = System.Math.Min((int)_rect.yMax + 1, _tex.height); // Clamp
-        for ( int y = startY; y < endY; ++y ) {
-            int xMin = (int)_rect.xMin;
-            if (xMin - 1 >= 0) // Clamp
-                pixels[xMin - 1 + y * _tex.width] = pixels[xMin + y * _tex.width];
+        for ( int y = start_y; y < end_y; ++y ) {
+            // ignore clamp
+            if ( xMin - 1 >= 0 ) {
+                Color32 color = _srcPixels[xMin + y * _textureWidth];
+                _result[xMin - 1 + y * _textureWidth] = color;
+            }
 
-            int xMax = (int)_rect.xMax - 1;
-            if (xMax + 1 < _tex.width) // Clamp
-                pixels[xMax + 1 + y * _tex.width] = pixels[xMax + y * _tex.width];
+            // ignore clamp
+            if ( xMax + 1 < _textureWidth ) {
+                Color32 color = _srcPixels[xMax + y * _textureWidth];
+                // color.a = 0;
+                _result[xMax + 1 + y * _textureWidth] = color;
+            }
         }
 
-        // Copy modified pixel buffer back to same texture (we are modifying the destination atlas anyway)
-        _tex.SetPixels32(pixels);
+        // corners
+        if ( xMin-1 >= 0 && yMin-1 >= 0 ) {
+            Color32 color = _srcPixels[xMin + yMin * _textureWidth];
+            _result[xMin - 1 + (yMin - 1) * _textureWidth] = color;
+        }
+        if ( xMin-1 >= 0 && yMax+1 < _textureHeight ) {
+            Color32 color = _srcPixels[xMin + yMax * _textureWidth];
+            _result[xMin - 1 + (yMax + 1) * _textureWidth] = color;
+        }
+        if ( xMax+1 < _textureWidth && yMax+1 < _textureHeight ) {
+            Color32 color = _srcPixels[xMax + yMax * _textureWidth];
+            _result[xMax + 1 + (yMax + 1) * _textureWidth] = color;
+        }
+        if ( xMax+1 < _textureWidth && yMin-1 >= 0 ) {
+            Color32 color = _srcPixels[xMax + yMin * _textureWidth];
+            _result[xMax + 1 + (yMin - 1) * _textureWidth] = color;
+        }
     }
 }

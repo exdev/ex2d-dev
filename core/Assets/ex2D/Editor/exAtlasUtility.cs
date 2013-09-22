@@ -1156,19 +1156,14 @@ public static class exAtlasUtility {
     // ------------------------------------------------------------------ 
 
     static void ApplyBleed ( exAtlas _atlas, Texture2D _atlasTexture ) {
-        Color32[] srcPixels = null;
-        Color32[] result = null;
-
-        if ( _atlas.useContourBleed || _atlas.usePaddingBleed ) {
-            srcPixels = _atlasTexture.GetPixels32(0);
-            result = new Color32[srcPixels.Length];
+        //
+        if ( _atlas.useContourBleed ) {
+            Color32[] srcPixels = _atlasTexture.GetPixels32(0);
+            Color32[] result = new Color32[srcPixels.Length];
             for ( int i = 0; i < srcPixels.Length; ++i ) {
                 result[i] = srcPixels[i];
             }
-        }
 
-        //
-        if ( _atlas.useContourBleed ) {
             foreach ( exTextureInfo textureInfo in _atlas.textureInfos ) {
                 // copy raw texture into atlas texture
                 if ( textureInfo.isDiced ) {
@@ -1203,13 +1198,45 @@ public static class exAtlasUtility {
 
         //
         if ( _atlas.usePaddingBleed ) {
-            // TODO { 
-            // // apply padding bleed
-            // if ( _atlas.usePaddingBleed ) {
-            //     exTextureUtility.ApplyPaddingBleed( atlasTexture,
-            //                                         new Rect( textureInfo.x, textureInfo.y, textureInfo.width, textureInfo.height ) );
-            // }
-            // } TODO end 
+            Color32[] srcPixels = _atlasTexture.GetPixels32(0);
+            Color32[] result = new Color32[srcPixels.Length];
+            for ( int i = 0; i < srcPixels.Length; ++i ) {
+                result[i] = srcPixels[i];
+            }
+
+            foreach ( exTextureInfo textureInfo in _atlas.textureInfos ) {
+                // copy raw texture into atlas texture
+                if ( textureInfo.isDiced ) {
+                    foreach (exTextureInfo.Dice dice in textureInfo.dices) {
+                        if (dice.sizeType != exTextureInfo.DiceType.Empty) {
+                            exTextureUtility.ApplyPaddingBleed ( ref result, 
+                                                                 srcPixels,
+                                                                 _atlasTexture.width,
+                                                                 _atlasTexture.height,
+                                                                 new Rect( dice.x, dice.y, dice.rotatedWidth, dice.rotatedHeight ) );
+                        }
+                    }
+                }
+                else {
+                    exTextureUtility.ApplyPaddingBleed ( ref result, 
+                                                         srcPixels, 
+                                                         _atlasTexture.width,
+                                                         _atlasTexture.height,
+                                                         new Rect( textureInfo.x, textureInfo.y, textureInfo.rotatedWidth, textureInfo.rotatedHeight ) );
+                }
+            }
+
+            foreach ( exBitmapFont bitmapFont in _atlas.bitmapFonts ) {
+                foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+                    exTextureUtility.ApplyPaddingBleed( ref result, 
+                                                        srcPixels, 
+                                                        _atlasTexture.width,
+                                                        _atlasTexture.height,
+                                                        new Rect( charInfo.x, charInfo.y, charInfo.rotatedWidth, charInfo.rotatedHeight ) ); 
+                }
+            }
+
+            _atlasTexture.SetPixels32(result);
         }
     }
 }
