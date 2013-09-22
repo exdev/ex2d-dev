@@ -69,7 +69,7 @@ public static class exTextureUtility {
             }
         }
 
-        for ( int y = y_end-1; y >= y_end; --y ) {
+        for ( int y = y_end-1; y >= y_start; --y ) {
             for ( int x = x_start; x < x_end; ++x ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
                     ymax = y;

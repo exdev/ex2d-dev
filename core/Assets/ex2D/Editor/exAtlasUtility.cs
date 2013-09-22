@@ -887,6 +887,26 @@ public static class exAtlasUtility {
             textureInfo.trim_y = (int)trimRect.y;
             textureInfo.width = (int)trimRect.width;
             textureInfo.height = (int)trimRect.height;
+
+            // trim diced data
+            if ( textureInfo.shouldDiced ) {
+                textureInfo.BeginDiceData();
+                int editorDiceCount = textureInfo.editorDiceXCount * textureInfo.editorDiceYCount;
+                for ( int diceIndex = 0; diceIndex < editorDiceCount; ++diceIndex ) {
+                    exTextureInfo.Dice dice = textureInfo.GetDiceData(diceIndex);
+                    Rect trimResult = exTextureUtility.GetTrimTextureRect( rawTexture, 
+                                                                           textureInfo.trimThreshold, 
+                                                                           new Rect( dice.trim_x, dice.trim_y, dice.width, dice.height ) );
+                    //
+                    dice.offset_x = (int)(trimResult.x - dice.trim_x);
+                    dice.offset_y = (int)(trimResult.y - dice.trim_y);
+                    dice.width = (int)trimResult.width;
+                    dice.height = (int)trimResult.height;
+
+                    textureInfo.SetDiceData( diceIndex, dice );
+                }
+                textureInfo.EndDiceData();
+            }
         }
 
         // bitmapfont
