@@ -895,20 +895,22 @@ namespace ex2D.Detail {
                     texelSize = new Vector2(1.0f / _textureInfo.rawWidth, 1.0f / _textureInfo.rawHeight);
                 }
                 foreach (exTextureInfo.Dice dice in _textureInfo.dices) {
-                    Vector2 start = new Vector2(dice.x * texelSize.x, dice.y * texelSize.y);
-                    Vector2 end = new Vector2((dice.x + dice.rotatedWidth) * texelSize.x, 
-                                              (dice.y + dice.rotatedHeight) * texelSize.y);
-                    if ( dice.rotated ) {
-                        _uvs.buffer[_vbIndex++] = new Vector2(end.x, start.y);
-                        _uvs.buffer[_vbIndex++] = start;
-                        _uvs.buffer[_vbIndex++] = new Vector2(start.x, end.y);
-                        _uvs.buffer[_vbIndex++] = end;
-                    }
-                    else {
-                        _uvs.buffer[_vbIndex++] = start;
-                        _uvs.buffer[_vbIndex++] = new Vector2(start.x, end.y);
-                        _uvs.buffer[_vbIndex++] = end;
-                        _uvs.buffer[_vbIndex++] = new Vector2(end.x, start.y);
+                    if (dice.sizeType != exTextureInfo.DiceType.Empty) {
+                        Vector2 start = new Vector2(dice.x * texelSize.x, dice.y * texelSize.y);
+                        Vector2 end = new Vector2((dice.x + dice.rotatedWidth) * texelSize.x, 
+                                                  (dice.y + dice.rotatedHeight) * texelSize.y);
+                        if ( dice.rotated ) {
+                            _uvs.buffer[_vbIndex++] = new Vector2(end.x, start.y);
+                            _uvs.buffer[_vbIndex++] = start;
+                            _uvs.buffer[_vbIndex++] = new Vector2(start.x, end.y);
+                            _uvs.buffer[_vbIndex++] = end;
+                        }
+                        else {
+                            _uvs.buffer[_vbIndex++] = start;
+                            _uvs.buffer[_vbIndex++] = new Vector2(start.x, end.y);
+                            _uvs.buffer[_vbIndex++] = end;
+                            _uvs.buffer[_vbIndex++] = new Vector2(end.x, start.y);
+                        }
                     }
                 }
             }
