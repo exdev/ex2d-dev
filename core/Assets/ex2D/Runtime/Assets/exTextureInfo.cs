@@ -374,12 +374,14 @@ public partial class exTextureInfo : ScriptableObject {
         if (editorDiceDatas == null) {
             editorDiceDatas = new Dice[editorDiceCount];
             // decompress data
-            int diceID = 0;
-            foreach (Dice dice in dices) {
-                if (diceID >= editorDiceDatas.Length) {
-                    break;
+            if (isDiced) {
+                int diceID = 0;
+                foreach (Dice dice in dices) {
+                    if (diceID >= editorDiceDatas.Length) {
+                        break;
+                    }
+                    editorDiceDatas[diceID++] = dice;
                 }
-                editorDiceDatas[diceID++] = dice;
             }
         }
         else if (editorDiceDatas.Length != editorDiceCount) {
