@@ -369,6 +369,43 @@ public partial class exTextureInfo : ScriptableObject {
     /// Start commit dice data
     // ------------------------------------------------------------------ 
     
+    public void GenerateDiceData () {
+        int editorDiceCount = editorDiceXCount * editorDiceYCount;
+        editorDiceDatas = new Dice[editorDiceCount];
+
+        int xCount = editorDiceXCount;
+        int yCount = editorDiceYCount;
+        int unitWidth = editorDiceUnitWidth;
+        int unitHeight = editorDiceUnitHeight;
+
+        for ( int x = 0; x < xCount; ++x ) {
+            for ( int y = 0; y < yCount; ++y ) {
+                int diceWidth = unitWidth;
+                if ( x == xCount-1 )
+                    diceWidth = width - unitWidth * x;
+
+                int diceHeight = unitHeight;
+                if ( y == yCount-1 )
+                    diceHeight = height - unitHeight * y;
+
+                Dice dice = new Dice();
+                dice.offset_x = 0;
+                dice.offset_y = 0;
+                dice.width = diceWidth;
+                dice.height = diceHeight;
+                dice.x = 0;
+                dice.y = 0;
+                dice.rotated = false;
+                editorDiceDatas[x + y * yCount] = dice;
+            }
+        }
+        EndDiceData ();
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Start commit dice data
+    // ------------------------------------------------------------------ 
+    
     public void BeginDiceData () {
         int editorDiceCount = editorDiceXCount * editorDiceYCount;
         if (editorDiceDatas == null) {

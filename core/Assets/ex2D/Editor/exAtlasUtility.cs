@@ -723,6 +723,7 @@ public static class exAtlasUtility {
 
                 // trim diced data
                 if ( textureInfo.shouldDiced ) {
+                    textureInfo.GenerateDiceData();
                     textureInfo.BeginDiceData();
                     int editorDiceCount = textureInfo.editorDiceXCount * textureInfo.editorDiceYCount;
                     for ( int diceIndex = 0; diceIndex < editorDiceCount; ++diceIndex ) {
@@ -890,6 +891,7 @@ public static class exAtlasUtility {
 
             // trim diced data
             if ( textureInfo.shouldDiced ) {
+                textureInfo.GenerateDiceData();
                 textureInfo.BeginDiceData();
                 int editorDiceCount = textureInfo.editorDiceXCount * textureInfo.editorDiceYCount;
                 for ( int diceIndex = 0; diceIndex < editorDiceCount; ++diceIndex ) {
