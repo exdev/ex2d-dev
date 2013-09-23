@@ -1130,7 +1130,7 @@ partial class exAtlasEditor : EditorWindow {
 
             // clear diced data before layout
             foreach ( exTextureInfo info in curEdit.textureInfos ) {
-                if (info.shouldDiced) {
+                if ( info.shouldDiced ) {
                     info.BeginDiceData();
                 }
             }
@@ -1158,7 +1158,9 @@ partial class exAtlasEditor : EditorWindow {
 
             //
             foreach ( exTextureInfo info in curEdit.textureInfos ) {
-                info.EndDiceData();
+                if ( info.shouldDiced ) {
+                    info.EndDiceData();
+                }
             }
         }
         catch ( exAtlasUtility.LayoutException _exception ) {
