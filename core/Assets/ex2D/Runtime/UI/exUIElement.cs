@@ -539,24 +539,28 @@ public class exUIElement {
 
         case ContentType.Texture2D:
             Texture2D texture = image as Texture2D;
-            if ( style.width.type == exCSS_size.Type.Auto ) {
-                imgWidth = texture.width;
+            if ( texture != null ) {
+                if ( style.width.type == exCSS_size.Type.Auto ) {
+                    imgWidth = texture.width;
+                }
+                if ( style.height.type == exCSS_size.Type.Auto ) {
+                    imgHeight = texture.height;
+                }
+                AddImageIntoElements ( texture, contentType, imgWidth, imgHeight, ref cur_x, ref cur_y );
             }
-            if ( style.height.type == exCSS_size.Type.Auto ) {
-                imgHeight = texture.height;
-            }
-            AddImageIntoElements ( texture, contentType, imgWidth, imgHeight, ref cur_x, ref cur_y );
             break;
 
         case ContentType.TextureInfo:
             exTextureInfo textureInfo = image as exTextureInfo;
-            if ( style.width.type == exCSS_size.Type.Auto ) {
-                imgWidth = textureInfo.width;
+            if ( textureInfo != null ) {
+                if ( style.width.type == exCSS_size.Type.Auto ) {
+                    imgWidth = textureInfo.width;
+                }
+                if ( style.height.type == exCSS_size.Type.Auto ) {
+                    imgHeight = textureInfo.height;
+                }
+                AddImageIntoElements ( textureInfo, contentType, imgWidth, imgHeight, ref cur_x, ref cur_y );
             }
-            if ( style.height.type == exCSS_size.Type.Auto ) {
-                imgHeight = textureInfo.height;
-            }
-            AddImageIntoElements ( textureInfo, contentType, imgWidth, imgHeight, ref cur_x, ref cur_y );
             break;
         }
 

@@ -300,7 +300,7 @@ public class exUIStyle {
 
     // border
     public exCSS_image borderImage    = new exCSS_image( exCSS_image.Type.TextureInfo, null );
-    public exCSS_color borderColor    = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 255 ) );
+    public exCSS_color borderColor    = new exCSS_color( exCSS_color.Type.Color, new Color( 255, 255, 255, 255 ) );
     public exCSS_size_lengthonly borderSizeTop    = new exCSS_size_lengthonly( exCSS_size_lengthonly.Type.Length, 0.0f );
     public exCSS_size_lengthonly borderSizeRight  = new exCSS_size_lengthonly( exCSS_size_lengthonly.Type.Length, 0.0f );
     public exCSS_size_lengthonly borderSizeBottom = new exCSS_size_lengthonly( exCSS_size_lengthonly.Type.Length, 0.0f );
