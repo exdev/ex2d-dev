@@ -333,31 +333,78 @@ public static class exEditorUtility {
         GL.Begin(GL.QUADS);
             GL.Color(_color);
 
-            if ( _textureInfo.rotated == false ) {
-                GL.TexCoord2 ( s0, t0 );
-                GL.Vertex3 ( _rect.x, _rect.yMax, 0.0f );
+            if ( _textureInfo.isDiced ) {
+                Vector2 texelSize = _textureInfo.texture.texelSize;
+                float x_scale = _rect.width/_textureInfo.width;
+                float y_scale = _rect.height/_textureInfo.height;
 
-                GL.TexCoord2 ( s0, t1 );
-                GL.Vertex3 ( _rect.x, _rect.y, 0.0f );
+                foreach ( exTextureInfo.Dice dice in _textureInfo.dices ) {
+                    if ( dice.sizeType != exTextureInfo.DiceType.Empty ) {
+                        s0 = dice.x * texelSize.x;
+                        t0 = dice.y * texelSize.y;
+                        s1 = (dice.x + dice.rotatedWidth) * texelSize.x;
+                        t1 = (dice.y + dice.rotatedHeight) * texelSize.y;
+                        float start_x = dice.trim_x * x_scale;
+                        float start_y = dice.trim_y * y_scale;
+                        float end_x = (dice.trim_x + dice.width) * x_scale;
+                        float end_y = (dice.trim_y + dice.height) * y_scale;
 
-                GL.TexCoord2 ( s1, t1 );
-                GL.Vertex3 ( _rect.xMax, _rect.y, 0.0f );
+                        if ( dice.rotated == false ) {
+                            GL.TexCoord2 ( s0, t0 );
+                            GL.Vertex3 ( _rect.x + start_x, _rect.yMax - start_y, 0.0f );
 
-                GL.TexCoord2 ( s1, t0 );
-                GL.Vertex3 ( _rect.xMax, _rect.yMax, 0.0f );
+                            GL.TexCoord2 ( s0, t1 );
+                            GL.Vertex3 ( _rect.x + start_x, _rect.yMax - end_y, 0.0f );
+
+                            GL.TexCoord2 ( s1, t1 );
+                            GL.Vertex3 ( _rect.x + end_x, _rect.yMax - end_y, 0.0f );
+
+                            GL.TexCoord2 ( s1, t0 );
+                            GL.Vertex3 ( _rect.x + end_x, _rect.yMax - start_y, 0.0f );
+                        }
+                        else {
+                            GL.TexCoord2 ( s1, t0 );
+                            GL.Vertex3 ( _rect.x + start_x, _rect.yMax - start_y, 0.0f );
+
+                            GL.TexCoord2 ( s0, t0 );
+                            GL.Vertex3 ( _rect.x + start_x, _rect.yMax - end_y, 0.0f );
+
+                            GL.TexCoord2 ( s0, t1 );
+                            GL.Vertex3 ( _rect.x + end_x, _rect.yMax - end_y, 0.0f );
+
+                            GL.TexCoord2 ( s1, t1 );
+                            GL.Vertex3 ( _rect.x + end_x, _rect.yMax - start_y, 0.0f );
+                        }
+                    }
+                }
             }
             else {
-                GL.TexCoord2 ( s1, t0 );
-                GL.Vertex3 ( _rect.x, _rect.yMax, 0.0f );
+                if ( _textureInfo.rotated == false ) {
+                    GL.TexCoord2 ( s0, t0 );
+                    GL.Vertex3 ( _rect.x, _rect.yMax, 0.0f );
 
-                GL.TexCoord2 ( s0, t0 );
-                GL.Vertex3 ( _rect.x, _rect.y, 0.0f );
+                    GL.TexCoord2 ( s0, t1 );
+                    GL.Vertex3 ( _rect.x, _rect.y, 0.0f );
 
-                GL.TexCoord2 ( s0, t1 );
-                GL.Vertex3 ( _rect.xMax, _rect.y, 0.0f );
+                    GL.TexCoord2 ( s1, t1 );
+                    GL.Vertex3 ( _rect.xMax, _rect.y, 0.0f );
 
-                GL.TexCoord2 ( s1, t1 );
-                GL.Vertex3 ( _rect.xMax, _rect.yMax, 0.0f );
+                    GL.TexCoord2 ( s1, t0 );
+                    GL.Vertex3 ( _rect.xMax, _rect.yMax, 0.0f );
+                }
+                else {
+                    GL.TexCoord2 ( s1, t0 );
+                    GL.Vertex3 ( _rect.x, _rect.yMax, 0.0f );
+
+                    GL.TexCoord2 ( s0, t0 );
+                    GL.Vertex3 ( _rect.x, _rect.y, 0.0f );
+
+                    GL.TexCoord2 ( s0, t1 );
+                    GL.Vertex3 ( _rect.xMax, _rect.y, 0.0f );
+
+                    GL.TexCoord2 ( s1, t1 );
+                    GL.Vertex3 ( _rect.xMax, _rect.yMax, 0.0f );
+                }
             }
 
         GL.End();
@@ -524,6 +571,9 @@ public static class exEditorUtility {
     // ------------------------------------------------------------------ 
 
     public static void GL_DrawTextureInfo ( exTextureInfo _textureInfo, Vector2 _pos, Color _color ) {
+        if (_textureInfo == null) {
+            return;
+        }
         if (_textureInfo.texture == null) {
             return;
         }
@@ -541,31 +591,88 @@ public static class exEditorUtility {
         GL.Begin(GL.QUADS);
             GL.Color(_color);
 
-            if ( _textureInfo.rotated == false ) {
-                GL.TexCoord2 ( s0, t0 );
-                GL.Vertex3 ( -halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+            if ( _textureInfo.isDiced ) {
+                Vector2 texelSize = _textureInfo.texture.texelSize;
 
-                GL.TexCoord2 ( s0, t1 );
-                GL.Vertex3 ( -halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
+                foreach ( exTextureInfo.Dice dice in _textureInfo.dices ) {
+                    if ( dice.sizeType != exTextureInfo.DiceType.Empty ) {
+                        s0 = dice.x * texelSize.x;
+                        t0 = dice.y * texelSize.y;
+                        s1 = (dice.x + dice.rotatedWidth) * texelSize.x;
+                        t1 = (dice.y + dice.rotatedHeight) * texelSize.y;
 
-                GL.TexCoord2 ( s1, t1 );
-                GL.Vertex3 (  halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
+                        if ( dice.rotated == false ) {
+                            GL.TexCoord2 ( s0, t0 );
+                            GL.Vertex3 ( -halfSize.x + _pos.x + dice.trim_x,
+                                         -halfSize.y + _pos.y + dice.trim_y, 
+                                         0.0f );
 
-                GL.TexCoord2 ( s1, t0 );
-                GL.Vertex3 (  halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+                            GL.TexCoord2 ( s0, t1 );
+                            GL.Vertex3 ( -halfSize.x + _pos.x + dice.trim_x,
+                                         -halfSize.y + _pos.y + dice.trim_y + dice.height,
+                                         0.0f );
+
+                            GL.TexCoord2 ( s1, t1 );
+                            GL.Vertex3 ( -halfSize.x + _pos.x + dice.trim_x + dice.width,
+                                         -halfSize.y + _pos.y + dice.trim_y + dice.height,
+                                         0.0f );
+
+                            GL.TexCoord2 ( s1, t0 );
+                            GL.Vertex3 ( -halfSize.x + _pos.x + dice.trim_x + dice.width,
+                                         -halfSize.y + _pos.y + dice.trim_y,
+                                         0.0f );
+                        }
+                        else {
+                            GL.TexCoord2 ( s1, t0 );
+                            GL.Vertex3 ( -halfSize.x + _pos.x + dice.trim_x,
+                                         -halfSize.y + _pos.y + dice.trim_y, 
+                                         0.0f );
+
+                            GL.TexCoord2 ( s0, t0 );
+                            GL.Vertex3 ( -halfSize.x + _pos.x + dice.trim_x,
+                                         -halfSize.y + _pos.y + dice.trim_y + dice.height,
+                                         0.0f );
+
+                            GL.TexCoord2 ( s0, t1 );
+                            GL.Vertex3 ( -halfSize.x + _pos.x + dice.trim_x + dice.width,
+                                         -halfSize.y + _pos.y + dice.trim_y + dice.height,
+                                         0.0f );
+
+                            GL.TexCoord2 ( s1, t1 );
+                            GL.Vertex3 ( -halfSize.x + _pos.x + dice.trim_x + dice.width,
+                                         -halfSize.y + _pos.y + dice.trim_y,
+                                         0.0f );
+                        }
+                    }
+                }
             }
             else {
-                GL.TexCoord2 ( s1, t0 );
-                GL.Vertex3 ( -halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+                if ( _textureInfo.rotated == false ) {
+                    GL.TexCoord2 ( s0, t0 );
+                    GL.Vertex3 ( -halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
 
-                GL.TexCoord2 ( s0, t0 );
-                GL.Vertex3 ( -halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
+                    GL.TexCoord2 ( s0, t1 );
+                    GL.Vertex3 ( -halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
 
-                GL.TexCoord2 ( s0, t1 );
-                GL.Vertex3 (  halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
+                    GL.TexCoord2 ( s1, t1 );
+                    GL.Vertex3 (  halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
 
-                GL.TexCoord2 ( s1, t1 );
-                GL.Vertex3 (  halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+                    GL.TexCoord2 ( s1, t0 );
+                    GL.Vertex3 (  halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+                }
+                else {
+                    GL.TexCoord2 ( s1, t0 );
+                    GL.Vertex3 ( -halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+
+                    GL.TexCoord2 ( s0, t0 );
+                    GL.Vertex3 ( -halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
+
+                    GL.TexCoord2 ( s0, t1 );
+                    GL.Vertex3 (  halfSize.x + _pos.x,  halfSize.y + _pos.y, 0.0f );
+
+                    GL.TexCoord2 ( s1, t1 );
+                    GL.Vertex3 (  halfSize.x + _pos.x, -halfSize.y + _pos.y, 0.0f );
+                }
             }
 
         GL.End();

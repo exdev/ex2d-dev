@@ -472,7 +472,6 @@ class exTextureInfoEditor : EditorWindow {
                                 editCamera.transform.position.y + (_rect.height * 0.5f) / scale );
 
             // draw texture info
-            // exEditorUtility.GL_DrawTextureInfo ( curEdit, Vector2.zero, Color.white );
             Texture2D rawTexture = exEditorUtility.LoadAssetFromGUID<Texture2D>( curEdit.rawTextureGUID );
             if ( rawTexture != null )
                 exEditorUtility.GL_DrawTexture ( Vector2.zero, new Vector2( rawTexture.width, rawTexture.height ), rawTexture, new Rect(0.0f, 0.0f, 1.0f, 1.0f), Color.white );

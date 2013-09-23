@@ -170,51 +170,54 @@ class exTextureInfoInspector : Editor {
         rect = exGeometryUtility.Rect_FloorToInt(rect);
         // EditorGUI.DrawPreviewTexture(rect, textureInfo.texture);
 
-        if ( textureInfo.rotated ) {
-            float xStart = (float)textureInfo.x/(float)textureInfo.texture.width;
-            float xEnd = xStart + (float)textureInfo.rotatedWidth/(float)textureInfo.texture.width;
-            float yStart = (float)textureInfo.y/(float)textureInfo.texture.height;
-            float yEnd = yStart + (float)textureInfo.rotatedHeight/(float)textureInfo.texture.height;
+        exEditorUtility.GUI_DrawTextureInfo ( rect,
+                                              textureInfo,
+                                              Color.white );
+        // if ( textureInfo.rotated ) {
+        //     float xStart = (float)textureInfo.x/(float)textureInfo.texture.width;
+        //     float xEnd = xStart + (float)textureInfo.rotatedWidth/(float)textureInfo.texture.width;
+        //     float yStart = (float)textureInfo.y/(float)textureInfo.texture.height;
+        //     float yEnd = yStart + (float)textureInfo.rotatedHeight/(float)textureInfo.texture.height;
 
-            quadMaterial.mainTexture = textureInfo.texture;
-            quadMaterial.SetPass(0);
+        //     quadMaterial.mainTexture = textureInfo.texture;
+        //     quadMaterial.SetPass(0);
 
-            quadMesh.hideFlags = HideFlags.DontSave;
-            quadMesh.vertices = new Vector3[] {
-                new Vector3 ( rect.x, rect.y, 0.0f ),
-                new Vector3 ( rect.x, rect.y + rect.height, 0.0f ),
-                new Vector3 ( rect.x + rect.width, rect.y + rect.height, 0.0f ),
-                new Vector3 ( rect.x + rect.width, rect.y, 0.0f ),
-            };
-            quadMesh.uv = new Vector2[] {
-                new Vector2 ( xStart, yStart ),
-                new Vector2 ( xEnd, yStart ),
-                new Vector2 ( xEnd, yEnd ),
-                new Vector2 ( xStart, yEnd ),
-            };
-            quadMesh.colors32 = new Color32[] {
-                new Color32 ( 255, 255, 255, 255 ),
-                new Color32 ( 255, 255, 255, 255 ),
-                new Color32 ( 255, 255, 255, 255 ),
-                new Color32 ( 255, 255, 255, 255 ),
-            };
-            quadMesh.triangles = new int[] {
-                0, 1, 2,
-                0, 2, 3
-            };
+        //     quadMesh.hideFlags = HideFlags.DontSave;
+        //     quadMesh.vertices = new Vector3[] {
+        //         new Vector3 ( rect.x, rect.y, 0.0f ),
+        //         new Vector3 ( rect.x, rect.y + rect.height, 0.0f ),
+        //         new Vector3 ( rect.x + rect.width, rect.y + rect.height, 0.0f ),
+        //         new Vector3 ( rect.x + rect.width, rect.y, 0.0f ),
+        //     };
+        //     quadMesh.uv = new Vector2[] {
+        //         new Vector2 ( xStart, yStart ),
+        //         new Vector2 ( xEnd, yStart ),
+        //         new Vector2 ( xEnd, yEnd ),
+        //         new Vector2 ( xStart, yEnd ),
+        //     };
+        //     quadMesh.colors32 = new Color32[] {
+        //         new Color32 ( 255, 255, 255, 255 ),
+        //         new Color32 ( 255, 255, 255, 255 ),
+        //         new Color32 ( 255, 255, 255, 255 ),
+        //         new Color32 ( 255, 255, 255, 255 ),
+        //     };
+        //     quadMesh.triangles = new int[] {
+        //         0, 1, 2,
+        //         0, 2, 3
+        //     };
 
-            Graphics.DrawMeshNow ( quadMesh, Vector3.zero, Quaternion.identity );
-        }
-        else {
-            float uv_s  = (float)textureInfo.x / (float)textureInfo.texture.width;
-            float uv_t  = (float)textureInfo.y / (float)textureInfo.texture.height;
-            float uv_w  = (float)textureInfo.rotatedWidth / (float)textureInfo.texture.width;
-            float uv_h  = (float)textureInfo.rotatedHeight / (float)textureInfo.texture.height;
+        //     Graphics.DrawMeshNow ( quadMesh, Vector3.zero, Quaternion.identity );
+        // }
+        // else {
+        //     float uv_s  = (float)textureInfo.x / (float)textureInfo.texture.width;
+        //     float uv_t  = (float)textureInfo.y / (float)textureInfo.texture.height;
+        //     float uv_w  = (float)textureInfo.rotatedWidth / (float)textureInfo.texture.width;
+        //     float uv_h  = (float)textureInfo.rotatedHeight / (float)textureInfo.texture.height;
 
-            GUI.DrawTextureWithTexCoords( rect, 
-                                          textureInfo.texture, 
-                                          new Rect( uv_s, uv_t, uv_w, uv_h ) );
-        }
+        //     GUI.DrawTextureWithTexCoords( rect, 
+        //                                   textureInfo.texture, 
+        //                                   new Rect( uv_s, uv_t, uv_w, uv_h ) );
+        // }
     }
 
     // ------------------------------------------------------------------ 
