@@ -504,9 +504,26 @@ public class exUIElement {
             height = System.Math.Min ( System.Math.Max ( height, minHeight ), maxHeight );
         }
         if ( style.width.type == exCSS_size.Type.Auto ) {
+            bool useContentWidth = false;
+
             if ( display == exCSS_display.InlineBlock ||
                  display == exCSS_display.Inline ) 
             {
+                useContentWidth = true;
+            }
+
+            if ( display == exCSS_display.Block ) {
+                if ( contentType == ContentType.Texture2D ||
+                     contentType == ContentType.TextureInfo )
+                {
+                    useContentWidth = true;
+                }
+                else if ( parent != null && parent.display != exCSS_display.Block && parent.style.width.type == exCSS_size.Type.Auto ) {
+                    useContentWidth = true;
+                }
+            }
+
+            if ( useContentWidth ) {
                 width = maxLineWidth;
                 width = System.Math.Min ( System.Math.Max ( width, minWidth ), maxWidth );
             }
