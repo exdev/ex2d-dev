@@ -88,6 +88,8 @@ class exUILayoutEditor : EditorWindow {
 
     Vector2 hierarchyScrollPos = Vector2.zero;
     Vector2 styleScrollPos = Vector2.zero;
+    Vector2 contentScrollPos = Vector2.zero;
+
     exUIElement activeElement = null;
     exUIElement hoverElement = null;
     exUIElement dropElement = null;
@@ -134,6 +136,10 @@ class exUILayoutEditor : EditorWindow {
         rectSelection = new exRectSelection<Object>( PickObject,
                                                      PickRectObjects,
                                                      ConfirmRectSelection );
+
+        selectedElements.Clear();
+        draggingElements = false;
+        dropElement = null;
 
         UpdateEditObject ();
     }
@@ -324,6 +330,11 @@ class exUILayoutEditor : EditorWindow {
         debugElement = false;
         hoverElement = null;
         activeElement = null;
+        dropElement = null;
+
+        draggingElements = false;
+        selectedElements.Clear();
+
         if ( curEdit != null )
             activeElement = curEdit.root;
     }
@@ -530,29 +541,118 @@ class exUILayoutEditor : EditorWindow {
             // content
             GUILayout.FlexibleSpace();
             GUILayout.Space(20);
-            EditorGUILayout.LabelField ( "Content:" );
-            if ( activeElement != null ) {
-                EditorGUILayout.BeginHorizontal();
+
+            EditorGUILayout.BeginHorizontal(new GUILayoutOption [] {
+                                            GUILayout.Width(_width), 
+                                            GUILayout.MinWidth(_width), 
+                                            GUILayout.MaxWidth(_width),
+                                            GUILayout.ExpandWidth(false),
+                                            });
                 GUILayout.Space(10);
-                // contentScrollPos = EditorGUILayout.BeginScrollView(contentScrollPos);        
                 EditorGUI.BeginChangeCheck();
-                activeElement.content = EditorGUILayout.TextArea( activeElement.content, 
-                                                                  new GUILayoutOption [] {
-                                                                  GUILayout.Height(400),
-                                                                  GUILayout.MinHeight(400),
-                                                                  GUILayout.MaxHeight(400),
-                                                                  GUILayout.Width(_width),
-                                                                  GUILayout.MinWidth(_width),
-                                                                  GUILayout.MaxWidth(_width),
-                                                                  GUILayout.ExpandHeight(false), 
-                                                                  GUILayout.ExpandWidth(false), 
-                                                                  } );        
+                    EditorGUILayout.LabelField ( "Content: ", new GUILayoutOption [] { GUILayout.Width(80) } );
+                    GUILayout.FlexibleSpace();
+                    activeElement.contentType = (exUIElement.ContentType)EditorGUILayout.EnumPopup ( activeElement.contentType, new GUILayoutOption [] { GUILayout.Width(80) } );
                 if ( EditorGUI.EndChangeCheck() ) {
                     curEdit.Apply();
                     EditorUtility.SetDirty(curEdit);
                     Repaint();
                 }
-                // EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space();
+
+            if ( activeElement != null ) {
+                EditorGUILayout.BeginHorizontal();
+                GUILayout.Space(10);
+                switch ( activeElement.contentType ) {
+                case exUIElement.ContentType.Text:
+                case exUIElement.ContentType.Markdown:
+                    contentScrollPos = EditorGUILayout.BeginScrollView(contentScrollPos, 
+                                                                       new GUILayoutOption [] {
+                                                                       GUILayout.Height(200),
+                                                                       GUILayout.MinHeight(200),
+                                                                       GUILayout.MaxHeight(200),
+                                                                       GUILayout.Width(_width),
+                                                                       GUILayout.MinWidth(_width),
+                                                                       GUILayout.MaxWidth(_width),
+                                                                       GUILayout.ExpandHeight(false), 
+                                                                       GUILayout.ExpandWidth(false), 
+                                                                       }
+                                                                      );        
+                        EditorGUI.BeginChangeCheck();
+                        activeElement.text = EditorGUILayout.TextArea( activeElement.text
+                                                                       , new GUILayoutOption [] {
+                                                                       GUILayout.Width(_width - 30),
+                                                                       GUILayout.MinWidth(_width - 30),
+                                                                       GUILayout.MaxWidth(_width - 30),
+                                                                       GUILayout.ExpandHeight(true), 
+                                                                       } 
+                                                                     );        
+                        if ( EditorGUI.EndChangeCheck() ) {
+                            curEdit.Apply();
+                            EditorUtility.SetDirty(curEdit);
+                            Repaint();
+                        }
+                    EditorGUILayout.EndScrollView();
+                    break;
+
+                case exUIElement.ContentType.Texture2D:
+                    EditorGUILayout.BeginVertical(new GUILayoutOption [] {
+                                                  GUILayout.Height(200),
+                                                  GUILayout.MinHeight(200),
+                                                  GUILayout.MaxHeight(200),
+                                                  GUILayout.Width(_width),
+                                                  GUILayout.MinWidth(_width),
+                                                  GUILayout.MaxWidth(_width),
+                                                  GUILayout.ExpandHeight(false), 
+                                                  GUILayout.ExpandWidth(false), 
+                                                  });
+                        EditorGUI.BeginChangeCheck();
+                            EditorGUILayout.BeginHorizontal();
+                            GUILayout.FlexibleSpace();
+                            activeElement.image = EditorGUILayout.ObjectField ( activeElement.image, typeof(Texture2D), false, 
+                                                                                new GUILayoutOption[] { 
+                                                                                GUILayout.Width(100), 
+                                                                                GUILayout.Height(100) 
+                                                                                } ) as Texture2D;
+                            GUILayout.Space(10);
+                            EditorGUILayout.EndHorizontal();
+                        if ( EditorGUI.EndChangeCheck() ) {
+                            curEdit.Apply();
+                            EditorUtility.SetDirty(curEdit);
+                            Repaint();
+                        }
+                    EditorGUILayout.EndVertical();
+                    break;
+
+                case exUIElement.ContentType.TextureInfo:
+                    EditorGUILayout.BeginVertical(new GUILayoutOption [] {
+                                                  GUILayout.Height(200),
+                                                  GUILayout.MinHeight(200),
+                                                  GUILayout.MaxHeight(200),
+                                                  GUILayout.Width(_width),
+                                                  GUILayout.MinWidth(_width),
+                                                  GUILayout.MaxWidth(_width),
+                                                  GUILayout.ExpandHeight(false), 
+                                                  GUILayout.ExpandWidth(false), 
+                                                  });
+                        EditorGUI.BeginChangeCheck();
+                            EditorGUILayout.BeginHorizontal();
+                            GUILayout.FlexibleSpace();
+                            activeElement.image = EditorGUILayout.ObjectField ( activeElement.image, typeof(exTextureInfo), false, new GUILayoutOption[] { 
+                                                                                GUILayout.Width(200) 
+                                                                                } ) as exTextureInfo;
+                            GUILayout.Space(10);
+                            EditorGUILayout.EndHorizontal();
+                        if ( EditorGUI.EndChangeCheck() ) {
+                            curEdit.Apply();
+                            EditorUtility.SetDirty(curEdit);
+                            Repaint();
+                        }
+                    EditorGUILayout.EndVertical();
+                    break;
+                }
                 EditorGUILayout.EndHorizontal();
             }
             GUILayout.Space(20);
@@ -659,7 +759,7 @@ class exUILayoutEditor : EditorWindow {
 
                     bool canDrop = true;
                     for ( int i = 0; i < selectedElements.Count; ++i ) {
-                        if ( selectedElements[i].IsAncestorOf(_el) ) {
+                        if ( selectedElements[i].IsSelfOrAncestorOf(_el) ) {
                             canDrop = false;
                             break;
                         } 
@@ -681,6 +781,7 @@ class exUILayoutEditor : EditorWindow {
             break;
 
         case EventType.MouseDown:
+            dropElement = null;
             if ( e.button == 0 && e.clickCount == 1 && rect.Contains(e.mousePosition) ) {
                 GUIUtility.hotControl = _controlID;
                 GUIUtility.keyboardControl = _controlID;
@@ -702,6 +803,7 @@ class exUILayoutEditor : EditorWindow {
                     else {
                         selectedElements.Clear();
                         selectedElements.Add(activeElement);
+                        draggingElements = true;
                     }
                 }
 
@@ -725,6 +827,7 @@ class exUILayoutEditor : EditorWindow {
                 draggingElements = false;
                 dropElement = null;
                 selectedElements.Clear();
+                selectedElements.Add(activeElement);
             }
             break;
         }
@@ -1158,10 +1261,10 @@ class exUILayoutEditor : EditorWindow {
                     EditorGUILayout.Space();
 
                     // text
-                    GUILayout.Label ( "text", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
+                    GUILayout.Label ( "content", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
                     ++indentLevel;
-                        exCSSUI.ColorField ( indentLevel, activeElement, "color", style.textColor, true );
-                        exCSSUI.WhiteSpaceField ( indentLevel, activeElement, "white-space", ref style.whitespace );
+                        exCSSUI.ColorField ( indentLevel, activeElement, "color", style.contentColor, true );
+                        exCSSUI.WrapField ( indentLevel, activeElement, "wrap", ref style.wrap );
                         exCSSUI.AligmentField ( indentLevel, activeElement, "aligment", ref style.textAlign );
                         exCSSUI.DecorationField ( indentLevel, activeElement, "decoration", ref style.textDecoration );
                         exCSSUI.SizeNoPercentageField ( indentLevel, activeElement, "letter-spacing", style.letterSpacing, true );
@@ -1290,7 +1393,23 @@ class exUILayoutEditor : EditorWindow {
 
         // draw content or child (NOTE: content-element will not have child) 
         if ( _el.isContent || _el.isContentInline ) {
-            DrawText ( element_x, element_y, _el, _el.content );
+            switch ( _el.contentType ) {
+            case exUIElement.ContentType.Text:
+                DrawText ( element_x, element_y, _el, _el.text );
+                break;
+
+            case exUIElement.ContentType.Texture2D:
+                // exEditorUtility.GUI_DrawTextureInfo ( new Rect( element_x, element_y, _el.width, _el.height ),
+                //                                       textureInfo,
+                //                                       _el.contentColor );
+                break;
+
+            case exUIElement.ContentType.TextureInfo:
+                exEditorUtility.GUI_DrawTextureInfo ( new Rect( element_x, element_y, _el.width, _el.height ),
+                                                      _el.image as exTextureInfo,
+                                                      _el.contentColor );
+                break;
+            }
         }
         else {
         
@@ -1410,7 +1529,7 @@ class exUILayoutEditor : EditorWindow {
         }
 
         GL.Begin(GL.QUADS);
-        GL.Color(_el.textColor);
+        GL.Color(_el.contentColor);
         for ( int i = 0; i < _text.Length; ++i ) {
             int idx = 4*i;
             GL.TexCoord2 ( uvs[idx].x, uvs[idx].y );
