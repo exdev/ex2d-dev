@@ -208,9 +208,10 @@ public class exUIElement {
         if ( _el.IsSelfOrAncestorOf (this) )
             return;
 
-        if ( _el.parent != null ) {
-            _el.parent.RemoveElement(_el);
-            _el.parent.SetDirty();
+        exUIElement lastParent = _el.parent;
+        if ( lastParent != null ) {
+            lastParent.RemoveElement(_el);
+            lastParent.SetDirty();
         }
 
         children.Add(_el);
@@ -427,12 +428,10 @@ public class exUIElement {
         int maxLineHeight = 0;
         // int lineChildIndex = 0;
         int lineChildCount = 0;
-        exUIElement lastChild = null;
 
         for ( int i = 0; i < normalFlows_.Count; ++i ) {
             exUIElement child = normalFlows_[i];
             bool needWrap = false;
-            bool needNextLine = false;
 
             // do layout if they are not content-line-elements
             if ( child.isContent == false ) {
@@ -462,41 +461,33 @@ public class exUIElement {
 
                 if ( wrap == exCSS_wrap.Pre ) {
                     needWrap = true;
-                    needNextLine = true;
                 }
                 else if ( wrap == exCSS_wrap.Word || wrap == exCSS_wrap.PreWrap ) {
                     if ( (lineChildCount > 0) && (cur_child_x + childTotalWidth) > width ) {
                         needWrap = true;
-                        needNextLine = true;
                     }
-                }
-                else if ( lastChild != null && lastChild.display == exCSS_display.Block ) {
-                    needWrap = true;
-                    needNextLine = true;
                 }
             }
             else if ( child.display == exCSS_display.Block ) {
                 needWrap = true;
-                needNextLine = true;
             }
-            else if ( child.display == exCSS_display.InlineBlock ) 
-            {
+            else if ( child.display == exCSS_display.InlineBlock ) {
                 int childTotalWidth = child.GetTotalWidth();
-                if ( lastChild != null && lastChild.display == exCSS_display.Block ) {
-                    needWrap = true;
-                    needNextLine = true;
-                }
-                else if ( wrap == exCSS_wrap.Word || wrap == exCSS_wrap.PreWrap ) {
+                if ( wrap == exCSS_wrap.Word || wrap == exCSS_wrap.PreWrap ) {
                     if ( (lineChildCount > 0) && (cur_child_x + childTotalWidth) > width ) {
                         needWrap = true;
-                        needNextLine = true;
                     }
                 }
             }
 
-            // check if next-line
-            if ( needNextLine ) {
+            // need wrap
+            if ( needWrap ) {
+
                 // TODO: adjust last line childrens
+
+                // wrap-x
+                child.x = child.x - cur_child_x;  // re-adjust x
+                cur_child_x = 0;
 
                 // re-adjust y
                 child.y = child.y + maxLineHeight;
@@ -511,12 +502,6 @@ public class exUIElement {
                 lineChildCount = 0;
             }
 
-            // check if wrap-x
-            if ( needWrap ) {
-                child.x = child.x - cur_child_x;  // re-adjust y
-                cur_child_x = 0;
-            }
-
             // advance-x
             cur_child_x += child.GetTotalWidth();
 
@@ -527,7 +512,14 @@ public class exUIElement {
             }
 
             ++lineChildCount;
-            lastChild = child;
+
+            // start a new line directly if this is a block
+            if ( child.display == exCSS_display.Block ) {
+                maxLineWidth = cur_child_x;
+                cur_child_x = 0;
+                cur_child_y += maxLineHeight;
+                maxLineHeight = 0;
+            }
         }
 
         // end-line check
