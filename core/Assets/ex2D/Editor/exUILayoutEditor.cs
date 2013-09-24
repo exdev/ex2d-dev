@@ -440,7 +440,7 @@ class exUILayoutEditor : EditorWindow {
             if ( GUILayout.Button( "Clone", hierarchyStyles.toolbarButton ) ) {
                 if ( activeElement != null && activeElement != curEdit.root ) {
                     exUIElement newEL = activeElement.Clone();
-                    newEL.parent = activeElement.parent;
+                    activeElement.parent.AddElement(newEL);
 
                     curEdit.Apply();
                     EditorUtility.SetDirty(curEdit);
@@ -476,7 +476,7 @@ class exUILayoutEditor : EditorWindow {
                                    hierarchyStyles.toolbarDropDown ) ) 
             {
                 exUIElement newEL = new exUIElement(); 
-                newEL.parent = activeElement;
+                activeElement.AddElement(newEL);
 
                 curEdit.Apply();
                 EditorUtility.SetDirty(curEdit);
@@ -816,7 +816,7 @@ class exUILayoutEditor : EditorWindow {
             if ( draggingElements ) {
                 if ( dropElement != null ) {
                     for ( int i = 0; i < selectedElements.Count; ++i ) {
-                        selectedElements[i].parent = dropElement;
+                        dropElement.AddElement(selectedElements[i]);
                     }
 
                     curEdit.Apply();
@@ -1392,7 +1392,7 @@ class exUILayoutEditor : EditorWindow {
         int element_y = _y + _el.y;
 
         // draw content or child (NOTE: content-element will not have child) 
-        if ( _el.isContent || _el.isContentInline ) {
+        if ( _el.isContent ) {
             switch ( _el.contentType ) {
             case exUIElement.ContentType.Text:
                 DrawText ( element_x, element_y, _el, _el.text );

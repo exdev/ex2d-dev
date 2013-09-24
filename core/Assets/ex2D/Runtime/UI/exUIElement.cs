@@ -45,7 +45,6 @@ public class exUIElement {
     public Object image = null;
 
     public bool isContent { get { return isContent_; } }
-    public bool isContentInline { get { return isContentInline_; } }
 
     public List<exUIElement> normalFlows { get { return normalFlows_; } } 
     List<exUIElement> normalFlows_ = new List<exUIElement>(); 
@@ -56,27 +55,29 @@ public class exUIElement {
 
     public exUIElement parent_ = null;
     public exUIElement parent {
-        set {
-            // your child or yourself can not become your parent
-            if ( IsSelfOrAncestorOf (value) )
-                return;
+        // DISABLE { 
+        // set {
+        //     // your child or yourself can not become your parent
+        //     if ( IsSelfOrAncestorOf (value) )
+        //         return;
 
-            if ( !ReferenceEquals(parent_, value) ) {
-                if ( !ReferenceEquals(parent_, null) ) {
-                    parent_.children.Remove(this);
-                    parent_ = null;
-                    dirty = true;
-                }
+        //     if ( !ReferenceEquals(parent_, value) ) {
+        //         if ( !ReferenceEquals(parent_, null) ) {
+        //             parent_.children.Remove(this);
+        //             parent_ = null;
+        //             dirty = true;
+        //         }
 
-                if ( !ReferenceEquals(value, null) ) {
-                    parent_ = value;
-                    if ( parent_.children.IndexOf (this) == -1 ) {
-                        parent_.children.Add(this);
-                        dirty = true;
-                    }
-                }
-            }
-        }
+        //         if ( !ReferenceEquals(value, null) ) {
+        //             parent_ = value;
+        //             if ( parent_.children.IndexOf (this) == -1 ) {
+        //                 parent_.children.Add(this);
+        //                 dirty = true;
+        //             }
+        //         }
+        //     }
+        // }
+        // } DISABLE end 
         get {
             return parent_;
         }
@@ -125,7 +126,6 @@ public class exUIElement {
 
     bool dirty = false;
     bool isContent_ = false;
-    bool isContentInline_ = false;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -162,7 +162,7 @@ public class exUIElement {
 
         for ( int i = 0; i < children.Count; ++i ) {
             exUIElement childEL = children[i].Clone();
-            childEL.parent = newEL;
+            newEL.AddElement (childEL);
         }
 
         return newEL;
@@ -198,7 +198,25 @@ public class exUIElement {
     // ------------------------------------------------------------------ 
 
     public void AddElement ( exUIElement _el ) {
-        _el.parent = this;
+        if ( _el == null )
+            return;
+
+        if ( _el.parent == this )
+            return;
+
+        // you can not add your parent or yourself as your child
+        if ( _el.IsSelfOrAncestorOf (this) )
+            return;
+
+        if ( _el.parent != null ) {
+            _el.parent.RemoveElement(_el);
+            _el.parent.SetDirty();
+        }
+
+        children.Add(_el);
+        SetDirty();
+
+        _el.parent_ = this;
     }
 
     // ------------------------------------------------------------------ 
@@ -206,17 +224,14 @@ public class exUIElement {
     // ------------------------------------------------------------------ 
 
     public void RemoveElement ( exUIElement _el ) {
-        if ( children.IndexOf(_el) != -1 ) {
-            _el.parent = null;
+        if ( _el == null )
+            return;
+
+        int idx = children.IndexOf(_el);
+        if ( idx != -1 ) {
+            children.RemoveAt(idx);
+            _el.parent_ = null;
         }
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public int GetElementIndex ( exUIElement _el ) {
-        return children.IndexOf(_el);
     }
 
     // ------------------------------------------------------------------ 
@@ -237,9 +252,18 @@ public class exUIElement {
                 idx = curIdx - 1;
         }
 
-        _el.parent = null;
+        if ( _el.parent != null )
+            _el.parent.RemoveElement(_el);
         this.children.Insert( idx, _el );
         _el.parent_ = this;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public int GetElementIndex ( exUIElement _el ) {
+        return children.IndexOf(_el);
     }
 
     // ------------------------------------------------------------------ 
@@ -328,7 +352,7 @@ public class exUIElement {
         width = System.Math.Min ( System.Math.Max ( width, minWidth ), maxWidth );
 
         // NOTE: auto-margin is a little wested when we have style.width.type == exCSS_size_push.Type.Push
-        if ( style.display == exCSS_display.Block ) {
+        if ( display == exCSS_display.Block ) {
             if ( style.width.type != exCSS_size.Type.Auto &&
                  ( style.marginLeft.type == exCSS_size.Type.Auto || style.marginRight.type == exCSS_size.Type.Auto ) ) 
             {
@@ -383,10 +407,15 @@ public class exUIElement {
         y = y + marginTop + borderSizeTop + paddingTop;
 
         // ======================================================== 
-        // layout content elemtns 
+        // process content, inlnie elements in normal-flow
         // ======================================================== 
 
-        AddContentToNormalFlow ( _x, _y, width, height );
+        if ( display == exCSS_display.Inline ) {
+            BreakContentToNormalFlow ( _x, _y, width, height );
+        }
+        else {
+            AddElementsToNormalFlow ( _x, _y, width, height );
+        } 
 
         // ======================================================== 
         // layout the children
@@ -406,7 +435,7 @@ public class exUIElement {
             bool needNextLine = false;
 
             // do layout if they are not content-line-elements
-            if ( child.isContent == false && child.isContentInline == false ) {
+            if ( child.isContent == false ) {
                 child.Layout( cur_child_x, cur_child_y, width, height );
             }
             else {
@@ -415,15 +444,12 @@ public class exUIElement {
             }
 
             // if this is not a content-inline element, we will BreakTextIntoElements here.
-            if ( child.isContent == false && child.isContentInline == false && child.display == exCSS_display.Inline ) {
+            if ( child.isContent == false && child.display == exCSS_display.Inline ) {
                 if ( child.normalFlows.Count > 0 ) {
                     normalFlows_.InsertRange ( i+1, child.normalFlows );
                     for ( int j = 0; j < child.normalFlows.Count; ++j ) {
                         normalFlows_[j+i+1].x = child.x + child.normalFlows[j].x;
                         normalFlows_[j+i+1].y = child.y + child.normalFlows[j].y;
-                        normalFlows_[j+i+1].isContent_ = false;
-                        normalFlows_[j+i+1].isContentInline_ = true;
-
                     }
                     child.normalFlows.Clear();
                 }
@@ -432,12 +458,9 @@ public class exUIElement {
             
             //
             if ( child.isContent ) {
-                needWrap = true;
-                needNextLine = true;
-            }
-            else if ( child.isContentInline ) {
                 int childTotalWidth = child.GetTotalWidth();
-                if ( lastChild != null && lastChild.display == exCSS_display.Block ) {
+
+                if ( wrap == exCSS_wrap.Pre ) {
                     needWrap = true;
                     needNextLine = true;
                 }
@@ -446,6 +469,10 @@ public class exUIElement {
                         needWrap = true;
                         needNextLine = true;
                     }
+                }
+                else if ( lastChild != null && lastChild.display == exCSS_display.Block ) {
+                    needWrap = true;
+                    needNextLine = true;
                 }
             }
             else if ( child.display == exCSS_display.Block ) {
@@ -547,7 +574,28 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void AddContentToNormalFlow ( int _x, int _y, int _width, int _height ) {
+    void AddElementsToNormalFlow ( int _x, int _y, int _width, int _height ) {
+        normalFlows_.Clear();
+
+        exUIElement newEL = new exUIElement ();
+        newEL.name = name;
+        newEL.id = id;
+        newEL.text = text;
+        newEL.image = image;
+        newEL.contentType = contentType;
+        newEL.style = style.Clone();
+        newEL.style.display = exCSS_display.Inline;
+        newEL.parent_ = parent_; // HACK
+
+        normalFlows_.Add(newEL);
+        normalFlows_.AddRange(children);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void BreakContentToNormalFlow ( int _x, int _y, int _width, int _height ) {
         int cur_x = _x;
         int cur_y = 0;
         int imgWidth = _width;
@@ -590,8 +638,6 @@ public class exUIElement {
             }
             break;
         }
-
-        normalFlows_.AddRange(children);
     }
 
     // ------------------------------------------------------------------ 
