@@ -54,12 +54,12 @@ public static class exCSSUI {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void WhiteSpaceField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_white_space _val ) {
+    public static void WrapField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_wrap _val ) {
         EditorGUILayout.BeginHorizontal ();
             GUILayout.Space( 15.0f * _indentLevel );
             GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
 
-            _val = (exCSS_white_space)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+            _val = (exCSS_wrap)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
         EditorGUILayout.EndHorizontal ();
     }
 
@@ -530,11 +530,11 @@ public static class exCSSUI {
 
             switch ( _prop.type ) {
             case exCSS_image.Type.TextureInfo:
-                _prop.val = (exTextureInfo)EditorGUILayout.ObjectField ( _prop.val, typeof(exTextureInfo), false, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+                _prop.val = EditorGUILayout.ObjectField ( _prop.val, typeof(exTextureInfo), false, new GUILayoutOption[] { GUILayout.Width(80.0f) } ) as exTextureInfo;
                 break;
 
             case exCSS_image.Type.Texture2D:
-                _prop.val = (Texture2D)EditorGUILayout.ObjectField ( _prop.val, typeof(Texture2D), false, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+                _prop.val = EditorGUILayout.ObjectField ( _prop.val, typeof(Texture2D), false, new GUILayoutOption[] { GUILayout.Width(80.0f) } ) as Texture2D;
                 break;
 
             case exCSS_image.Type.Inherit:
@@ -574,11 +574,11 @@ public static class exCSSUI {
 
             switch ( _prop.type ) {
             case exCSS_font.Type.TTF:
-                _prop.val = (Font)EditorGUILayout.ObjectField ( _prop.val, typeof(Font), false, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+                _prop.val = EditorGUILayout.ObjectField ( _prop.val, typeof(Font), false, new GUILayoutOption[] { GUILayout.Width(80.0f) } ) as Font;
                 break;
 
             case exCSS_font.Type.BitmapFont:
-                _prop.val = (exBitmapFont)EditorGUILayout.ObjectField ( _prop.val, typeof(exBitmapFont), false, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+                _prop.val = EditorGUILayout.ObjectField ( _prop.val, typeof(exBitmapFont), false, new GUILayoutOption[] { GUILayout.Width(80.0f) } ) as exBitmapFont;
                 break;
 
             case exCSS_font.Type.Inherit:

@@ -95,7 +95,9 @@ public static class MenuItems {
         textureInfo.rotated = false;
         textureInfo.trim = true;
         textureInfo.trimThreshold = 1;
-        Rect trimRect = exTextureUtility.GetTrimTextureRect(rawTexture,1);
+        Rect trimRect = exTextureUtility.GetTrimTextureRect( rawTexture, 
+                                                             1,
+                                                             new Rect( 0, 0, rawTexture.width, rawTexture.height ) );
         if ( trimRect.width <= 0 || trimRect.height <= 0 ) {
             textureInfo.trim = false;
             trimRect = new Rect ( 0, 0, rawTexture.width, rawTexture.height );

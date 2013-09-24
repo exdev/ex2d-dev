@@ -641,7 +641,18 @@ partial class exAtlasEditor : EditorWindow {
 
 
                 if ( textureInfo.isDiced ) {
-                    // TODO:
+                    foreach (exTextureInfo.Dice dice in textureInfo.dices) {
+                        if (dice.sizeType != exTextureInfo.DiceType.Empty) {
+                            DrawAtlasElement ( MapDicedInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), dice ),
+                                               rawTexture, 
+                                               dice.trim_x,
+                                               dice.trim_y,
+                                               dice.width,
+                                               dice.height,
+                                               dice.rotated,
+                                               selected );
+                        }
+                    }
                 }
                 else {
                     DrawAtlasElement ( MapTextureInfo( new Rect ( 0, 0, atlasRect.width, atlasRect.height ), textureInfo ),
@@ -998,11 +1009,26 @@ partial class exAtlasEditor : EditorWindow {
             if ( textureInfo == null )
                 continue;
 
-            Rect textureInfoRect = MapTextureInfo ( atlasRect, textureInfo );
-            if ( exGeometryUtility.RectRect_Contains( _rect, textureInfoRect ) != 0 ||
-                 exGeometryUtility.RectRect_Intersect( _rect, textureInfoRect ) )
-            {
-                objects.Add (textureInfo);
+            if ( textureInfo.isDiced ) {
+                foreach (exTextureInfo.Dice dice in textureInfo.dices) {
+                    if (dice.sizeType != exTextureInfo.DiceType.Empty) {
+                        Rect dicedInfoRect = MapDicedInfo ( atlasRect, dice );
+                        if ( exGeometryUtility.RectRect_Contains( _rect, dicedInfoRect ) != 0 ||
+                             exGeometryUtility.RectRect_Intersect( _rect, dicedInfoRect ) )
+                        {
+                            objects.Add (textureInfo);
+                            break;
+                        }
+                    }
+                }
+            }
+            else {
+                Rect textureInfoRect = MapTextureInfo ( atlasRect, textureInfo );
+                if ( exGeometryUtility.RectRect_Contains( _rect, textureInfoRect ) != 0 ||
+                     exGeometryUtility.RectRect_Intersect( _rect, textureInfoRect ) )
+                {
+                    objects.Add (textureInfo);
+                }
             }
         }
         foreach ( exBitmapFont bitmapFont in curEdit.bitmapFonts ) {
@@ -1038,6 +1064,23 @@ partial class exAtlasEditor : EditorWindow {
         }
         Selection.activeObject = _activeObj;
         Selection.objects = _selectedObjs;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    Rect MapDicedInfo ( Rect _atlasRect, exTextureInfo.Dice _diceData ) {
+        Rect rect = new Rect ( _diceData.x * curEdit.scale,
+                               _diceData.y * curEdit.scale,
+                               _diceData.rotatedWidth * curEdit.scale,
+                               _diceData.rotatedHeight * curEdit.scale );
+
+        rect.x = _atlasRect.x + rect.x;
+        rect.y = _atlasRect.y + _atlasRect.height - rect.y - rect.height;
+        rect = exGeometryUtility.Rect_FloorToInt(rect);
+
+        return rect;
     }
 
     // ------------------------------------------------------------------ 
@@ -1085,6 +1128,13 @@ partial class exAtlasEditor : EditorWindow {
         try {
             EditorUtility.DisplayProgressBar( "Layout Elements...", "Layout Elements...", 0.5f  );    
 
+            // clear diced data before layout
+            foreach ( exTextureInfo info in curEdit.textureInfos ) {
+                if ( info.shouldDiced ) {
+                    info.BeginDiceData();
+                }
+            }
+
             // sort texture info
             List<exAtlasUtility.Element> elements = exAtlasUtility.GetElementList(curEdit);
             exAtlasUtility.Sort( elements, 
@@ -1104,6 +1154,13 @@ partial class exAtlasEditor : EditorWindow {
             // apply back element to atlas texture info, char info or others
             foreach ( exAtlasUtility.Element el in elements ) {
                 el.Apply();
+            }
+
+            //
+            foreach ( exTextureInfo info in curEdit.textureInfos ) {
+                if ( info.shouldDiced ) {
+                    info.EndDiceData();
+                }
             }
         }
         catch ( exAtlasUtility.LayoutException _exception ) {

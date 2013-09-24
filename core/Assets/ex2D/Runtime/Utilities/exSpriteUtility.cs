@@ -23,21 +23,23 @@ namespace ex2D.Detail {
 public static class exSpriteUtility {
 
     public static void GetDicingCount (exTextureInfo _ti, out int _colCount, out int _rowCount) {
-        if (_ti != null && _ti.diceUnitWidth > 0 && _ti.diceUnitHeight > 0 && _ti.width > 0 && _ti.height > 0) {
-            _colCount = Mathf.Max((int)Mathf.Ceil((float)_ti.width / _ti.diceUnitWidth), 1);
-            _rowCount = Mathf.Max((int)Mathf.Ceil((float)_ti.height / _ti.diceUnitHeight), 1);
-        }
-        else {
-            _colCount = 1;
-            _rowCount = 1;
+        _colCount = 1;
+        _rowCount = 1;
+        if (_ti != null) {
+            if (_ti.diceUnitWidth > 0 && _ti.width > 0) {
+                _colCount = Mathf.CeilToInt((float)_ti.width / _ti.diceUnitWidth);
+            }
+            if (_ti.diceUnitHeight > 0 && _ti.height > 0) {
+                _rowCount = Mathf.CeilToInt((float)_ti.height / _ti.diceUnitHeight);
+            }
         }
     }
 
     public static void GetTilingCount (exISprite _sprite, out int _colCount, out int _rowCount) {
         exTextureInfo ti = _sprite.textureInfo;
         if (ti != null && ti.width + _sprite.tiledSpacing.x != 0 && ti.height + _sprite.tiledSpacing.y != 0) {
-            _colCount = Mathf.Max((int)Mathf.Ceil(_sprite.width / (ti.width + _sprite.tiledSpacing.x)), 1);
-            _rowCount = Mathf.Max((int)Mathf.Ceil(_sprite.height / (ti.height + _sprite.tiledSpacing.y)), 1);
+            _colCount = Mathf.Max(Mathf.CeilToInt(_sprite.width / (ti.width + _sprite.tiledSpacing.x)), 1);
+            _rowCount = Mathf.Max(Mathf.CeilToInt(_sprite.height / (ti.height + _sprite.tiledSpacing.y)), 1);
         }
         else {
             _colCount = 1;
@@ -200,9 +202,9 @@ public static partial class exISpriteExtends {
                 return;
             }
             int quadCount = 0;
-            DiceEnumerator dice = _sprite.textureInfo.GetDiceEnumerator ();
+            DiceEnumerator dice = _sprite.textureInfo.dices;
             while (dice.MoveNext()) {
-                if (dice.Current.sizeType != DiceEnumerator.SizeType.Empty) {
+                if (dice.Current.sizeType != exTextureInfo.DiceType.Empty) {
                     ++quadCount;
                 }
             }

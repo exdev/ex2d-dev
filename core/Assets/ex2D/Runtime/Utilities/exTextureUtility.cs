@@ -25,7 +25,7 @@ public static class exTextureUtility {
     /// get the trimmed texture rect 
     // ------------------------------------------------------------------ 
 
-    public static Rect GetTrimTextureRect ( Texture2D _tex, int _trimThreshold = 1 ) {
+    public static Rect GetTrimTextureRect ( Texture2D _tex, int _trimThreshold, Rect _rect ) {
         Rect rect = new Rect( 0, 0, 0, 0 );
         Color32[] pixels = _tex.GetPixels32(0);
 
@@ -34,8 +34,13 @@ public static class exTextureUtility {
         int ymin = _tex.height;
         int ymax = 0;
 
-        for ( int x = 0; x < _tex.width; ++x ) {
-            for ( int y = 0; y < _tex.height; ++y ) {
+        int x_start = (int)_rect.x;
+        int x_end = (int)(_rect.x + _rect.width);
+        int y_start = (int)_rect.y;
+        int y_end = (int)(_rect.y + _rect.height);
+
+        for ( int x = x_start; x < x_end; ++x ) {
+            for ( int y = y_start; y < y_end; ++y ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
                     xmin = x;
                     x = _tex.width;
@@ -44,8 +49,8 @@ public static class exTextureUtility {
             }
         }
 
-        for ( int x = _tex.width-1; x >= 0; --x ) {
-            for ( int y = 0; y < _tex.height; ++y ) {
+        for ( int x = x_end-1; x >= x_start; --x ) {
+            for ( int y = y_start; y < y_end; ++y ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
                     xmax = x;
                     x = -1;
@@ -54,8 +59,8 @@ public static class exTextureUtility {
             }
         }
 
-        for ( int y = 0; y < _tex.height; ++y ) {
-            for ( int x = 0; x < _tex.width; ++x ) {
+        for ( int y = y_start; y < y_end; ++y ) {
+            for ( int x = x_start; x < x_end; ++x ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
                     ymin = y;
                     y = _tex.height;
@@ -64,8 +69,8 @@ public static class exTextureUtility {
             }
         }
 
-        for ( int y = _tex.height-1; y >= 0; --y ) {
-            for ( int x = 0; x < _tex.width; ++x ) {
+        for ( int y = y_end-1; y >= y_start; --y ) {
+            for ( int x = x_start; x < x_end; ++x ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
                     ymax = y;
                     y = -1;
@@ -105,7 +110,8 @@ public static class exTextureUtility {
     /// fill the source texture to target texture
     // ------------------------------------------------------------------ 
 
-    public static void Fill ( Texture2D _dest, 
+    public static void Fill ( ref Color32[] _destPixels, 
+                              int _destWidth,
                               Texture2D _src, 
                               string _name,
                               int _destX,
@@ -115,15 +121,22 @@ public static class exTextureUtility {
                               int _srcWidth,
                               int _srcHeight,
                               bool _rotated ) {
+        Color32[] srcPixels = _src.GetPixels32(0);
         if ( _rotated == false ) {
-            _dest.SetPixels( _destX, _destY, _srcWidth, _srcHeight, 
-                             _src.GetPixels( _srcX, _srcY, _srcWidth, _srcHeight ) );
+            for ( int j = 0; j < _srcHeight; ++j ) {
+                for ( int i = 0; i < _srcWidth; ++i ) {
+                    int src_x = _srcX + i;
+                    int src_y = _srcY + j;
+                    int dest_x = _destX + i;
+                    int dest_y = _destY + j;
+                    Color32 pixel = srcPixels[src_x + src_y*_src.width];
+                    _destPixels[dest_x + dest_y*_destWidth] = pixel;
+                }
+            }
         }
         else {
             int destWidth = _srcHeight;
             int destHeight = _srcWidth;
-            Color32[] srcPixels = _src.GetPixels32(0);
-
             for ( int j = 0; j < destHeight; ++j ) {
                 for ( int i = 0; i < destWidth; ++i ) {
                     int src_x = _srcX + j;
@@ -131,7 +144,7 @@ public static class exTextureUtility {
                     int dest_x = _destX + i;
                     int dest_y = _destY + j;
                     Color32 pixel = srcPixels[src_x + src_y*_src.width];
-                    _dest.SetPixel( dest_x, dest_y, pixel );
+                    _destPixels[dest_x + dest_y*_destWidth] = pixel;
 
                     // DEBUG { 
                     // try {
@@ -169,24 +182,33 @@ public static class exTextureUtility {
     private static readonly int[] bleedXOffsets = new [] { -1,  0,  1, -1,  1, -1,  0,  1 };
     private static readonly int[] bleedYOffsets = new [] { -1, -1, -1,  0,  0,  1,  1,  1 };
 
-    public static Texture2D ApplyContourBleed ( Texture2D _tex ) {
-        // Extract pixel buffer to be modified
-        Color32[] pixels = _tex.GetPixels32(0);
+    public static void ApplyContourBleed ( ref Color32[] _result, Color32[] _srcPixels, int _textureWidth, Rect _rect ) {
+        if ( _rect.width == 0 || _rect.height == 0 )
+            return;
 
-        for ( int x = 0; x < _tex.width; ++x ) {
-            for ( int y = 0; y < _tex.height; ++y ) {
+        int start_x = (int)_rect.x;
+        int end_x = (int)(_rect.x + _rect.width);
+        int start_y = (int)_rect.y;
+        int end_y = (int)(_rect.y + _rect.height);
+
+        for ( int x = start_x; x < end_x; ++x ) {
+            for ( int y = start_y; y < end_y; ++y ) {
+
                 // only try to bleed into purely transparent pixels
-                if ( pixels[x + y * _tex.width].a == 0 ) {
+                if ( _srcPixels[x + y * _textureWidth].a == 0 ) {
                     // sample all around to find any non-purely transparent pixels
                     for ( int i = 0; i < bleedXOffsets.Length; i++ ) {
                         int sampleX = x + bleedXOffsets[i];
                         int sampleY = y + bleedYOffsets[i];
-						// check to stay within texture bounds
-                        if (sampleX >= 0 && sampleX < _tex.width && sampleY >= 0 && sampleY < _tex.height) {
-                            Color32 color = pixels[sampleX + sampleY * _tex.width];
+
+                        // check to stay within texture bounds
+                        if (sampleX >= start_x && sampleX < end_x && sampleY >= start_y && sampleY < end_y) {
+                            Color32 color = _srcPixels[sampleX + sampleY * _textureWidth];
+
                             if (color.a != 0) {
                                 // Copy RGB color channels to purely transparent pixel, but preserving its 0 alpha
-                                pixels[x + y * _tex.width] = new Color32(color.r, color.g, color.b, 0);
+                                _result[x + y * _textureWidth] = new Color32(color.r, color.g, color.b, 0);
+                                // _result[x + y * _textureWidth] = new Color32( 255, 255, 255, 255 );
                                 break;
                             }
                         }
@@ -194,11 +216,6 @@ public static class exTextureUtility {
                 }
             }
         }
-
-        // Copy modified pixel buffer to new texture (to preserve original element texture and allow user to uncheck the option)
-        Texture2D tex = new Texture2D(_tex.width, _tex.height, _tex.format, false);
-        tex.SetPixels32(pixels);
-        return tex;
     }
 
     // ------------------------------------------------------------------ 
@@ -218,7 +235,7 @@ public static class exTextureUtility {
     /// or transparent) values when it exceeds the bounds of the element.
     // ------------------------------------------------------------------ 
 
-    public static void ApplyPaddingBleed( Texture2D _tex, Rect _rect ) {
+    public static void ApplyPaddingBleed ( ref Color32[] _result, Color32[] _srcPixels, int _textureWidth, int _textureHeight, Rect _rect ) {
         // exAtlas allows bitmap font put in into atlas texture. Some font character didn't have
         // width and height (), they still need one element represent otherwise sprite will not index
         // on it and get null
@@ -234,35 +251,64 @@ public static class exTextureUtility {
         // of one, but the performance could be greatly improved.  That stands *only* if
         // Get/SetPixels32() make a copy of the data, otherwise there is no performance
         // cost to the current algorithm.  It might be worth investigating that...
-        
-        // Extract pixel buffer to be modified
-        Color32[] pixels = _tex.GetPixels32(0);
+
+        int start_x = (int)_rect.x;
+        int end_x = (int)(_rect.x + _rect.width);
+        int start_y = (int)_rect.y;
+        int end_y = (int)(_rect.y + _rect.height);
+
+        int yMin = start_y;
+        int yMax = end_y-1;
+        int xMin = start_x;
+        int xMax = end_x-1;
         
         // Copy top and bottom rows of pixels
-        for ( int x = (int)_rect.xMin; x < (int)_rect.xMax; ++x ) {
-            int yMin = (int)_rect.yMin;
-            if (yMin - 1 >= 0) // Clamp
-                pixels[x + (yMin - 1) * _tex.width] = pixels[x + yMin * _tex.width];
+        for ( int x = start_x; x < end_x; ++x ) {
+            // ignore clamp
+            if ( yMin - 1 >= 0 ) {
+                Color32 color = _srcPixels[x + yMin * _textureWidth];
+                _result[x + (yMin - 1) * _textureWidth] = color;
+            }
 
-            int yMax = (int)_rect.yMax - 1;
-            if (yMax + 1 < _tex.height) // Clamp
-                pixels[x + (yMax + 1) * _tex.width] = pixels[x + yMax * _tex.width];
+            // ignore clamp
+            if ( yMax + 1 < _textureHeight ) {
+                Color32 color = _srcPixels[x + yMax * _textureWidth];
+                _result[x + (yMax + 1) * _textureWidth] = color;
+            }
         }
 
         // Copy left and right columns of pixels (plus 2 extra pixels for corners)
-        int startY = System.Math.Max((int)_rect.yMin - 1, 0); // Clamp
-        int endY = System.Math.Min((int)_rect.yMax + 1, _tex.height); // Clamp
-        for ( int y = startY; y < endY; ++y ) {
-            int xMin = (int)_rect.xMin;
-            if (xMin - 1 >= 0) // Clamp
-                pixels[xMin - 1 + y * _tex.width] = pixels[xMin + y * _tex.width];
+        for ( int y = start_y; y < end_y; ++y ) {
+            // ignore clamp
+            if ( xMin - 1 >= 0 ) {
+                Color32 color = _srcPixels[xMin + y * _textureWidth];
+                _result[xMin - 1 + y * _textureWidth] = color;
+            }
 
-            int xMax = (int)_rect.xMax - 1;
-            if (xMax + 1 < _tex.width) // Clamp
-                pixels[xMax + 1 + y * _tex.width] = pixels[xMax + y * _tex.width];
+            // ignore clamp
+            if ( xMax + 1 < _textureWidth ) {
+                Color32 color = _srcPixels[xMax + y * _textureWidth];
+                // color.a = 0;
+                _result[xMax + 1 + y * _textureWidth] = color;
+            }
         }
 
-        // Copy modified pixel buffer back to same texture (we are modifying the destination atlas anyway)
-        _tex.SetPixels32(pixels);
+        // corners
+        if ( xMin-1 >= 0 && yMin-1 >= 0 ) {
+            Color32 color = _srcPixels[xMin + yMin * _textureWidth];
+            _result[xMin - 1 + (yMin - 1) * _textureWidth] = color;
+        }
+        if ( xMin-1 >= 0 && yMax+1 < _textureHeight ) {
+            Color32 color = _srcPixels[xMin + yMax * _textureWidth];
+            _result[xMin - 1 + (yMax + 1) * _textureWidth] = color;
+        }
+        if ( xMax+1 < _textureWidth && yMax+1 < _textureHeight ) {
+            Color32 color = _srcPixels[xMax + yMax * _textureWidth];
+            _result[xMax + 1 + (yMax + 1) * _textureWidth] = color;
+        }
+        if ( xMax+1 < _textureWidth && yMin-1 >= 0 ) {
+            Color32 color = _srcPixels[xMax + yMin * _textureWidth];
+            _result[xMax + 1 + (yMin - 1) * _textureWidth] = color;
+        }
     }
 }
