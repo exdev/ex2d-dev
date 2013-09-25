@@ -364,6 +364,21 @@ public partial class exTextureInfo : ScriptableObject {
     }
 
     private Dice[] editorDiceDatas = null;  ///< not committed value, used for editor
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    
+    public void ClearDiceData () {
+        int editorDiceCount = editorDiceXCount * editorDiceYCount;
+        if (editorDiceDatas == null || editorDiceDatas.Length != editorDiceCount) {
+            Debug.LogError("You should GenerateDiceData first");
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Start commit dice data
+    // ------------------------------------------------------------------ 
     
     private void UpdateDiceData () {
         int editorDiceCount = editorDiceXCount * editorDiceYCount;
