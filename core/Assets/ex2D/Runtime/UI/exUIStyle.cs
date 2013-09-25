@@ -43,8 +43,8 @@ public enum exCSS_position {
 
 // white-space
 public enum exCSS_wrap {
-    None,
-    Word,
+    Normal,
+    NoWrap,
     Pre,
     PreWrap,
     Inherit
@@ -320,7 +320,7 @@ public class exUIStyle {
 
     // content
     public exCSS_color contentColor = new exCSS_color( exCSS_color.Type.Color, new Color( 255, 255, 255, 255 ) );
-    public exCSS_wrap wrap = exCSS_wrap.Word;
+    public exCSS_wrap wrap = exCSS_wrap.Normal;
     public exCSS_alignment textAlign = exCSS_alignment.Left;
     public exCSS_decoration textDecoration = exCSS_decoration.None;
     public exCSS_size_nopercentage letterSpacing = new exCSS_size_nopercentage( exCSS_size_nopercentage.Type.Auto, 0.0f );
@@ -575,7 +575,7 @@ public class exUIStyle {
 
         // white-space
         if ( wrap == exCSS_wrap.Inherit ) {
-            _el.wrap = (_el.parent != null) ? _el.parent.wrap : exCSS_wrap.Word;
+            _el.wrap = (_el.parent != null) ? _el.parent.wrap : exCSS_wrap.Normal;
         }
         else {
             _el.wrap = wrap;

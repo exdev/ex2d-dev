@@ -118,7 +118,7 @@ public class exUIElement {
     [System.NonSerialized] public Object font = null;
     [System.NonSerialized] public int fontSize = 0;
     [System.NonSerialized] public Color contentColor = new Color( 0.0f, 0.0f, 0.0f, 0.0f );
-    [System.NonSerialized] public exCSS_wrap wrap = exCSS_wrap.Word;
+    [System.NonSerialized] public exCSS_wrap wrap = exCSS_wrap.Normal;
     [System.NonSerialized] public int letterSpacing = 0;
     [System.NonSerialized] public int wordSpacing = 0;
     [System.NonSerialized] public int lineHeight = 0;
@@ -446,23 +446,29 @@ public class exUIElement {
             if ( child.isContent == false && child.display == exCSS_display.Inline ) {
                 if ( child.normalFlows.Count > 0 ) {
                     normalFlows_.InsertRange ( i+1, child.normalFlows );
-                    for ( int j = 0; j < child.normalFlows.Count; ++j ) {
-                        normalFlows_[j+i+1].x = child.x + child.normalFlows[j].x;
-                        normalFlows_[j+i+1].y = child.y + child.normalFlows[j].y;
+                    // for ( int j = 0; j < child.normalFlows.Count; ++j ) {
+                    //     normalFlows_[j+i+1].x = child.x + child.normalFlows[j].x;
+                    //     normalFlows_[j+i+1].y = child.y + child.normalFlows[j].y;
+                    // }
+
+                    // re-adjust multi-line inline-block. this is good for debug
+                    if ( child.normalFlows.Count > 1 ) {
+                        child.x = 0;
                     }
+
                     child.normalFlows.Clear();
                 }
+
                 continue;
             }
             
             //
             if ( child.isContent ) {
-                int childTotalWidth = child.GetTotalWidth();
-
-                if ( wrap == exCSS_wrap.Pre ) {
+                if ( wrap != exCSS_wrap.Normal ) {
                     needWrap = true;
                 }
-                else if ( wrap == exCSS_wrap.Word || wrap == exCSS_wrap.PreWrap ) {
+                else {
+                    int childTotalWidth = child.GetTotalWidth();
                     if ( (lineChildCount > 0) && (cur_child_x + childTotalWidth) > width ) {
                         needWrap = true;
                     }
@@ -472,8 +478,8 @@ public class exUIElement {
                 needWrap = true;
             }
             else if ( child.display == exCSS_display.InlineBlock ) {
-                int childTotalWidth = child.GetTotalWidth();
-                if ( wrap == exCSS_wrap.Word || wrap == exCSS_wrap.PreWrap ) {
+                if ( wrap == exCSS_wrap.Normal || wrap == exCSS_wrap.PreWrap ) {
+                    int childTotalWidth = child.GetTotalWidth();
                     if ( (lineChildCount > 0) && (cur_child_x + childTotalWidth) > width ) {
                         needWrap = true;
                     }
@@ -485,20 +491,20 @@ public class exUIElement {
 
                 // TODO: adjust last line childrens
 
-                // wrap-x
-                child.x = child.x - cur_child_x;  // re-adjust x
+                // check and store max-line-width
+                if ( cur_child_x > maxLineWidth )
+                    maxLineWidth = cur_child_x;
+
+                // re-adjust x, wrap it
+                child.x = child.x - cur_child_x;
                 cur_child_x = 0;
 
                 // re-adjust y
                 child.y = child.y + maxLineHeight;
 
+                // advance-y
                 cur_child_y += maxLineHeight;
                 maxLineHeight = 0;
-
-                // check and store max-line-width
-                if ( cur_child_x > maxLineWidth )
-                    maxLineWidth = cur_child_x;
-
                 lineChildCount = 0;
             }
 
@@ -515,10 +521,12 @@ public class exUIElement {
 
             // start a new line directly if this is a block
             if ( child.display == exCSS_display.Block ) {
-                maxLineWidth = cur_child_x;
+                if ( cur_child_x > maxLineWidth )
+                    maxLineWidth = cur_child_x;
                 cur_child_x = 0;
                 cur_child_y += maxLineHeight;
                 maxLineHeight = 0;
+                lineChildCount = 0;
             }
         }
 
@@ -527,11 +535,13 @@ public class exUIElement {
             maxLineWidth = cur_child_x;
         cur_child_y += maxLineHeight;
 
-        // calculate the height after child
+        // calculate auto height
         if ( style.height.type == exCSS_size.Type.Auto ) {
             height += cur_child_y;
             height = System.Math.Min ( System.Math.Max ( height, minHeight ), maxHeight );
         }
+
+        // calculate auto width
         if ( style.width.type == exCSS_size.Type.Auto ) {
             bool useContentWidth = false;
 
@@ -577,7 +587,7 @@ public class exUIElement {
         newEL.contentType = contentType;
         newEL.style = style.Clone();
         newEL.style.display = exCSS_display.Inline;
-        newEL.parent_ = parent_; // HACK
+        newEL.parent_ = parent_; // NOTE: DO NOT use AddElement which will make this element become real child.
 
         normalFlows_.Add(newEL);
         normalFlows_.AddRange(children);
@@ -646,6 +656,7 @@ public class exUIElement {
         int cur_y = _y;
 
         exUIElement newEL = new exUIElement();
+        newEL.name = name + " [0]";
         newEL.isContent_ = true;
         newEL.style = null;
         newEL.display = exCSS_display.Inline; 
@@ -677,23 +688,24 @@ public class exUIElement {
         exTextUtility.WrapMode wrapMode = exTextUtility.WrapMode.None;
 
         switch ( wrap ) {
-        case exCSS_wrap.Word:    wrapMode = exTextUtility.WrapMode.Word;    break;
-        case exCSS_wrap.Pre:     wrapMode = exTextUtility.WrapMode.Pre;     break;
-        case exCSS_wrap.None:    wrapMode = exTextUtility.WrapMode.None;    break;
-        case exCSS_wrap.PreWrap: wrapMode = exTextUtility.WrapMode.PreWrap; break;
+        case exCSS_wrap.Normal:    wrapMode = exTextUtility.WrapMode.Word;    break;
+        case exCSS_wrap.Pre:       wrapMode = exTextUtility.WrapMode.Pre;     break;
+        case exCSS_wrap.NoWrap:    wrapMode = exTextUtility.WrapMode.None;    break;
+        case exCSS_wrap.PreWrap:   wrapMode = exTextUtility.WrapMode.PreWrap; break;
         }
+
+        bool finished = false;
+        int line_width = 0;
+        int cur_x = 0;
+        int cur_y = _y;
+        int cur_index = 0;
+        int cur_width = _width - _x;
+        bool firstLineCheck = (_x > 0 && display != exCSS_display.Inline);
+        StringBuilder builder = new StringBuilder(_text.Length);
+        int line_id = 0;
 
         if ( font is Font ) {
             (font as Font).RequestCharactersInTexture ( _text, fontSize, FontStyle.Normal );
-
-            bool finished = false;
-            int line_width = 0;
-            int cur_x = 0;
-            int cur_y = _y;
-            int cur_index = 0;
-            int cur_width = _width - _x;
-            bool firstLineCheck = (_x > 0 && display != exCSS_display.Inline);
-            StringBuilder builder = new StringBuilder(_text.Length);
 
             while ( finished == false ) {
                 // int start_index = cur_index;
@@ -726,6 +738,7 @@ public class exUIElement {
 
                 // generate element
                 exUIElement newEL = new exUIElement();
+                newEL.name = name + " [" + line_id + "]";
                 newEL.isContent_ = true;
                 newEL.style = null;
                 newEL.display = exCSS_display.Inline; 
@@ -742,7 +755,6 @@ public class exUIElement {
                 newEL.y = cur_y;
                 newEL.text = builder.ToString();
                 newEL.contentType = ContentType.Text;
-                // newEL.text = builder.ToString( 0, cur_index - start_index );
                 normalFlows_.Add(newEL);
 
                 //
@@ -750,20 +762,13 @@ public class exUIElement {
                 cur_y += lineHeight;
                 cur_width = _width;
                 ++cur_index;
+                ++line_id;
             }
 
             _x = line_width;
             _y = cur_y;
         }
         else if ( font is exBitmapFont ) {
-            bool finished = false;
-            int line_width = 0;
-            int cur_x = 0;
-            int cur_y = _y;
-            int cur_index = 0;
-            int cur_width = _width - _x;
-            bool firstLineCheck = (_x > 0 && display != exCSS_display.Inline);
-            StringBuilder builder = new StringBuilder(_text.Length);
 
             while ( finished == false ) {
                 // int start_index = cur_index;
@@ -796,6 +801,7 @@ public class exUIElement {
 
                 // generate element
                 exUIElement newEL = new exUIElement();
+                newEL.name = name + " [" + line_id + "]";
                 newEL.isContent_ = true;
                 newEL.style = null;
                 newEL.display = exCSS_display.Inline; 
@@ -811,7 +817,7 @@ public class exUIElement {
                 newEL.x = cur_x;
                 newEL.y = cur_y;
                 newEL.text = builder.ToString();
-                // newEL.text = builder.ToString( 0, cur_index - start_index );
+                newEL.contentType = ContentType.Text;
                 normalFlows_.Add(newEL);
 
                 //
@@ -819,6 +825,7 @@ public class exUIElement {
                 cur_y += lineHeight;
                 cur_width = _width;
                 ++cur_index;
+                ++line_id;
             }
 
             _x = line_width;
