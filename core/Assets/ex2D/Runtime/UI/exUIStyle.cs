@@ -42,10 +42,10 @@ public enum exCSS_position {
 }
 
 // white-space
-public enum exCSS_white_space {
+public enum exCSS_wrap {
     Normal,
-    Pre,
     NoWrap,
+    Pre,
     PreWrap,
     Inherit
 }
@@ -300,7 +300,7 @@ public class exUIStyle {
 
     // border
     public exCSS_image borderImage    = new exCSS_image( exCSS_image.Type.TextureInfo, null );
-    public exCSS_color borderColor    = new exCSS_color( exCSS_color.Type.Color, new Color( 0, 0, 0, 255 ) );
+    public exCSS_color borderColor    = new exCSS_color( exCSS_color.Type.Color, new Color( 255, 255, 255, 255 ) );
     public exCSS_size_lengthonly borderSizeTop    = new exCSS_size_lengthonly( exCSS_size_lengthonly.Type.Length, 0.0f );
     public exCSS_size_lengthonly borderSizeRight  = new exCSS_size_lengthonly( exCSS_size_lengthonly.Type.Length, 0.0f );
     public exCSS_size_lengthonly borderSizeBottom = new exCSS_size_lengthonly( exCSS_size_lengthonly.Type.Length, 0.0f );
@@ -318,9 +318,9 @@ public class exUIStyle {
     public exCSS_font font = new exCSS_font( exCSS_font.Type.Inherit, null );
     public exCSS_size_noauto fontSize = new exCSS_size_noauto( exCSS_size_noauto.Type.Inherit, 16.0f );
 
-    // text
-    public exCSS_color textColor = new exCSS_color( exCSS_color.Type.Color, new Color( 255, 255, 255, 255 ) );
-    public exCSS_white_space whitespace = exCSS_white_space.Normal;
+    // content
+    public exCSS_color contentColor = new exCSS_color( exCSS_color.Type.Color, new Color( 255, 255, 255, 255 ) );
+    public exCSS_wrap wrap = exCSS_wrap.Normal;
     public exCSS_alignment textAlign = exCSS_alignment.Left;
     public exCSS_decoration textDecoration = exCSS_decoration.None;
     public exCSS_size_nopercentage letterSpacing = new exCSS_size_nopercentage( exCSS_size_nopercentage.Type.Auto, 0.0f );
@@ -335,6 +335,29 @@ public class exUIStyle {
     ///////////////////////////////////////////////////////////////////////////////
     // functions
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public exUIStyle InlineContent () {
+        exUIStyle newStyle = new exUIStyle ();
+
+        // font
+        newStyle.font = new exCSS_font( font.type, font.val );
+        newStyle.fontSize = new exCSS_size_noauto( fontSize.type, fontSize.val );
+
+        // text
+        newStyle.contentColor = new exCSS_color( contentColor.type, contentColor.val );
+        newStyle.wrap = wrap;
+        newStyle.textAlign = textAlign;
+        newStyle.textDecoration = textDecoration;
+        newStyle.letterSpacing = new exCSS_size_nopercentage( letterSpacing.type, letterSpacing.val );
+        newStyle.wordSpacing = new exCSS_size_nopercentage( wordSpacing.type, wordSpacing.val );
+        newStyle.lineHeight = new exCSS_size( lineHeight.type, lineHeight.val );
+
+        return newStyle;
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -396,8 +419,8 @@ public class exUIStyle {
         newStyle.fontSize = new exCSS_size_noauto( fontSize.type, fontSize.val );
 
         // text
-        newStyle.textColor = new exCSS_color( textColor.type, textColor.val );
-        newStyle.whitespace = whitespace;
+        newStyle.contentColor = new exCSS_color( contentColor.type, contentColor.val );
+        newStyle.wrap = wrap;
         newStyle.textAlign = textAlign;
         newStyle.textDecoration = textDecoration;
         newStyle.letterSpacing = new exCSS_size_nopercentage( letterSpacing.type, letterSpacing.val );
@@ -566,19 +589,19 @@ public class exUIStyle {
         }
 
         // text-color
-        if ( textColor.type == exCSS_color.Type.Inherit ) {
-            _el.textColor = (_el.parent != null) ? _el.parent.textColor : Color.white;
+        if ( contentColor.type == exCSS_color.Type.Inherit ) {
+            _el.contentColor = (_el.parent != null) ? _el.parent.contentColor : Color.white;
         }
         else {
-            _el.textColor = textColor.val;
+            _el.contentColor = contentColor.val;
         }
 
         // white-space
-        if ( whitespace == exCSS_white_space.Inherit ) {
-            _el.whitespace = (_el.parent != null) ? _el.parent.whitespace : exCSS_white_space.Normal;
+        if ( wrap == exCSS_wrap.Inherit ) {
+            _el.wrap = (_el.parent != null) ? _el.parent.wrap : exCSS_wrap.Normal;
         }
         else {
-            _el.whitespace = whitespace;
+            _el.wrap = wrap;
         }
 
         // letter-spacing

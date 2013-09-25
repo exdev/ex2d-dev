@@ -1130,7 +1130,9 @@ partial class exAtlasEditor : EditorWindow {
 
             // clear diced data before layout
             foreach ( exTextureInfo info in curEdit.textureInfos ) {
-                info.CreateDiceData();
+                if ( info.shouldDiced ) {
+                    info.BeginDiceData();
+                }
             }
 
             // sort texture info
@@ -1156,7 +1158,9 @@ partial class exAtlasEditor : EditorWindow {
 
             //
             foreach ( exTextureInfo info in curEdit.textureInfos ) {
-                info.CommitDiceData();
+                if ( info.shouldDiced ) {
+                    info.EndDiceData();
+                }
             }
         }
         catch ( exAtlasUtility.LayoutException _exception ) {

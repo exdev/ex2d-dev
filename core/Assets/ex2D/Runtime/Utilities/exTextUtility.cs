@@ -69,9 +69,9 @@ public static class exTextUtility {
                 bool doShrink = false;
                 bool skipThis = false;
 
-                // pre-wrap will shrink the started white-space
+                // shrink the started white-space
                 if ( cur_index == _start_index &&
-                     ( _wrap == WrapMode.PreWrap || _wrap == WrapMode.Word || _wrap == WrapMode.None ) ) 
+                     ( /*_wrap == WrapMode.PreWrap ||*/ _wrap == WrapMode.Word || _wrap == WrapMode.None ) ) 
                 {
                     skipThis = true;
                     doShrink = true;
@@ -261,8 +261,9 @@ public static class exTextUtility {
                             break;
                     }
                 }
-
-                lastCharInfo = charInfo;
+            }
+            else {
+                cur_index = next_index;
             }
         }
 

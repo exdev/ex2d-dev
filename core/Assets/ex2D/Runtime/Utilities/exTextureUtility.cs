@@ -25,7 +25,7 @@ public static class exTextureUtility {
     /// get the trimmed texture rect 
     // ------------------------------------------------------------------ 
 
-    public static Rect GetTrimTextureRect ( Texture2D _tex, int _trimThreshold = 1 ) {
+    public static Rect GetTrimTextureRect ( Texture2D _tex, int _trimThreshold, Rect _rect ) {
         Rect rect = new Rect( 0, 0, 0, 0 );
         Color32[] pixels = _tex.GetPixels32(0);
 
@@ -34,8 +34,13 @@ public static class exTextureUtility {
         int ymin = _tex.height;
         int ymax = 0;
 
-        for ( int x = 0; x < _tex.width; ++x ) {
-            for ( int y = 0; y < _tex.height; ++y ) {
+        int x_start = (int)_rect.x;
+        int x_end = (int)(_rect.x + _rect.width);
+        int y_start = (int)_rect.y;
+        int y_end = (int)(_rect.y + _rect.height);
+
+        for ( int x = x_start; x < x_end; ++x ) {
+            for ( int y = y_start; y < y_end; ++y ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
                     xmin = x;
                     x = _tex.width;
@@ -44,8 +49,8 @@ public static class exTextureUtility {
             }
         }
 
-        for ( int x = _tex.width-1; x >= 0; --x ) {
-            for ( int y = 0; y < _tex.height; ++y ) {
+        for ( int x = x_end-1; x >= x_start; --x ) {
+            for ( int y = y_start; y < y_end; ++y ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
                     xmax = x;
                     x = -1;
@@ -54,8 +59,8 @@ public static class exTextureUtility {
             }
         }
 
-        for ( int y = 0; y < _tex.height; ++y ) {
-            for ( int x = 0; x < _tex.width; ++x ) {
+        for ( int y = y_start; y < y_end; ++y ) {
+            for ( int x = x_start; x < x_end; ++x ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
                     ymin = y;
                     y = _tex.height;
@@ -64,8 +69,8 @@ public static class exTextureUtility {
             }
         }
 
-        for ( int y = _tex.height-1; y >= 0; --y ) {
-            for ( int x = 0; x < _tex.width; ++x ) {
+        for ( int y = y_end-1; y >= y_start; --y ) {
+            for ( int x = x_start; x < x_end; ++x ) {
                 if ( pixels[x+y*_tex.width].a >= _trimThreshold ) {
                     ymax = y;
                     y = -1;

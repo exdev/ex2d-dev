@@ -109,7 +109,7 @@ public partial class exTextureInfo : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public struct Dice {            
-        public DiceType sizeType;
+        public DiceType sizeType;   ///< 当前格子的尺寸类型。只有用DiceEnumerator遍历时才有值
         public int offset_x;    ///< 当前格子的左下角坐标经过trim后的偏移，为0相当于没有trim
         public int offset_y;    ///< 当前格子的左下角坐标经过trim后的偏移，为0相当于没有trim
         public int width;       ///< 当前格子的宽度
@@ -128,19 +128,8 @@ public partial class exTextureInfo : ScriptableObject {
             }
         }
 #if UNITY_EDITOR
-        public DiceEnumerator enumerator;
-        public int trim_x {      ///< 当前格子在rawTexture中的UV起始点
-            get {
-                int col = enumerator.diceIndex % enumerator.columnCount;
-                return enumerator.textureInfo.trim_x + col * enumerator.textureInfo.diceUnitWidth + offset_x;
-            }
-        }
-        public int trim_y {      ///< 当前格子在rawTexture中的UV起始点
-            get {
-                int row = enumerator.diceIndex / enumerator.columnCount;
-                return enumerator.textureInfo.trim_y + row * enumerator.textureInfo.diceUnitHeight + offset_y;
-            }
-        }
+        public int trim_x;      ///< 当前格子在rawTexture中的UV起始点
+        public int trim_y;      ///< 当前格子在rawTexture中的UV起始点
 #endif
     }
 }
@@ -167,7 +156,6 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
     
 #if UNITY_EDITOR
     public int columnCount;
-    public int rowCount;
     public int diceIndex;     ///< current dice index
     public exTextureInfo textureInfo;
 #endif
@@ -179,6 +167,7 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
         dataIndex = -1;
 #if UNITY_EDITOR
         textureInfo = _textureInfo;
+        int rowCount;
         exSpriteUtility.GetDicingCount(textureInfo, out columnCount, out rowCount);
         diceIndex = -1;
 #endif
@@ -213,7 +202,10 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
         get {
             exTextureInfo.Dice d = new exTextureInfo.Dice();
 #if UNITY_EDITOR
-            d.enumerator = this;
+            int col = diceIndex % columnCount;
+            d.trim_x = textureInfo.trim_x + col * textureInfo.diceUnitWidth;
+            int row = diceIndex / columnCount;
+            d.trim_y = textureInfo.trim_y + row * textureInfo.diceUnitHeight;
 #endif
             if (diceData[dataIndex] == EMPTY) {
                 d.sizeType = exTextureInfo.DiceType.Empty;
@@ -241,6 +233,10 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
                 d.height = diceUnitHeight;
                 d.rotated = (diceData[dataIndex] == MAX_ROTATED);
             }
+#if UNITY_EDITOR
+            d.trim_x += d.offset_x;
+            d.trim_y += d.offset_y;
+#endif
             return d;
         }
     }
@@ -360,50 +356,62 @@ public partial class exTextureInfo : ScriptableObject {
     }
 
     public bool shouldDiced {
-        get { return rawEditorDiceUnitWidth > 0 || rawEditorDiceUnitHeight > 0; }
+        get { 
+            return (rawEditorDiceUnitWidth > 0 && rawEditorDiceUnitWidth < width) || 
+                    (rawEditorDiceUnitHeight > 0 && rawEditorDiceUnitHeight < height);
+        }
     }
 
     private Dice[] editorDiceDatas = null;  ///< not committed value, used for editor
 
     // ------------------------------------------------------------------ 
-    // Desc:
+    /// Start commit dice data
     // ------------------------------------------------------------------ 
     
-    public void ClearDiceData () {
+    public void GenerateDiceData () {
+        int editorDiceCount = editorDiceXCount * editorDiceYCount;
+        editorDiceDatas = new Dice[editorDiceCount];
+
+        int xCount = editorDiceXCount;
+        int yCount = editorDiceYCount;
+        int unitWidth = editorDiceUnitWidth;
+        int unitHeight = editorDiceUnitHeight;
+
+        for ( int x = 0; x < xCount; ++x ) {
+            for ( int y = 0; y < yCount; ++y ) {
+                int diceWidth = unitWidth;
+                if ( x == xCount-1 )
+                    diceWidth = width - unitWidth * x;
+
+                int diceHeight = unitHeight;
+                if ( y == yCount-1 )
+                    diceHeight = height - unitHeight * y;
+
+                Dice dice = new Dice();
+                dice.offset_x = 0;
+                dice.offset_y = 0;
+                dice.width = diceWidth;
+                dice.height = diceHeight;
+                dice.x = 0;
+                dice.y = 0;
+                dice.rotated = false;
+                dice.trim_x = trim_x + x * unitWidth;
+                dice.trim_y = trim_y + y * unitHeight;
+                editorDiceDatas[x + y * xCount] = dice;
+            }
+        }
+        EndDiceData ();
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Start commit dice data
+    // ------------------------------------------------------------------ 
+    
+    public void BeginDiceData () {
         int editorDiceCount = editorDiceXCount * editorDiceYCount;
         if (editorDiceDatas == null || editorDiceDatas.Length != editorDiceCount) {
             Debug.LogError("You should GenerateDiceData first");
         }
-    }
-
-    // ------------------------------------------------------------------ 
-    /// Start commit dice data
-    // ------------------------------------------------------------------ 
-    
-    private void UpdateDiceData () {
-        int editorDiceCount = editorDiceXCount * editorDiceYCount;
-        if (editorDiceDatas == null) {
-            editorDiceDatas = new Dice[editorDiceCount];
-            // decompress data
-            int diceID = 0;
-            foreach (Dice dice in dices) {
-                if (diceID >= editorDiceDatas.Length) {
-                    break;
-                }
-                editorDiceDatas[diceID++] = dice;
-            }
-        }
-        else if (editorDiceDatas.Length != editorDiceCount) {
-            System.Array.Resize(ref editorDiceDatas, editorDiceCount);
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    /// Start commit dice data
-    // ------------------------------------------------------------------ 
-
-    public void CreateDiceData () {
-        editorDiceDatas = new Dice[editorDiceXCount * editorDiceYCount];
     }
 
     // ------------------------------------------------------------------ 
@@ -415,12 +423,10 @@ public partial class exTextureInfo : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public void SetDiceData (int _diceIndex, Dice _dice) {
-        UpdateDiceData();
         editorDiceDatas[_diceIndex] = _dice;
     }
 
     public Dice GetDiceData (int _diceIndex) {
-        UpdateDiceData();
         return editorDiceDatas[_diceIndex];
     }
 
@@ -428,7 +434,7 @@ public partial class exTextureInfo : ScriptableObject {
     /// Save committed value
     // ------------------------------------------------------------------ 
 
-    public void CommitDiceData () {
+    public void EndDiceData () {
         if (rawEditorDiceUnitWidth_ == -1) {
             rawEditorDiceUnitWidth_ = diceUnitWidth;    // keep dice value
         }
@@ -441,10 +447,21 @@ public partial class exTextureInfo : ScriptableObject {
         }
         diceData.Add (editorDiceUnitWidth);
         diceData.Add (editorDiceUnitHeight);
-        foreach (Dice dice in editorDiceDatas) {
-           DiceEnumerator.AddDiceData(this, diceData, dice);
+
+        int lastVisible = editorDiceDatas.Length - 1;   // used for trimming
+        for (; lastVisible >= 0; --lastVisible) {
+            Dice dice = editorDiceDatas[lastVisible];
+            if (dice.width > 0 && dice.height > 0) {
+                break;
+            }
         }
-        // TODO: trim last empty dice
+        int visibleCount = lastVisible + 1;
+        foreach (Dice dice in editorDiceDatas) {
+            if (visibleCount-- <= 0) {
+                break;  // trim end empty dice
+            }
+            DiceEnumerator.AddDiceData(this, diceData, dice);
+        }
     }
 }
 

@@ -858,6 +858,10 @@ namespace ex2D.Detail {
     
         public static void DicedUpdateBuffers (exSpriteBase _sprite, exTextureInfo _textureInfo, bool _useTextureOffset, Space _space, 
                                                exList<Vector3> _vertices, exList<Vector2> _uvs, exList<int> _indices, int _vbIndex, int _ibIndex) {
+            if (_textureInfo.isDiced == false) {
+                SimpleUpdateBuffers(_sprite, _textureInfo, _useTextureOffset, _space, _vertices, _uvs, _indices, _vbIndex, _ibIndex);
+                return;
+            }
             //if (_vertices.Count == 0) {
             //    return;
             //}
@@ -867,8 +871,6 @@ namespace ex2D.Detail {
                 SimpleVertexBufferToDiced(_sprite, _textureInfo, _vertices, _vbIndex);
             }
             
-            //int colCount, rowCount;
-            //exSpriteUtility.GetDicingCount(_textureInfo, out colCount, out rowCount);
             if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
                 /* dice index:
                 8  9  10 11
@@ -886,7 +888,7 @@ namespace ex2D.Detail {
                 }
             }
             
-            if ((_sprite.updateFlags & exUpdateFlags.UV) != 0 && _textureInfo.isDiced) {
+            if ((_sprite.updateFlags & exUpdateFlags.UV) != 0) {
                 Vector2 texelSize;
                 if (_textureInfo.texture != null) {
                     texelSize = _textureInfo.texture.texelSize;
@@ -895,20 +897,22 @@ namespace ex2D.Detail {
                     texelSize = new Vector2(1.0f / _textureInfo.rawWidth, 1.0f / _textureInfo.rawHeight);
                 }
                 foreach (exTextureInfo.Dice dice in _textureInfo.dices) {
-                    Vector2 start = new Vector2(dice.x * texelSize.x, dice.y * texelSize.y);
-                    Vector2 end = new Vector2((dice.x + dice.rotatedWidth) * texelSize.x, 
-                                              (dice.y + dice.rotatedHeight) * texelSize.y);
-                    if ( dice.rotated ) {
-                        _uvs.buffer[_vbIndex++] = new Vector2(end.x, start.y);
-                        _uvs.buffer[_vbIndex++] = start;
-                        _uvs.buffer[_vbIndex++] = new Vector2(start.x, end.y);
-                        _uvs.buffer[_vbIndex++] = end;
-                    }
-                    else {
-                        _uvs.buffer[_vbIndex++] = start;
-                        _uvs.buffer[_vbIndex++] = new Vector2(start.x, end.y);
-                        _uvs.buffer[_vbIndex++] = end;
-                        _uvs.buffer[_vbIndex++] = new Vector2(end.x, start.y);
+                    if (dice.sizeType != exTextureInfo.DiceType.Empty) {
+                        Vector2 start = new Vector2(dice.x * texelSize.x, dice.y * texelSize.y);
+                        Vector2 end = new Vector2((dice.x + dice.rotatedWidth) * texelSize.x, 
+                                                  (dice.y + dice.rotatedHeight) * texelSize.y);
+                        if ( dice.rotated ) {
+                            _uvs.buffer[_vbIndex++] = new Vector2(end.x, start.y);
+                            _uvs.buffer[_vbIndex++] = start;
+                            _uvs.buffer[_vbIndex++] = new Vector2(start.x, end.y);
+                            _uvs.buffer[_vbIndex++] = end;
+                        }
+                        else {
+                            _uvs.buffer[_vbIndex++] = start;
+                            _uvs.buffer[_vbIndex++] = new Vector2(start.x, end.y);
+                            _uvs.buffer[_vbIndex++] = end;
+                            _uvs.buffer[_vbIndex++] = new Vector2(end.x, start.y);
+                        }
                     }
                 }
             }
@@ -966,15 +970,11 @@ namespace ex2D.Detail {
                 Vector3 bottomLeft = rowBottomLeft;
                 Vector3 topLeft = bottomLeft + diceBottomToTop;
                 for (int c = 0; c < colCount; ++c) {
-#if EX_DEBUG
                     bool hasNext = diceEnumerator.MoveNext ();
                     if (hasNext == false) {
-		                Debug.LogError("Not enough dice data");
-                        break;
+                        // 后面都被Trim掉了
+                        return;
 	                }
-#else
-                    diceEnumerator.MoveNext ();
-#endif
                     exTextureInfo.Dice dice = diceEnumerator.Current;
                     if (dice.sizeType == exTextureInfo.DiceType.Max) {
                         _vertices.buffer[i++] = bottomLeft;

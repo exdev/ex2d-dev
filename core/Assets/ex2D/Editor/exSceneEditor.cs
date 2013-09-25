@@ -691,9 +691,15 @@ class exSceneEditor : EditorWindow {
         if ( _sprite.shader == null )
             _sprite.shader = Shader.Find("ex2D/Alpha Blended");
 
-        if ( _sprite.textureInfo != null && _sprite.textureInfo.hasBorder ) {
-            _sprite.spriteType = exSpriteType.Sliced;
-            _sprite.customSize = true;
+        if ( _sprite.textureInfo != null ) {
+            if ( _sprite.textureInfo.isDiced ) {
+                _sprite.spriteType = exSpriteType.Diced;
+                _sprite.customSize = false;
+            }
+            else if ( _sprite.textureInfo.hasBorder ) {
+                _sprite.spriteType = exSpriteType.Sliced;
+                _sprite.customSize = true;
+            }
         }
     }
 

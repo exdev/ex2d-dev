@@ -54,12 +54,12 @@ public static class exCSSUI {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void WhiteSpaceField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_white_space _val ) {
+    public static void WrapField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_wrap _val ) {
         EditorGUILayout.BeginHorizontal ();
             GUILayout.Space( 15.0f * _indentLevel );
             GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
 
-            _val = (exCSS_white_space)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+            _val = (exCSS_wrap)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
         EditorGUILayout.EndHorizontal ();
     }
 
