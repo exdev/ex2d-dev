@@ -1150,9 +1150,12 @@ class exUILayoutEditor : EditorWindow {
                     // border
                     GUILayout.Label ( "border", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
                     ++indentLevel;
+                        GUILayout.BeginHorizontal ();
                         exCSSUI.ImageField ( indentLevel, activeElement, "image", style.borderImage, false );
+
                         exTextureInfo borderTextureInfo = style.borderImage.val as exTextureInfo;
-                        if ( borderTextureInfo && borderTextureInfo.hasBorder ) {
+                        GUI.enabled = (borderTextureInfo && borderTextureInfo.hasBorder);
+                        if ( GUILayout.Button("Reset") ) {
                             style.borderSizeTop.type    = exCSS_size_lengthonly.Type.Length;
                             style.borderSizeTop.val     = borderTextureInfo.borderTop;
                             style.borderSizeRight.type  = exCSS_size_lengthonly.Type.Length;
@@ -1166,6 +1169,8 @@ class exUILayoutEditor : EditorWindow {
                             style.lockBorderSizeBottom = false;
                             style.lockBorderSizeLeft   = false;
                         }
+                        GUI.enabled = true;
+                        GUILayout.EndHorizontal ();
 
                         exCSSUI.ColorField ( indentLevel, activeElement, "color", style.borderColor, false );
                         exCSSUI.SizeLengthOnlyField ( indentLevel, activeElement, "top", style.borderSizeTop, false );
@@ -1388,8 +1393,87 @@ class exUILayoutEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawElements ( int _x, int _y, exUIElement _el ) {
+        // this is a dummy element, skip it.
+        if ( _el.display == exCSS_display.Inline && _el.isContent == false ) 
+            return;
+
         int element_x = _x + _el.x;
         int element_y = _y + _el.y;
+
+        // draw border
+        if ( _el.borderColor.a > 0.0f &&
+             ( _el.borderSizeLeft > 0 || _el.borderSizeRight > 0 || _el.borderSizeTop > 0 || _el.borderSizeBottom > 0 ) ) 
+        {
+            int x = element_x - _el.paddingLeft - _el.borderSizeLeft;
+            int y = element_y - _el.paddingTop - _el.borderSizeTop;
+            int width = _el.width 
+                + _el.paddingLeft + _el.paddingRight 
+                + _el.borderSizeLeft + _el.borderSizeRight;
+            int height = _el.height 
+                + _el.paddingTop + _el.paddingBottom 
+                + _el.borderSizeTop + _el.borderSizeBottom;
+
+            if ( _el.borderImage == null ) {
+                exEditorUtility.GL_UI_DrawBorderRectangle ( x, y, width, height, 
+                                                            _el.borderSizeTop, _el.borderSizeRight, _el.borderSizeBottom, _el.borderSizeLeft,
+                                                            _el.borderColor );
+            }
+            else {
+                float s0 = 0.0f; 
+                float t0 = 0.0f;
+                float s1 = 1.0f;
+                float t1 = 1.0f;
+                Texture2D texture = _el.borderImage as Texture2D; 
+                bool rotated = false;
+
+                float uv_top = _el.borderSizeTop;
+                float uv_bottom = _el.borderSizeBottom;
+                float uv_left = _el.borderSizeLeft;
+                float uv_right = _el.borderSizeRight;
+
+                if ( texture == null ) {
+                    exTextureInfo textureInfo = _el.borderImage as exTextureInfo;
+                    if ( textureInfo != null ) {
+                        texture = textureInfo.texture;
+
+                        s0 = textureInfo.x * texture.texelSize.x;
+                        t0 = textureInfo.y * texture.texelSize.y;
+                        s1 = (textureInfo.x + textureInfo.rotatedWidth) * texture.texelSize.x;
+                        t1 = (textureInfo.y + textureInfo.rotatedHeight) * texture.texelSize.y;
+
+                        rotated = textureInfo.rotated;
+
+                        uv_top = textureInfo.borderTop;
+                        uv_bottom = textureInfo.borderBottom;
+                        uv_left = textureInfo.borderLeft;
+                        uv_right = textureInfo.borderRight;
+                    }
+                }
+
+                exEditorUtility.GL_UI_DrawBorderTexture ( x, y, width, height, 
+                                                          _el.borderSizeTop, _el.borderSizeRight, _el.borderSizeBottom, _el.borderSizeLeft,
+                                                          uv_top, uv_right, uv_bottom, uv_left,
+                                                          s0, t0, s1, t1,
+                                                          texture,
+                                                          _el.borderColor,
+                                                          rotated );
+            }
+        }
+
+        // draw background
+        if ( _el.backgroundImage == null ) {
+            if ( _el.backgroundColor.a > 0.0f ) {
+                int x = element_x - _el.paddingLeft;
+                int y = element_y - _el.paddingTop;
+                int width = _el.width + _el.paddingLeft + _el.paddingRight; 
+                int height = _el.height + _el.paddingTop + _el.paddingBottom; 
+                exEditorUtility.GL_UI_DrawRectangle ( x, y, width, height, 
+                                                      _el.backgroundColor );
+            }
+        }
+        else {
+            // TODO:
+        }
 
         // draw content or child (NOTE: content-element will not have child) 
         if ( _el.isContent ) {
@@ -1412,72 +1496,6 @@ class exUILayoutEditor : EditorWindow {
             }
         }
         else {
-        
-            if ( _el.display == exCSS_display.Inline ) 
-                return;
-
-            // draw border
-            if ( _el.borderColor.a > 0.0f &&
-                 _el.borderSizeLeft > 0 && _el.borderSizeRight > 0 && _el.borderSizeTop > 0 && _el.borderSizeBottom > 0 ) 
-            {
-                int x = element_x - _el.paddingLeft - _el.borderSizeLeft;
-                int y = element_y - _el.paddingTop - _el.borderSizeTop;
-                int width = _el.width 
-                    + _el.paddingLeft + _el.paddingRight 
-                    + _el.borderSizeLeft + _el.borderSizeRight;
-                int height = _el.height 
-                    + _el.paddingTop + _el.paddingBottom 
-                    + _el.borderSizeTop + _el.borderSizeBottom;
-
-                if ( _el.borderImage == null ) {
-                    exEditorUtility.GL_UI_DrawBorderRectangle ( x, y, width, height, 
-                                                                _el.borderSizeTop, _el.borderSizeRight, _el.borderSizeBottom, _el.borderSizeLeft,
-                                                                _el.borderColor );
-                }
-                else {
-                    float s0 = 0.0f; 
-                    float t0 = 0.0f;
-                    float s1 = 1.0f;
-                    float t1 = 1.0f;
-                    Texture2D texture = _el.borderImage as Texture2D; 
-                    bool rotated = false;
-
-                    if ( texture == null ) {
-                        exTextureInfo textureInfo = _el.borderImage as exTextureInfo;
-                        if ( textureInfo != null ) {
-                            texture = textureInfo.texture;
-                            s0 = textureInfo.x * texture.texelSize.x;
-                            t0 = textureInfo.y * texture.texelSize.y;
-                            s1 = (textureInfo.x + textureInfo.rotatedWidth) * texture.texelSize.x;
-                            t1 = (textureInfo.y + textureInfo.rotatedHeight) * texture.texelSize.y;
-                            rotated = textureInfo.rotated;
-                        }
-                    }
-
-                    exEditorUtility.GL_UI_DrawBorderTexture ( x, y, width, height, 
-                                                              _el.borderSizeTop, _el.borderSizeRight, _el.borderSizeBottom, _el.borderSizeLeft,
-                                                              s0, t0, s1, t1,
-                                                              texture,
-                                                              _el.borderColor,
-                                                              rotated );
-                }
-            }
-
-            // draw background
-            if ( _el.backgroundImage == null ) {
-                if ( _el.backgroundColor.a > 0.0f ) {
-                    int x = element_x - _el.paddingLeft;
-                    int y = element_y - _el.paddingTop;
-                    int width = _el.width + _el.paddingLeft + _el.paddingRight; 
-                    int height = _el.height + _el.paddingTop + _el.paddingBottom; 
-                    exEditorUtility.GL_UI_DrawRectangle ( x, y, width, height, 
-                                                          _el.backgroundColor );
-                }
-            }
-            else {
-                // TODO:
-            }
-
             // DrawElementBorder ( _el, Color.white );
             for ( int i = 0; i < _el.normalFlows.Count; ++i ) {
                 DrawElements( element_x, element_y, _el.normalFlows[i] );

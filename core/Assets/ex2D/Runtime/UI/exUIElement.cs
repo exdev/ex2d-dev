@@ -151,6 +151,52 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public void CloneComputedStyle ( exUIElement _el ) {
+        x = _el.x;
+        y = _el.y;
+        width = _el.width;
+        height = _el.height;
+
+        minWidth = _el.minWidth;
+        maxWidth =  _el.maxWidth;
+        minHeight = _el.minHeight;
+        maxHeight = _el.maxHeight;
+
+        marginLeft = _el.marginLeft;
+        marginRight = _el.marginRight;
+        marginTop = _el.marginTop;
+        marginBottom = _el.marginBottom;
+
+        borderSizeLeft = _el.borderSizeLeft;
+        borderSizeRight = _el.borderSizeRight;
+        borderSizeTop = _el.borderSizeTop;
+        borderSizeBottom = _el.borderSizeBottom;
+
+        paddingLeft = _el.paddingLeft;
+        paddingRight = _el.paddingRight;
+        paddingTop = _el.paddingTop;
+        paddingBottom = _el.paddingBottom;
+
+        borderImage = _el.borderImage;
+        borderColor = _el.borderColor;
+
+        backgroundImage = _el.backgroundImage;
+        backgroundColor = _el.backgroundColor;
+
+        font = _el.font;
+        fontSize = _el.fontSize;
+        contentColor = _el.contentColor;
+        wrap = _el.wrap;
+        letterSpacing = _el.letterSpacing;
+        wordSpacing = _el.wordSpacing;
+        lineHeight = _el.lineHeight;
+        display = _el.display;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public exUIElement Clone () {
         exUIElement newEL = new exUIElement ();
         newEL.name = name;
@@ -289,6 +335,13 @@ public class exUIElement {
     // ------------------------------------------------------------------ 
 
     public int GetTotalHeight () {
+        if ( display == exCSS_display.Inline ) {
+            if ( contentType == ContentType.Text )
+                return lineHeight;
+
+            return height;
+        }
+
         return height 
             + marginTop + marginBottom 
             + borderSizeTop + borderSizeBottom
@@ -437,7 +490,7 @@ public class exUIElement {
                 child.Layout( cur_child_x, cur_child_y, width, height );
             }
             else {
-                child.x = cur_child_x;
+                child.x = cur_child_x + child.marginLeft + child.paddingLeft + child.borderSizeLeft;
                 child.y = cur_child_y;
             }
 
@@ -445,18 +498,21 @@ public class exUIElement {
             if ( child.isContent == false && child.display == exCSS_display.Inline ) {
                 if ( child.normalFlows.Count > 0 ) {
                     normalFlows_.InsertRange ( i+1, child.normalFlows );
-                    // for ( int j = 0; j < child.normalFlows.Count; ++j ) {
-                    //     normalFlows_[j+i+1].x = child.x + child.normalFlows[j].x;
-                    //     normalFlows_[j+i+1].y = child.y + child.normalFlows[j].y;
-                    // }
 
-                    // re-adjust multi-line inline-block. this is good for debug
-                    if ( child.normalFlows.Count > 1 ) {
-                        child.x = 0;
-                    }
+                    // TEMP { 
+                    // re-adjust multi-line inline element. this is good for debug
+                    // if ( child.normalFlows.Count > 1 ) {
+                    //     child.x = 0;
+                    // }
+                    // } TEMP end 
 
                     child.normalFlows.Clear();
                 }
+
+                // TEMP { 
+                // re-adjust y when it is a inline element. this is good for debug
+                child.y -= (child.marginTop + child.paddingTop + child.borderSizeTop);
+                // } TEMP end 
 
                 continue;
             }
@@ -584,7 +640,7 @@ public class exUIElement {
         newEL.text = text;
         newEL.image = image;
         newEL.contentType = contentType;
-        newEL.style = style.Clone();
+        newEL.style = style.InlineContent();
         newEL.style.display = exCSS_display.Inline;
         newEL.parent_ = parent_; // NOTE: DO NOT use AddElement which will make this element become real child.
 
@@ -702,6 +758,7 @@ public class exUIElement {
         bool firstLineCheck = (_x > 0 && display != exCSS_display.Inline);
         StringBuilder builder = new StringBuilder(_text.Length);
         int line_id = 0;
+        bool begin = true;
 
         if ( font is Font ) {
             (font as Font).RequestCharactersInTexture ( _text, fontSize, FontStyle.Normal );
@@ -709,6 +766,15 @@ public class exUIElement {
             while ( finished == false ) {
                 // int start_index = cur_index;
                 builder.Length = 0;
+
+                // TODO { 
+                // // if begin, apply margin-left, padding-left and border-left
+                // int x_offset = 0;
+                // if ( firstLineCheck ) {
+                //     x_offset = marginLeft + paddingLeft + borderSizeLeft;
+                //     cur_width -= x_offset;
+                // }
+                // } TODO end 
 
                 //
                 finished = exTextUtility.CalcTextLine ( ref line_width, 
@@ -722,6 +788,12 @@ public class exUIElement {
                                                         wrapMode,
                                                         wordSpacing,
                                                         letterSpacing );
+
+                // TODO { 
+                // if end, apply margin-right, padding-right and border-right
+                // if ( finished ) {
+                // }
+                // } TODO end 
 
                 // if inline-block's first line exceed, it will start from next line 
                 if ( firstLineCheck ) {
@@ -737,23 +809,32 @@ public class exUIElement {
 
                 // generate element
                 exUIElement newEL = new exUIElement();
+                newEL.CloneComputedStyle (this);
                 newEL.name = name + " [" + line_id + "]";
                 newEL.isContent_ = true;
                 newEL.style = null;
-                newEL.display = exCSS_display.Inline; 
-                newEL.font = font;
-                newEL.fontSize = fontSize;
-                newEL.contentColor = contentColor;
-                newEL.wrap = wrap; 
-                newEL.letterSpacing = letterSpacing;
-                newEL.wordSpacing = wordSpacing;
-                newEL.lineHeight = lineHeight;
-                newEL.width = line_width;
-                newEL.height = lineHeight;
-                newEL.x = cur_x;
-                newEL.y = cur_y;
                 newEL.text = builder.ToString();
                 newEL.contentType = ContentType.Text;
+
+                newEL.x = cur_x;
+                newEL.y = cur_y;
+                newEL.width = line_width;
+                newEL.height = fontSize;
+
+                if ( begin == false ) {
+                    newEL.marginLeft = 0;
+                    newEL.paddingLeft = 0;
+                    newEL.borderSizeLeft = 0;
+                }
+                if ( finished == false ) {
+                    newEL.marginRight = 0;
+                    newEL.paddingRight = 0;
+                    newEL.borderSizeRight = 0;
+                }
+                if ( begin ) {
+                    begin = false;
+                }
+
                 normalFlows_.Add(newEL);
 
                 //
@@ -800,23 +881,18 @@ public class exUIElement {
 
                 // generate element
                 exUIElement newEL = new exUIElement();
+                newEL.CloneComputedStyle (this);
                 newEL.name = name + " [" + line_id + "]";
                 newEL.isContent_ = true;
                 newEL.style = null;
-                newEL.display = exCSS_display.Inline; 
-                newEL.font = font;
-                newEL.fontSize = fontSize;
-                newEL.contentColor = contentColor;
-                newEL.wrap = wrap; 
-                newEL.letterSpacing = letterSpacing;
-                newEL.wordSpacing = wordSpacing;
-                newEL.lineHeight = lineHeight;
-                newEL.width = line_width;
-                newEL.height = lineHeight;
-                newEL.x = cur_x;
-                newEL.y = cur_y;
                 newEL.text = builder.ToString();
                 newEL.contentType = ContentType.Text;
+
+                newEL.x = cur_x;
+                newEL.y = cur_y;
+                newEL.width = line_width;
+                newEL.height = fontSize;
+
                 normalFlows_.Add(newEL);
 
                 //

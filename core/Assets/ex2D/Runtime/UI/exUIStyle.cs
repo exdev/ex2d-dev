@@ -340,6 +340,29 @@ public class exUIStyle {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public exUIStyle InlineContent () {
+        exUIStyle newStyle = new exUIStyle ();
+
+        // font
+        newStyle.font = new exCSS_font( font.type, font.val );
+        newStyle.fontSize = new exCSS_size_noauto( fontSize.type, fontSize.val );
+
+        // text
+        newStyle.contentColor = new exCSS_color( contentColor.type, contentColor.val );
+        newStyle.wrap = wrap;
+        newStyle.textAlign = textAlign;
+        newStyle.textDecoration = textDecoration;
+        newStyle.letterSpacing = new exCSS_size_nopercentage( letterSpacing.type, letterSpacing.val );
+        newStyle.wordSpacing = new exCSS_size_nopercentage( wordSpacing.type, wordSpacing.val );
+        newStyle.lineHeight = new exCSS_size( lineHeight.type, lineHeight.val );
+
+        return newStyle;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public exUIStyle Clone () {
         exUIStyle newStyle = new exUIStyle ();
         newStyle.width = new exCSS_size ( width.type, width.val ); 

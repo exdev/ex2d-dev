@@ -163,7 +163,6 @@ public static class exTextUtility {
         int cur_index = _start_index;
         int cur_x = 0;
         int line_width = 0;
-        exBitmapFont.CharInfo lastCharInfo = null;
 
         while ( cur_index < _text.Length ) {
             int next_index = cur_index+1;
@@ -261,8 +260,6 @@ public static class exTextUtility {
                             break;
                     }
                 }
-
-                lastCharInfo = charInfo;
             }
             else {
                 cur_index = next_index;
