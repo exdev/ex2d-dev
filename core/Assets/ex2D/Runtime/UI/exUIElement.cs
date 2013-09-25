@@ -426,7 +426,6 @@ public class exUIElement {
         int cur_child_y = 0;
         int maxLineWidth = 0;
         int maxLineHeight = 0;
-        // int lineChildIndex = 0;
         int lineChildCount = 0;
 
         for ( int i = 0; i < normalFlows_.Count; ++i ) {

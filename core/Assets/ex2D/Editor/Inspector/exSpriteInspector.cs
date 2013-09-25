@@ -174,7 +174,6 @@ class exSpriteInspector : exLayeredSpriteInspector {
 
         if (spriteTypeProp.enumValueIndex == (int)exSpriteType.Tiled) {
             // tiled spacing
-            EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField ( tiledSpacingProp, new GUIContent("Tiled Spacing"), true );
             if ( EditorGUI.EndChangeCheck() ) {
@@ -190,6 +189,8 @@ class exSpriteInspector : exLayeredSpriteInspector {
                     }
                 }
             }
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
             if ( GUILayout.Button("Use Raw Size", GUILayout.Width(88), GUILayout.Height(16) ) ) {
                 foreach (Object obj in serializedObject.targetObjects) {
                     exSprite sp = obj as exSprite;
@@ -202,6 +203,8 @@ class exSpriteInspector : exLayeredSpriteInspector {
             }
             EditorGUILayout.EndHorizontal();
         }
+
+        EditorGUILayout.Space();
         
         // DISABLE { 
         // EditorGUILayout.Space();
