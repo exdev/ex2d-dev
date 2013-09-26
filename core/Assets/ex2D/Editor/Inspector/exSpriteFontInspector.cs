@@ -74,6 +74,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
                 else {
                     sp.SetFont(EditorGUILayout.ObjectField("Font", sp.dynamicFont, typeof(Font), false) as Font);
                     sp.fontStyle = (FontStyle)EditorGUILayout.EnumPopup("Font Style", sp.fontStyle);
+                    sp.fontSize = EditorGUILayout.IntField("Font Size", sp.fontSize);
                     sp.lineHeight = EditorGUILayout.IntField("Line Height", sp.lineHeight);
                 }
                 EditorGUI.indentLevel--;

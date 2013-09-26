@@ -779,7 +779,7 @@ public class exSpriteFont : exLayeredSprite {
     // ------------------------------------------------------------------ 
 
     void OnFontTextureRebuilt () {
-        updateFlags |= exUpdateFlags.UV;
+        updateFlags |= exUpdateFlags.Text;  // TODO: only need to update UV
     }
 }
 
@@ -832,7 +832,12 @@ namespace ex2D.Detail {
                 Debug.LogError("顶点缓冲长度不够，是否绕开属性直接修改了text_?: " + sfp.vertexCount, _sprite);
                 return _sprite.updateFlags;
             }
-#endif
+            #endif
+            
+            // It is advisable to always call RequestCharactersInTexture for any text on the screen you wish to render using custom font rendering functions, 
+            // even if the characters are currently present in the texture, to make sure they don't get purged during texture rebuild.
+            sfp.font.RequestCharactersInTexture (sfp.text);
+            
             if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
                 //exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
                 BuildText(_sprite, ref sfp, _space, _vertices, _vbIndex, _uvs);
@@ -889,7 +894,7 @@ namespace ex2D.Detail {
             _sprite.height = 0.0f;   // 和SpriteBase一致，用于表示实际高度
             int invisibleVertexStart = -1;
             int visibleVertexCount;
-            if (sfp.font != null) {
+            if (sfp.font.isValid) {
                 BuildTextInLocalSpace(_sprite, ref sfp, _vertices, _vbIndex, _uvs);
                 visibleVertexCount = sfp.text.Length * 4;
             }

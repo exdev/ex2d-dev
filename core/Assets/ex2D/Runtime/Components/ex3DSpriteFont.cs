@@ -421,6 +421,7 @@ public class ex3DSpriteFont : exStandaloneSprite {
 
     protected override void Show () {
         base.Show();
+        Debug.Log ("show");
         font_.textureRebuildCallback = null;
         font_.textureRebuildCallback += OnFontTextureRebuilt;
     }
@@ -468,7 +469,8 @@ public class ex3DSpriteFont : exStandaloneSprite {
     // ------------------------------------------------------------------ 
 
     void OnFontTextureRebuilt () {
-        updateFlags |= exUpdateFlags.UV;
+        Debug.Log("OnFontTextureRebuilt");
+        updateFlags |= exUpdateFlags.Text;      // TODO: only need to update UV
     }
 }
 //#endif

@@ -77,10 +77,6 @@ using System.Collections.Generic;
             return dynamicFont_;
         }
         private set {
-            if (dynamicFont_ != null && dynamicFontRegistered) {
-                dynamicFontRegistered = false;
-                dynamicFont_.textureRebuildCallback -= OnFontTextureRebuilt;
-            }
             dynamicFont_ = value;
         }
     }
@@ -207,7 +203,7 @@ using System.Collections.Generic;
     }
 
     [System.NonSerialized] public Font.FontTextureRebuildCallback textureRebuildCallback;
-    private bool dynamicFontRegistered = false;
+    [System.NonSerialized] private bool dynamicFontRegistered = false;
 
     /*
     private Font.FontTextureRebuildCallback textureRebuildCallback_;
@@ -268,10 +264,10 @@ using System.Collections.Generic;
         }
         if (dynamicFont_ != null) {
             //// yes, Unity's GetCharacterInfo have y problem, you should get lowest character j's y-offset adjust it.
-            //CharacterInfo jCharInfo;
-            //dynamicFont_.RequestCharactersInTexture("j", dynamicFontSize_, dynamicFontStyle_);
-            //dynamicFont_.GetCharacterInfo('j', out jCharInfo, dynamicFontSize_, dynamicFontStyle_);
-            //float ttf_offset = (dynamicFontSize_ + jCharInfo.vert.yMax);
+            CharacterInfo jCharInfo;
+            dynamicFont_.RequestCharactersInTexture("j", dynamicFontSize_, dynamicFontStyle_);
+            dynamicFont_.GetCharacterInfo('j', out jCharInfo, dynamicFontSize_, dynamicFontStyle_);
+            int ttf_offset = (int)(dynamicFontSize_ + jCharInfo.vert.yMax);
 
             CharacterInfo dynamicCharInfo;
             dynamicFont_.GetCharacterInfo(_symbol, out dynamicCharInfo, dynamicFontSize_, dynamicFontStyle_);
@@ -281,12 +277,12 @@ using System.Collections.Generic;
             charInfo.id = _symbol;
             charInfo.trim_x = 0;
             charInfo.trim_y = 0;
-            charInfo.x = (int)dynamicCharInfo.uv.x * texture.width;  // TODO: save uv in char info
-            charInfo.y = (int)dynamicCharInfo.uv.y * texture.height;
+            charInfo.x = (int)(dynamicCharInfo.uv.x * texture.width);  // TODO: save uv in char info
+            charInfo.y = (int)(dynamicCharInfo.uv.yMax * texture.height);
             charInfo.width = (int)dynamicCharInfo.vert.width;
-            charInfo.height = (int)dynamicCharInfo.vert.height;
+            charInfo.height = - (int)dynamicCharInfo.vert.height;
             charInfo.xoffset = (int)dynamicCharInfo.vert.x;
-            charInfo.yoffset = (int)dynamicCharInfo.vert.y;
+            charInfo.yoffset = - (int)dynamicCharInfo.vert.y;
             charInfo.xadvance = (int)dynamicCharInfo.width;
             charInfo.rotated = dynamicCharInfo.flipped;
             return charInfo;
@@ -299,5 +295,13 @@ using System.Collections.Generic;
             return bitmapFont_.GetKerning(_first, _second);
         }
         return 0;
+    }
+    
+    public void RequestCharactersInTexture ( string _text ) {
+        if (dynamicFont_ != null) {
+            dynamicFont_.textureRebuildCallback = OnFontTextureRebuilt;
+            dynamicFont_.RequestCharactersInTexture (_text, dynamicFontSize_, dynamicFontStyle_);
+            dynamicFont_.textureRebuildCallback = null; // TODO how to keep callback
+        }
     }
 }
