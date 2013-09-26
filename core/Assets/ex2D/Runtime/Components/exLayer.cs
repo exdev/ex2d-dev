@@ -159,6 +159,12 @@ public class exLayer : MonoBehaviour
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
+    /// \NOTE You should not deactivate the layer manually. 
+    ///       If you want to change the visibility of the whole layer, you should set its show property.
+    void OnDisable () {
+        DestroyMeshes();
+    }
+
     // If layer can be standalone, we should check whether the layer belongs to any 2D Renderer, 
     // otherwise we need to call GenerateMeshes when OnEnable.
 

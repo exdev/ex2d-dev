@@ -519,7 +519,7 @@ public class exUIElement {
             
             //
             if ( child.isContent ) {
-                if ( wrap != exCSS_wrap.Normal ) {
+                if ( wrap != exCSS_wrap.Normal && wrap != exCSS_wrap.NoWrap ) {
                     needWrap = true;
                 }
                 else {
