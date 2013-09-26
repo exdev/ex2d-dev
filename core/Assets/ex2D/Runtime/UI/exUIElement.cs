@@ -45,6 +45,7 @@ public class exUIElement {
     public Object image = null;
 
     public bool isContent { get { return isContent_; } }
+    public bool isFirstLine { get { return isFirstLine_; } }
 
     public List<exUIElement> normalFlows { get { return normalFlows_; } } 
     List<exUIElement> normalFlows_ = new List<exUIElement>(); 
@@ -126,6 +127,7 @@ public class exUIElement {
 
     bool dirty = false;
     bool isContent_ = false;
+    bool isFirstLine_ = false;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -465,10 +467,11 @@ public class exUIElement {
         // ======================================================== 
 
         if ( display == exCSS_display.Inline ) {
-            BreakContentToNormalFlow ( _x, _y, width, height );
+            // inline never care the width, height
+            BreakInlineElement ( _x, _y, _width, _height );
         }
         else {
-            AddElementsToNormalFlow ( _x, _y, width, height );
+            AddContentToNormalFlow ( _x, _y, width, height );
         } 
 
         // ======================================================== 
@@ -498,35 +501,31 @@ public class exUIElement {
             if ( child.isContent == false && child.display == exCSS_display.Inline ) {
                 if ( child.normalFlows.Count > 0 ) {
                     normalFlows_.InsertRange ( i+1, child.normalFlows );
-
-                    // TEMP { 
-                    // re-adjust multi-line inline element. this is good for debug
-                    // if ( child.normalFlows.Count > 1 ) {
-                    //     child.x = 0;
-                    // }
-                    // } TEMP end 
-
                     child.normalFlows.Clear();
                 }
-
-                // TEMP { 
-                // re-adjust y when it is a inline element. this is good for debug
-                child.y -= (child.marginTop + child.paddingTop + child.borderSizeTop);
-                // } TEMP end 
-
                 continue;
             }
             
             //
             if ( child.isContent ) {
-                if ( wrap != exCSS_wrap.Normal && wrap != exCSS_wrap.NoWrap ) {
-                    needWrap = true;
-                }
-                else {
-                    int childTotalWidth = child.GetTotalWidth();
-                    if ( (lineChildCount > 0) && (cur_child_x + childTotalWidth) > width ) {
+                if ( child.isFirstLine ) {
+                    if ( child.wrap != exCSS_wrap.Normal ) {
                         needWrap = true;
                     }
+                    else {
+                        if ( wrap != exCSS_wrap.Normal && wrap != exCSS_wrap.NoWrap ) {
+                            needWrap = true;
+                        }
+                        else {
+                            int childTotalWidth = child.GetTotalWidth();
+                            if ( (lineChildCount > 0) && (cur_child_x + childTotalWidth) > width ) {
+                                needWrap = true;
+                            }
+                        }
+                    }
+                }
+                else {
+                    needWrap = true;
                 }
             }
             else if ( child.display == exCSS_display.Block ) {
@@ -590,36 +589,56 @@ public class exUIElement {
             maxLineWidth = cur_child_x;
         cur_child_y += maxLineHeight;
 
-        // calculate auto height
-        if ( style.height.type == exCSS_size.Type.Auto ) {
+        // re-calculate width & height
+        if ( display == exCSS_display.Inline ) {
             height += cur_child_y;
-            height = System.Math.Min ( System.Math.Max ( height, minHeight ), maxHeight );
-        }
 
-        // calculate auto width
-        if ( style.width.type == exCSS_size.Type.Auto ) {
-            bool useContentWidth = false;
-
-            if ( display == exCSS_display.InlineBlock ||
-                 display == exCSS_display.Inline ) 
-            {
-                useContentWidth = true;
+            // re-adjust x, if we are multi-line
+            if ( normalFlows_.Count > 1 ) {
+                x = marginLeft + paddingLeft + borderSizeLeft;
+                // width = _width - marginRight - borderSizeRight - paddingRight;
+            }
+            else {
+                width = maxLineWidth 
+                    - marginLeft - marginRight
+                    - borderSizeLeft - borderSizeRight
+                    - paddingLeft - paddingRight;
             }
 
-            if ( display == exCSS_display.Block ) {
-                if ( contentType == ContentType.Texture2D ||
-                     contentType == ContentType.TextureInfo )
+            // re-adjust y
+            y -= (marginTop + paddingTop + borderSizeTop);
+        }
+        else {
+            // calculate auto height
+            if ( style.height.type == exCSS_size.Type.Auto ) {
+                height += cur_child_y;
+                height = System.Math.Min ( System.Math.Max ( height, minHeight ), maxHeight );
+            }
+
+            // calculate auto width
+            if ( style.width.type == exCSS_size.Type.Auto ) {
+                bool useContentWidth = false;
+
+                if ( display == exCSS_display.InlineBlock ) 
                 {
                     useContentWidth = true;
                 }
-                else if ( parent != null && parent.display != exCSS_display.Block && parent.style.width.type == exCSS_size.Type.Auto ) {
-                    useContentWidth = true;
-                }
-            }
 
-            if ( useContentWidth ) {
-                width = maxLineWidth;
-                width = System.Math.Min ( System.Math.Max ( width, minWidth ), maxWidth );
+                if ( display == exCSS_display.Block ) {
+                    if ( contentType == ContentType.Texture2D ||
+                         contentType == ContentType.TextureInfo )
+                    {
+                        useContentWidth = true;
+                    }
+                    else if ( parent != null && parent.display != exCSS_display.Block && parent.style.width.type == exCSS_size.Type.Auto ) {
+                        useContentWidth = true;
+                    }
+                }
+
+                if ( useContentWidth ) {
+                    width = maxLineWidth;
+                    width = System.Math.Min ( System.Math.Max ( width, minWidth ), maxWidth );
+                }
             }
         }
 
@@ -631,7 +650,7 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void AddElementsToNormalFlow ( int _x, int _y, int _width, int _height ) {
+    void AddContentToNormalFlow ( int _x, int _y, int _width, int _height ) {
         normalFlows_.Clear();
 
         exUIElement newEL = new exUIElement ();
@@ -652,7 +671,7 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void BreakContentToNormalFlow ( int _x, int _y, int _width, int _height ) {
+    void BreakInlineElement ( int _x, int _y, int _width, int _height ) {
         int cur_x = _x;
         int cur_y = 0;
         int imgWidth = _width;
@@ -713,6 +732,7 @@ public class exUIElement {
         exUIElement newEL = new exUIElement();
         newEL.name = name + " [0]";
         newEL.isContent_ = true;
+        newEL.isFirstLine_ = true;
         newEL.style = null;
         newEL.display = exCSS_display.Inline; 
         newEL.x = cur_x;
@@ -751,14 +771,16 @@ public class exUIElement {
 
         bool finished = false;
         int line_width = 0;
-        int cur_x = 0;
+        int cur_x = 0 + marginLeft + borderSizeLeft + paddingLeft;
         int cur_y = _y;
         int cur_index = 0;
-        int cur_width = _width - _x;
-        bool firstLineCheck = (_x > 0 && display != exCSS_display.Inline);
+        int cur_width = _width - _x - (marginLeft + borderSizeLeft + paddingLeft);
         StringBuilder builder = new StringBuilder(_text.Length);
+
         int line_id = 0;
         bool begin = true;
+        bool firstWordCheck = (_x > 0) && (wrapMode == exTextUtility.WrapMode.Word);
+        bool endLineCheck = ( marginRight > 0 || paddingRight > 0 || borderSizeRight > 0 );
 
         if ( font is Font ) {
             (font as Font).RequestCharactersInTexture ( _text, fontSize, FontStyle.Normal );
@@ -766,15 +788,7 @@ public class exUIElement {
             while ( finished == false ) {
                 // int start_index = cur_index;
                 builder.Length = 0;
-
-                // TODO { 
-                // // if begin, apply margin-left, padding-left and border-left
-                // int x_offset = 0;
-                // if ( firstLineCheck ) {
-                //     x_offset = marginLeft + paddingLeft + borderSizeLeft;
-                //     cur_width -= x_offset;
-                // }
-                // } TODO end 
+                int last_index = cur_index;
 
                 //
                 finished = exTextUtility.CalcTextLine ( ref line_width, 
@@ -789,20 +803,30 @@ public class exUIElement {
                                                         wordSpacing,
                                                         letterSpacing );
 
-                // TODO { 
-                // if end, apply margin-right, padding-right and border-right
-                // if ( finished ) {
-                // }
-                // } TODO end 
-
                 // if inline-block's first line exceed, it will start from next line 
-                if ( firstLineCheck ) {
-                    firstLineCheck = false;
-                    if ( finished == false || line_width > cur_width ) {
+                if ( firstWordCheck ) {
+                    firstWordCheck = false;
+                    if ( line_width > cur_width ) {
+                        string line_text = builder.ToString();
+                        if ( line_text.IndexOf(' ') == -1 ) {
+                            finished = false;
+                            cur_x = 0;
+                            cur_width = _width - (marginLeft + borderSizeLeft + paddingLeft);
+                            cur_index = 0;
+                            continue;
+                        }
+                    }
+                }
+
+                // end-line re-check
+                if ( finished && endLineCheck ) {
+                    endLineCheck = false;
+                    cur_width -= (marginRight + borderSizeRight + paddingRight);
+                    if ( line_width > cur_width ) {
                         finished = false;
                         cur_x = 0;
-                        cur_width = _width;
-                        cur_index = 0;
+                        cur_width = cur_width;
+                        cur_index = last_index;
                         continue;
                     }
                 }
@@ -812,6 +836,7 @@ public class exUIElement {
                 newEL.CloneComputedStyle (this);
                 newEL.name = name + " [" + line_id + "]";
                 newEL.isContent_ = true;
+                newEL.isFirstLine_ = begin;
                 newEL.style = null;
                 newEL.text = builder.ToString();
                 newEL.contentType = ContentType.Text;
@@ -868,14 +893,17 @@ public class exUIElement {
                                                         letterSpacing );
 
                 // if inline-block's first line exceed, it will start from next line 
-                if ( firstLineCheck ) {
-                    firstLineCheck = false;
-                    if ( finished == false || line_width > cur_width ) {
-                        finished = false;
-                        cur_x = 0;
-                        cur_width = _width;
-                        cur_index = 0;
-                        continue;
+                if ( firstWordCheck ) {
+                    firstWordCheck = false;
+                    if ( line_width > cur_width ) {
+                        string line_text = builder.ToString();
+                        if ( line_text.IndexOf(' ') == -1 ) {
+                            finished = false;
+                            cur_x = 0;
+                            cur_width = _width - (marginLeft + borderSizeLeft + paddingLeft);
+                            cur_index = 0;
+                            continue;
+                        }
                     }
                 }
 
@@ -884,6 +912,7 @@ public class exUIElement {
                 newEL.CloneComputedStyle (this);
                 newEL.name = name + " [" + line_id + "]";
                 newEL.isContent_ = true;
+                newEL.isFirstLine_ = begin;
                 newEL.style = null;
                 newEL.text = builder.ToString();
                 newEL.contentType = ContentType.Text;
@@ -892,6 +921,20 @@ public class exUIElement {
                 newEL.y = cur_y;
                 newEL.width = line_width;
                 newEL.height = fontSize;
+
+                if ( begin == false ) {
+                    newEL.marginLeft = 0;
+                    newEL.paddingLeft = 0;
+                    newEL.borderSizeLeft = 0;
+                }
+                if ( finished == false ) {
+                    newEL.marginRight = 0;
+                    newEL.paddingRight = 0;
+                    newEL.borderSizeRight = 0;
+                }
+                if ( begin ) {
+                    begin = false;
+                }
 
                 normalFlows_.Add(newEL);
 

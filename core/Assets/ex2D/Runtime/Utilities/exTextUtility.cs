@@ -88,6 +88,13 @@ public static class exTextUtility {
                             break;
                         ++next_index;
                     }
+
+                    // if we are at the end of the line, just ignore any white-space.
+                    if ( next_index >= _text.Length ) {
+                        _end_x = cur_x;
+                        _end_index = cur_index;
+                        return true;
+                    }
                 }
                 if ( skipThis ) {
                     cur_index = next_index;
@@ -105,7 +112,6 @@ public static class exTextUtility {
                 cur_x += _wordSpacing;
 
             //
-            _builder.Append(cur_char);
             cur_index = next_index;
 
             // check if wrap the next-word
@@ -122,10 +128,9 @@ public static class exTextUtility {
                     _font.GetCharacterInfo ( tmp_char, out tmp_charInfo, _fontSize );
 
                     tmp_x += (int)tmp_charInfo.width + _letterSpacing;
-                    tmp_char = _text[tmp_index];
 
                     if ( tmp_x > _width ) {
-                        _end_x = cur_x;
+                        _end_x = cur_x - (int)charInfo.width - _letterSpacing - _wordSpacing;
                         _end_index = cur_index-1;
                         return false;
                     }
@@ -133,8 +138,12 @@ public static class exTextUtility {
                     ++tmp_index;
                     if ( tmp_index >= _text.Length )
                         break;
+                    tmp_char = _text[tmp_index];
                 }
             }
+
+            // NOTE: we put builder here to skip white-space when text been break into nextline
+            _builder.Append(cur_char);
         }
 
         //
@@ -203,6 +212,13 @@ public static class exTextUtility {
                             break;
                         ++next_index;
                     }
+
+                    // if we are at the end of the line, just ignore any white-space.
+                    if ( next_index >= _text.Length ) {
+                        _end_x = cur_x;
+                        _end_index = cur_index;
+                        return true;
+                    }
                 }
                 if ( skipThis ) {
                     cur_index = next_index;
@@ -228,7 +244,6 @@ public static class exTextUtility {
                     cur_x += _wordSpacing;
 
                 //
-                _builder.Append(cur_char);
                 cur_index = next_index;
 
                 // check if wrap the next-word
@@ -245,10 +260,9 @@ public static class exTextUtility {
                         if ( tmp_charInfo != null ) {
                             int tmp_width = tmp_x + tmp_charInfo.width + _letterSpacing;
                             tmp_x += (int)tmp_charInfo.xadvance + _letterSpacing;
-                            tmp_char = _text[tmp_index];
 
                             if ( tmp_width > _width ) {
-                                _end_x = line_width;
+                                _end_x = line_width - (int)charInfo.xadvance - _letterSpacing - _wordSpacing;
                                 _end_index = cur_index-1;
                                 line_width = 0;
                                 return false;
@@ -258,8 +272,12 @@ public static class exTextUtility {
                         ++tmp_index;
                         if ( tmp_index >= _text.Length )
                             break;
+                        tmp_char = _text[tmp_index];
                     }
                 }
+
+                // NOTE: we put builder here to skip white-space when text been break into nextline
+                _builder.Append(cur_char);
             }
             else {
                 cur_index = next_index;
