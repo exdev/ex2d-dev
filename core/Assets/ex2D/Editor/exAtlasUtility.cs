@@ -1216,7 +1216,7 @@ public static class exAtlasUtility {
             }
 
             foreach ( exBitmapFont bitmapFont in _atlas.bitmapFonts ) {
-                foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+                foreach ( exFont.CharInfo charInfo in bitmapFont.charInfos ) {
                     exTextureUtility.ApplyContourBleed( ref result, 
                                                         srcPixels, 
                                                         _atlasTexture.width,
@@ -1258,7 +1258,7 @@ public static class exAtlasUtility {
             }
 
             foreach ( exBitmapFont bitmapFont in _atlas.bitmapFonts ) {
-                foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+                foreach ( exFont.CharInfo charInfo in bitmapFont.charInfos ) {
                     exTextureUtility.ApplyPaddingBleed( ref result, 
                                                         srcPixels, 
                                                         _atlasTexture.width,
