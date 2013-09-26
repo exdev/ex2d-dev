@@ -19,17 +19,6 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-enum FontType {
-    Bitmap,
-    Dynamic,
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///
-/// The facade for both exBitmapFont and unity's dynamic font.
-///
-///////////////////////////////////////////////////////////////////////////////
-
 [System.Serializable] public class exFont {
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -79,16 +68,6 @@ enum FontType {
         }
     }
 
-    [SerializeField] private FontType fontType_;
-    public FontType FontType {
-        get {
-            return fontType_;
-        }
-        set {
-            fontType_ = value;
-        }
-    }
-
     // ------------------------------------------------------------------ 
     [SerializeField] private Font dynamicFont_;
     /// The referenced dynamic font asset
@@ -116,20 +95,50 @@ enum FontType {
         }
         private set {
             bitmapFont_ = value;
-            if (bitmapFont_.texture == null) {
+            if (bitmapFont_ != null && bitmapFont_.texture == null) {
                 Debug.LogWarning("invalid font texture");
             }
         }
     }
+
+#if UNITY_EDITOR
+    
+    public enum TypeForEditor {
+        Bitmap,
+        Dynamic,
+    }
+
+    [SerializeField] private TypeForEditor type_ = TypeForEditor.Bitmap;
+    /// 该属性仅供编辑器使用，用户直接调用exFont.Set方法即可，无需设置类型。
+    public TypeForEditor type {
+        get {
+            return type_;
+        }
+        set {
+            type_ = value;
+            if (type_ == TypeForEditor.Bitmap) {
+                dynamicFont = null;
+            }
+            else {
+                bitmapFont = null;
+            }
+        }
+    }
+
+#endif
     
     public void Set (exBitmapFont _bitmapFont) {
-        dynamicFont = null;
         bitmapFont = _bitmapFont;
+#if UNITY_EDITOR
+        type = TypeForEditor.Bitmap;
+#endif
     }
 
     public void Set (Font _dynamicFont) {
-        bitmapFont = null;
         dynamicFont = _dynamicFont;
+#if UNITY_EDITOR
+        type = TypeForEditor.Dynamic;
+#endif
     }
 
     public void Clear () {

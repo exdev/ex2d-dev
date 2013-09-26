@@ -23,13 +23,6 @@ using System.IO;
 [CustomEditor(typeof(ex3DSpriteFont))]
 class ex3DSpriteFontInspector : exStandaloneSpriteInspector {
 
-    enum FontType {
-        Bitmap,
-        Dynamic,
-    }
-
-    static FontType defaultFontType = FontType.Bitmap;
-
     //SerializedProperty fontProp;
     SerializedProperty textProp;
     SerializedProperty textAlignProp;
@@ -68,22 +61,15 @@ class ex3DSpriteFontInspector : exStandaloneSpriteInspector {
             // font
             ex3DSpriteFont sp = serializedObject.targetObject as ex3DSpriteFont;
             if (sp) {
-                FontType fontType = defaultFontType;    // TODO: save font type in exFont
-                if (sp.font.bitmapFont != null) {
-                    fontType = FontType.Bitmap;
-                }
-                else if (sp.font.dynamicFont != null) {
-                    fontType = FontType.Dynamic;
-                }
+                exFont.TypeForEditor fontType = sp.font.type;
                 EditorGUI.BeginChangeCheck();
-                fontType = (FontType)EditorGUILayout.EnumPopup("Font Type", fontType);
+                fontType = (exFont.TypeForEditor)EditorGUILayout.EnumPopup("Font Type", fontType);
                 if (EditorGUI.EndChangeCheck()) {
-                    sp.font.Clear();
-                    defaultFontType = fontType;
+                    sp.font.type = fontType;
                     EditorUtility.SetDirty(sp);
                 }
                 EditorGUI.indentLevel++;
-                if (fontType == FontType.Bitmap) {
+                if (fontType == exFont.TypeForEditor.Bitmap) {
                     sp.font.Set(EditorGUILayout.ObjectField("Font", sp.font.bitmapFont, typeof(exBitmapFont), false) as exBitmapFont);
                 }
                 else {

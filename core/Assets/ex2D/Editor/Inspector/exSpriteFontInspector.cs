@@ -57,16 +57,27 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
 
         EditorGUILayout.Space();
 
-        // font
-        EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( fontProp, new GUIContent("Font") );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
-                if ( sp ) {
-                    //sp.font = fontProp.objectReferenceValue as exBitmapFont;
+        {
+            // font
+            exSpriteFont sp = serializedObject.targetObject as exSpriteFont;
+            if (sp) {
+                exFont.TypeForEditor fontType = sp.font.type;
+                EditorGUI.BeginChangeCheck();
+                fontType = (exFont.TypeForEditor)EditorGUILayout.EnumPopup("Font Type", fontType);
+                if (EditorGUI.EndChangeCheck()) {
+                    sp.font.type = fontType;
                     EditorUtility.SetDirty(sp);
                 }
+                EditorGUI.indentLevel++;
+                if (fontType == exFont.TypeForEditor.Bitmap) {
+                    sp.font.Set(EditorGUILayout.ObjectField("Font", sp.font.bitmapFont, typeof(exBitmapFont), false) as exBitmapFont);
+                }
+                else {
+                    sp.font.Set(EditorGUILayout.ObjectField("Font", sp.font.dynamicFont, typeof(Font), false) as Font);
+                    sp.font.fontStyle = (FontStyle)EditorGUILayout.EnumPopup("Font Style", sp.font.fontStyle);
+                    sp.font.lineHeight = EditorGUILayout.IntField("Line Height", sp.font.lineHeight);
+                }
+                EditorGUI.indentLevel--;
             }
         }
 
