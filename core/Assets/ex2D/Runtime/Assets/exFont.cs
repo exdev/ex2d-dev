@@ -19,6 +19,17 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
+enum FontType {
+    Bitmap,
+    Dynamic,
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///
+/// The facade for both exBitmapFont and unity's dynamic font.
+///
+///////////////////////////////////////////////////////////////////////////////
+
 [System.Serializable] public class exFont {
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -65,6 +76,16 @@ using System.Collections.Generic;
             yoffset = _c.yoffset;
             xadvance = _c.xadvance;
             rotated = _c.rotated;
+        }
+    }
+
+    [SerializeField] private FontType fontType_;
+    public FontType FontType {
+        get {
+            return fontType_;
+        }
+        set {
+            fontType_ = value;
         }
     }
 
