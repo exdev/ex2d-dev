@@ -39,6 +39,18 @@ public class exSpriteFont : exLayeredSprite {
 
     /// 每个exSpriteFont都有单独的一个exFont实例
     [SerializeField] protected exFont font_ = new exFont();
+    
+    public exBitmapFont bitmapFont {
+        get {
+            return font_.bitmapFont;
+        }
+    }
+
+    public Font dynamicFont {
+        get {
+            return font_.dynamicFont;
+        }
+    }
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected string text_ = "Hello World!";
@@ -60,6 +72,42 @@ public class exSpriteFont : exLayeredSprite {
                 if (oldText.Length != text_.Length) {
                     UpdateCapacity();   // TODO: 如果在一帧内反复修改文本，会造成多余的layer改动，考虑留到update时再处理
                 }
+                updateFlags |= exUpdateFlags.Text;
+            }
+        }
+    }
+
+    public int lineHeight {
+        get {
+            return font_.lineHeight;
+        }
+        set {
+            if (font_.lineHeight != value) {
+                font_.lineHeight = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+    public int fontSize {
+        get {
+            return font_.fontSize;
+        }
+        set {
+            if (font_.fontSize != value) {
+                font_.fontSize = value;
+                updateFlags |= exUpdateFlags.Text;
+            }
+        }
+    }
+
+    public FontStyle fontStyle {
+        get {
+            return font_.fontStyle;
+        }
+        set {
+            if (font_.fontStyle != value) {
+                font_.fontStyle = value;
                 updateFlags |= exUpdateFlags.Text;
             }
         }
@@ -262,6 +310,23 @@ public class exSpriteFont : exLayeredSprite {
         }
     }
 
+#if UNITY_EDITOR
+    
+    /// 该属性仅供编辑器使用，用户直接调用SetFont方法即可，无需设置类型。
+    public exFont.TypeForEditor fontType {
+        get {
+            return font_.type;
+        }
+        set {
+            if (font_.type == value) {
+                font_.type = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+#endif
+
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -388,10 +453,18 @@ public class exSpriteFont : exLayeredSprite {
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
     
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public void SetFont (exBitmapFont _bitmapFont) {
         font_.Set(_bitmapFont);
         UpdateTexture();
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
 
     public void SetFont (Font _dynamicFont) {
         font_.Set(_dynamicFont);

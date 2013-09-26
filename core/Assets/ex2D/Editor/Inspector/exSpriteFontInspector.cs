@@ -23,7 +23,7 @@ using System.IO;
 [CustomEditor(typeof(exSpriteFont))]
 class exSpriteFontInspector : exLayeredSpriteInspector {
 
-    SerializedProperty fontProp;
+    //SerializedProperty fontProp;
     SerializedProperty textProp;
     SerializedProperty textAlignProp;
     SerializedProperty useKerningProp;
@@ -59,23 +59,22 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
 
         {
             // font
-            exSpriteFont sp = serializedObject.targetObject as exSpriteFont;
+            ex3DSpriteFont sp = serializedObject.targetObject as ex3DSpriteFont;
             if (sp) {
-                exFont.TypeForEditor fontType = sp.font.type;
                 EditorGUI.BeginChangeCheck();
-                fontType = (exFont.TypeForEditor)EditorGUILayout.EnumPopup("Font Type", fontType);
+                exFont.TypeForEditor fontType = (exFont.TypeForEditor)EditorGUILayout.EnumPopup("Font Type", sp.fontType);
                 if (EditorGUI.EndChangeCheck()) {
-                    sp.font.type = fontType;
+                    sp.fontType = fontType;
                     EditorUtility.SetDirty(sp);
                 }
                 EditorGUI.indentLevel++;
                 if (fontType == exFont.TypeForEditor.Bitmap) {
-                    sp.font.Set(EditorGUILayout.ObjectField("Font", sp.font.bitmapFont, typeof(exBitmapFont), false) as exBitmapFont);
+                    sp.SetFont(EditorGUILayout.ObjectField("Font", sp.bitmapFont, typeof(exBitmapFont), false) as exBitmapFont);
                 }
                 else {
-                    sp.font.Set(EditorGUILayout.ObjectField("Font", sp.font.dynamicFont, typeof(Font), false) as Font);
-                    sp.font.fontStyle = (FontStyle)EditorGUILayout.EnumPopup("Font Style", sp.font.fontStyle);
-                    sp.font.lineHeight = EditorGUILayout.IntField("Line Height", sp.font.lineHeight);
+                    sp.SetFont(EditorGUILayout.ObjectField("Font", sp.dynamicFont, typeof(Font), false) as Font);
+                    sp.fontStyle = (FontStyle)EditorGUILayout.EnumPopup("Font Style", sp.fontStyle);
+                    sp.lineHeight = EditorGUILayout.IntField("Line Height", sp.lineHeight);
                 }
                 EditorGUI.indentLevel--;
             }
@@ -272,7 +271,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
 
     protected new void InitProperties () {
         base.InitProperties();
-        fontProp = serializedObject.FindProperty("font_");
+        //fontProp = serializedObject.FindProperty("font_");
         textProp = serializedObject.FindProperty("text_");
         textAlignProp = serializedObject.FindProperty("textAlign_");
         useKerningProp = serializedObject.FindProperty("useKerning_");
