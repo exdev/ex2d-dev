@@ -730,18 +730,18 @@ public class exUIElement {
         int cur_y = _y;
 
         exUIElement newEL = new exUIElement();
+        newEL.CloneComputedStyle (this);
         newEL.name = name + " [0]";
         newEL.isContent_ = true;
         newEL.isFirstLine_ = true;
         newEL.style = null;
-        newEL.display = exCSS_display.Inline; 
-        newEL.x = cur_x;
-        newEL.y = cur_y;
         newEL.image = _image;
         newEL.contentType = _contentType;
+
+        newEL.x = cur_x;
+        newEL.y = cur_y;
         newEL.width = _width;
         newEL.height = _height;
-        newEL.contentColor = contentColor;
 
         normalFlows_.Add(newEL);
 
