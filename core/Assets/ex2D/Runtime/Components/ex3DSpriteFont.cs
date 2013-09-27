@@ -304,7 +304,7 @@ public class ex3DSpriteFont : exStandaloneSprite {
             return font_.type;
         }
         set {
-            if (font_.type == value) {
+            if (font_.type != value) {
                 font_.type = value;
                 updateFlags |= exUpdateFlags.Vertex;
             }
@@ -342,6 +342,24 @@ public class ex3DSpriteFont : exStandaloneSprite {
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable functions
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    protected new void OnEnable () {
+        font_.textureRebuildCallback += OnFontTextureRebuilt;
+        base.OnEnable();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    protected new void OnDisable () {
+        base.OnDisable();
+        font_.textureRebuildCallback -= OnFontTextureRebuilt;
+    }
 
     #region Functions used to update geometry buffer
 
@@ -413,17 +431,6 @@ public class ex3DSpriteFont : exStandaloneSprite {
 
     protected override void UpdateVertexAndIndexCount () {
         SpriteFontBuilder.GetVertexAndIndexCount (text_, out vertexCount_, out indexCount_);
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
-    protected override void Show () {
-        base.Show();
-        Debug.Log ("show");
-        font_.textureRebuildCallback = null;
-        font_.textureRebuildCallback += OnFontTextureRebuilt;
     }
 
     ///////////////////////////////////////////////////////////////////////////////

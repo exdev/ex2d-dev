@@ -59,15 +59,19 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
 
         {
             // font
-            ex3DSpriteFont sp = serializedObject.targetObject as ex3DSpriteFont;
+            exSpriteFont sp = serializedObject.targetObject as exSpriteFont;
             if (sp) {
                 EditorGUI.BeginChangeCheck();
                 exFont.TypeForEditor fontType = (exFont.TypeForEditor)EditorGUILayout.EnumPopup("Font Type", sp.fontType);
                 if (EditorGUI.EndChangeCheck()) {
                     sp.fontType = fontType;
+                    if (fontType == exFont.TypeForEditor.Dynamic && sp.dynamicFont == null) {
+                        sp.SetFont(Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font);
+                    }
                     EditorUtility.SetDirty(sp);
                 }
                 EditorGUI.indentLevel++;
+                EditorGUI.BeginChangeCheck();
                 if (fontType == exFont.TypeForEditor.Bitmap) {
                     sp.SetFont(EditorGUILayout.ObjectField("Font", sp.bitmapFont, typeof(exBitmapFont), false) as exBitmapFont);
                 }
@@ -76,6 +80,9 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
                     sp.fontStyle = (FontStyle)EditorGUILayout.EnumPopup("Font Style", sp.fontStyle);
                     sp.fontSize = EditorGUILayout.IntField("Font Size", sp.fontSize);
                     sp.lineHeight = EditorGUILayout.IntField("Line Height", sp.lineHeight);
+                }
+                if (EditorGUI.EndChangeCheck()) {
+                    EditorUtility.SetDirty(sp);
                 }
                 EditorGUI.indentLevel--;
             }

@@ -318,7 +318,7 @@ public class exSpriteFont : exLayeredSprite {
             return font_.type;
         }
         set {
-            if (font_.type == value) {
+            if (font_.type != value) {
                 font_.type = value;
                 updateFlags |= exUpdateFlags.Vertex;
             }
@@ -358,6 +358,24 @@ public class exSpriteFont : exLayeredSprite {
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable functions
     ///////////////////////////////////////////////////////////////////////////////
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    protected new void OnEnable () {
+        font_.textureRebuildCallback += OnFontTextureRebuilt;
+        base.OnEnable();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    protected new void OnDisable () {
+        base.OnDisable();
+        font_.textureRebuildCallback -= OnFontTextureRebuilt;
+    }
 
     #region Functions used to update geometry buffer
 
@@ -428,16 +446,6 @@ public class exSpriteFont : exLayeredSprite {
         if (layer_ == null) {
             UpdateCapacity();
         }
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
-    protected override void Show () {
-        base.Show();
-        font_.textureRebuildCallback = null;
-        font_.textureRebuildCallback += OnFontTextureRebuilt;
     }
 
     //// ------------------------------------------------------------------ 

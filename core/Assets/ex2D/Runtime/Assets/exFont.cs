@@ -77,6 +77,15 @@ using System.Collections.Generic;
             return dynamicFont_;
         }
         private set {
+            if (ReferenceEquals(dynamicFont_, value)) {
+                return;
+            }
+            if (dynamicFont_ != null) {
+                dynamicFont_.textureRebuildCallback -= textureRebuildCallback_;
+            }
+            if (value != null) {
+                value.textureRebuildCallback += textureRebuildCallback_;
+            }
             dynamicFont_ = value;
         }
     }
@@ -140,7 +149,7 @@ using System.Collections.Generic;
     public void Clear () {
         bitmapFont = null;
         dynamicFont = null;
-        textureRebuildCallback = null;
+        textureRebuildCallback_ = null;
     }
     
     // ------------------------------------------------------------------ 
@@ -196,41 +205,39 @@ using System.Collections.Generic;
     }
 
     void OnFontTextureRebuilt () {
-        exDebug.Assert(dynamicFontRegistered);
-        if (textureRebuildCallback != null) {
-            textureRebuildCallback();
+        exDebug.Assert(textureRebuildCallback_ != null);
+        if (textureRebuildCallback_ != null) {
+            textureRebuildCallback_();
         }
     }
 
-    [System.NonSerialized] public Font.FontTextureRebuildCallback textureRebuildCallback;
-    [System.NonSerialized] private bool dynamicFontRegistered = false;
+    //[System.NonSerialized] public Font.FontTextureRebuildCallback textureRebuildCallback;
 
-    /*
-    private Font.FontTextureRebuildCallback textureRebuildCallback_;
+    [System.NonSerialized] private Font.FontTextureRebuildCallback textureRebuildCallback_;
+    /// 这个事件的add和remove方法必须保证成对调用。
     public event Font.FontTextureRebuildCallback textureRebuildCallback {
         add {
 #if UNITY_EDITOR
-            exDebug.Assert( UnityEditor.ArrayUtility.Contains(textureRebuildCallback_.GetInvocationList(), 
+            exDebug.Assert( textureRebuildCallback_ == null || UnityEditor.ArrayUtility.Contains(textureRebuildCallback_.GetInvocationList(), 
                 new Font.FontTextureRebuildCallback(value)) == false );
 #endif
-            textureRebuildCallback_ += value;
-            if (dynamicFontRegistered == false && dynamicFont_ != null) {
-                dynamicFontRegistered = true;
+            textureRebuildCallback_ = value;    // 直接限制不能多个sprite font共享一个exFont
+            if (dynamicFont_ != null) {
                 dynamicFont_.textureRebuildCallback += textureRebuildCallback_;
             }
+            Debug.Log("[|exFont] add");
         }
         remove {
 #if UNITY_EDITOR
-            exDebug.Assert( UnityEditor.ArrayUtility.Contains(textureRebuildCallback_.GetInvocationList(), 
-                new Font.FontTextureRebuildCallback(value)) == true );
+            exDebug.Assert( textureRebuildCallback_ == value );
 #endif
-            textureRebuildCallback_ -= value;
-            if (dynamicFontRegistered && textureRebuildCallback_ == null && dynamicFont_ != null) {
-                dynamicFontRegistered = false;
+            textureRebuildCallback_ = null;    // 直接限制不能多个sprite font共享一个exFont
+            if (dynamicFont_ != null) {
                 dynamicFont_.textureRebuildCallback -= textureRebuildCallback_;
             }
+            Debug.Log("[|exFont] remove");
         }
-    }*/
+    }
 
     public Texture2D texture {
         get {
@@ -251,7 +258,7 @@ using System.Collections.Generic;
                     return bitmapFont_.charInfos.Count > 0;
                 }
                 else if (dynamicFont_ != null) {
-                    return dynamicFont_.characterInfo.Length > 0;
+                    return true;
                 }
             }
             return false;
@@ -299,9 +306,9 @@ using System.Collections.Generic;
     
     public void RequestCharactersInTexture ( string _text ) {
         if (dynamicFont_ != null) {
-            dynamicFont_.textureRebuildCallback = OnFontTextureRebuilt;
+            //dynamicFont_.textureRebuildCallback = OnFontTextureRebuilt;
             dynamicFont_.RequestCharactersInTexture (_text, dynamicFontSize_, dynamicFontStyle_);
-            dynamicFont_.textureRebuildCallback = null; // TODO how to keep callback
+            //dynamicFont_.textureRebuildCallback = null;
         }
     }
 }
