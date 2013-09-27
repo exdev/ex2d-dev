@@ -1270,7 +1270,7 @@ class exUILayoutEditor : EditorWindow {
                     ++indentLevel;
                         exCSSUI.ColorField ( indentLevel, activeElement, "color", style.contentColor, true );
                         exCSSUI.WrapField ( indentLevel, activeElement, "wrap", ref style.wrap );
-                        exCSSUI.AligmentField ( indentLevel, activeElement, "aligment", ref style.textAlign );
+                        exCSSUI.HorizontalAlignField ( indentLevel, activeElement, "horizontal-align", ref style.horizontalAlign );
                         exCSSUI.DecorationField ( indentLevel, activeElement, "decoration", ref style.textDecoration );
                         exCSSUI.SizeNoPercentageField ( indentLevel, activeElement, "letter-spacing", style.letterSpacing, true );
                         exCSSUI.SizeNoPercentageField ( indentLevel, activeElement, "word-spacing", style.wordSpacing, true );

@@ -67,12 +67,12 @@ public static class exCSSUI {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void AligmentField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_alignment _val ) {
+    public static void HorizontalAlignField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_horizontal_align _val ) {
         EditorGUILayout.BeginHorizontal ();
             GUILayout.Space( 15.0f * _indentLevel );
             GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
 
-            _val = (exCSS_alignment)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+            _val = (exCSS_horizontal_align)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
         EditorGUILayout.EndHorizontal ();
     }
 
