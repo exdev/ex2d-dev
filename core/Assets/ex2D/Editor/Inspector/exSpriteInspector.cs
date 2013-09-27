@@ -28,6 +28,11 @@ class exSpriteInspector : exLayeredSpriteInspector {
     SerializedProperty spriteTypeProp;
     SerializedProperty tiledSpacingProp;
     SerializedProperty borderOnlyProp;
+    SerializedProperty customBorderSizeProp;
+    SerializedProperty leftProp;
+    SerializedProperty rightProp;
+    SerializedProperty topProp;
+    SerializedProperty bottomProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -220,6 +225,62 @@ class exSpriteInspector : exLayeredSpriteInspector {
                     }
                 }
             }
+            
+            // custom border size
+            EditorGUILayout.BeginHorizontal ();
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField ( customBorderSizeProp, new GUIContent("Custom Border Size"), true );
+            if ( EditorGUI.EndChangeCheck() ) {
+                foreach ( Object obj in serializedObject.targetObjects ) {
+                    exSprite sp = obj as exSprite;
+                    if ( sp ) {
+                        sp.customBorderSize = customBorderSizeProp.boolValue;
+                        EditorUtility.SetDirty(sp);
+                    }
+                }
+            }
+            
+            if (customBorderSizeProp.boolValue) {
+                // reset border size
+                if ( GUILayout.Button("Reset", GUILayout.Width(57), GUILayout.Height(16) ) ) {
+                    foreach (Object obj in serializedObject.targetObjects) {
+                        exSprite sp = obj as exSprite;
+                        if (sp) {
+                            sp.leftBorderSize = sp.textureInfo.borderLeft;
+                            sp.rightBorderSize = sp.textureInfo.borderRight;
+                            sp.topBorderSize = sp.textureInfo.borderTop;
+                            sp.bottomBorderSize = sp.textureInfo.borderBottom;
+                            EditorUtility.SetDirty(sp);
+                        }
+                    }
+                }
+                EditorGUILayout.EndHorizontal ();
+                
+                ++EditorGUI.indentLevel;
+                // left right top bottom
+                EditorGUI.BeginChangeCheck ();
+                EditorGUILayout.PropertyField (leftProp, new GUIContent ("Left"), true);
+                EditorGUILayout.PropertyField (rightProp, new GUIContent ("Right"), true);
+                EditorGUILayout.PropertyField (topProp, new GUIContent ("Top"), true);
+                EditorGUILayout.PropertyField (bottomProp, new GUIContent ("Bottom"), true);
+                if (EditorGUI.EndChangeCheck ()) {
+                    foreach (Object obj in serializedObject.targetObjects) {
+                        exSprite sp = obj as exSprite;
+                        if (sp) {
+                            sp.leftBorderSize = leftProp.floatValue;
+                            sp.rightBorderSize = rightProp.floatValue;
+                            sp.topBorderSize = topProp.floatValue;
+                            sp.bottomBorderSize = bottomProp.floatValue;
+                            EditorUtility.SetDirty (sp);
+                        }
+                    }
+                }
+                --EditorGUI.indentLevel;
+            }
+            else {
+                EditorGUILayout.EndHorizontal ();
+            }
+            
             --EditorGUI.indentLevel;
         }
 
@@ -256,6 +317,11 @@ class exSpriteInspector : exLayeredSpriteInspector {
         spriteTypeProp = serializedObject.FindProperty("spriteType_");
         tiledSpacingProp = serializedObject.FindProperty("tiledSpacing_");
         borderOnlyProp = serializedObject.FindProperty("borderOnly_");
+        customBorderSizeProp = serializedObject.FindProperty("customBorderSize_");
+        leftProp = serializedObject.FindProperty("leftBorderSize_");
+        rightProp = serializedObject.FindProperty("rightBorderSize_");
+        topProp = serializedObject.FindProperty("topBorderSize_");
+        bottomProp = serializedObject.FindProperty("bottomBorderSize_");
     }
 }
 

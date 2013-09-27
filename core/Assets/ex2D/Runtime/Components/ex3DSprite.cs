@@ -104,16 +104,103 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
     
     // ------------------------------------------------------------------ 
     [SerializeField] protected bool borderOnly_ = false;
-    /// used for sliced sprite
+    /// only used for sliced sprite
     // ------------------------------------------------------------------ 
 
     public bool borderOnly {
         get { return borderOnly_; }
         set {
-            if ( borderOnly_ != value && spriteType_ == exSpriteType.Sliced) {
+            if ( borderOnly_ != value ) {
                 borderOnly_ = value;
-                UpdateBufferSize();
-                updateFlags |= exUpdateFlags.All;
+                if (spriteType_ == exSpriteType.Sliced) {
+                    UpdateBufferSize();
+                    updateFlags |= exUpdateFlags.All;
+                }
+            }
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected bool customBorderSize_ = false;
+    /// only used for sliced sprite
+    // ------------------------------------------------------------------ 
+
+    public bool customBorderSize {
+        get { return customBorderSize_; }
+        set {
+            if ( customBorderSize_ != value ) {
+                customBorderSize_ = value;
+                if (spriteType_ == exSpriteType.Sliced) {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected float leftBorderSize_;
+    /// The left border size used for sliced sprite
+    // ------------------------------------------------------------------ 
+
+    public float leftBorderSize {
+        get { return leftBorderSize_; }
+        set {
+            if ( leftBorderSize_ != value ) {
+                leftBorderSize_ = value;
+                if (spriteType_ == exSpriteType.Sliced) {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected float rightBorderSize_;
+    /// The right border size used for sliced sprite
+    // ------------------------------------------------------------------ 
+
+    public float rightBorderSize {
+        get { return rightBorderSize_; }
+        set {
+            if ( rightBorderSize_ != value ) {
+                rightBorderSize_ = value;
+                if (spriteType_ == exSpriteType.Sliced) {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected float topBorderSize_;
+    /// The top border size used for sliced sprite
+    // ------------------------------------------------------------------ 
+
+    public float topBorderSize {
+        get { return topBorderSize_; }
+        set {
+            if ( topBorderSize_ != value ) {
+                topBorderSize_ = value;
+                if (spriteType_ == exSpriteType.Sliced) {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected float bottomBorderSize_;
+    /// The bottom border size used for sliced sprite
+    // ------------------------------------------------------------------ 
+
+    public float bottomBorderSize {
+        get { return bottomBorderSize_; }
+        set {
+            if ( bottomBorderSize_ != value ) {
+                bottomBorderSize_ = value;
+                if (spriteType_ == exSpriteType.Sliced) {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
             }
         }
     }

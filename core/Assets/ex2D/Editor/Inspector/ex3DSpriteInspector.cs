@@ -28,6 +28,11 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
     SerializedProperty spriteTypeProp;
     SerializedProperty tiledSpacingProp;
     SerializedProperty borderOnlyProp;
+    SerializedProperty customBorderSizeProp;
+    SerializedProperty leftProp;
+    SerializedProperty rightProp;
+    SerializedProperty topProp;
+    SerializedProperty bottomProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -206,6 +211,7 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
         }
         else if (spriteTypeProp.enumValueIndex == (int)exSpriteType.Sliced) {
             ++EditorGUI.indentLevel;
+            
             // border only
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField ( borderOnlyProp, new GUIContent("Border Only"), true );
@@ -218,6 +224,61 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
                     }
                 }
             }
+            // custom border size
+            EditorGUILayout.BeginHorizontal ();
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField ( customBorderSizeProp, new GUIContent("Custom Border Size"), true );
+            if ( EditorGUI.EndChangeCheck() ) {
+                foreach ( Object obj in serializedObject.targetObjects ) {
+                    ex3DSprite sp = obj as ex3DSprite;
+                    if ( sp ) {
+                        sp.customBorderSize = customBorderSizeProp.boolValue;
+                        EditorUtility.SetDirty(sp);
+                    }
+                }
+            }
+
+            if (customBorderSizeProp.boolValue) {
+                // reset border size
+                if ( GUILayout.Button("Reset", GUILayout.Width(57), GUILayout.Height(16) ) ) {
+                    foreach (Object obj in serializedObject.targetObjects) {
+                        ex3DSprite sp = obj as ex3DSprite;
+                        if (sp) {
+                            sp.leftBorderSize = sp.textureInfo.borderLeft;
+                            sp.rightBorderSize = sp.textureInfo.borderRight;
+                            sp.topBorderSize = sp.textureInfo.borderTop;
+                            sp.bottomBorderSize = sp.textureInfo.borderBottom;
+                            EditorUtility.SetDirty(sp);
+                        }
+                    }
+                }
+                EditorGUILayout.EndHorizontal ();
+
+                ++EditorGUI.indentLevel;
+                // left right top bottom
+                EditorGUI.BeginChangeCheck ();
+                EditorGUILayout.PropertyField (leftProp, new GUIContent ("Left"), true);
+                EditorGUILayout.PropertyField (rightProp, new GUIContent ("Right"), true);
+                EditorGUILayout.PropertyField (topProp, new GUIContent ("Top"), true);
+                EditorGUILayout.PropertyField (bottomProp, new GUIContent ("Bottom"), true);
+                if (EditorGUI.EndChangeCheck ()) {
+                    foreach (Object obj in serializedObject.targetObjects) {
+                        ex3DSprite sp = obj as ex3DSprite;
+                        if (sp) {
+                            sp.leftBorderSize = leftProp.floatValue;
+                            sp.rightBorderSize = rightProp.floatValue;
+                            sp.topBorderSize = topProp.floatValue;
+                            sp.bottomBorderSize = bottomProp.floatValue;
+                            EditorUtility.SetDirty (sp);
+                        }
+                    }
+                }
+                --EditorGUI.indentLevel;
+            }
+            else {
+                EditorGUILayout.EndHorizontal ();
+            }
+            
             --EditorGUI.indentLevel;
         }
     }
@@ -233,6 +294,11 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
         spriteTypeProp = serializedObject.FindProperty("spriteType_");
         tiledSpacingProp = serializedObject.FindProperty("tiledSpacing_");
         borderOnlyProp = serializedObject.FindProperty("borderOnly_");
+        customBorderSizeProp = serializedObject.FindProperty("customBorderSize_");
+        leftProp = serializedObject.FindProperty("leftBorderSize_");
+        rightProp = serializedObject.FindProperty("rightBorderSize_");
+        topProp = serializedObject.FindProperty("topBorderSize_");
+        bottomProp = serializedObject.FindProperty("bottomBorderSize_");
     }
 }
 

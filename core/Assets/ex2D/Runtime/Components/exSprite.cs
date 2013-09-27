@@ -120,17 +120,102 @@ public class exSprite : exLayeredSprite, exISprite {
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected bool borderOnly_ = false;
-    /// used for sliced sprite
+    /// only used for sliced sprite
     // ------------------------------------------------------------------ 
 
     public bool borderOnly {
         get { return borderOnly_; }
         set {
-            if ( borderOnly_ != value && spriteType_ == exSpriteType.Sliced) {
+            if ( borderOnly_ != value ) {
                 borderOnly_ = value;
-                if (layer_ != null) {
+                if (spriteType_ == exSpriteType.Sliced && layer_ != null) {
                     UpdateBufferSize();
                     updateFlags |= exUpdateFlags.All;
+                }
+            }
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected bool customBorderSize_ = false;
+    /// only used for sliced sprite
+    // ------------------------------------------------------------------ 
+
+    public bool customBorderSize {
+        get { return customBorderSize_; }
+        set {
+            if ( customBorderSize_ != value ) {
+                customBorderSize_ = value;
+                if (spriteType_ == exSpriteType.Sliced && layer_ != null) {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected float leftBorderSize_;
+    /// The left border size used for sliced sprite
+    // ------------------------------------------------------------------ 
+
+    public float leftBorderSize {
+        get { return leftBorderSize_; }
+        set {
+            if ( leftBorderSize_ != value ) {
+                leftBorderSize_ = value;
+                if (spriteType_ == exSpriteType.Sliced && layer_ != null) {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected float rightBorderSize_;
+    /// The right border size used for sliced sprite
+    // ------------------------------------------------------------------ 
+
+    public float rightBorderSize {
+        get { return rightBorderSize_; }
+        set {
+            if ( rightBorderSize_ != value ) {
+                rightBorderSize_ = value;
+                if (spriteType_ == exSpriteType.Sliced && layer_ != null) {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected float topBorderSize_;
+    /// The top border size used for sliced sprite
+    // ------------------------------------------------------------------ 
+
+    public float topBorderSize {
+        get { return topBorderSize_; }
+        set {
+            if ( topBorderSize_ != value ) {
+                topBorderSize_ = value;
+                if (spriteType_ == exSpriteType.Sliced && layer_ != null) {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected float bottomBorderSize_;
+    /// The bottom border size used for sliced sprite
+    // ------------------------------------------------------------------ 
+
+    public float bottomBorderSize {
+        get { return bottomBorderSize_; }
+        set {
+            if ( bottomBorderSize_ != value ) {
+                bottomBorderSize_ = value;
+                if (spriteType_ == exSpriteType.Sliced && layer_ != null) {
+                    updateFlags |= exUpdateFlags.Vertex;
                 }
             }
         }
@@ -658,6 +743,22 @@ namespace ex2D.Detail {
             4  5  6  7 
             0  1  2  3 
             */
+            // get border size
+            float leftBorderSize, rightBorderSize, topBorderSize, bottomBorderSize;
+            exISprite iSprite = _sprite as exISprite;
+            if (iSprite.customBorderSize) {
+                leftBorderSize = iSprite.leftBorderSize;
+                rightBorderSize = iSprite.rightBorderSize;
+                topBorderSize = iSprite.topBorderSize;
+                bottomBorderSize = iSprite.bottomBorderSize;
+            }
+            else {
+                leftBorderSize = (float)textureInfo_.borderLeft;
+                rightBorderSize = (float)textureInfo_.borderTop;
+                topBorderSize = (float)textureInfo_.borderRight;
+                bottomBorderSize = (float)textureInfo_.borderBottom;
+            }
+            
             // left right columns
             Vector3 v0 = _vertices.buffer[_startIndex + 0];
             Vector3 v12 = _vertices.buffer[_startIndex + 1];
@@ -668,16 +769,17 @@ namespace ex2D.Detail {
             _vertices.buffer[_startIndex + 12] = v12;
             _vertices.buffer[_startIndex + 15] = v15;
             float height = _sprite.height;
-            float yStep1 = (float)textureInfo_.borderBottom / height;        // position step, not uv step
-            float yStep2 = (height - textureInfo_.borderTop) / height;
+            float yStep1 = bottomBorderSize / height;        // position step, not uv step
+            float yStep2 = (height - topBorderSize) / height;
             _vertices.buffer[_startIndex + 4] = v0 + (v12 - v0) * yStep1;
             _vertices.buffer[_startIndex + 7] = v3 + (v15 - v3) * yStep1;
             _vertices.buffer[_startIndex + 8] = v0 + (v12 - v0) * yStep2;
             _vertices.buffer[_startIndex + 11] = v3 + (v15 - v3) * yStep2;
+            
             // mid columns
             float width = _sprite.width;
-            float xStep1 = (float)textureInfo_.borderLeft / width;
-            float xStep2 = (width - textureInfo_.borderRight) / width;
+            float xStep1 = leftBorderSize / width;
+            float xStep2 = (width - rightBorderSize) / width;
             for (int i = 0; i <= 12; i += 4) {
                 Vector3 left = _vertices.buffer[_startIndex + i];
                 Vector3 right = _vertices.buffer[_startIndex + i + 3];
