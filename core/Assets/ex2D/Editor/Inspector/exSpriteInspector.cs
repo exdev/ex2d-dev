@@ -227,7 +227,6 @@ class exSpriteInspector : exLayeredSpriteInspector {
             }
             
             // custom border size
-            EditorGUILayout.BeginHorizontal ();
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField ( customBorderSizeProp, new GUIContent("Custom Border Size"), true );
             if ( EditorGUI.EndChangeCheck() ) {
@@ -241,21 +240,6 @@ class exSpriteInspector : exLayeredSpriteInspector {
             }
             
             if (customBorderSizeProp.boolValue) {
-                // reset border size
-                if ( GUILayout.Button("Reset", GUILayout.Width(57), GUILayout.Height(16) ) ) {
-                    foreach (Object obj in serializedObject.targetObjects) {
-                        exSprite sp = obj as exSprite;
-                        if (sp) {
-                            sp.leftBorderSize = sp.textureInfo.borderLeft;
-                            sp.rightBorderSize = sp.textureInfo.borderRight;
-                            sp.topBorderSize = sp.textureInfo.borderTop;
-                            sp.bottomBorderSize = sp.textureInfo.borderBottom;
-                            EditorUtility.SetDirty(sp);
-                        }
-                    }
-                }
-                EditorGUILayout.EndHorizontal ();
-                
                 ++EditorGUI.indentLevel;
                 // left right top bottom
                 EditorGUI.BeginChangeCheck ();
@@ -275,10 +259,24 @@ class exSpriteInspector : exLayeredSpriteInspector {
                         }
                     }
                 }
-                --EditorGUI.indentLevel;
-            }
-            else {
+
+                // reset border size
+                EditorGUILayout.BeginHorizontal ();
+                GUILayout.FlexibleSpace();
+                if ( GUILayout.Button("Reset", GUILayout.Width(57), GUILayout.Height(16) ) ) {
+                    foreach (Object obj in serializedObject.targetObjects) {
+                        exSprite sp = obj as exSprite;
+                        if (sp) {
+                            sp.leftBorderSize = sp.textureInfo.borderLeft;
+                            sp.rightBorderSize = sp.textureInfo.borderRight;
+                            sp.topBorderSize = sp.textureInfo.borderTop;
+                            sp.bottomBorderSize = sp.textureInfo.borderBottom;
+                            EditorUtility.SetDirty(sp);
+                        }
+                    }
+                }
                 EditorGUILayout.EndHorizontal ();
+                --EditorGUI.indentLevel;
             }
             
             --EditorGUI.indentLevel;
