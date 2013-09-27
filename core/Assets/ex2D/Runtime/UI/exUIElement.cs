@@ -153,6 +153,7 @@ public class exUIElement {
     bool dirty = false;
     bool isContent_ = false;
     bool isFirstLine_ = false;
+    List<LineInfo> lines = new List<LineInfo>();
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -477,7 +478,7 @@ public class exUIElement {
         int maxLineWidth = 0;
         int maxLineHeight = 0;
 
-        List<LineInfo> lines = new List<LineInfo>();
+        lines.Clear();
         LineInfo curLine = new LineInfo();
         curLine.name = name + "[" + lines.Count + "]";
 
@@ -653,18 +654,6 @@ public class exUIElement {
 
                 width = System.Math.Min ( System.Math.Max ( width, minWidth ), maxWidth );
             }
-
-
-            // adjust line elements ( do not adjust inline element )
-            for ( int i = 0; i < lines.Count; ++i ) {
-                curLine = lines[i];
-                if ( curLine.isBlock ) {
-                    AdjustBlockElement ( curLine.elements[0], width, height );
-                }
-                else {
-                    AdjustLineElements ( width, curLine.elements, curLine.width, curLine.height );
-                }
-            }
         }
 
         // TODO: I think only parent set dirty
@@ -675,34 +664,74 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void AdjustBlockElement ( exUIElement _el, int _width, int _height ) {
-        // NOTE: auto-margin is a little wested when we have style.width.type == exCSS_size_push.Type.Push
-        if ( _el.style.width.type != exCSS_size.Type.Auto &&
-             ( _el.style.marginLeft.type == exCSS_size.Type.Auto || _el.style.marginRight.type == exCSS_size.Type.Auto ) ) 
-        {
-            int remainWidth = _width - _el.width - _el.borderSizeLeft - _el.borderSizeRight - _el.paddingLeft - _el.paddingRight;
-            if ( _el.style.marginLeft.type == exCSS_size.Type.Auto && _el.style.marginRight.type == exCSS_size.Type.Auto ) {
-                remainWidth = System.Math.Max ( remainWidth, 0 );
-                _el.marginLeft = remainWidth / 2;
-                _el.marginRight = remainWidth / 2;
-            }
-            else if ( _el.style.marginLeft.type == exCSS_size.Type.Auto ) {
-                remainWidth -= _el.marginRight; 
-                remainWidth = System.Math.Max ( remainWidth, 0 );
-                _el.marginLeft = remainWidth;
-            }
-            else if ( _el.style.marginRight.type == exCSS_size.Type.Auto ) {
-                remainWidth -= _el.marginLeft; 
-                remainWidth = System.Math.Max ( remainWidth, 0 );
-                _el.marginRight = remainWidth;
+    public void AdjustLines ( int _width, int _height ) {
+        AdjustBlockElement ( _width, _height );
+
+        // adjust line elements ( do not adjust inline element )
+        for ( int i = 0; i < lines.Count; ++i ) {
+            LineInfo curLine = lines[i];
+            if ( curLine.isBlock == false ) {
+                AdjustLineElements ( width, curLine.elements, curLine.width, curLine.height );
             }
         }
+        lines.Clear();
 
-        if ( _el.style.marginRight.type != exCSS_size.Type.Auto ) {
-            int remainWidth = _width - _el.width - _el.borderSizeLeft - _el.borderSizeRight - _el.paddingLeft - _el.paddingRight;
-            remainWidth -= _el.marginLeft; 
-            remainWidth = System.Math.Max ( remainWidth, 0 );
-            _el.marginRight = remainWidth;
+        // adjust children
+        for ( int i = 0; i < normalFlows_.Count; ++i ) {
+            exUIElement childEL = normalFlows_[i];
+
+            // skip inline elements
+            if ( childEL.display == exCSS_display.Inline )
+                continue;
+
+            childEL.AdjustLines ( width, height );
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void AdjustBlockElement ( int _width, int _height ) {
+        if ( display == exCSS_display.Block ) {
+            if ( style.width.type == exCSS_size.Type.Auto && contentType == ContentType.Text ) {
+                width = _width 
+                    - marginLeft - marginRight
+                    - borderSizeLeft - borderSizeRight
+                    - paddingLeft - paddingRight;
+                width = System.Math.Max ( width, 0 );
+                width = System.Math.Min ( System.Math.Max ( width, minWidth ), maxWidth );
+            }
+            else {
+                // NOTE: auto-margin is a little wested when we have style.width.type == exCSS_size_push.Type.Push
+                if ( ( style.marginLeft.type == exCSS_size.Type.Auto || style.marginRight.type == exCSS_size.Type.Auto ) ) {
+                    int remainWidth = _width - width - borderSizeLeft - borderSizeRight - paddingLeft - paddingRight;
+                    if ( style.marginLeft.type == exCSS_size.Type.Auto && style.marginRight.type == exCSS_size.Type.Auto ) {
+                        remainWidth = System.Math.Max ( remainWidth, 0 );
+                        marginLeft = remainWidth / 2;
+                        marginRight = remainWidth / 2;
+                    }
+                    else if ( style.marginLeft.type == exCSS_size.Type.Auto ) {
+                        remainWidth -= marginRight; 
+                        remainWidth = System.Math.Max ( remainWidth, 0 );
+                        marginLeft = remainWidth;
+                    }
+                    else if ( style.marginRight.type == exCSS_size.Type.Auto ) {
+                        remainWidth -= marginLeft; 
+                        remainWidth = System.Math.Max ( remainWidth, 0 );
+                        marginRight = remainWidth;
+                    }
+
+                    x = marginLeft + borderSizeLeft + paddingLeft;
+                }
+            }
+
+            if ( style.marginRight.type != exCSS_size.Type.Auto ) {
+                int remainWidth = _width - width - borderSizeLeft - borderSizeRight - paddingLeft - paddingRight;
+                remainWidth -= marginLeft; 
+                remainWidth = System.Math.Max ( remainWidth, 0 );
+                marginRight = remainWidth;
+            }
         }
     }
 

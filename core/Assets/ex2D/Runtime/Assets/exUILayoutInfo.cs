@@ -57,6 +57,7 @@ public class exUILayoutInfo : ScriptableObject {
 
         root.Layout_PreProcess();
         root.Layout( 0, 0, width, height );
+        root.AdjustLines ( width, height );
     }
 
     // ------------------------------------------------------------------ 
