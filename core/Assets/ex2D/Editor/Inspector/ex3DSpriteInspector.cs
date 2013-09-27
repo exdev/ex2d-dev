@@ -26,6 +26,8 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
     SerializedProperty textureInfoProp;
     SerializedProperty useTextureOffsetProp;
     SerializedProperty spriteTypeProp;
+    SerializedProperty tiledSpacingProp;
+    SerializedProperty borderOnlyProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -168,6 +170,56 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
                 }
             }
         }
+        
+        if (spriteTypeProp.enumValueIndex == (int)exSpriteType.Tiled) {
+            ++EditorGUI.indentLevel;
+            // tiled spacing
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField ( tiledSpacingProp, new GUIContent("Tiled Spacing"), true );
+            if ( EditorGUI.EndChangeCheck() ) {
+                foreach ( Object obj in serializedObject.targetObjects ) {
+                    ex3DSprite sp = obj as ex3DSprite;
+                    if ( sp ) {
+                        sp.tiledSpacing = tiledSpacingProp.vector2Value;
+                        if (sp.textureInfo != null) {
+                            sp.tiledSpacing = new Vector2(Mathf.Max(-sp.textureInfo.width + 1, sp.tiledSpacing.x), 
+                                                          Mathf.Max(-sp.textureInfo.height + 1, sp.tiledSpacing.y));
+                        }
+                        EditorUtility.SetDirty(sp);
+                    }
+                }
+            }
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if ( GUILayout.Button("Use Raw Size", GUILayout.Width(88), GUILayout.Height(16) ) ) {
+                foreach (Object obj in serializedObject.targetObjects) {
+                    ex3DSprite sp = obj as ex3DSprite;
+                    if (sp && sp.textureInfo != null) {
+                        exTextureInfo ti = sp.textureInfo;
+                        sp.tiledSpacing = new Vector2(ti.rawWidth - ti.width, ti.rawHeight - ti.height) / 2;
+                        EditorUtility.SetDirty(sp);
+                    }
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+            --EditorGUI.indentLevel;
+        }
+        else if (spriteTypeProp.enumValueIndex == (int)exSpriteType.Sliced) {
+            ++EditorGUI.indentLevel;
+            // border only
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField ( borderOnlyProp, new GUIContent("Border Only"), true );
+            if ( EditorGUI.EndChangeCheck() ) {
+                foreach ( Object obj in serializedObject.targetObjects ) {
+                    ex3DSprite sp = obj as ex3DSprite;
+                    if ( sp ) {
+                        sp.borderOnly = borderOnlyProp.boolValue;
+                        EditorUtility.SetDirty(sp);
+                    }
+                }
+            }
+            --EditorGUI.indentLevel;
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -179,6 +231,8 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
         textureInfoProp = serializedObject.FindProperty("textureInfo_");
         useTextureOffsetProp = serializedObject.FindProperty("useTextureOffset_");
         spriteTypeProp = serializedObject.FindProperty("spriteType_");
+        tiledSpacingProp = serializedObject.FindProperty("tiledSpacing_");
+        borderOnlyProp = serializedObject.FindProperty("borderOnly_");
     }
 }
 

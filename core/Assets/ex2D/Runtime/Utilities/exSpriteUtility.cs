@@ -169,6 +169,9 @@ public static partial class exISpriteExtends {
         case exSpriteType.Sliced:
             _vertexCount = 4 * 4;
             _indexCount = exMesh.QUAD_INDEX_COUNT * 9;
+            if (_sprite.borderOnly) {
+                _indexCount -= exMesh.QUAD_INDEX_COUNT;
+            }
             break;
         case exSpriteType.Tiled: {
             int colCount, rowCount;

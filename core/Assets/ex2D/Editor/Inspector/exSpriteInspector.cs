@@ -27,6 +27,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
     SerializedProperty useTextureOffsetProp;
     SerializedProperty spriteTypeProp;
     SerializedProperty tiledSpacingProp;
+    SerializedProperty borderOnlyProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -173,6 +174,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
         }
 
         if (spriteTypeProp.enumValueIndex == (int)exSpriteType.Tiled) {
+            ++EditorGUI.indentLevel;
             // tiled spacing
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField ( tiledSpacingProp, new GUIContent("Tiled Spacing"), true );
@@ -202,6 +204,23 @@ class exSpriteInspector : exLayeredSpriteInspector {
                 }
             }
             EditorGUILayout.EndHorizontal();
+            --EditorGUI.indentLevel;
+        }
+        else if (spriteTypeProp.enumValueIndex == (int)exSpriteType.Sliced) {
+            ++EditorGUI.indentLevel;
+            // border only
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField ( borderOnlyProp, new GUIContent("Border Only"), true );
+            if ( EditorGUI.EndChangeCheck() ) {
+                foreach ( Object obj in serializedObject.targetObjects ) {
+                    exSprite sp = obj as exSprite;
+                    if ( sp ) {
+                        sp.borderOnly = borderOnlyProp.boolValue;
+                        EditorUtility.SetDirty(sp);
+                    }
+                }
+            }
+            --EditorGUI.indentLevel;
         }
 
         EditorGUILayout.Space();
@@ -236,6 +255,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
         useTextureOffsetProp = serializedObject.FindProperty("useTextureOffset_");
         spriteTypeProp = serializedObject.FindProperty("spriteType_");
         tiledSpacingProp = serializedObject.FindProperty("tiledSpacing_");
+        borderOnlyProp = serializedObject.FindProperty("borderOnly_");
     }
 }
 

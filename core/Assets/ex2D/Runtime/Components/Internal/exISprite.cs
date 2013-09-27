@@ -32,6 +32,7 @@ public interface exISpriteBase : IMonoBehaviour {
     Vector2 offset { get; set; }
     Vector2 shear { get; set; }
     Shader shader { get; set; }
+    
     int vertexCount { get; }
     int indexCount { get; }
     Material material { get; }
@@ -51,6 +52,7 @@ public interface exISprite : exISpriteBase {
     bool useTextureOffset { get; set; }
     exSpriteType spriteType { get; set; }
     Vector2 tiledSpacing { get; set; }
+    bool borderOnly  { get; set; }
     
     void UpdateBufferSize ();   ///< internal use
 }

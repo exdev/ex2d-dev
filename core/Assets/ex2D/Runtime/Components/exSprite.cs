@@ -117,6 +117,24 @@ public class exSprite : exLayeredSprite, exISprite {
             }
         }
     }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected bool borderOnly_ = false;
+    /// used for sliced sprite
+    // ------------------------------------------------------------------ 
+
+    public bool borderOnly {
+        get { return borderOnly_; }
+        set {
+            if ( borderOnly_ != value && spriteType_ == exSpriteType.Sliced) {
+                borderOnly_ = value;
+                if (layer_ != null) {
+                    UpdateBufferSize();
+                    updateFlags |= exUpdateFlags.All;
+                }
+            }
+        }
+    }
     
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -550,8 +568,10 @@ namespace ex2D.Detail {
                 SpriteBuilder.SimpleVertexBufferToSliced(_sprite, _textureInfo, _vertices, _vbIndex);
             }
             if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
+                bool borderOnly = (_sprite as exISprite).borderOnly;
+                int centerIndexIfBorderOnly = borderOnly ? 5 : int.MinValue;
                 for (int i = 0; i <= 10; ++i) {
-                    if (i != 3 && i != 7) {     // 0 1 2 4 5 6 8 9 10
+                    if (i != 3 && i != 7 && i != centerIndexIfBorderOnly) {     // 0 1 2 4 5 6 8 9 10
                         int blVertexIndex = _vbIndex + i;   // bottom left vertex index
                         _indices.buffer[_ibIndex++] = blVertexIndex;
                         _indices.buffer[_ibIndex++] = blVertexIndex + 4;

@@ -102,6 +102,22 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
         }
     }
     
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected bool borderOnly_ = false;
+    /// used for sliced sprite
+    // ------------------------------------------------------------------ 
+
+    public bool borderOnly {
+        get { return borderOnly_; }
+        set {
+            if ( borderOnly_ != value && spriteType_ == exSpriteType.Sliced) {
+                borderOnly_ = value;
+                UpdateBufferSize();
+                updateFlags |= exUpdateFlags.All;
+            }
+        }
+    }
+    
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
