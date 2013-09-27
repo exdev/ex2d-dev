@@ -163,7 +163,7 @@ public static class exTextUtility {
         int cur_index = _start_index;
         int cur_x = 0;
         int line_width = 0;
-        exFont.CharInfo lastCharInfo = null;
+        exBitmapFont.CharInfo lastCharInfo = null;
 
         while ( cur_index < _text.Length ) {
             int next_index = cur_index+1;
@@ -212,7 +212,7 @@ public static class exTextUtility {
             }
 
             // get character info
-            exFont.CharInfo charInfo = _font.GetCharInfo(cur_char);
+            exBitmapFont.CharInfo charInfo = _font.GetCharInfo(cur_char);
             if ( charInfo != null ) {
                 // get the line-width
                 line_width = cur_x + (int)charInfo.width + _letterSpacing;
@@ -242,7 +242,7 @@ public static class exTextUtility {
 
                     char tmp_char = _text[tmp_index];
                     while ( tmp_char != ' ' && tmp_char != '\n' ) {
-                        exFont.CharInfo tmp_charInfo = _font.GetCharInfo(tmp_char);
+                        exBitmapFont.CharInfo tmp_charInfo = _font.GetCharInfo(tmp_char);
                         if ( tmp_charInfo != null ) {
                             int tmp_width = tmp_x + tmp_charInfo.width + _letterSpacing;
                             tmp_x += (int)tmp_charInfo.xadvance + _letterSpacing;
@@ -365,7 +365,7 @@ public static class exTextUtility {
             }
 
             // generate mesh
-            exFont.CharInfo charInfo = _font.GetCharInfo(cur_char);
+            exBitmapFont.CharInfo charInfo = _font.GetCharInfo(cur_char);
             if ( charInfo != null ) {
                 int idx = 4*i;
                 float x = cur_x + charInfo.xoffset;

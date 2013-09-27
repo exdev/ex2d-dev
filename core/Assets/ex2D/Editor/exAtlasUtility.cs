@@ -40,7 +40,7 @@ public static class exAtlasUtility {
 
         // raw referenced
         public exTextureInfo textureInfo = null; 
-        public exFont.CharInfo charInfo = null;
+        public exBitmapFont.CharInfo charInfo = null;
 
         public int rotatedWidth {
             get {
@@ -258,7 +258,7 @@ public static class exAtlasUtility {
             }
         }
         foreach ( exBitmapFont bitmapFont in _atlas.bitmapFonts ) {
-            foreach ( exFont.CharInfo info in bitmapFont.charInfos ) {
+            foreach ( exBitmapFont.CharInfo info in bitmapFont.charInfos ) {
                 Element el = new Element();
                 el.x = 0;
                 el.y = 0;
@@ -1131,7 +1131,7 @@ public static class exAtlasUtility {
             }
             if ( dirty )
                 EditorUtility.SetDirty(bitmapFont);
-                foreach ( exFont.CharInfo charInfo in bitmapFont.charInfos ) {
+                foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
 
                 // copy raw texture into atlas texture
                 exTextureUtility.Fill( ref pixels
@@ -1216,7 +1216,7 @@ public static class exAtlasUtility {
             }
 
             foreach ( exBitmapFont bitmapFont in _atlas.bitmapFonts ) {
-                foreach ( exFont.CharInfo charInfo in bitmapFont.charInfos ) {
+                foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
                     exTextureUtility.ApplyContourBleed( ref result, 
                                                         srcPixels, 
                                                         _atlasTexture.width,
@@ -1258,7 +1258,7 @@ public static class exAtlasUtility {
             }
 
             foreach ( exBitmapFont bitmapFont in _atlas.bitmapFonts ) {
-                foreach ( exFont.CharInfo charInfo in bitmapFont.charInfos ) {
+                foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
                     exTextureUtility.ApplyPaddingBleed( ref result, 
                                                         srcPixels, 
                                                         _atlasTexture.width,

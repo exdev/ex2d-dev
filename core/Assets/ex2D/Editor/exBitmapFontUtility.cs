@@ -103,7 +103,7 @@ public static class exBitmapFontUtility {
                 _bitmapFont.texture = texture;
             }
             else if ( words[0] == "char" ) {
-                exFont.CharInfo charInfo = new exFont.CharInfo(); 
+                exBitmapFont.CharInfo charInfo = new exBitmapFont.CharInfo(); 
                 charInfo.id = int.Parse ( ParseValue( words, "id" ) );
                 charInfo.width = int.Parse ( ParseValue( words, "width" ) );
                 charInfo.height = int.Parse ( ParseValue( words, "height" ) );
@@ -131,7 +131,7 @@ public static class exBitmapFontUtility {
         _bitmapFont.rawTextureGUID = exEditorUtility.AssetToGUID(_bitmapFont.texture);
 
         // revert charInfo uv-y to fit the Unity's uv-coordination.
-        foreach ( exFont.CharInfo charInfo in _bitmapFont.charInfos ) {
+        foreach ( exBitmapFont.CharInfo charInfo in _bitmapFont.charInfos ) {
             charInfo.trim_y = textureHeight - (charInfo.trim_y + charInfo.height);
             charInfo.x = charInfo.trim_x;
             charInfo.y = charInfo.trim_y;

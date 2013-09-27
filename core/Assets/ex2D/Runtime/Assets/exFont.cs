@@ -21,53 +21,6 @@ using System.Collections.Generic;
 
 [System.Serializable] public class exFont {
 
-    ///////////////////////////////////////////////////////////////////////////////
-    ///
-    /// A structure to descrip the character in the bitmap font 
-    ///
-    ///////////////////////////////////////////////////////////////////////////////
-
-    [System.Serializable]
-    public class CharInfo {
-        public int id = -1;                ///< the char value
-        public int trim_x = -1; // TODO: UNITY_EDITOR ///< the trim offset x of the raw texture (used in atlas-font drawing in editor)
-        public int trim_y = -1;            ///< the trim offset y of the raw texture (used in atlas-font drawing in editor)
-        public int x = -1;                 ///< the x pos
-        public int y = -1;                 ///< the y pos
-        public int width = -1;             ///< the width
-        public int height = -1;            ///< the height
-        public int xoffset = -1;           ///< the xoffset
-        public int yoffset = -1;           ///< the yoffset
-        public int xadvance = -1;          ///< the xadvance
-        public bool rotated = false;
-
-        public int rotatedWidth {
-            get {
-                if ( rotated ) return height;
-                return width;
-            }
-        }
-        public int rotatedHeight {
-            get {
-                if ( rotated ) return width;
-                return height;
-            }
-        }
-
-        public CharInfo () {}
-        public CharInfo ( CharInfo _c ) {
-            id = _c.id;
-            x = _c.x;
-            y = _c.y;
-            width = _c.width;
-            height = _c.height;
-            xoffset = _c.xoffset;
-            yoffset = _c.yoffset;
-            xadvance = _c.xadvance;
-            rotated = _c.rotated;
-        }
-    }
-
     // ------------------------------------------------------------------ 
     [SerializeField] private Font dynamicFont_;
     /// The referenced dynamic font asset
@@ -265,7 +218,7 @@ using System.Collections.Generic;
         }
     }
 
-    public CharInfo GetCharInfo ( char _symbol ) {
+    /*public CharInfo GetCharInfo ( char _symbol ) {
         if (bitmapFont_ != null) {
             return bitmapFont_.GetCharInfo(_symbol);
         }
@@ -284,7 +237,7 @@ using System.Collections.Generic;
             charInfo.id = _symbol;
             charInfo.trim_x = 0;
             charInfo.trim_y = 0;
-            charInfo.x = (int)(dynamicCharInfo.uv.x * texture.width);  // TODO: save uv in char info
+            charInfo.x = (int)(dynamicCharInfo.uv.x * texture.width);
             charInfo.y = (int)(dynamicCharInfo.uv.yMax * texture.height);
             charInfo.width = (int)dynamicCharInfo.vert.width;
             charInfo.height = - (int)dynamicCharInfo.vert.height;
@@ -295,6 +248,43 @@ using System.Collections.Generic;
             return charInfo;
         }
         return null;
+    }*/
+
+    public bool GetCharInfo ( char _symbol, out CharacterInfo _charInfo ) {
+        if (bitmapFont_ != null) {
+            exBitmapFont.CharInfo bitmapCharInfo = bitmapFont_.GetCharInfo(_symbol);
+            _charInfo.flipped = bitmapCharInfo.rotated;
+            _charInfo.index = bitmapCharInfo.id;
+            _charInfo.size = 0;
+            _charInfo.style = FontStyle.Normal;
+            if (bitmapFont_.texture != null) {
+                Vector2 texelSize = bitmapFont_.texture.texelSize;
+                _charInfo.uv = new Rect(bitmapCharInfo.x * texelSize.x,
+                                        bitmapCharInfo.y * texelSize.y,
+                                        (bitmapCharInfo.x + bitmapCharInfo.rotatedWidth) * texelSize.x,
+                                        (bitmapCharInfo.y + bitmapCharInfo.rotatedHeight) * texelSize.y);
+            }
+            else {
+                _charInfo.uv = new Rect();
+            }
+            _charInfo.vert = new Rect(bitmapCharInfo.xoffset, - bitmapCharInfo.yoffset, bitmapCharInfo.xoffset + bitmapCharInfo.width, - bitmapCharInfo.yoffset + bitmapCharInfo.height);
+            _charInfo.width = bitmapCharInfo.xadvance;
+            return true;
+        }
+        else if (dynamicFont_ != null) {
+            /*/// yes, Unity's GetCharacterInfo have y problem, you should get lowest character j's y-offset adjust it.
+            CharacterInfo jCharInfo;
+            dynamicFont_.RequestCharactersInTexture("j", dynamicFontSize_, dynamicFontStyle_);
+            dynamicFont_.GetCharacterInfo('j', out jCharInfo, dynamicFontSize_, dynamicFontStyle_);
+            int ttf_offset = (int)(dynamicFontSize_ + jCharInfo.vert.yMax);*/
+
+            dynamicFont_.GetCharacterInfo(_symbol, out _charInfo, dynamicFontSize_, dynamicFontStyle_);
+            return true;
+        }
+        else {
+            _charInfo = new CharacterInfo();
+            return false;
+        }
     }
 
     public int GetKerning ( char _first, char _second ) {
@@ -306,9 +296,7 @@ using System.Collections.Generic;
     
     public void RequestCharactersInTexture ( string _text ) {
         if (dynamicFont_ != null) {
-            //dynamicFont_.textureRebuildCallback = OnFontTextureRebuilt;
             dynamicFont_.RequestCharactersInTexture (_text, dynamicFontSize_, dynamicFontStyle_);
-            //dynamicFont_.textureRebuildCallback = null;
         }
     }
 }

@@ -20,6 +20,53 @@ using System.Collections.Generic;
 ///////////////////////////////////////////////////////////////////////////////
 
 public class exBitmapFont : ScriptableObject {
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    ///
+    /// A structure to descrip the character in the bitmap font 
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+
+    [System.Serializable]
+    public class CharInfo {
+        public int id = -1;                ///< the char value
+        public int trim_x = -1; // TODO: UNITY_EDITOR ///< the trim offset x of the raw texture (used in atlas-font drawing in editor)
+        public int trim_y = -1;            ///< the trim offset y of the raw texture (used in atlas-font drawing in editor)
+        public int x = -1;                 ///< the x pos
+        public int y = -1;                 ///< the y pos
+        public int width = -1;             ///< the width
+        public int height = -1;            ///< the height
+        public int xoffset = -1;           ///< the xoffset
+        public int yoffset = -1;           ///< the yoffset
+        public int xadvance = -1;          ///< the xadvance
+        public bool rotated = false;
+
+        public int rotatedWidth {
+            get {
+                if ( rotated ) return height;
+                return width;
+            }
+        }
+        public int rotatedHeight {
+            get {
+                if ( rotated ) return width;
+                return height;
+            }
+        }
+
+        public CharInfo () {}
+        public CharInfo ( CharInfo _c ) {
+            id = _c.id;
+            x = _c.x;
+            y = _c.y;
+            width = _c.width;
+            height = _c.height;
+            xoffset = _c.xoffset;
+            yoffset = _c.yoffset;
+            xadvance = _c.xadvance;
+            rotated = _c.rotated;
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     ///
@@ -84,7 +131,7 @@ public class exBitmapFont : ScriptableObject {
     public string rawAtlasGUID = "";
     public Texture2D texture; ///< the atlas or raw texture
 
-    public List<exFont.CharInfo> charInfos = new List<exFont.CharInfo>(); ///< the list of the character information
+    public List<CharInfo> charInfos = new List<CharInfo>(); ///< the list of the character information
     public List<KerningInfo> kernings = new List<KerningInfo>(); ///< the list of the kerning information 
 
     public int baseLine;   ///< the base-line of the text when draw
@@ -95,7 +142,7 @@ public class exBitmapFont : ScriptableObject {
     // internal fileds
     ///////////////////////////////////////////////////////////////////////////////
 
-    protected Dictionary<int,exFont.CharInfo> charInfoTable = null;
+    protected Dictionary<int, CharInfo> charInfoTable = null;
     protected Dictionary<KerningTableKey,int> kerningTable = null;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -123,11 +170,11 @@ public class exBitmapFont : ScriptableObject {
 
     public void RebuildCharInfoTable () {
         if ( charInfoTable == null ) {
-            charInfoTable = new Dictionary<int,exFont.CharInfo>(charInfos.Count);
+            charInfoTable = new Dictionary<int, CharInfo>(charInfos.Count);
         }
         charInfoTable.Clear();
         for ( int i = 0; i < charInfos.Count; ++i ) {
-            exFont.CharInfo c = charInfos[i];
+            CharInfo c = charInfos[i];
             charInfoTable[c.id] = c;
         }
     }
@@ -138,13 +185,13 @@ public class exBitmapFont : ScriptableObject {
     /// Get the character information by exBitmapFont.CharInfo.id
     // ------------------------------------------------------------------ 
 
-    public exFont.CharInfo GetCharInfo ( char _symbol ) {
+    public CharInfo GetCharInfo ( char _symbol ) {
         // create and build idToCharInfo table if null
         if ( charInfoTable == null || charInfoTable.Count == 0 ) {
             RebuildCharInfoTable ();
         }
 
-        exFont.CharInfo charInfo;
+        CharInfo charInfo;
         if ( charInfoTable.TryGetValue (_symbol, out charInfo) )
             return charInfo;
         return null;
