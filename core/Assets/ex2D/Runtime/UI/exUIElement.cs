@@ -467,6 +467,7 @@ public class exUIElement {
         if ( display == exCSS_display.Inline ) {
             // inline never care the width, height
             BreakInlineElement ( _x, _y, _width, _height );
+            // BreakInlineElement ( _x, _y, width, height );
         }
         else {
             AddContentToNormalFlow ( _x, _y, width, height );
@@ -624,7 +625,10 @@ public class exUIElement {
 
         // re-calculate width & height
         if ( display == exCSS_display.Inline ) {
-            height += cur_child_y;
+            if ( style.height.type == exCSS_size.Type.Auto ) {
+                height += cur_child_y;
+                height = System.Math.Min ( System.Math.Max ( height, minHeight ), maxHeight );
+            }
 
             // re-adjust x, if we are multi-line
             if ( normalFlows_.Count > 1 ) {

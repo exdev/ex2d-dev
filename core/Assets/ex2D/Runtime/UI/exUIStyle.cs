@@ -352,6 +352,14 @@ public class exUIStyle {
     public exUIStyle InlineContent () {
         exUIStyle newStyle = new exUIStyle ();
 
+        //
+        newStyle.width     = new exCSS_size( width.type, width.val );
+        newStyle.height    = new exCSS_size( height.type, height.val );
+        newStyle.minWidth  = new exCSS_min_size( minWidth.type, minWidth.val );
+        newStyle.minHeight = new exCSS_min_size( minHeight.type, minHeight.val );
+        newStyle.maxWidth  = new exCSS_max_size( maxWidth.type, maxWidth.val );
+        newStyle.maxHeight = new exCSS_max_size( maxHeight.type, maxHeight.val );
+
         // font
         newStyle.font = new exCSS_font( font.type, font.val );
         newStyle.fontSize = new exCSS_size_noauto( fontSize.type, fontSize.val );
