@@ -1069,7 +1069,7 @@ namespace ex2D.Detail {
             for (; _charIndex < sfp.text.Length; ++_charIndex, _vbIndex += 4, curX += sfp.spacing.x) {
                 char c = sfp.text[_charIndex];
                 
-                // if new line  // TODO: auto wrap
+                // if new line
                 if (c == '\n') {
                     _vertices.buffer[_vbIndex + 0] = new Vector3();
                     _vertices.buffer[_vbIndex + 1] = new Vector3();
@@ -1087,9 +1087,9 @@ namespace ex2D.Detail {
                         curX += sfp.font.GetKerning(sfp.text[_charIndex - 1], c);
                     }
                 }
-                
-                exFont.CharInfo ci = sfp.font.GetCharInfo(c);
-                if (ci == null) {
+
+                CharacterInfo ci;
+                if (sfp.font.GetCharInfo(c, out ci) == false) {
                     // character is not present, it will not display
                     // Debug.Log("character is not present: " + c, this);
                     _vertices.buffer[_vbIndex + 0] = new Vector3();
@@ -1098,8 +1098,33 @@ namespace ex2D.Detail {
                     _vertices.buffer[_vbIndex + 3] = new Vector3();
                     continue;
                 }
+
+                float x = curX;
+                float y = _top;
+                _vertices.buffer[_vbIndex + 0] = new Vector3(x + ci.vert.xMin, y - ci.vert.yMin, 0.0f);
+                _vertices.buffer[_vbIndex + 1] = new Vector3(x + ci.vert.xMax, y - ci.vert.yMin, 0.0f);
+                _vertices.buffer[_vbIndex + 2] = new Vector3(x + ci.vert.xMax, y - ci.vert.yMax, 0.0f);
+                _vertices.buffer[_vbIndex + 3] = new Vector3(x + ci.vert.xMin, y - ci.vert.yMax, 0.0f);
                 
-                // build text vertices
+                // advance x
+                lastWidth = ci.vert.width;
+                lastAdvance = ci.width;
+
+                // build uv
+                if ( ci.flipped ) {
+                    _uvs.buffer[_vbIndex + 0] = new Vector2(ci.uv.xMax, ci.uv.yMin);
+                    _uvs.buffer[_vbIndex + 1] = new Vector2(ci.uv.xMax, ci.uv.yMax);
+                    _uvs.buffer[_vbIndex + 2] = new Vector2(ci.uv.xMin, ci.uv.yMax);
+                    _uvs.buffer[_vbIndex + 3] = new Vector2(ci.uv.xMin, ci.uv.yMin);
+                }
+                else {
+                    _uvs.buffer[_vbIndex + 0] = new Vector2(ci.uv.xMin, ci.uv.yMax);
+                    _uvs.buffer[_vbIndex + 1] = new Vector2(ci.uv.xMax, ci.uv.yMax);
+                    _uvs.buffer[_vbIndex + 2] = new Vector2(ci.uv.xMax, ci.uv.yMin);
+                    _uvs.buffer[_vbIndex + 3] = new Vector2(ci.uv.xMin, ci.uv.yMin);
+                }
+
+                /*// build text vertices
                 float x = curX + ci.xoffset;
                 float y = _top - ci.yoffset;
                 _vertices.buffer[_vbIndex + 0] = new Vector3(x, y - ci.height, 0.0f);
@@ -1126,7 +1151,7 @@ namespace ex2D.Detail {
                         _uvs.buffer[_vbIndex + 2] = end;
                         _uvs.buffer[_vbIndex + 3] = new Vector2(end.x, start.y);
                     }
-                }
+                }*/
             }
             return curX + lastWidth;
         }
