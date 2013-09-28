@@ -86,7 +86,7 @@ public partial class exTextureInfo : ScriptableObject {
     public bool isDiced {
         get {
             if (diceData != null && diceData.Count > 0) {
-                return diceData[0] > 0 || diceData[1] > 0;
+                return (diceData[0] > 0 && diceData[0] < width) || (diceData[1] > 0 && diceData[1] < height);
             }
             return false;
         }
@@ -365,6 +365,20 @@ public partial class exTextureInfo : ScriptableObject {
     private Dice[] editorDiceDatas = null;  ///< not committed value, used for editor
 
     // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    public void ClearDiceData () {
+        if (rawEditorDiceUnitWidth_ == -1) {
+            rawEditorDiceUnitWidth_ = diceUnitWidth;
+        }
+        if (rawEditorDiceUnitHeight_ == -1) {
+            rawEditorDiceUnitHeight_ = diceUnitHeight;
+        }
+        diceData.Clear();
+    }
+
+    // ------------------------------------------------------------------ 
     /// Start commit dice data
     // ------------------------------------------------------------------ 
     
@@ -435,16 +449,8 @@ public partial class exTextureInfo : ScriptableObject {
     // ------------------------------------------------------------------ 
 
     public void EndDiceData () {
-        if (rawEditorDiceUnitWidth_ == -1) {
-            rawEditorDiceUnitWidth_ = diceUnitWidth;    // keep dice value
-        }
-        if (rawEditorDiceUnitHeight_ == -1) {
-            rawEditorDiceUnitHeight_ = diceUnitHeight;  // keep dice value
-        }
-        diceData.Clear();
-        if (shouldDiced == false) {
-            return;
-        }
+        exDebug.Assert(shouldDiced);
+
         diceData.Add (editorDiceUnitWidth);
         diceData.Add (editorDiceUnitHeight);
 

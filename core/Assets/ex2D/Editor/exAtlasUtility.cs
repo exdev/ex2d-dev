@@ -721,6 +721,8 @@ public static class exAtlasUtility {
                     EditorUtility.SetDirty(textureInfo);
                 }
 
+                textureInfo.ClearDiceData();
+
                 // trim diced data
                 if ( textureInfo.shouldDiced ) {
                     textureInfo.GenerateDiceData();
@@ -888,6 +890,8 @@ public static class exAtlasUtility {
             textureInfo.trim_y = (int)trimRect.y;
             textureInfo.width = (int)trimRect.width;
             textureInfo.height = (int)trimRect.height;
+
+            textureInfo.ClearDiceData();
 
             // trim diced data
             if ( textureInfo.shouldDiced ) {

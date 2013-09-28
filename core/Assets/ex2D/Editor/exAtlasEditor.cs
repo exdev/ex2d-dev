@@ -1130,6 +1130,7 @@ partial class exAtlasEditor : EditorWindow {
 
             // clear diced data before layout
             foreach ( exTextureInfo info in curEdit.textureInfos ) {
+                info.ClearDiceData();
                 if ( info.shouldDiced ) {
                     info.BeginDiceData();
                 }
