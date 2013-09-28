@@ -145,6 +145,7 @@ public class exUIElement {
     [System.NonSerialized] public Color contentColor = new Color( 0.0f, 0.0f, 0.0f, 0.0f );
     [System.NonSerialized] public exCSS_wrap wrap = exCSS_wrap.Normal;
     [System.NonSerialized] public exCSS_horizontal_align horizontalAlign = exCSS_horizontal_align.Left;
+    [System.NonSerialized] public exCSS_vertical_align verticalAlign = exCSS_vertical_align.Top;
     [System.NonSerialized] public int letterSpacing = 0;
     [System.NonSerialized] public int wordSpacing = 0;
     [System.NonSerialized] public int lineHeight = 0;
@@ -215,6 +216,8 @@ public class exUIElement {
         fontSize = _el.fontSize;
         contentColor = _el.contentColor;
         wrap = _el.wrap;
+        horizontalAlign = _el.horizontalAlign;
+        verticalAlign = _el.verticalAlign;
         letterSpacing = _el.letterSpacing;
         wordSpacing = _el.wordSpacing;
         lineHeight = _el.lineHeight;
@@ -741,27 +744,45 @@ public class exUIElement {
 
     void AdjustLineElements ( int _width, List<exUIElement> _elements, int _lineWidth, int _lineHeight ) {
         int remainWidth = System.Math.Max( _width - _lineWidth, 0 );
-        int offset = 0;
+        int offset_x = 0;
+        int offset_y = 0;
 
         //
         switch ( horizontalAlign ) {
         case exCSS_horizontal_align.Left:
-            offset = 0;
+            offset_x = 0;
             break;
 
         case exCSS_horizontal_align.Center:
-            offset = remainWidth/2;
+            offset_x = remainWidth/2;
             break;
 
         case exCSS_horizontal_align.Right:
-            offset = remainWidth;
+            offset_x = remainWidth;
             break;
         }
 
         //
         for ( int i = 0; i < _elements.Count; ++i ) {
             exUIElement el = _elements[i];
-            el.x += offset;
+
+            int remainHeight = System.Math.Max( _lineHeight - el.GetTotalHeight(), 0 );
+            switch ( el.verticalAlign ) {
+            case exCSS_vertical_align.Top:
+                offset_y = 0;
+                break;
+
+            case exCSS_vertical_align.Middle:
+                offset_y = remainHeight/2;
+                break;
+
+            case exCSS_vertical_align.Bottom:
+                offset_y = remainHeight;
+                break;
+            }
+
+            el.x += offset_x;
+            el.y += offset_y;
 
             // re-adjust owner, if it is not multi-line
             if ( el.isContent && el.isFirstLine && el.owner != null && el.owner.normalFlows.Count == 1 ) {

@@ -80,6 +80,19 @@ public static class exCSSUI {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public static void VerticalAlignField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_vertical_align _val ) {
+        EditorGUILayout.BeginHorizontal ();
+            GUILayout.Space( 15.0f * _indentLevel );
+            GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+
+            _val = (exCSS_vertical_align)EditorGUILayout.EnumPopup ( _val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+        EditorGUILayout.EndHorizontal ();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public static void DecorationField ( int _indentLevel, exUIElement _el, string _name, ref exCSS_decoration _val ) {
         EditorGUILayout.BeginHorizontal ();
             GUILayout.Space( 15.0f * _indentLevel );

@@ -58,6 +58,14 @@ public enum exCSS_horizontal_align {
     Inherit
 }
 
+// vertical-align
+public enum exCSS_vertical_align {
+    Top,
+    Middle,
+    Bottom,
+    Inherit
+}
+
 // text-decoration
 public enum exCSS_decoration {
     None,
@@ -321,7 +329,8 @@ public class exUIStyle {
     // content
     public exCSS_color contentColor = new exCSS_color( exCSS_color.Type.Color, new Color( 255, 255, 255, 255 ) );
     public exCSS_wrap wrap = exCSS_wrap.Normal;
-    public exCSS_horizontal_align horizontalAlign = exCSS_horizontal_align.Left;
+    public exCSS_horizontal_align horizontalAlign = exCSS_horizontal_align.Inherit;
+    public exCSS_vertical_align verticalAlign = exCSS_vertical_align.Inherit;
     public exCSS_decoration textDecoration = exCSS_decoration.None;
     public exCSS_size_nopercentage letterSpacing = new exCSS_size_nopercentage( exCSS_size_nopercentage.Type.Auto, 0.0f );
     public exCSS_size_nopercentage wordSpacing = new exCSS_size_nopercentage( exCSS_size_nopercentage.Type.Auto, 0.0f );
@@ -351,6 +360,7 @@ public class exUIStyle {
         newStyle.contentColor = new exCSS_color( contentColor.type, contentColor.val );
         newStyle.wrap = wrap;
         newStyle.horizontalAlign = horizontalAlign;
+        newStyle.verticalAlign = verticalAlign;
         newStyle.textDecoration = textDecoration;
         newStyle.letterSpacing = new exCSS_size_nopercentage( letterSpacing.type, letterSpacing.val );
         newStyle.wordSpacing = new exCSS_size_nopercentage( wordSpacing.type, wordSpacing.val );
@@ -422,6 +432,7 @@ public class exUIStyle {
         newStyle.contentColor = new exCSS_color( contentColor.type, contentColor.val );
         newStyle.wrap = wrap;
         newStyle.horizontalAlign = horizontalAlign;
+        newStyle.verticalAlign = verticalAlign;
         newStyle.textDecoration = textDecoration;
         newStyle.letterSpacing = new exCSS_size_nopercentage( letterSpacing.type, letterSpacing.val );
         newStyle.wordSpacing = new exCSS_size_nopercentage( wordSpacing.type, wordSpacing.val );
@@ -610,6 +621,14 @@ public class exUIStyle {
         }
         else {
             _el.horizontalAlign = horizontalAlign;
+        }
+
+        // vertical-align
+        if ( verticalAlign == exCSS_vertical_align.Inherit ) {
+            _el.verticalAlign = (_el.parent != null) ? _el.parent.verticalAlign : exCSS_vertical_align.Top;
+        }
+        else {
+            _el.verticalAlign = verticalAlign;
         }
 
         // letter-spacing
