@@ -465,9 +465,7 @@ public class exUIElement {
         // ======================================================== 
 
         if ( display == exCSS_display.Inline ) {
-            // inline never care the width, height
             BreakInlineElement ( _x, _y, _width, _height );
-            // BreakInlineElement ( _x, _y, width, height );
         }
         else {
             AddContentToNormalFlow ( _x, _y, width, height );
@@ -506,6 +504,14 @@ public class exUIElement {
 
             // block element will occupy the line and force the next element start a new line 
             if ( childEL.display == exCSS_display.Block ) {
+                // add last line
+                if ( curLine.count > 0 ) {
+                    curLine.height = maxLineHeight;
+                    lines.Add(curLine);
+                    curLine = new LineInfo();
+                    curLine.name = name + "[" + lines.Count + "]";
+                }
+
                 // advance
                 cur_child_x = 0;
                 cur_child_y += childEL.GetTotalHeight();
@@ -514,13 +520,6 @@ public class exUIElement {
                 int childWidth = childEL.GetTotalWidth();
                 if ( childWidth > maxLineWidth )
                     maxLineWidth = childWidth;
-
-                // add last line
-                if ( curLine.count > 0 ) {
-                    lines.Add(curLine);
-                    curLine = new LineInfo();
-                    curLine.name = name + "[" + lines.Count + "]";
-                }
 
                 // add this line
                 curLine.Add(childEL);
@@ -824,13 +823,16 @@ public class exUIElement {
     void BreakInlineElement ( int _x, int _y, int _width, int _height ) {
         int cur_x = _x;
         int cur_y = 0;
-        int imgWidth = _width;
-        int imgHeight = _height;
+
+        // NOTE: ony image element affect by width & height
+        int imgWidth = width;
+        int imgHeight = height;
 
         normalFlows_.Clear();
 
         switch ( contentType ) {
         case ContentType.Text:
+            // inline text never care the width, height
             BreakTextIntoElements ( text, _width, ref cur_x, ref cur_y );
             break;
 
