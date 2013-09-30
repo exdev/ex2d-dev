@@ -118,7 +118,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
     /// you need to override this and call base.OnEnable() in your OnEnable block.
     // ------------------------------------------------------------------ 
 
-    protected void OnEnable () {
+    protected new void OnEnable () {
         isOnEnabled = true;
         Show ();
         bool reloadNonSerialized = (vertices.Count == 0);
@@ -138,7 +138,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
     /// you need to override this and call base.OnDisable() in your OnDisable block.
     // ------------------------------------------------------------------ 
 
-    protected void OnDisable () {
+    protected new void OnDisable () {
         isOnEnabled = false;
         Hide ();
     }

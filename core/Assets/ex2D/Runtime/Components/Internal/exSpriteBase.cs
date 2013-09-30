@@ -229,14 +229,14 @@ public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
-    void OnEnable () {
+    protected void OnEnable () {
         isOnEnabled = true;
         if (visible) {
             Show();
         }
     }
 
-    void OnDisable () {
+    protected void OnDisable () {
         isOnEnabled = false;
         Hide();
     }
