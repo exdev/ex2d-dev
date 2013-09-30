@@ -523,7 +523,7 @@ public class exUIElement {
                     // add last line
                     if ( curLine.count > 0 ) {
                         if ( curLine.pushWidth )
-                            maxLineHeight = LayoutPushElements_Width( curLine, maxLineHeight, _x, cur_child_y, width, height );
+                            LayoutPushElements_Width( curLine, _x, cur_child_y, width, height, ref maxLineWidth, ref maxLineHeight );
                         curLine.height = maxLineHeight;
                         lines.Add(curLine);
                         curLine = new LineInfo();
@@ -617,7 +617,7 @@ public class exUIElement {
                 if ( needWrap ) {
                     // add line-info if this is not a block (NOTE: we add block element below)
                     if ( curLine.pushWidth )
-                        maxLineHeight = LayoutPushElements_Width( curLine, maxLineHeight, _x, cur_child_y, width, height );
+                        LayoutPushElements_Width( curLine, _x, cur_child_y, width, height, ref maxLineWidth, ref maxLineHeight );
                     curLine.height = maxLineHeight;
                     lines.Add(curLine);
                     curLine = new LineInfo();
@@ -661,7 +661,7 @@ public class exUIElement {
             // add the rest line
             if ( curLine.count > 0 ) {
                 if ( curLine.pushWidth )
-                    maxLineHeight = LayoutPushElements_Width( curLine, maxLineHeight, _x, cur_child_y, width, height );
+                    LayoutPushElements_Width( curLine, _x, cur_child_y, width, height, ref maxLineWidth, ref maxLineHeight );
                 curLine.height = maxLineHeight;
                 lines.Add(curLine);
             }
@@ -720,13 +720,13 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    int LayoutPushElements_Width ( LineInfo _lineInfo, int _maxLineHeight, int _x, int _y, int _width, int _height ) {
+    void LayoutPushElements_Width ( LineInfo _lineInfo, int _x, int _y, int _width, int _height, ref int _maxLineWidth, ref int _maxLineHeight ) {
         int lineWidth = _lineInfo.width;
         int remainWidth = _width - lineWidth;
-        int maxLineHeight = _maxLineHeight;
 
-        if ( remainWidth <= 0 )
-            return maxLineHeight;
+        if ( remainWidth <= 0 ) {
+            return;
+        }
 
         List<exUIElement> pushElements = new List<exUIElement>();
         for ( int i = 0; i < _lineInfo.elements.Count; ++i ) {
@@ -756,8 +756,8 @@ public class exUIElement {
                     el.Layout ( cur_x, _y, width, _height );
 
                     int childLineHeight = el.GetLineHeight();
-                    if ( childLineHeight > maxLineHeight ) {
-                        maxLineHeight = childLineHeight;
+                    if ( childLineHeight > _maxLineHeight ) {
+                        _maxLineHeight = childLineHeight;
                     }
                 }
                 else {
@@ -765,9 +765,12 @@ public class exUIElement {
                 }
                 cur_x += el.GetTotalWidth();
             }
-        }
 
-        return maxLineHeight;
+            //
+            if ( _width > _maxLineWidth ) {
+                _maxLineWidth = _width;
+            }
+        }
     }
 
     // ------------------------------------------------------------------ 
