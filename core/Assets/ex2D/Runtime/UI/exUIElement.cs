@@ -365,7 +365,7 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public int GetTotalHeight () {
+    public int GetLineHeight () {
         if ( display == exCSS_display.Inline ) {
             if ( contentType == ContentType.Text )
                 return lineHeight;
@@ -377,6 +377,25 @@ public class exUIElement {
             + marginTop + marginBottom 
             + borderSizeTop + borderSizeBottom
             + paddingTop + paddingBottom;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public int GetTotalHeight () {
+        return height 
+            + marginTop + marginBottom 
+            + borderSizeTop + borderSizeBottom
+            + paddingTop + paddingBottom;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public int GetContentHeight () {
+        return height;
     }
 
     // ------------------------------------------------------------------ 
@@ -514,7 +533,7 @@ public class exUIElement {
 
                 // advance
                 cur_child_x = 0;
-                cur_child_y += childEL.GetTotalHeight();
+                cur_child_y += childEL.GetLineHeight();
 
                 maxLineHeight = 0;
                 int childWidth = childEL.GetTotalWidth();
@@ -599,9 +618,9 @@ public class exUIElement {
                 cur_child_x += childEL.GetTotalWidth();
 
                 // get max-line-height
-                int childTotalHeight = childEL.GetTotalHeight();
-                if ( childTotalHeight > maxLineHeight ) {
-                    maxLineHeight = childTotalHeight;
+                int childLineHeight = childEL.GetLineHeight();
+                if ( childLineHeight > maxLineHeight ) {
+                    maxLineHeight = childLineHeight;
                 }
 
                 curLine.Add(childEL);
@@ -769,7 +788,7 @@ public class exUIElement {
         for ( int i = 0; i < _elements.Count; ++i ) {
             exUIElement el = _elements[i];
 
-            int remainHeight = System.Math.Max( _lineHeight - el.GetTotalHeight(), 0 );
+            int remainHeight = System.Math.Max( _lineHeight - el.GetLineHeight(), 0 );
             switch ( el.verticalAlign ) {
             case exCSS_vertical_align.Top:
                 offset_y = 0;
@@ -782,6 +801,13 @@ public class exUIElement {
             case exCSS_vertical_align.Bottom:
                 offset_y = remainHeight;
                 break;
+            }
+
+            // adjust the el to make it draw the text in the middle of the line-height
+            if ( el.isContent ) {
+                remainHeight = System.Math.Max( el.GetLineHeight() - el.GetContentHeight(), 0 );
+                int offset_y_2 = remainHeight/2;
+                offset_y += offset_y_2;
             }
 
             el.x += offset_x;
