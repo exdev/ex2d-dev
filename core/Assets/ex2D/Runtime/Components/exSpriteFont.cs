@@ -77,7 +77,7 @@ public class exSpriteFont : exLayeredSprite {
         }
     }
 
-    public int lineHeight {
+/*    public int lineHeight {
         get {
             return font_.lineHeight;
         }
@@ -87,7 +87,7 @@ public class exSpriteFont : exLayeredSprite {
                 updateFlags |= exUpdateFlags.Vertex;
             }
         }
-    }
+    }*/
 
     public int fontSize {
         get {
@@ -842,10 +842,6 @@ namespace ex2D.Detail {
             }
             #endif
             
-            // It is advisable to always call RequestCharactersInTexture for any text on the screen you wish to render using custom font rendering functions, 
-            // even if the characters are currently present in the texture, to make sure they don't get purged during texture rebuild.
-            sfp.font.RequestCharactersInTexture (sfp.text);
-            
             if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
                 //exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
                 BuildText(_sprite, ref sfp, _space, _vertices, _vbIndex, _uvs);
@@ -897,6 +893,11 @@ namespace ex2D.Detail {
         // ------------------------------------------------------------------ 
 
         public static void BuildText (exSpriteBase _sprite, ref SpriteFontParams sfp, Space _space, exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs = null) {
+
+            // It is advisable to always call RequestCharactersInTexture for any text on the screen you wish to render using custom font rendering functions, 
+            // even if the characters are currently present in the texture, to make sure they don't get purged during texture rebuild.
+            sfp.font.RequestCharactersInTexture (sfp.text);
+            
             // TODO: use space instead of _spriteMatrix
             _sprite.width = 0.0f;    // 和SpriteBase一致，用于表示实际宽度
             _sprite.height = 0.0f;   // 和SpriteBase一致，用于表示实际高度
@@ -1049,7 +1050,7 @@ namespace ex2D.Detail {
                 if (lineWidth > _sprite.width) {
                     _sprite.width = lineWidth;
                 }
-                _sprite.height += sfp.font.lineHeight;
+                _sprite.height += sfp.font.fontSize;
                 if (charIndex < sfp.text.Length) {
                     _sprite.height += sfp.spacing.y;
                 }
@@ -1101,27 +1102,29 @@ namespace ex2D.Detail {
 
                 float x = curX;
                 float y = _top;
-                _vertices.buffer[_vbIndex + 0] = new Vector3(x + ci.vert.xMin, y - ci.vert.yMin, 0.0f);
-                _vertices.buffer[_vbIndex + 1] = new Vector3(x + ci.vert.xMax, y - ci.vert.yMin, 0.0f);
-                _vertices.buffer[_vbIndex + 2] = new Vector3(x + ci.vert.xMax, y - ci.vert.yMax, 0.0f);
-                _vertices.buffer[_vbIndex + 3] = new Vector3(x + ci.vert.xMin, y - ci.vert.yMax, 0.0f);
+                _vertices.buffer[_vbIndex + 0] = new Vector3(x + ci.vert.xMin, y + ci.vert.yMax, 0.0f);
+                _vertices.buffer[_vbIndex + 1] = new Vector3(x + ci.vert.xMin, y + ci.vert.yMin, 0.0f);
+                _vertices.buffer[_vbIndex + 2] = new Vector3(x + ci.vert.xMax, y + ci.vert.yMin, 0.0f);
+                _vertices.buffer[_vbIndex + 3] = new Vector3(x + ci.vert.xMax, y + ci.vert.yMax, 0.0f);
                 
                 // advance x
                 lastWidth = ci.vert.width;
                 lastAdvance = ci.width;
 
                 // build uv
-                if ( ci.flipped ) {
-                    _uvs.buffer[_vbIndex + 0] = new Vector2(ci.uv.xMax, ci.uv.yMin);
-                    _uvs.buffer[_vbIndex + 1] = new Vector2(ci.uv.xMax, ci.uv.yMax);
-                    _uvs.buffer[_vbIndex + 2] = new Vector2(ci.uv.xMin, ci.uv.yMax);
-                    _uvs.buffer[_vbIndex + 3] = new Vector2(ci.uv.xMin, ci.uv.yMin);
-                }
-                else {
-                    _uvs.buffer[_vbIndex + 0] = new Vector2(ci.uv.xMin, ci.uv.yMax);
-                    _uvs.buffer[_vbIndex + 1] = new Vector2(ci.uv.xMax, ci.uv.yMax);
-                    _uvs.buffer[_vbIndex + 2] = new Vector2(ci.uv.xMax, ci.uv.yMin);
-                    _uvs.buffer[_vbIndex + 3] = new Vector2(ci.uv.xMin, ci.uv.yMin);
+                if (_uvs != null) {
+                    if (ci.flipped) {
+                        _uvs.buffer [_vbIndex + 0] = new Vector2 (ci.uv.xMin, ci.uv.yMin);
+                        _uvs.buffer [_vbIndex + 1] = new Vector2 (ci.uv.xMax, ci.uv.yMin);
+                        _uvs.buffer [_vbIndex + 2] = new Vector2 (ci.uv.xMax, ci.uv.yMax);
+                        _uvs.buffer [_vbIndex + 3] = new Vector2 (ci.uv.xMin, ci.uv.yMax);
+                    }
+                    else {
+                        _uvs.buffer [_vbIndex + 0] = new Vector2 (ci.uv.xMin, ci.uv.yMin);
+                        _uvs.buffer [_vbIndex + 1] = new Vector2 (ci.uv.xMin, ci.uv.yMax);
+                        _uvs.buffer [_vbIndex + 2] = new Vector2 (ci.uv.xMax, ci.uv.yMax);
+                        _uvs.buffer [_vbIndex + 3] = new Vector2 (ci.uv.xMax, ci.uv.yMin);
+                    }
                 }
 
                 /*// build text vertices

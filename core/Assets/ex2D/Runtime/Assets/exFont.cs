@@ -105,7 +105,7 @@ using System.Collections.Generic;
         textureRebuildCallback_ = null;
     }
     
-    // ------------------------------------------------------------------ 
+/*    // ------------------------------------------------------------------ 
     [SerializeField] private int dynamicLineHeight;
     /// the space of the line
     // ------------------------------------------------------------------ 
@@ -124,7 +124,7 @@ using System.Collections.Generic;
                 dynamicLineHeight = value;
             }
         }
-    }
+    }*/
 
     // ------------------------------------------------------------------ 
     [SerializeField] private int dynamicFontSize_;
@@ -178,7 +178,7 @@ using System.Collections.Generic;
             if (dynamicFont_ != null) {
                 dynamicFont_.textureRebuildCallback += textureRebuildCallback_;
             }
-            Debug.Log("[|exFont] add");
+            //Debug.Log("[|exFont] add");
         }
         remove {
 #if UNITY_EDITOR
@@ -188,7 +188,7 @@ using System.Collections.Generic;
             if (dynamicFont_ != null) {
                 dynamicFont_.textureRebuildCallback -= textureRebuildCallback_;
             }
-            Debug.Log("[|exFont] remove");
+            //Debug.Log("[|exFont] remove");
         }
     }
 
@@ -217,6 +217,12 @@ using System.Collections.Generic;
             return false;
         }
     }
+
+    private float jOffsetY;
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // Functions
+    ///////////////////////////////////////////////////////////////////////////////
 
     /*public CharInfo GetCharInfo ( char _symbol ) {
         if (bitmapFont_ != null) {
@@ -259,26 +265,29 @@ using System.Collections.Generic;
             _charInfo.style = FontStyle.Normal;
             if (bitmapFont_.texture != null) {
                 Vector2 texelSize = bitmapFont_.texture.texelSize;
-                _charInfo.uv = new Rect(bitmapCharInfo.x * texelSize.x,
-                                        bitmapCharInfo.y * texelSize.y,
-                                        (bitmapCharInfo.x + bitmapCharInfo.rotatedWidth) * texelSize.x,
-                                        (bitmapCharInfo.y + bitmapCharInfo.rotatedHeight) * texelSize.y);
+                if (bitmapCharInfo.rotated) {
+                    _charInfo.uv = new Rect ((bitmapCharInfo.x + bitmapCharInfo.rotatedWidth) * texelSize.x,
+                                             bitmapCharInfo.y * texelSize.y,
+                                             - bitmapCharInfo.rotatedWidth * texelSize.x,
+                                             bitmapCharInfo.rotatedHeight * texelSize.y);
+                }
+                else {
+                    _charInfo.uv = new Rect (bitmapCharInfo.x * texelSize.x,
+                                             bitmapCharInfo.y * texelSize.y,
+                                             bitmapCharInfo.rotatedWidth * texelSize.x,
+                                             bitmapCharInfo.rotatedHeight * texelSize.y);
+                }
             }
             else {
                 _charInfo.uv = new Rect();
             }
-            _charInfo.vert = new Rect(bitmapCharInfo.xoffset, - bitmapCharInfo.yoffset, bitmapCharInfo.xoffset + bitmapCharInfo.width, - bitmapCharInfo.yoffset + bitmapCharInfo.height);
+            _charInfo.vert = new Rect(bitmapCharInfo.xoffset, - bitmapCharInfo.yoffset, bitmapCharInfo.width, - bitmapCharInfo.height);
             _charInfo.width = bitmapCharInfo.xadvance;
             return true;
         }
         else if (dynamicFont_ != null) {
-            /*/// yes, Unity's GetCharacterInfo have y problem, you should get lowest character j's y-offset adjust it.
-            CharacterInfo jCharInfo;
-            dynamicFont_.RequestCharactersInTexture("j", dynamicFontSize_, dynamicFontStyle_);
-            dynamicFont_.GetCharacterInfo('j', out jCharInfo, dynamicFontSize_, dynamicFontStyle_);
-            int ttf_offset = (int)(dynamicFontSize_ + jCharInfo.vert.yMax);*/
-
             dynamicFont_.GetCharacterInfo(_symbol, out _charInfo, dynamicFontSize_, dynamicFontStyle_);
+            _charInfo.vert.y -= jOffsetY;
             return true;
         }
         else {
@@ -296,6 +305,12 @@ using System.Collections.Generic;
     
     public void RequestCharactersInTexture ( string _text ) {
         if (dynamicFont_ != null) {
+            /// yes, Unity's GetCharacterInfo have y problem, you should get lowest character j's y-offset adjust it.
+            dynamicFont_.RequestCharactersInTexture("j", dynamicFontSize_, dynamicFontStyle_);
+            CharacterInfo jCharInfo;
+            dynamicFont_.GetCharacterInfo('j', out jCharInfo, dynamicFontSize_, dynamicFontStyle_);
+            jOffsetY = jCharInfo.vert.yMin;
+            //
             dynamicFont_.RequestCharactersInTexture (_text, dynamicFontSize_, dynamicFontStyle_);
         }
     }

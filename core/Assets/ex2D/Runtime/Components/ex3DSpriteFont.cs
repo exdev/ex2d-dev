@@ -63,7 +63,7 @@ public class ex3DSpriteFont : exStandaloneSprite {
         }
     }
     
-    public int lineHeight {
+/*    public int lineHeight {
         get {
             return font_.lineHeight;
         }
@@ -73,7 +73,7 @@ public class ex3DSpriteFont : exStandaloneSprite {
                 updateFlags |= exUpdateFlags.Vertex;
             }
         }
-    }
+    }*/
 
     public int fontSize {
         get {
@@ -476,7 +476,6 @@ public class ex3DSpriteFont : exStandaloneSprite {
     // ------------------------------------------------------------------ 
 
     void OnFontTextureRebuilt () {
-        Debug.Log("OnFontTextureRebuilt");
         updateFlags |= exUpdateFlags.Text;      // TODO: only need to update UV
     }
 }
