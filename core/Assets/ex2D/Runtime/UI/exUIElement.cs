@@ -35,7 +35,10 @@ public class exUIElement {
         public string name = "";
         public int height = 0;
         public List<exUIElement> elements = new List<exUIElement>();
+
         public bool isBlock = false;
+        public bool pushWidth = false;
+        public bool pushHeight = false;
 
         public int width {
             get {
@@ -423,14 +426,9 @@ public class exUIElement {
 
     // ------------------------------------------------------------------ 
     // Desc: 
-    // _x is offset from parent-content-x
-    // _y is offset from parent-content-y
     // ------------------------------------------------------------------ 
 
-    public void Layout ( int _x, int _y, int _width, int _height ) {
-        x = _x;
-        y = _y;
-
+    public void ComputeContentBox ( int _x, int _y, int _width, int _height ) {
         // compute style
         style.Compute ( this, _x, _y, _width, _height );
 
@@ -440,13 +438,14 @@ public class exUIElement {
         // ======================================================== 
 
         // calculate width
-        if ( style.width.type == exCSS_size.Type.Length ) {
+        if ( style.width.type == exCSS_size_push.Type.Length ) {
             width = (int)style.width.val;
         }
-        else if ( style.width.type == exCSS_size.Type.Percentage ) {
+        else if ( style.width.type == exCSS_size_push.Type.Percentage ) {
             width = Mathf.FloorToInt ( style.width.val/100.0f * (float)_width );
         }
-        else if ( style.width.type == exCSS_size.Type.Auto ) {
+        else if ( style.width.type == exCSS_size_push.Type.Auto ||
+                  style.width.type == exCSS_size_push.Type.Push ) {
             width = _width 
                    - marginLeft - marginRight
                    - borderSizeLeft - borderSizeRight
@@ -461,13 +460,13 @@ public class exUIElement {
         // ======================================================== 
 
         // calculate height
-        if ( style.height.type == exCSS_size.Type.Length ) {
+        if ( style.height.type == exCSS_size_push.Type.Length ) {
             height = (int)style.height.val;
         }
-        else if ( style.height.type == exCSS_size.Type.Percentage ) {
+        else if ( style.height.type == exCSS_size_push.Type.Percentage ) {
             height = Mathf.FloorToInt ( style.height.val/100.0f * (float)_height );
         }
-        else if ( style.height.type == exCSS_size.Type.Auto ) {
+        else if ( style.height.type == exCSS_size_push.Type.Auto ) {
             height = 0;
         }
         height = System.Math.Min ( System.Math.Max ( height, minHeight ), maxHeight );
@@ -476,8 +475,19 @@ public class exUIElement {
         // calculate position
         // ======================================================== 
 
-        x = x + marginLeft + borderSizeLeft + paddingLeft;
-        y = y + marginTop + borderSizeTop + paddingTop;
+        x = _x + marginLeft + borderSizeLeft + paddingLeft;
+        y = _y + marginTop + borderSizeTop + paddingTop;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // _x is offset from parent-content-x
+    // _y is offset from parent-content-y
+    // ------------------------------------------------------------------ 
+
+    public void Layout ( int _x, int _y, int _width, int _height ) {
+
+        ComputeContentBox ( _x, _y, _width, _height );
 
         // ======================================================== 
         // process content, inlnie elements in normal-flow
@@ -510,11 +520,30 @@ public class exUIElement {
             if ( childEL.isContent == false ) {
                 // if this is a block, wrap it directly
                 if ( childEL.display == exCSS_display.Block ) {
+                    // add last line
+                    if ( curLine.count > 0 ) {
+                        if ( curLine.pushWidth )
+                            maxLineHeight = LayoutPushElements_Width( curLine, maxLineHeight, _x, cur_child_y, width, height );
+                        curLine.height = maxLineHeight;
+                        lines.Add(curLine);
+                        curLine = new LineInfo();
+                        curLine.name = name + "[" + lines.Count + "]";
+                    }
+
+                    // advance last line
                     cur_child_x = 0;
                     cur_child_y += maxLineHeight;
                 }
 
-                childEL.Layout( cur_child_x, cur_child_y, width, height );
+                //
+                if ( childEL.display == exCSS_display.InlineBlock && 
+                     childEL.style.width.type == exCSS_size_push.Type.Push ) 
+                {
+                    childEL.ComputeContentBox( cur_child_x, cur_child_y, 0, 0 );
+                }
+                else {
+                    childEL.Layout( cur_child_x, cur_child_y, width, height );
+                }
             }
             else {
                 childEL.x = cur_child_x + childEL.marginLeft + childEL.paddingLeft + childEL.borderSizeLeft;
@@ -523,17 +552,11 @@ public class exUIElement {
 
             // block element will occupy the line and force the next element start a new line 
             if ( childEL.display == exCSS_display.Block ) {
-                // add last line
-                if ( curLine.count > 0 ) {
-                    curLine.height = maxLineHeight;
-                    lines.Add(curLine);
-                    curLine = new LineInfo();
-                    curLine.name = name + "[" + lines.Count + "]";
-                }
+                maxLineHeight = childEL.GetLineHeight();
 
                 // advance
                 cur_child_x = 0;
-                cur_child_y += childEL.GetLineHeight();
+                cur_child_y += maxLineHeight;
 
                 maxLineHeight = 0;
                 int childWidth = childEL.GetTotalWidth();
@@ -593,6 +616,8 @@ public class exUIElement {
                 // need wrap
                 if ( needWrap ) {
                     // add line-info if this is not a block (NOTE: we add block element below)
+                    if ( curLine.pushWidth )
+                        maxLineHeight = LayoutPushElements_Width( curLine, maxLineHeight, _x, cur_child_y, width, height );
                     curLine.height = maxLineHeight;
                     lines.Add(curLine);
                     curLine = new LineInfo();
@@ -624,6 +649,10 @@ public class exUIElement {
                 }
 
                 curLine.Add(childEL);
+                if ( curLine.pushWidth == false ) {
+                    curLine.pushWidth = (childEL.display == exCSS_display.InlineBlock && 
+                                         childEL.style.width.type == exCSS_size_push.Type.Push);
+                }
             }
         }
 
@@ -631,6 +660,8 @@ public class exUIElement {
         if ( normalFlows_.Count > 0 ) {
             // add the rest line
             if ( curLine.count > 0 ) {
+                if ( curLine.pushWidth )
+                    maxLineHeight = LayoutPushElements_Width( curLine, maxLineHeight, _x, cur_child_y, width, height );
                 curLine.height = maxLineHeight;
                 lines.Add(curLine);
             }
@@ -643,7 +674,7 @@ public class exUIElement {
 
         // re-calculate width & height
         if ( display == exCSS_display.Inline ) {
-            if ( style.height.type == exCSS_size.Type.Auto ) {
+            if ( style.height.type == exCSS_size_push.Type.Auto ) {
                 height += cur_child_y;
                 height = System.Math.Min ( System.Math.Max ( height, minHeight ), maxHeight );
             }
@@ -665,13 +696,13 @@ public class exUIElement {
         }
         else {
             // calculate auto height
-            if ( style.height.type == exCSS_size.Type.Auto ) {
+            if ( style.height.type == exCSS_size_push.Type.Auto ) {
                 height += cur_child_y;
                 height = System.Math.Min ( System.Math.Max ( height, minHeight ), maxHeight );
             }
 
             // calculate auto width
-            if ( style.width.type == exCSS_size.Type.Auto ) {
+            if ( style.width.type == exCSS_size_push.Type.Auto ) {
                 // TODO: if overflow == true
                 width = System.Math.Min ( maxLineWidth, width );
                 // else
@@ -689,6 +720,60 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    int LayoutPushElements_Width ( LineInfo _lineInfo, int _maxLineHeight, int _x, int _y, int _width, int _height ) {
+        int lineWidth = _lineInfo.width;
+        int remainWidth = _width - lineWidth;
+        int maxLineHeight = _maxLineHeight;
+
+        if ( remainWidth <= 0 )
+            return maxLineHeight;
+
+        List<exUIElement> pushElements = new List<exUIElement>();
+        for ( int i = 0; i < _lineInfo.elements.Count; ++i ) {
+            exUIElement el = _lineInfo.elements[i];
+            if ( el.display == exCSS_display.InlineBlock && 
+                 el.style.width.type == exCSS_size_push.Type.Push )
+            {
+                pushElements.Add(el);
+            }
+        }
+
+        //
+        if ( pushElements.Count > 0 ) {
+            int cur_x = 0;
+            int pushSize = remainWidth/pushElements.Count;
+
+            for ( int i = 0; i < _lineInfo.elements.Count; ++i ) {
+                exUIElement el = _lineInfo.elements[i];
+                if ( el.display == exCSS_display.InlineBlock && 
+                     el.style.width.type == exCSS_size_push.Type.Push )
+                {
+                    // NOTE: this is because in _lineInfo.width we calculate lineWidth by GetTotalWidth() for each element
+                    int width = pushSize 
+                        + el.marginLeft + el.marginRight
+                        + el.borderSizeLeft + el.borderSizeRight
+                        + el.paddingLeft + el.paddingRight;
+                    el.Layout ( cur_x, _y, width, _height );
+
+                    int childLineHeight = el.GetLineHeight();
+                    if ( childLineHeight > maxLineHeight ) {
+                        maxLineHeight = childLineHeight;
+                    }
+                }
+                else {
+                    el.x = cur_x + el.marginLeft + el.borderSizeLeft + el.paddingLeft;
+                }
+                cur_x += el.GetTotalWidth();
+            }
+        }
+
+        return maxLineHeight;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public void AdjustLines ( int _width, int _height ) {
         AdjustBlockElement ( _width, _height );
 
@@ -696,7 +781,7 @@ public class exUIElement {
         for ( int i = 0; i < lines.Count; ++i ) {
             LineInfo curLine = lines[i];
             if ( curLine.isBlock == false ) {
-                AdjustLineElements ( width, curLine.elements, curLine.width, curLine.height );
+                AdjustLineElements ( curLine, width );
             }
         }
         lines.Clear();
@@ -719,7 +804,7 @@ public class exUIElement {
 
     void AdjustBlockElement ( int _width, int _height ) {
         if ( display == exCSS_display.Block ) {
-            if ( style.width.type == exCSS_size.Type.Auto && contentType == ContentType.Text ) {
+            if ( style.width.type == exCSS_size_push.Type.Auto && contentType == ContentType.Text ) {
                 width = _width 
                     - marginLeft - marginRight
                     - borderSizeLeft - borderSizeRight
@@ -764,31 +849,36 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void AdjustLineElements ( int _width, List<exUIElement> _elements, int _lineWidth, int _lineHeight ) {
-        int remainWidth = System.Math.Max( _width - _lineWidth, 0 );
+    void AdjustLineElements ( LineInfo _lineInfo, int _width ) {
+
+        int lineWidth = _lineInfo.width;
+        int lineHeight = _lineInfo.height;
+        int remainWidth = System.Math.Max( _width - lineWidth, 0 );
         int offset_x = 0;
         int offset_y = 0;
 
         //
-        switch ( horizontalAlign ) {
-        case exCSS_horizontal_align.Left:
-            offset_x = 0;
-            break;
+        if ( _lineInfo.pushWidth == false ) {
+            switch ( horizontalAlign ) {
+            case exCSS_horizontal_align.Left:
+                offset_x = 0;
+                break;
 
-        case exCSS_horizontal_align.Center:
-            offset_x = remainWidth/2;
-            break;
+            case exCSS_horizontal_align.Center:
+                offset_x = remainWidth/2;
+                break;
 
-        case exCSS_horizontal_align.Right:
-            offset_x = remainWidth;
-            break;
+            case exCSS_horizontal_align.Right:
+                offset_x = remainWidth;
+                break;
+            }
         }
 
         //
-        for ( int i = 0; i < _elements.Count; ++i ) {
-            exUIElement el = _elements[i];
+        for ( int i = 0; i < _lineInfo.elements.Count; ++i ) {
+            exUIElement el = _lineInfo.elements[i];
 
-            int remainHeight = System.Math.Max( _lineHeight - el.GetLineHeight(), 0 );
+            int remainHeight = System.Math.Max( lineHeight - el.GetLineHeight(), 0 );
             switch ( el.verticalAlign ) {
             case exCSS_vertical_align.Top:
                 offset_y = 0;
@@ -869,10 +959,10 @@ public class exUIElement {
         case ContentType.Texture2D:
             Texture2D texture = image as Texture2D;
             if ( texture != null ) {
-                if ( style.width.type == exCSS_size.Type.Auto ) {
+                if ( style.width.type == exCSS_size_push.Type.Auto ) {
                     imgWidth = texture.width;
                 }
-                if ( style.height.type == exCSS_size.Type.Auto ) {
+                if ( style.height.type == exCSS_size_push.Type.Auto ) {
                     imgHeight = texture.height;
                 }
                 AddImageIntoElements ( texture, contentType, imgWidth, imgHeight, ref cur_x, ref cur_y );
@@ -882,10 +972,10 @@ public class exUIElement {
         case ContentType.TextureInfo:
             exTextureInfo textureInfo = image as exTextureInfo;
             if ( textureInfo != null ) {
-                if ( style.width.type == exCSS_size.Type.Auto ) {
+                if ( style.width.type == exCSS_size_push.Type.Auto ) {
                     imgWidth = textureInfo.width;
                 }
-                if ( style.height.type == exCSS_size.Type.Auto ) {
+                if ( style.height.type == exCSS_size_push.Type.Auto ) {
                     imgHeight = textureInfo.height;
                 }
                 AddImageIntoElements ( textureInfo, contentType, imgWidth, imgHeight, ref cur_x, ref cur_y );
@@ -962,7 +1052,8 @@ public class exUIElement {
         bool endLineCheck = ( marginRight > 0 || paddingRight > 0 || borderSizeRight > 0 );
 
         if ( font is Font ) {
-            (font as Font).RequestCharactersInTexture ( _text, fontSize, FontStyle.Normal );
+            Font ttfFont = font as Font;
+            ttfFont.RequestCharactersInTexture ( _text, fontSize, FontStyle.Normal );
 
             while ( finished == false ) {
                 // int start_index = cur_index;
@@ -976,7 +1067,7 @@ public class exUIElement {
                                                         _text,
                                                         cur_index,
                                                         cur_width,
-                                                        font as Font,
+                                                        ttfFont,
                                                         fontSize,
                                                         wrapMode,
                                                         wordSpacing,
@@ -1055,9 +1146,12 @@ public class exUIElement {
         }
         else if ( font is exBitmapFont ) {
 
+            exBitmapFont bitmapFont = font as exBitmapFont;
+
             while ( finished == false ) {
                 // int start_index = cur_index;
                 builder.Length = 0;
+                int last_index = cur_index;
 
                 //
                 finished = exTextUtility.CalcTextLine ( ref line_width, 
@@ -1066,7 +1160,7 @@ public class exUIElement {
                                                         _text,
                                                         cur_index,
                                                         cur_width,
-                                                        font as exBitmapFont,
+                                                        bitmapFont,
                                                         fontSize,
                                                         wrapMode,
                                                         wordSpacing,
@@ -1087,6 +1181,19 @@ public class exUIElement {
                     }
                 }
 
+                // end-line re-check
+                if ( finished && endLineCheck ) {
+                    endLineCheck = false;
+                    cur_width -= (marginRight + borderSizeRight + paddingRight);
+                    if ( line_width > cur_width ) {
+                        finished = false;
+                        cur_x = 0;
+                        // cur_width = cur_width;
+                        cur_index = last_index;
+                        continue;
+                    }
+                }
+
                 // generate element
                 exUIElement newEL = new exUIElement();
                 newEL.CloneComputedStyle (this);
@@ -1101,7 +1208,7 @@ public class exUIElement {
                 newEL.x = cur_x;
                 newEL.y = cur_y;
                 newEL.width = line_width;
-                newEL.height = fontSize;
+                newEL.height = bitmapFont.lineHeight;
 
                 if ( begin == false ) {
                     newEL.marginLeft = 0;

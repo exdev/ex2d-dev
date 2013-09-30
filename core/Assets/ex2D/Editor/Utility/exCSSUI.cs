@@ -213,6 +213,60 @@ public static class exCSSUI {
         EditorGUILayout.EndHorizontal ();
         return changed;
     }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void DoSizePushField ( int _indentLevel, exUIElement _el, string _name, exCSS_size_push _prop, bool _inherited ) {
+        GUILayout.Space( 15.0f * _indentLevel );
+        GUILayout.Label ( _name, new GUILayoutOption[] { GUILayout.Width(80.0f) } );
+
+        // process enum with inherit variable
+        if ( _inherited ) {
+            _prop.type = (exCSS_size_push.Type)EditorGUILayout.EnumPopup ( _prop.type, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+        }
+        else {
+            string[] names = System.Enum.GetNames(typeof(exCSS_size_push.Type));
+            // int idx = System.Array.IndexOf<string>(names, System.Enum.GetName( typeof(exCSS_size_push.Type), _prop.type));
+            int idx = (int)_prop.type;
+            string[] names2 = new string [names.Length-1];
+            for ( int i = 0; i < names2.Length; ++i ) {
+                names2[i] = names[i];
+            }
+
+            idx = EditorGUILayout.Popup ( "", idx, names2, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+            _prop.type = (exCSS_size_push.Type)System.Math.Min( idx, names2.Length-1 );
+        }
+
+        // process value with type
+        switch ( _prop.type ) {
+        case exCSS_size_push.Type.Length:
+            _prop.val = EditorGUILayout.FloatField ( _prop.val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+            GUILayout.Label ( "px" );
+            break;
+
+        case exCSS_size_push.Type.Percentage:
+            _prop.val = EditorGUILayout.FloatField ( _prop.val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+            GUILayout.Label ( "%" );
+            break;
+
+        case exCSS_size_push.Type.Auto:
+        case exCSS_size_push.Type.Push:
+        case exCSS_size_push.Type.Inherit:
+            bool old = GUI.enabled;
+            GUI.enabled = false;
+            _prop.val = EditorGUILayout.FloatField ( _prop.val, new GUILayoutOption[] { GUILayout.Width(50.0f) } );
+            GUI.enabled = old;
+            break;
+        }
+    }
+
+    public static void SizePushField ( int _indentLevel, exUIElement _el, string _name, exCSS_size_push _prop, bool _inherited ) {
+        EditorGUILayout.BeginHorizontal ();
+            DoSizePushField ( _indentLevel, _el, _name, _prop, _inherited );
+        EditorGUILayout.EndHorizontal ();
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
