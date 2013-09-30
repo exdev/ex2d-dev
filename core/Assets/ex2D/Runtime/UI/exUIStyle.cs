@@ -99,6 +99,32 @@ public class exCSS_size {
     public exCSS_size ( Type _type, float _val ) { type = _type; val = _val; }
 }
 
+// size push
+[System.Serializable]
+public class exCSS_size_push { 
+    public enum Type {
+        Length,
+        Percentage,
+        Auto,
+        Push,
+        Inherit
+    }
+    public Type type; 
+    [SerializeField] float val_; 
+    public float val {
+        set {
+            if ( type == Type.Length )
+                val_ = Mathf.FloorToInt(value);
+            else
+                val_ = value;
+        }
+        get {
+            return val_;
+        }
+    }
+    public exCSS_size_push ( Type _type, float _val ) { type = _type; val = _val; }
+}
+
 // size no-percentage
 [System.Serializable]
 public class exCSS_size_nopercentage { 
@@ -273,8 +299,8 @@ public class exCSS_font {
 public class exUIStyle {
 
     // size
-    public exCSS_size width         = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
-    public exCSS_size height        = new exCSS_size( exCSS_size.Type.Auto, -1.0f );
+    public exCSS_size_push width         = new exCSS_size_push( exCSS_size_push.Type.Auto, -1.0f );
+    public exCSS_size_push height        = new exCSS_size_push( exCSS_size_push.Type.Auto, -1.0f );
     public exCSS_min_size minWidth  = new exCSS_min_size( exCSS_min_size.Type.Length, 0.0f );
     public exCSS_min_size minHeight = new exCSS_min_size( exCSS_min_size.Type.Length, 0.0f );
     public exCSS_max_size maxWidth  = new exCSS_max_size( exCSS_max_size.Type.None, -1.0f );
@@ -353,8 +379,8 @@ public class exUIStyle {
         exUIStyle newStyle = new exUIStyle ();
 
         //
-        newStyle.width     = new exCSS_size( width.type, width.val );
-        newStyle.height    = new exCSS_size( height.type, height.val );
+        newStyle.width     = new exCSS_size_push( width.type, width.val );
+        newStyle.height    = new exCSS_size_push( height.type, height.val );
         newStyle.minWidth  = new exCSS_min_size( minWidth.type, minWidth.val );
         newStyle.minHeight = new exCSS_min_size( minHeight.type, minHeight.val );
         newStyle.maxWidth  = new exCSS_max_size( maxWidth.type, maxWidth.val );
@@ -383,8 +409,8 @@ public class exUIStyle {
 
     public exUIStyle Clone () {
         exUIStyle newStyle = new exUIStyle ();
-        newStyle.width = new exCSS_size ( width.type, width.val ); 
-        newStyle.height = new exCSS_size ( height.type, height.val ); 
+        newStyle.width = new exCSS_size_push ( width.type, width.val ); 
+        newStyle.height = new exCSS_size_push ( height.type, height.val ); 
         newStyle.minWidth  = new exCSS_min_size( minWidth.type, minWidth.val );
         newStyle.minHeight = new exCSS_min_size( minHeight.type, minHeight.val );
         newStyle.maxWidth  = new exCSS_max_size( maxWidth.type, maxWidth.val );

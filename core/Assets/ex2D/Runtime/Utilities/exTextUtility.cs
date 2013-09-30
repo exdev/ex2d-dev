@@ -119,6 +119,7 @@ public static class exTextUtility {
 
                 int tmp_x = cur_x;
                 int tmp_index = next_index;
+
                 if ( tmp_index >= _text.Length )
                     break;
 
@@ -182,7 +183,6 @@ public static class exTextUtility {
                 if ( _wrap == WrapMode.Pre || _wrap == WrapMode.PreWrap ) {
                     _end_x = line_width;
                     _end_index = cur_index;
-                    line_width = 0;
                     return false;
                 }
                 cur_char = ' ';
@@ -195,7 +195,7 @@ public static class exTextUtility {
 
                 // pre-wrap will shrink the started white-space
                 if ( cur_index == _start_index &&
-                     ( _wrap == WrapMode.PreWrap || _wrap == WrapMode.Word || _wrap == WrapMode.None ) ) 
+                     ( /*_wrap == WrapMode.PreWrap ||*/ _wrap == WrapMode.Word || _wrap == WrapMode.None ) ) 
                 {
                     skipThis = true;
                     doShrink = true;
@@ -215,7 +215,7 @@ public static class exTextUtility {
 
                     // if we are at the end of the line, just ignore any white-space.
                     if ( next_index >= _text.Length ) {
-                        _end_x = cur_x;
+                        _end_x = line_width;
                         _end_index = cur_index;
                         return true;
                     }
@@ -231,11 +231,8 @@ public static class exTextUtility {
             if ( charInfo != null ) {
                 // get the line-width
                 line_width = cur_x + (int)charInfo.width + _letterSpacing;
-                // NOTE: in BitmapFont, space have zero width...
                 if ( cur_char == ' ' ) {
                     line_width += _wordSpacing;
-                    line_width -= (int)charInfo.width;
-                    line_width += (int)charInfo.xadvance;
                 }
 
                 // advance-x
@@ -251,6 +248,8 @@ public static class exTextUtility {
 
                     int tmp_x = cur_x;
                     int tmp_index = next_index;
+                    int tmp_width = line_width;
+
                     if ( tmp_index >= _text.Length )
                         break;
 
@@ -258,13 +257,13 @@ public static class exTextUtility {
                     while ( tmp_char != ' ' && tmp_char != '\n' ) {
                         exBitmapFont.CharInfo tmp_charInfo = _font.GetCharInfo(tmp_char);
                         if ( tmp_charInfo != null ) {
-                            int tmp_width = tmp_x + tmp_charInfo.width + _letterSpacing;
+                            tmp_width = tmp_x + (int)tmp_charInfo.width + _letterSpacing;
                             tmp_x += (int)tmp_charInfo.xadvance + _letterSpacing;
 
                             if ( tmp_width > _width ) {
-                                _end_x = line_width - (int)charInfo.xadvance - _letterSpacing - _wordSpacing;
+                                // NOTE: in BitmapFont, space have zero width, so we use cur_x here NOT line_width
+                                _end_x = cur_x - (int)charInfo.width - _letterSpacing - _wordSpacing;
                                 _end_index = cur_index-1;
-                                line_width = 0;
                                 return false;
                             }
                         }

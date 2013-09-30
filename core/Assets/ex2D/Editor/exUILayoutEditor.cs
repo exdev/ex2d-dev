@@ -982,8 +982,8 @@ class exUILayoutEditor : EditorWindow {
                     // size
                     GUILayout.Label ( "size", new GUILayoutOption[] { GUILayout.Width(200.0f) } );
                     ++indentLevel;
-                        exCSSUI.SizeField ( indentLevel, activeElement, "width", style.width, false );
-                        exCSSUI.SizeField ( indentLevel, activeElement, "height", style.height, false );
+                        exCSSUI.SizePushField ( indentLevel, activeElement, "width", style.width, false );
+                        exCSSUI.SizePushField ( indentLevel, activeElement, "height", style.height, false );
                         exCSSUI.MinSizeField ( indentLevel, activeElement, "min-width", style.minWidth, false );
                         exCSSUI.MinSizeField ( indentLevel, activeElement, "min-height", style.minHeight, false );
                         exCSSUI.MaxSizeField ( indentLevel, activeElement, "max-width", style.maxWidth, false );
