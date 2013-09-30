@@ -1135,8 +1135,7 @@ public static class exAtlasUtility {
             }
             if ( dirty )
                 EditorUtility.SetDirty(bitmapFont);
-
-            foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
+                foreach ( exBitmapFont.CharInfo charInfo in bitmapFont.charInfos ) {
 
                 // copy raw texture into atlas texture
                 exTextureUtility.Fill( ref pixels

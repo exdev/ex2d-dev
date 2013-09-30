@@ -163,9 +163,13 @@ public class exMesh : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public static exMesh Create (exLayer _layer) {
+#if UNITY_EDITOR
+        GameObject go = UnityEditor.EditorUtility.CreateGameObjectWithHideFlags("", exReleaseFlags.hideAndDontSave | exReleaseFlags.notEditable);
+#else
         GameObject go = new GameObject();
         // 当在EX_DEBUG模式下，如果显示着GO的Inspector，再启动游戏，由于GO是DontSave的，会先被销毁。这时Unity将会报错，但不影响运行，这个问题在类似插件中也会存在。
         go.hideFlags = exReleaseFlags.hideAndDontSave | exReleaseFlags.notEditable;
+#endif
         exMesh res = go.AddComponent<exMesh>();
         res.UpdateDebugName(_layer);
         res.Init();

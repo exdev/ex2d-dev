@@ -23,7 +23,7 @@ using System.IO;
 [CustomEditor(typeof(ex3DSpriteFont))]
 class ex3DSpriteFontInspector : exStandaloneSpriteInspector {
 
-    SerializedProperty fontProp;
+    //SerializedProperty fontProp;
     SerializedProperty textProp;
     SerializedProperty textAlignProp;
     SerializedProperty useKerningProp;
@@ -49,24 +49,42 @@ class ex3DSpriteFontInspector : exStandaloneSpriteInspector {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	public override void OnInspectorGUI () {
+    public override void OnInspectorGUI () {
         base.OnInspectorGUI();
 
         // NOTE: DO NOT call serializedObject.ApplyModifiedProperties ();
         serializedObject.Update ();
 
         EditorGUILayout.Space();
-
-        // font
-        EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( fontProp, new GUIContent("Font") );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                ex3DSpriteFont sp = obj as ex3DSpriteFont;
-                if ( sp ) {
-                    sp.font = fontProp.objectReferenceValue as exBitmapFont;
+        
+        {
+            // font
+            ex3DSpriteFont sp = serializedObject.targetObject as ex3DSpriteFont;
+            if (sp) {
+                EditorGUI.BeginChangeCheck();
+                exFont.TypeForEditor fontType = (exFont.TypeForEditor)EditorGUILayout.EnumPopup("Font Type", sp.fontType);
+                if (EditorGUI.EndChangeCheck()) {
+                    sp.fontType = fontType;
+                    if (fontType == exFont.TypeForEditor.Dynamic && sp.dynamicFont == null) {
+                        sp.SetFont(Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font);
+                    }
                     EditorUtility.SetDirty(sp);
                 }
+                EditorGUI.indentLevel++;
+                EditorGUI.BeginChangeCheck();
+                if (fontType == exFont.TypeForEditor.Bitmap) {
+                    sp.SetFont(EditorGUILayout.ObjectField("Font", sp.bitmapFont, typeof(exBitmapFont), false) as exBitmapFont);
+                }
+                else {
+                    sp.SetFont(EditorGUILayout.ObjectField("Font", sp.dynamicFont, typeof(Font), false) as Font);
+                    sp.fontStyle = (FontStyle)EditorGUILayout.EnumPopup("Font Style", sp.fontStyle);
+                    sp.fontSize = EditorGUILayout.IntField("Font Size", sp.fontSize);
+                    //sp.lineHeight = EditorGUILayout.IntField("Line Height", sp.lineHeight);
+                }
+                if (EditorGUI.EndChangeCheck()) {
+                    EditorUtility.SetDirty(sp);
+                }
+                EditorGUI.indentLevel--;
             }
         }
 
@@ -261,7 +279,7 @@ class ex3DSpriteFontInspector : exStandaloneSpriteInspector {
 
     protected new void InitProperties () {
         base.InitProperties();
-        fontProp = serializedObject.FindProperty("font_");
+        //fontProp = serializedObject.FindProperty("font_");
         textProp = serializedObject.FindProperty("text_");
         textAlignProp = serializedObject.FindProperty("textAlign_");
         useKerningProp = serializedObject.FindProperty("useKerning_");

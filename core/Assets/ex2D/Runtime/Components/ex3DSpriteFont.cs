@@ -16,7 +16,7 @@ using ex2D.Detail;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// 
-/// A component to render exBitmapFont in the scene 
+/// A component to render exFont in the scene 
 /// 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -27,41 +27,18 @@ public class ex3DSpriteFont : exStandaloneSprite {
     // serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected exBitmapFont font_;
-    /// The referenced bitmap font asset
-    // ------------------------------------------------------------------ 
+    /// 每个exSpriteFont都有单独的一个exFont实例
+    [SerializeField] protected exFont font_ = new exFont();
+    
+    public exBitmapFont bitmapFont {
+        get {
+            return font_.bitmapFont;
+        }
+    }
 
-    public exBitmapFont font {
-        get { return font_; }
-        set {
-            if (ReferenceEquals(font_, value)) {
-                return;
-            }
-            if (value != null) {
-                if (value.texture == null) {
-                    Debug.LogWarning("invalid bitmap font texture");
-                }
-                updateFlags |= exUpdateFlags.Text;
-
-                if (font_ == null || ReferenceEquals(font_.texture, value.texture) == false) {
-                    // texture changed
-                    font_ = value;
-                    UpdateMaterial();   // 前面update过text了
-                    return;
-                }
-                if (isOnEnabled && visible == false) {
-                    font_ = value;
-                    if (visible) {
-                        Show();
-                    }
-                }
-            }
-            else if (visible) {
-                // become invisible
-                Hide();
-            }
-            font_ = value;
+    public Font dynamicFont {
+        get {
+            return font_.dynamicFont;
         }
     }
 
@@ -81,6 +58,42 @@ public class ex3DSpriteFont : exStandaloneSprite {
                     Debug.LogError("Too many character on one sprite: " + value.Length, this);
                 }
                 UpdateBufferSize();
+                updateFlags |= exUpdateFlags.Text;
+            }
+        }
+    }
+    
+/*    public int lineHeight {
+        get {
+            return font_.lineHeight;
+        }
+        set {
+            if (font_.lineHeight != value) {
+                font_.lineHeight = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }*/
+
+    public int fontSize {
+        get {
+            return font_.fontSize;
+        }
+        set {
+            if (font_.fontSize != value) {
+                font_.fontSize = value;
+                updateFlags |= exUpdateFlags.Text;
+            }
+        }
+    }
+
+    public FontStyle fontStyle {
+        get {
+            return font_.fontStyle;
+        }
+        set {
+            if (font_.fontStyle != value) {
+                font_.fontStyle = value;
                 updateFlags |= exUpdateFlags.Text;
             }
         }
@@ -282,6 +295,23 @@ public class ex3DSpriteFont : exStandaloneSprite {
             }
         }
     }
+    
+#if UNITY_EDITOR
+    
+    /// 该属性仅供编辑器使用，用户直接调用SetFont方法即可，无需设置类型。
+    public exFont.TypeForEditor fontType {
+        get {
+            return font_.type;
+        }
+        set {
+            if (font_.type != value) {
+                font_.type = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+#endif
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -289,18 +319,13 @@ public class ex3DSpriteFont : exStandaloneSprite {
 
     protected override Texture texture {
         get {
-            if (font_ != null) {
-                return font_.texture;
-            }
-            else {
-                return null;
-            }
+            return font_.texture;
         }
     }
     
     public override bool visible {
         get {
-            return isOnEnabled && font_ != null && font_.texture != null;
+            return isOnEnabled && font_.isValid;
         }
     }
 
@@ -317,6 +342,24 @@ public class ex3DSpriteFont : exStandaloneSprite {
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable functions
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    protected new void OnEnable () {
+        font_.textureRebuildCallback += OnFontTextureRebuilt;
+        base.OnEnable();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    protected new void OnDisable () {
+        base.OnDisable();
+        font_.textureRebuildCallback -= OnFontTextureRebuilt;
+    }
 
     #region Functions used to update geometry buffer
 
@@ -391,8 +434,49 @@ public class ex3DSpriteFont : exStandaloneSprite {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Public Functions
+    // Other Functions
     ///////////////////////////////////////////////////////////////////////////////
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
 
+    public void SetFont (exBitmapFont _bitmapFont) {
+        font_.Set(_bitmapFont);
+        UpdateTexture();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void SetFont (Font _dynamicFont) {
+        font_.Set(_dynamicFont);
+        UpdateTexture();
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void UpdateTexture () {
+        if (font_.texture != null) {
+            updateFlags |= exUpdateFlags.Text;
+            UpdateMaterial();
+            Show();
+        }
+        else {
+            // become invisible
+            Hide();
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnFontTextureRebuilt () {
+        updateFlags |= exUpdateFlags.Text;      // TODO: only need to update UV
+    }
 }
 //#endif
