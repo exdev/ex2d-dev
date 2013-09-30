@@ -299,7 +299,7 @@ public class exLayer : MonoBehaviour
             if (_sprite.spriteIdInLayer == nextSpriteUniqueId - 1 && nextSpriteUniqueId > 0) {
                 --nextSpriteUniqueId;
             }
-            _sprite.spriteIdInLayer = 0; 
+            _sprite.spriteIdInLayer = 0;
         }
     }
     
@@ -449,16 +449,18 @@ public class exLayer : MonoBehaviour
         //    sprite.indexBufferIndex = -1;
         //    sprite.layer = null;
         //}
+        exLayeredSprite[] spriteList = GetComponentsInChildren<exLayeredSprite>(true);
+        foreach (exLayeredSprite sprite in spriteList) {
+            if (sprite != null) {
+                if (sprite.layer != null && ReferenceEquals(sprite.layer, this) == false) {
+                    Debug.LogError("Sprite's hierarchy is invalid!", sprite);
+                }
+                sprite.ResetLayerProperties();
+            }
+        }
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
             if (mesh != null) {
-                for (int s = 0; s < mesh.spriteList.Count; ++s) {
-                    exLayeredSprite sprite = mesh.spriteList[s];
-                    exDebug.Assert(sprite != null);
-                    if (sprite != null) {
-                        sprite.ResetLayerProperties();
-                    }
-                }
                 // 这里不应该使用Destroy，因为当停止执行editor的当时，Destroy不会根据editor下的行为自动使用DestroyImmediate，会导致layer的mesh无法被销毁的情况出现
                 mesh.gameObject.DestroyImmediate();
             }
@@ -846,24 +848,29 @@ public class exLayer : MonoBehaviour
 
     private void RemoveFromMesh (exLayeredSprite _sprite, exMesh _mesh) {
         _mesh.spriteList.RemoveAt(_sprite.spriteIndexInMesh);
+        int vertexCount = _sprite.vertexCount;
         for (int i = _sprite.spriteIndexInMesh; i < _mesh.spriteList.Count; ++i) {
             exLayeredSprite sprite = _mesh.spriteList[i];
             // update sprite and vertic index after removed sprite
             sprite.spriteIndexInMesh = i;
-            sprite.vertexBufferIndex -= _sprite.vertexCount;
+            sprite.vertexBufferIndex -= vertexCount;
             // update indices to make them match new vertic index
             if (sprite.isInIndexBuffer) {
-                for (int index = sprite.indexBufferIndex; index < sprite.indexBufferIndex + sprite.indexCount; ++index) {
-                    _mesh.indices.buffer[index] -= _sprite.vertexCount;
+                int indexEnd = sprite.indexBufferIndex + sprite.indexCount;
+                for (int index = sprite.indexBufferIndex; index < indexEnd; ++index) {
+                    if (index >= _mesh.indices.Count) {
+                        Debug.Log(string.Format("[RemoveFromMesh|exLayer] index: {1} _mesh.indices.Count: {0}", _mesh.indices.Count, index));
+                    }
+                    _mesh.indices.buffer[index] -= vertexCount;
                 }
             }
         }
         _mesh.updateFlags |= exUpdateFlags.VertexAndIndex;
 
         // update vertices
-        _mesh.vertices.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
-        _mesh.colors32.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
-        _mesh.uvs.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
+        _mesh.vertices.RemoveRange(_sprite.vertexBufferIndex, vertexCount);
+        _mesh.colors32.RemoveRange(_sprite.vertexBufferIndex, vertexCount);
+        _mesh.uvs.RemoveRange(_sprite.vertexBufferIndex, vertexCount);
 
 #if FORCE_UPDATE_VERTEX_INFO
         bool removeLastSprite = (_sprite.spriteIndexInMesh == _mesh.spriteList.Count);
