@@ -829,11 +829,7 @@ public class exUIElement {
                 int cur_y = 0;
                 for ( int i = 0; i < lines.Count; ++i ) {
                     LineInfo lineInfo = lines[i];
-                    if ( lineInfo.pushHeight ) {
-                        if ( lineInfo.height < pushSize ) {
-                            lineInfo.height = pushSize;
-                        }
-                    }
+                    int maxLineHeight = lineInfo.height;
 
                     for ( int j = 0; j < lineInfo.elements.Count; ++j ) {
                         exUIElement el = lineInfo.elements[j];
@@ -843,10 +839,19 @@ public class exUIElement {
                         }
                         else {
                             if ( el.style.height.type == exCSS_size_push.Type.Push ) {
-                                el.height = pushSize;
+                                el.height = pushSize; 
+
+                                int totalHeight = el.GetTotalHeight();
+                                if ( maxLineHeight < totalHeight ) {
+                                    maxLineHeight = totalHeight;
+                                }
                             }
                             el.y = cur_y + el.marginTop + el.borderSizeTop + el.paddingTop;
                         }
+                    }
+
+                    if ( lineInfo.pushHeight ) {
+                        lineInfo.height = maxLineHeight;
                     }
 
                     cur_y += lineInfo.height;
