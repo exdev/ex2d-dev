@@ -100,6 +100,21 @@ public class ex2DRenderer : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
     
     public List<exLayer> layerList = new List<exLayer>();   ///< 按Layer的渲染次序排序，先渲染的放在前面。
+    
+    [SerializeField] 
+    private bool customizeLayerZ_ = false;
+    public bool customizeLayerZ {
+        get {
+            return customizeLayerZ_;
+        }
+        set { 
+            if (customizeLayerZ_ == value) {
+                return;
+            }
+            customizeLayerZ_ = value;
+            ResortLayerDepth ();
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -281,11 +296,16 @@ public class ex2DRenderer : MonoBehaviour {
         for (int i = 0; i < layerList.Count; ++i) {
             exLayer layer = layerList[i];
             if (layer != null) {
-                occupiedZ = layer.SetWorldBoundsMinZ(occupiedZ + interval);
+                if (customizeLayerZ_) {
+                    layer.SetWorldBoundsMinZ(layer.customZ);
+                }
+                else {
+                    occupiedZ = layer.SetWorldBoundsMinZ(occupiedZ + interval);
+                }
             }
         }
     }
-
+    
     // ------------------------------------------------------------------ 
     /// Return shared material matchs given shader and texture
     // ------------------------------------------------------------------ 

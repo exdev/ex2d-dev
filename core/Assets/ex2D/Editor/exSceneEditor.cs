@@ -364,19 +364,27 @@ class exSceneEditor : EditorWindow {
 
         EditorGUILayout.Space();
         EditorGUILayout.Space();
-
+        
         // ======================================================== 
         // Layers 
         // ======================================================== 
 
         EditorGUILayout.BeginVertical( settingsStyles.boxBackground );
-            EditorGUILayout.LabelField ( "Layers", settingsStyles.boldLabel );
+            EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField ( "Layers", settingsStyles.boldLabel );
+                if (ex2DRenderer.instance.customizeLayerZ) {
+                    if (GUILayout.Button ("Refresh")) {
+                        ex2DRenderer.instance.layerList.Sort((x, y) => x.customZ.CompareTo(y.customZ));    
+                    }
+                }
+            EditorGUILayout.EndHorizontal();
+        
             GUILayout.Space(2);
-
+        
             Layout_LayerElementsField();
 
         EditorGUILayout.EndVertical();
-
+        
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
     }
@@ -393,7 +401,20 @@ class exSceneEditor : EditorWindow {
 
         // add layer button
         EditorGUILayout.BeginHorizontal( settingsStyles.toolbar, new GUILayoutOption[0]);
+
+        // custom z
+        bool useCustomZ = GUILayout.Toggle( ex2DRenderer.instance.customizeLayerZ, "Customize Z", settingsStyles.toolbarButton );
+        if ( useCustomZ != ex2DRenderer.instance.customizeLayerZ ) {
+            ex2DRenderer.instance.customizeLayerZ = useCustomZ;
+            // resort layer list
+            ex2DRenderer.instance.layerList.Sort((x, y) => x.customZ.CompareTo(y.customZ));
+            EditorUtility.SetDirty(ex2DRenderer.instance);
+        }
+        
         GUILayout.FlexibleSpace();
+            
+            GUI.enabled = (ex2DRenderer.instance.customizeLayerZ == false);
+            
             if ( GUILayout.Button( "UP", settingsStyles.toolbarButton ) ) 
             {
                 int curIdx = ex2DRenderer.instance.layerList.IndexOf(activeLayer);
@@ -412,6 +433,9 @@ class exSceneEditor : EditorWindow {
                     // activeLayer = ex2DRenderer.instance.layerList[nextIdx];
                 }
             }
+            
+            GUI.enabled = true;
+            
             if ( GUILayout.Button( settingsStyles.iconToolbarPlus, 
                                    settingsStyles.toolbarDropDown ) ) 
             {
@@ -470,6 +494,7 @@ class exSceneEditor : EditorWindow {
         }
         cur_x += 10.0f;
 
+        // show
         cur_x += 5.0f;
         size = EditorStyles.toggle.CalcSize( GUIContent.none );
         bool newShow = EditorGUI.Toggle ( new Rect ( cur_x, _rect.y + 3f, size.x, size.y ),
@@ -479,7 +504,8 @@ class exSceneEditor : EditorWindow {
             EditorUtility.SetDirty(_layer);
         }
         cur_x += 10.0f;
-
+        
+        // layer name
         cur_x += 10.0f;
         string newName = EditorGUI.TextField ( new Rect ( cur_x, _rect.y + 4f, 100f, _rect.height - 8f ),
                                                _layer.gameObject.name ); 
@@ -488,8 +514,20 @@ class exSceneEditor : EditorWindow {
             EditorUtility.SetDirty(_layer.gameObject);
         }
         cur_x += 100.0f;
-
-
+        
+        if (ex2DRenderer.instance.customizeLayerZ) {
+            // custom z
+            cur_x += 10.0f;
+            string z_text = EditorGUI.TextField (new Rect (cur_x, _rect.y + 4f, 40f, _rect.height - 8f),
+                                              _layer.customZ.ToString ()); 
+            float z;
+            if (float.TryParse (z_text, out z) && _layer.customZ != z) {
+                _layer.customZ = z;
+                EditorUtility.SetDirty (_layer.gameObject);
+            }
+            cur_x += 40.0f;
+        }
+        
         //
         size = settingsStyles.removeButton.CalcSize( new GUIContent(settingsStyles.iconToolbarMinus) );
         cur_x = _rect.xMax - 5.0f - size.x;

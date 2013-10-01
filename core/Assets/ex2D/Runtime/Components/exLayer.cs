@@ -135,7 +135,26 @@ public class exLayer : MonoBehaviour
             alphaHasChanged = true;
         }
     }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
 
+    [SerializeField] 
+    private float customZ_;
+    public float customZ {
+        get {
+            return customZ_;
+        }
+        set {
+            if (customZ_ == value) {
+                return;
+            }
+            customZ_ = value;
+            SetWorldBoundsMinZ(customZ_);
+        }
+    }
+    
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
