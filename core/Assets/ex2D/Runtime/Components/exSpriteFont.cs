@@ -759,7 +759,7 @@ public class exSpriteFont : exLayeredSprite {
             return;
         }
         int oldTextCapacity = vertexCount_ / exMesh.QUAD_VERTEX_COUNT;
-        int textCapacity = GetTextCapacity(oldTextCapacity);
+        int textCapacity = Mathf.Max(GetTextCapacity(oldTextCapacity), 1);  // layered sprite should always have at lease one quad
         
         if (textCapacity != oldTextCapacity) {
             if (layer_ != null) {
