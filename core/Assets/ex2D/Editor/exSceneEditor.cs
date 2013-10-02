@@ -642,7 +642,8 @@ class exSceneEditor : EditorWindow {
                 foreach ( Object o in DragAndDrop.objectReferences ) {
                     if ( o is exTextureInfo ||
                          o is exBitmapFont ||
-                         o is exSpriteAnimationClip ) 
+                         o is exSpriteAnimationClip ||
+                         o is exUILayoutInfo ) 
                     {
                         DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
                         break;
@@ -693,17 +694,22 @@ class exSceneEditor : EditorWindow {
                         }
                         InitSprite(sprite);
                     }
+                    else if ( o is exUILayoutInfo ) {
+                        newGO = new GameObject(o.name);
+                        exUILayout layout = newGO.AddComponent<exUILayout>();
+                        layout.layoutInfo = o as exUILayoutInfo;
+                        layout.Sync();
+                    }
 
                     if ( newGO != null && activeLayer != null ) {
                         newGO.transform.position = SceneField_MapToWorld( _rect, e.mousePosition);
                         newGO.transform.localScale = Vector3.one;
                         newGO.transform.rotation = Quaternion.identity;
 
-                        exLayeredSprite sp = newGO.GetComponent<exLayeredSprite>();
-                        activeLayer.Add(sp);
+                        activeLayer.Add(newGO);
 
                         EditorUtility.SetDirty(activeLayer);
-                        EditorUtility.SetDirty(sp);
+                        EditorUtility.SetDirty(newGO);
 
                         Selection.activeObject = newGO;
                     }
