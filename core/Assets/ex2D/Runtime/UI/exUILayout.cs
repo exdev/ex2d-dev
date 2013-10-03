@@ -35,25 +35,40 @@ public class exUILayout : MonoBehaviour {
 
         layoutInfo.Apply();
 
-        SyncElements ( transform, 0, layoutInfo.root, 0 );
+        SyncElements ( transform, 0, layoutInfo.root, 0, 0, 0 );
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void SyncElements ( Transform _transParent, int _idx, exUIElement _el, int _depth ) {
+    public void SyncElements ( Transform _transParent, int _idx, exUIElement _el, int _x, int _y, int _depth ) {
+
         string childName =  "[" + _idx + "]" + _el.name;
         GameObject go = FindOrNewCihld( _transParent, childName);
         Transform trans = go.transform;
 
+        int x = _x + _el.x - _el.paddingLeft - _el.borderSizeLeft;
+        int y = -(_y + _el.y - _el.paddingTop - _el.borderSizeTop);
+
         //
-        trans.localPosition = new Vector3 ( _el.x, -_el.y, 0.0f );
+        trans.localPosition = new Vector3 ( x, y, 0.0f );
+
+        // this is a content root
+        if ( _el.display == exCSS_display.Inline && _el.isContent == false ) 
+            return;
 
         // process current element
         if ( _el.borderColor.a > 0.0f &&
              ( _el.borderSizeLeft > 0 || _el.borderSizeRight > 0 || _el.borderSizeTop > 0 || _el.borderSizeBottom > 0 ) ) 
         {
+            int width = _el.width 
+                + _el.borderSizeLeft + _el.borderSizeRight +
+                + _el.paddingLeft + _el.paddingRight;
+            int height = _el.height 
+                + _el.borderSizeTop + _el.borderSizeBottom +
+                + _el.paddingTop + _el.paddingBottom;
+
             bool borderOnly = false;
             exTextureInfo borderImage = _el.borderImage as exTextureInfo;
             if ( _el.borderImage == null ) {
@@ -64,7 +79,7 @@ public class exUILayout : MonoBehaviour {
             exSprite sprite 
                 = ex2D.Detail.exSpriteUtility.NewSlicedSprite( go, borderImage, 
                                                                _el.borderSizeLeft, _el.borderSizeRight, _el.borderSizeTop, _el.borderSizeBottom,
-                                                               _el.width, _el.height, _el.borderColor, 
+                                                               width, height, _el.borderColor, 
                                                                borderOnly );
             sprite.anchor = Anchor.TopLeft;
             sprite.depth = _depth;
@@ -79,8 +94,8 @@ public class exUILayout : MonoBehaviour {
             GameObject backgroundGO = FindOrNewCihld ( trans, _el.name + " background" );
             exSprite sprite 
                 = ex2D.Detail.exSpriteUtility.NewSimpleSprite( backgroundGO, backgroundImage, 
-                                                               _el.width - _el.borderSizeLeft - _el.borderSizeRight, 
-                                                               _el.height - _el.borderSizeTop - _el.borderSizeBottom, 
+                                                               _el.width + _el.paddingLeft + _el.paddingRight, 
+                                                               _el.height + _el.paddingTop + _el.paddingBottom, 
                                                                _el.backgroundColor );
             backgroundGO.transform.localPosition = new Vector3 ( _el.borderSizeLeft, -_el.borderSizeTop, 0.0f );
             sprite.anchor = Anchor.TopLeft;
@@ -91,7 +106,20 @@ public class exUILayout : MonoBehaviour {
         if ( _el.isContent ) {
             switch ( _el.contentType ) {
             case exUIElement.ContentType.Text:
-                // DrawText ( element_x, element_y, _el, _el.text );
+                if ( _el.font != null ) {
+                    exSpriteFont spriteFont = null;
+                    exBitmapFont bitmapFont = _el.font as exBitmapFont;
+                    if ( bitmapFont != null ) {
+                        spriteFont = ex2D.Detail.exSpriteUtility.NewSpriteFont( go, bitmapFont, _el.contentColor, _el.text );
+                    }
+                    else {
+                        Font font = _el.font as Font;
+                        if ( font != null ) {
+                            spriteFont = ex2D.Detail.exSpriteUtility.NewSpriteFont( go, font, _el.fontSize, _el.contentColor, _el.text );
+                        }
+                    }
+                    spriteFont.anchor = Anchor.TopLeft;
+                }
                 break;
 
 
@@ -110,8 +138,7 @@ public class exUILayout : MonoBehaviour {
                 if ( childEL.IsEmpty() )
                     continue;
 
-                if ( childEL.owner == null )
-                    SyncElements ( trans, i, childEL, _depth + 1 );
+                SyncElements ( trans, i, childEL, _el.borderSizeLeft + _el.paddingLeft, _el.borderSizeTop + _el.paddingTop, _depth + 1 );
             }
         }
     }

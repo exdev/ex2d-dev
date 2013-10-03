@@ -67,6 +67,31 @@ public static class exSpriteUtility {
         return sprite;
     }
 
+    public static exSpriteFont NewSpriteFont ( GameObject _go, Font _font, int _fontSize, Color _color, string _text ) {
+        exSpriteFont spriteFont = _go.GetComponent<exSpriteFont>();
+        if ( spriteFont == null ) {
+            spriteFont = _go.AddComponent<exSpriteFont>();
+        }
+        spriteFont.SetFont (_font);
+        spriteFont.fontSize = _fontSize;
+        spriteFont.color = _color;
+        spriteFont.text = _text;
+
+        return spriteFont;
+    }
+
+    public static exSpriteFont NewSpriteFont ( GameObject _go, exBitmapFont _font, Color _color, string _text ) {
+        exSpriteFont spriteFont = _go.GetComponent<exSpriteFont>();
+        if ( spriteFont == null ) {
+            spriteFont = _go.AddComponent<exSpriteFont>();
+        }
+        spriteFont.SetFont (_font);
+        spriteFont.color = _color;
+        spriteFont.text = _text;
+
+        return spriteFont;
+    }
+
     public static void GetDicingCount (exTextureInfo _ti, out int _colCount, out int _rowCount) {
         _colCount = 1;
         _rowCount = 1;
