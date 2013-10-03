@@ -208,29 +208,31 @@ public class exUILayout : MonoBehaviour {
             }
 
             // check if we have unused children
-            int searchStart = _el.children.Count-1;
-            for ( int i = trans.childCount-1; i >= 0; --i ) {
-                Transform childTrans = trans.GetChild(i);
-                string name = childTrans.name;
-                if ( name == "__background" ||
-                     name == "__border" ||
-                     name == "__content" ||
-                     name.IndexOf("__inline_content") != -1 )
-                    continue;
+            // int searchStart = _el.children.Count-1;
+            // for ( int i = trans.childCount-1; i >= 0; --i ) {
+            //     Transform childTrans = trans.GetChild(i);
+            //     string name = childTrans.name;
+            //     if ( name == "__background" ||
+            //          name == "__border" ||
+            //          name == "__content" ||
+            //          name.IndexOf("__inline_content") != -1 )
+            //         continue;
 
-                bool found = false;
-                for ( int j = searchStart; j >= 0; --j ) {
-                    exUIElement childEL = _el.children[j];
-                    if ( name == childEL.GetName(j) ) {
-                        searchStart -= 1;
-                        found = true;
-                        break;
-                    }
-                }
+            //     // BUG: the j index sometimes different when we have __inline_content { 
+            //     bool found = false;
+            //     for ( int j = searchStart; j >= 0; --j ) {
+            //         exUIElement childEL = _el.children[j];
+            //         if ( name == childEL.GetName(j) ) {
+            //             searchStart -= 1;
+            //             found = true;
+            //             break;
+            //         }
+            //     }
+            //     // } BUG end 
 
-                if ( found == false )
-                    UnityEngineExtends.Destroy(childTrans.gameObject);
-            }
+            //     if ( found == false )
+            //         UnityEngineExtends.Destroy(childTrans.gameObject);
+            // }
         }
 
         return null;
