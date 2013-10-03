@@ -44,12 +44,7 @@ public class exUILayout : MonoBehaviour {
 
     public Transform SyncElements ( Transform _transParent, int _idx, exUIElement _el, float _x, float _y, int _depth ) {
 
-        string childName = "";
-        if ( _el.isContent )
-            childName = _el.name;
-        else
-            childName = "[" + _idx + "]" + _el.name;
-
+        string childName = _el.GetName(_idx);
         GameObject go = FindOrNewCihld( _transParent, childName);
         Transform trans = go.transform;
         float x = _x + (_el.x - _el.paddingLeft - _el.borderSizeLeft);
@@ -91,6 +86,12 @@ public class exUILayout : MonoBehaviour {
             sprite.anchor = Anchor.TopLeft;
             sprite.depth = _depth;
         }
+        else {
+            Transform borderTrans = trans.Find("__border");
+            if ( borderTrans != null ) {
+                UnityEngineExtends.Destroy(borderTrans.gameObject);
+            }
+        }
 
         // process background
         if ( _el.backgroundColor.a > 0.0f ) {
@@ -108,6 +109,12 @@ public class exUILayout : MonoBehaviour {
                                                                _el.backgroundColor );
             sprite.anchor = Anchor.TopLeft;
             sprite.depth = _depth;
+        }
+        else {
+            Transform backgroundTrans = trans.Find("__background");
+            if ( backgroundTrans != null ) {
+                UnityEngineExtends.Destroy(backgroundTrans.gameObject);
+            }
         }
 
         // process content or children
@@ -158,6 +165,13 @@ public class exUILayout : MonoBehaviour {
         }
         // sync children
         else {
+            //
+            Transform contentTrans = trans.Find("__content");
+            if ( contentTrans != null ) {
+                UnityEngineExtends.Destroy(contentTrans.gameObject);
+            }
+
+            //
             Transform owner = null;
             int idx = 0;
             for ( int i = 0; i < _el.normalFlows.Count; ++i ) {
@@ -179,10 +193,43 @@ public class exUILayout : MonoBehaviour {
 
                 if ( childEL.display == exCSS_display.Inline && childEL.isContent == false ) {
                     owner = newTrans;
+
+                    // remove unused lines (gameObject)
+                    if ( newTrans.childCount > childEL.normalFlows.Count ) {
+                        for ( int j = newTrans.childCount-1; j >= childEL.normalFlows.Count; --j ) {
+                            Transform unusedChild = newTrans.GetChild(j);
+                            UnityEngineExtends.Destroy(unusedChild.gameObject);
+                        }
+                    }
                 }
 
                 if ( childEL.isContent == false )
                     ++idx;
+            }
+
+            // check if we have unused children
+            int searchStart = _el.children.Count-1;
+            for ( int i = trans.childCount-1; i >= 0; --i ) {
+                Transform childTrans = trans.GetChild(i);
+                string name = childTrans.name;
+                if ( name == "__background" ||
+                     name == "__border" ||
+                     name == "__content" ||
+                     name.IndexOf("__inline_content") != -1 )
+                    continue;
+
+                bool found = false;
+                for ( int j = searchStart; j >= 0; --j ) {
+                    exUIElement childEL = _el.children[j];
+                    if ( name == childEL.GetName(j) ) {
+                        searchStart -= 1;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if ( found == false )
+                    UnityEngineExtends.Destroy(childTrans.gameObject);
             }
         }
 

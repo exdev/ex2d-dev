@@ -389,6 +389,16 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public string GetName ( int _idx ) {
+        if ( isContent )
+            return name;
+        return "[" + _idx + "]" + name;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public int GetLineHeight () {
         if ( display == exCSS_display.Inline ) {
             if ( contentType == ContentType.Text )
