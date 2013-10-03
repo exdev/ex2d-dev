@@ -486,7 +486,25 @@ public class exLayer : MonoBehaviour
         }
         meshList.Clear();
     }
+
+    // ------------------------------------------------------------------ 
+    /// 用于更新sprite的depth、material、vertex count等数据
+    // ------------------------------------------------------------------ 
+
+    internal void OnPreSpriteChange (exLayeredSprite _sprite) {
+        int meshIndex = IndexOfMesh(_sprite);
+        if (meshIndex != -1) {
+            RemoveFromMesh (_sprite, meshList[meshIndex]);
+        }
+    }
     
+    // ------------------------------------------------------------------ 
+    /// 用于更新sprite的depth、material、vertex count等数据
+    // ------------------------------------------------------------------ 
+
+    internal void OnAfterSpriteChange (exLayeredSprite _sprite) {
+        AddToMesh(_sprite, GetMeshToAdd(_sprite));
+    }
 
     // ------------------------------------------------------------------ 
     /// To update scene view in edit mode immediately

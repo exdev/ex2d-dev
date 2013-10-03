@@ -36,14 +36,14 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         get { return depth_; }
         set {
             if ( depth_ != value ) {
-                depth_ = value;
-                // 先直接重加到layer里，以后再做优化
                 if (layer_ != null) {
-                    exLayer originalLayer = layer_;
-                    originalLayer.Remove(this, false);
-                    originalLayer.Add(this, false);
+                    layer_.OnPreSpriteChange(this);
+                    depth_ = value;
+                    layer_.OnAfterSpriteChange(this);
                 }
-                //updateFlags |= exUpdateFlags.Index;
+                else {
+                    depth_ = value;
+                }
             }
         }
     }
@@ -88,7 +88,9 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         internal set {
             if (value != null) {
                 exDebug.Assert(layer_ == null, "Sprite should remove from last layer before add to new one");
-                OnPreAddToLayer();
+                if (layer_ == null) {
+                    OnPreAddToLayer();
+                }
             }
             layer_ = value;
         }
@@ -192,12 +194,10 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     
     protected override void UpdateMaterial () {
         if (layer_ != null) {
-            exLayer myLayer = layer_;
-            myLayer.Remove(this, false);
+            layer_.OnPreSpriteChange(this);
             material_ = null;   // set dirty, make material update.
-            if (ReferenceEquals(material, null) == false) {
-                myLayer.Add(this, false);
-            }
+            exDebug.Assert(material != null);
+            layer_.OnAfterSpriteChange(this);
         }
         else {
             material_ = null;   // set dirty, make material update.
