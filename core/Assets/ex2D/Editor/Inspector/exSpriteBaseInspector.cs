@@ -411,8 +411,8 @@ class exSpriteBaseInspector : Editor {
 
     public static void ApplySpriteScale (exISprite _sprite, Vector3 _size, Vector3 _center) {
         if (_sprite.spriteType == exSpriteType.Sliced && _sprite.textureInfo != null && _sprite.textureInfo.hasBorder) {
-            _size.x = Mathf.Max(_size.x, _sprite.textureInfo.borderLeft + _sprite.textureInfo.borderRight);
-            _size.y = Mathf.Max(_size.y, _sprite.textureInfo.borderBottom + _sprite.textureInfo.borderTop);
+            _size.x = Mathf.Max(_size.x, _sprite.leftBorderSize + _sprite.rightBorderSize);
+            _size.y = Mathf.Max(_size.y, _sprite.bottomBorderSize + _sprite.topBorderSize);
         }
 
         _sprite.width = _size.x;

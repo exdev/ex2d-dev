@@ -35,33 +35,40 @@ public class exUILayout : MonoBehaviour {
 
         layoutInfo.Apply();
 
-        SyncElements ( transform, 0, layoutInfo.root, 0, 0, 0 );
+        SyncElements ( transform, 0, layoutInfo.root, transform.position.x, transform.position.y, 0 );
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void SyncElements ( Transform _transParent, int _idx, exUIElement _el, int _x, int _y, int _depth ) {
+    public Transform SyncElements ( Transform _transParent, int _idx, exUIElement _el, float _x, float _y, int _depth ) {
 
-        string childName =  "[" + _idx + "]" + _el.name;
+        string childName = "";
+        if ( _el.isContent )
+            childName = _el.name;
+        else
+            childName = "[" + _idx + "]" + _el.name;
+
         GameObject go = FindOrNewCihld( _transParent, childName);
         Transform trans = go.transform;
+        float x = _x + (_el.x - _el.paddingLeft - _el.borderSizeLeft);
+        float y = _y - (_el.y - _el.paddingTop - _el.borderSizeTop);
 
-        int x = _x + _el.x - _el.paddingLeft - _el.borderSizeLeft;
-        int y = -(_y + _el.y - _el.paddingTop - _el.borderSizeTop);
-
-        //
-        trans.localPosition = new Vector3 ( x, y, 0.0f );
+        // set position
+        trans.position = new Vector3 ( x, y, _transParent.position.z );
 
         // this is a content root
         if ( _el.display == exCSS_display.Inline && _el.isContent == false ) 
-            return;
+            return trans;
 
         // process current element
         if ( _el.borderColor.a > 0.0f &&
              ( _el.borderSizeLeft > 0 || _el.borderSizeRight > 0 || _el.borderSizeTop > 0 || _el.borderSizeBottom > 0 ) ) 
         {
+            GameObject borderGO = FindOrNewCihld ( trans, "__border" );
+            borderGO.transform.position = new Vector3 ( x, y, 0.0f );
+
             int width = _el.width 
                 + _el.borderSizeLeft + _el.borderSizeRight +
                 + _el.paddingLeft + _el.paddingRight;
@@ -77,7 +84,7 @@ public class exUILayout : MonoBehaviour {
             }
 
             exSprite sprite 
-                = ex2D.Detail.exSpriteUtility.NewSlicedSprite( go, borderImage, 
+                = ex2D.Detail.exSpriteUtility.NewSlicedSprite( borderGO, borderImage, 
                                                                _el.borderSizeLeft, _el.borderSizeRight, _el.borderSizeTop, _el.borderSizeBottom,
                                                                width, height, _el.borderColor, 
                                                                borderOnly );
@@ -87,60 +94,99 @@ public class exUILayout : MonoBehaviour {
 
         // process background
         if ( _el.backgroundColor.a > 0.0f ) {
+            GameObject backgroundGO = FindOrNewCihld ( trans, "__background" );
+            backgroundGO.transform.position = new Vector3 ( x + _el.borderSizeLeft, y - _el.borderSizeTop, 0.0f );
+
             exTextureInfo backgroundImage = _el.backgroundImage as exTextureInfo;
             if ( backgroundImage == null ) {
                 backgroundImage = whiteTexture;
             }
-            GameObject backgroundGO = FindOrNewCihld ( trans, _el.name + " background" );
             exSprite sprite 
                 = ex2D.Detail.exSpriteUtility.NewSimpleSprite( backgroundGO, backgroundImage, 
                                                                _el.width + _el.paddingLeft + _el.paddingRight, 
                                                                _el.height + _el.paddingTop + _el.paddingBottom, 
                                                                _el.backgroundColor );
-            backgroundGO.transform.localPosition = new Vector3 ( _el.borderSizeLeft, -_el.borderSizeTop, 0.0f );
             sprite.anchor = Anchor.TopLeft;
             sprite.depth = _depth;
         }
 
         // process content or children
         if ( _el.isContent ) {
+            GameObject contentGO = FindOrNewCihld ( trans, "__content" );
+            contentGO.transform.position = new Vector3 ( x + _el.borderSizeLeft, y - _el.borderSizeTop, 0.0f );
+
             switch ( _el.contentType ) {
             case exUIElement.ContentType.Text:
                 if ( _el.font != null ) {
                     exSpriteFont spriteFont = null;
                     exBitmapFont bitmapFont = _el.font as exBitmapFont;
                     if ( bitmapFont != null ) {
-                        spriteFont = ex2D.Detail.exSpriteUtility.NewSpriteFont( go, bitmapFont, _el.contentColor, _el.text );
+                        spriteFont = ex2D.Detail.exSpriteUtility.NewSpriteFont( contentGO, bitmapFont, _el.contentColor, _el.text );
                     }
                     else {
                         Font font = _el.font as Font;
                         if ( font != null ) {
-                            spriteFont = ex2D.Detail.exSpriteUtility.NewSpriteFont( go, font, _el.fontSize, _el.contentColor, _el.text );
+                            spriteFont = ex2D.Detail.exSpriteUtility.NewSpriteFont( contentGO, font, _el.fontSize, _el.contentColor, _el.text );
                         }
                     }
-                    spriteFont.anchor = Anchor.TopLeft;
+
+                    if ( spriteFont != null ) {
+                        spriteFont.anchor = Anchor.TopLeft;
+                        spriteFont.depth = _depth+1;
+                    }
                 }
                 break;
 
 
             case exUIElement.ContentType.TextureInfo:
-                // exEditorUtility.GUI_DrawTextureInfo ( new Rect( element_x, element_y, _el.width, _el.height ),
-                //                                       _el.image as exTextureInfo,
-                //                                       _el.contentColor );
+                if ( _el.image != null ) {
+                    exTextureInfo image = _el.image as exTextureInfo;
+                    exSprite sprite = null;
+                    if ( image != null ) {
+                        sprite = ex2D.Detail.exSpriteUtility.NewSimpleSprite( contentGO, image, _el.width, _el.height, _el.contentColor );
+                    }
+
+                    if ( sprite != null ) {
+                        sprite.anchor = Anchor.TopLeft;
+                        sprite.depth = _depth+1;
+                    }
+
+                    contentGO.transform.position = new Vector3 ( x + _el.borderSizeLeft, y - _el.borderSizeTop, 0.0f );
+                }
                 break;
             }
         }
+        // sync children
         else {
-            // sync children
+            Transform owner = null;
+            int idx = 0;
             for ( int i = 0; i < _el.normalFlows.Count; ++i ) {
                 exUIElement childEL = _el.normalFlows[i];
 
                 if ( childEL.IsEmpty() )
                     continue;
 
-                SyncElements ( trans, i, childEL, _el.borderSizeLeft + _el.paddingLeft, _el.borderSizeTop + _el.paddingTop, _depth + 1 );
+                if ( childEL.display == exCSS_display.Inline ) {
+                    if ( childEL.isContent == false ) {
+                        owner = trans;
+                    }
+                }
+                else {
+                    owner = trans;
+                }
+
+                Transform newTrans = SyncElements ( owner, idx, childEL, x + (_el.borderSizeLeft + _el.paddingLeft), y - (_el.borderSizeTop + _el.paddingTop), _depth+1 );
+
+                if ( childEL.display == exCSS_display.Inline && childEL.isContent == false ) {
+                    owner = newTrans;
+                }
+
+                if ( childEL.isContent == false )
+                    ++idx;
             }
         }
+
+        return null;
     }
 
     // ------------------------------------------------------------------ 

@@ -28,6 +28,8 @@ public static class exSpriteUtility {
         if ( sprite == null ) {
             sprite = _go.AddComponent<exSprite>();
         }
+        if ( sprite.shader == null )
+            sprite.shader = Shader.Find("ex2D/Alpha Blended");
         sprite.spriteType = exSpriteType.Simple;
         sprite.textureInfo = _info;
 
@@ -48,6 +50,8 @@ public static class exSpriteUtility {
         if ( sprite == null ) {
             sprite = _go.AddComponent<exSprite>();
         }
+        if ( sprite.shader == null )
+            sprite.shader = Shader.Find("ex2D/Alpha Blended");
         sprite.spriteType = exSpriteType.Sliced;
         sprite.textureInfo = _info;
 
@@ -72,6 +76,8 @@ public static class exSpriteUtility {
         if ( spriteFont == null ) {
             spriteFont = _go.AddComponent<exSpriteFont>();
         }
+        if ( spriteFont.shader == null )
+            spriteFont.shader = Shader.Find("ex2D/Alpha Blended (Use Vertex Color)");
         spriteFont.SetFont (_font);
         spriteFont.fontSize = _fontSize;
         spriteFont.color = _color;
@@ -85,6 +91,8 @@ public static class exSpriteUtility {
         if ( spriteFont == null ) {
             spriteFont = _go.AddComponent<exSpriteFont>();
         }
+        if ( spriteFont.shader == null )
+            spriteFont.shader = Shader.Find("ex2D/Alpha Blended");
         spriteFont.SetFont (_font);
         spriteFont.color = _color;
         spriteFont.text = _text;

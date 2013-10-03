@@ -543,7 +543,7 @@ public class exUIElement {
 
         lines.Clear();
         LineInfo curLine = new LineInfo();
-        curLine.name = name + "[" + lines.Count + "]";
+        curLine.name = "[" + lines.Count + "]" + name;
 
         for ( int i = 0; i < normalFlows_.Count; ++i ) {
             exUIElement childEL = normalFlows_[i];
@@ -559,7 +559,7 @@ public class exUIElement {
                         curLine.height = maxLineHeight;
                         lines.Add(curLine);
                         curLine = new LineInfo();
-                        curLine.name = name + "[" + lines.Count + "]";
+                        curLine.name = "[" + lines.Count + "]" + name;
                     }
 
                     // check and store max-line-width
@@ -610,7 +610,7 @@ public class exUIElement {
                 curLine.isBlock = true;
                 lines.Add(curLine);
                 curLine = new LineInfo();
-                curLine.name = name + "[" + lines.Count + "]";
+                curLine.name = "[" + lines.Count + "]" + name;
             }
             else {
                 // if this is not a content-inline element, we will BreakTextIntoElements here.
@@ -664,7 +664,7 @@ public class exUIElement {
                         curLine.height = maxLineHeight;
                         lines.Add(curLine);
                         curLine = new LineInfo();
-                        curLine.name = name + "[" + lines.Count + "]";
+                        curLine.name = "[" + lines.Count + "]" + name;
                     }
 
                     // check and store max-line-width
@@ -1022,7 +1022,7 @@ public class exUIElement {
         normalFlows_.Clear();
 
         exUIElement newEL = new exUIElement ();
-        newEL.name = name + " Inline Content";
+        newEL.name = "__inline_content";
         newEL.id = id;
         newEL.text = text;
         newEL.image = image;
@@ -1103,7 +1103,7 @@ public class exUIElement {
         exUIElement newEL = new exUIElement();
         newEL.CloneComputedStyle (this);
         newEL.owner = this;
-        newEL.name = name + " [0]";
+        newEL.name = "[0]" + "__line";
         newEL.isContent_ = true;
         newEL.isFirstLine_ = true;
         newEL.style = null;
@@ -1208,7 +1208,7 @@ public class exUIElement {
                 exUIElement newEL = new exUIElement();
                 newEL.CloneComputedStyle (this);
                 newEL.owner = this;
-                newEL.name = name + " [" + line_id + "]";
+                newEL.name = "[" + line_id + "]" + "__line";
                 newEL.isContent_ = true;
                 newEL.isFirstLine_ = begin;
                 newEL.style = null;
@@ -1301,7 +1301,7 @@ public class exUIElement {
                 exUIElement newEL = new exUIElement();
                 newEL.CloneComputedStyle (this);
                 newEL.owner = this;
-                newEL.name = name + " [" + line_id + "]";
+                newEL.name = "[" + line_id + "]" + "__line";
                 newEL.isContent_ = true;
                 newEL.isFirstLine_ = begin;
                 newEL.style = null;
