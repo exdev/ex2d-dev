@@ -22,6 +22,51 @@ namespace ex2D.Detail {
 
 public static class exSpriteUtility {
 
+    public static exSprite NewSimpleSprite ( GameObject _go, exTextureInfo _info, 
+                                             int _width, int _height, Color _color ) {
+        exSprite sprite = _go.GetComponent<exSprite>();
+        if ( sprite == null ) {
+            sprite = _go.AddComponent<exSprite>();
+        }
+        sprite.spriteType = exSpriteType.Simple;
+        sprite.textureInfo = _info;
+
+        sprite.customSize = true;
+        sprite.width = _width;
+        sprite.height = _height;
+
+        sprite.color = _color;
+
+        return sprite;
+    }
+
+    public static exSprite NewSlicedSprite ( GameObject _go, exTextureInfo _info, 
+                                             int _left, int _right, int _top, int _bottom,
+                                             int _width, int _height, Color _color, 
+                                             bool _borderOnly ) {
+        exSprite sprite = _go.GetComponent<exSprite>();
+        if ( sprite == null ) {
+            sprite = _go.AddComponent<exSprite>();
+        }
+        sprite.spriteType = exSpriteType.Sliced;
+        sprite.textureInfo = _info;
+
+        sprite.borderOnly = _borderOnly;
+        sprite.customBorderSize = true;
+        sprite.leftBorderSize = _left;
+        sprite.rightBorderSize = _right;
+        sprite.topBorderSize = _top;
+        sprite.bottomBorderSize = _bottom;
+
+        sprite.customSize = true;
+        sprite.width = _width;
+        sprite.height = _height;
+
+        sprite.color = _color;
+
+        return sprite;
+    }
+
     public static void GetDicingCount (exTextureInfo _ti, out int _colCount, out int _rowCount) {
         _colCount = 1;
         _rowCount = 1;

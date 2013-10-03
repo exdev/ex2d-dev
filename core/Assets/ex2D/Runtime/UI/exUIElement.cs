@@ -253,6 +253,26 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public bool IsEmpty () {
+        if ( display == exCSS_display.Inline ) {
+            switch ( contentType ) {
+            case ContentType.Text:
+            case ContentType.Markdown:
+                return string.IsNullOrEmpty(text);
+
+            case ContentType.TextureInfo:
+            case ContentType.Texture2D:
+                return (image == null);
+            }
+        }
+
+        return false;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public void GetPosition ( out int _x, out int _y ) {
         _x = x;
         _y = y;
@@ -1002,7 +1022,7 @@ public class exUIElement {
         normalFlows_.Clear();
 
         exUIElement newEL = new exUIElement ();
-        newEL.name = name;
+        newEL.name = name + " Inline Content";
         newEL.id = id;
         newEL.text = text;
         newEL.image = image;
