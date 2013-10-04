@@ -285,14 +285,8 @@ public class ex2DRenderer : MonoBehaviour {
 
     public void ResortLayerDepth () {
         float cameraZ = cachedCamera.transform.position.z + cachedCamera.nearClipPlane;
-        float interval = 0.01f;
-        //if (Mathf.Abs(cameraZ) < 100000) {
-        //    interval = 0.01f;
-        //}
-        //else {
-        //    interval = 1f;
-        //}
-        float occupiedZ = cameraZ;
+        float layerInterval = (cachedCamera.farClipPlane - cachedCamera.nearClipPlane) / (layerList.Count + 1);
+        float layerZ = cameraZ + layerInterval;
         for (int i = 0; i < layerList.Count; ++i) {
             exLayer layer = layerList[i];
             if (layer != null) {
@@ -300,7 +294,8 @@ public class ex2DRenderer : MonoBehaviour {
                     layer.SetWorldBoundsMinZ(layer.customZ);
                 }
                 else {
-                    occupiedZ = layer.SetWorldBoundsMinZ(occupiedZ + interval);
+                    layer.SetWorldBoundsMinZ(layerZ);
+                    layerZ += layerInterval;
                 }
             }
         }
