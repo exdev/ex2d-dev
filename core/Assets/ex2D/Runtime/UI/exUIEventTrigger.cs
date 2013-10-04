@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : exUIEventDispatcher.cs
+// File         : exUIEventTrigger.cs
 // Author       : Wu Jie 
-// Last Change  : 10/04/2013 | 11:09:53 AM | Friday,October
+// Last Change  : 10/04/2013 | 15:59:02 PM | Friday,October
 // Description  : 
 // ======================================================================================
 
@@ -19,13 +19,7 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-public class exUIEventDispatcher : MonoBehaviour {
-
-    [System.Serializable]
-    public class MessageInfo {
-        public GameObject receiver = null;
-        public string method = "";
-    }
+public class exUIEventTrigger : MonoBehaviour {
 
     public float width = 0.0f;
     public float height = 0.0f;
@@ -41,7 +35,7 @@ public class exUIEventDispatcher : MonoBehaviour {
 
             if ( enabled == false )
                 return false;
-            exUIEventDispatcher p = parent;
+            exUIEventTrigger p = parent;
             while ( p != null ) {
                 if ( p.enabled == false )
                     return false;
@@ -51,8 +45,8 @@ public class exUIEventDispatcher : MonoBehaviour {
         }
     }
 
-    public exUIEventDispatcher parent;
-    public List<exUIEventDispatcher> children = new List<exUIEventDispatcher>();
+    public exUIEventTrigger parent;
+    public List<exUIEventTrigger> children = new List<exUIEventTrigger>();
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -62,7 +56,7 @@ public class exUIEventDispatcher : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void FindAndAddChild ( exUIEventDispatcher _dispatcher ) {
+    public static void FindAndAddChild ( exUIEventTrigger _dispatcher ) {
         _dispatcher.children.Clear();
         FindAndAddChildRecursively (_dispatcher, _dispatcher.transform );
     }
@@ -71,12 +65,12 @@ public class exUIEventDispatcher : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    static void FindAndAddChildRecursively ( exUIEventDispatcher _dispatcher, Transform _trans ) {
+    static void FindAndAddChildRecursively ( exUIEventTrigger _dispatcher, Transform _trans ) {
         foreach ( Transform child in _trans ) {
-            exUIEventDispatcher child_dispatcher = child.GetComponent<exUIEventDispatcher>();
+            exUIEventTrigger child_dispatcher = child.GetComponent<exUIEventTrigger>();
             if ( child_dispatcher ) {
                 _dispatcher.AddChild (child_dispatcher);
-                exUIEventDispatcher.FindAndAddChild (child_dispatcher);
+                exUIEventTrigger.FindAndAddChild (child_dispatcher);
             }
             else {
                 FindAndAddChildRecursively( _dispatcher, child );
@@ -102,14 +96,14 @@ public class exUIEventDispatcher : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public bool IsSelfOrAncestorOf ( exUIEventDispatcher _dispatcher ) {
+    public bool IsSelfOrAncestorOf ( exUIEventTrigger _dispatcher ) {
         if ( _dispatcher == null )
             return false;
 
         if ( _dispatcher == this )
             return true;
 
-        exUIEventDispatcher next = _dispatcher.parent;
+        exUIEventTrigger next = _dispatcher.parent;
         while ( next != null ) {
             if ( next == this )
                 return true;
@@ -122,7 +116,7 @@ public class exUIEventDispatcher : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void AddChild ( exUIEventDispatcher _dispatcher ) {
+    public void AddChild ( exUIEventTrigger _dispatcher ) {
         if ( _dispatcher == null )
             return;
 
@@ -133,7 +127,7 @@ public class exUIEventDispatcher : MonoBehaviour {
         if ( _dispatcher.IsSelfOrAncestorOf (this) )
             return;
 
-        exUIEventDispatcher lastParent = _dispatcher.parent;
+        exUIEventTrigger lastParent = _dispatcher.parent;
         if ( lastParent != null ) {
             lastParent.RemoveChild(_dispatcher);
         }
@@ -146,7 +140,7 @@ public class exUIEventDispatcher : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void RemoveChild ( exUIEventDispatcher _dispatcher ) {
+    public void RemoveChild ( exUIEventTrigger _dispatcher ) {
         if ( _dispatcher == null )
             return;
 
@@ -154,19 +148,6 @@ public class exUIEventDispatcher : MonoBehaviour {
         if ( idx != -1 ) {
             children.RemoveAt(idx);
             _dispatcher.parent = null;
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected void ProcessMessageInfoList ( List<MessageInfo> _messageInfos ) {
-        for ( int i = 0; i < _messageInfos.Count; ++i ) {
-            MessageInfo msgInfo = _messageInfos[i];
-            if ( msgInfo.receiver != null ) {
-                msgInfo.receiver.SendMessage ( msgInfo.method, SendMessageOptions.DontRequireReceiver );
-            }
         }
     }
 }
