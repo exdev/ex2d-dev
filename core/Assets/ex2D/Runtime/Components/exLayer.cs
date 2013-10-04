@@ -217,8 +217,7 @@ public class exLayer : MonoBehaviour
                         ShiftSpritesDown (m - 1, maxVertexCount, maxVertexCount);
                     }
                 }
-
-                UpdateMeshDebugName (m);
+                mesh.UpdateDebugName(this);
             }
             else {
                 ++m;
@@ -553,7 +552,7 @@ public class exLayer : MonoBehaviour
         mesh.material = _mat;
         mesh.SetDynamic(layerType_ == exLayerType.Dynamic);
         meshList.Insert(_index, mesh);
-        UpdateMeshDebugName(_index);
+        mesh.UpdateDebugName(this);
         ex2DRenderer.instance.ResortLayerDepth();
         return mesh;
     }
@@ -563,31 +562,15 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     private exMesh GetNewMesh (Material _mat, int _index) {
-        if (_index < meshList.Count) {
-            exMesh mesh = meshList[_index];
-            if (mesh.spriteList.Count == 0) {
+        for (int i = 0; i < meshList.Count; i++) {
+            exMesh mesh = meshList[i];
+            if (mesh != null && mesh.spriteList.Count == 0) {
                 mesh.material = _mat;
-                UpdateMeshDebugName(_index);
+                mesh.UpdateDebugName(this);
                 return mesh;
             }
         }
-        // TODO: search whole mesh list
         return CreateNewMesh(_mat, _index);
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
-    [System.Diagnostics.Conditional("EX_DEBUG")]
-    private void UpdateMeshDebugName (int _start) {
-#if EX_DEBUG
-        for (int i = _start; i < meshList.Count; ++i) {
-            if (meshList[i] != null) {
-                meshList[i].UpdateDebugName (this);
-            }
-        }
-#endif
     }
 
     // ------------------------------------------------------------------ 

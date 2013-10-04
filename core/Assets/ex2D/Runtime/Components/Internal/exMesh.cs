@@ -485,14 +485,7 @@ public class exMesh : MonoBehaviour
         else {
             matName = "None";
         }
-        int meshIndex = -1;
-        for (int i = 0; i < layerForDebug.meshList.Count; ++i) {
-            if (ReferenceEquals(this, layerForDebug.meshList[i])) {
-                meshIndex = i;
-                break;
-            }
-        }
-        gameObject.name = string.Format("_exMesh@{0}[{1:D2}]({2})", layerForDebug.name, meshIndex, matName);
+        gameObject.name = string.Format("_exMesh@{0}({2})", layerForDebug.name, matName);
 #endif
     }
 }
