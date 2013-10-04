@@ -562,9 +562,9 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    [System.Diagnostics.Conditional("UNITY_EDITOR"), System.Diagnostics.Conditional("EX_DEBUG")]
+    [System.Diagnostics.Conditional("EX_DEBUG")]
     private void UpdateMeshDebugName (int _start) {
-#if UNITY_EDITOR || EX_DEBUG
+#if EX_DEBUG
         for (int i = _start; i < meshList.Count; ++i) {
             if (meshList[i] != null) {
                 meshList[i].UpdateDebugName (this);

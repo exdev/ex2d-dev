@@ -130,8 +130,6 @@ public class exMesh : MonoBehaviour
     }
 
     void OnDestroy () {
-        Clear();
-        
         spriteList = null;
         sortedSpriteList = null;
         vertices = null;
@@ -468,9 +466,9 @@ public class exMesh : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    [System.Diagnostics.Conditional("UNITY_EDITOR"), System.Diagnostics.Conditional("EX_DEBUG")]
+    [System.Diagnostics.Conditional("EX_DEBUG")]
     public void UpdateDebugName (exLayer layer = null) {
-#if UNITY_EDITOR || EX_DEBUG
+#if EX_DEBUG
         if (ReferenceEquals(layer, null) == false) {
             layerForDebug = layer;
         }
