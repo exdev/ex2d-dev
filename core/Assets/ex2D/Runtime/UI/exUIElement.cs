@@ -253,20 +253,19 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public bool IsEmpty () {
-        if ( display == exCSS_display.Inline ) {
-            switch ( contentType ) {
-            case ContentType.Text:
-            case ContentType.Markdown:
-                return string.IsNullOrEmpty(text);
+    public bool IsEmptyContent () {
+        switch ( contentType ) {
+        case ContentType.Text:
+        case ContentType.Markdown:
+            return string.IsNullOrEmpty(text);
 
-            case ContentType.TextureInfo:
-            case ContentType.Texture2D:
-                return (image == null);
-            }
+        case ContentType.TextureInfo:
+        case ContentType.Texture2D:
+            return (image == null);
+
+        default:
+            return false;
         }
-
-        return false;
     }
 
     // ------------------------------------------------------------------ 

@@ -177,7 +177,7 @@ public class exUILayout : MonoBehaviour {
             for ( int i = 0; i < _el.normalFlows.Count; ++i ) {
                 exUIElement childEL = _el.normalFlows[i];
 
-                if ( childEL.IsEmpty() )
+                if ( childEL.display == exCSS_display.Inline && childEL.IsEmptyContent() )
                     continue;
 
                 if ( childEL.display == exCSS_display.Inline ) {
@@ -208,31 +208,34 @@ public class exUILayout : MonoBehaviour {
             }
 
             // check if we have unused children
-            // int searchStart = _el.children.Count-1;
-            // for ( int i = trans.childCount-1; i >= 0; --i ) {
-            //     Transform childTrans = trans.GetChild(i);
-            //     string name = childTrans.name;
-            //     if ( name == "__background" ||
-            //          name == "__border" ||
-            //          name == "__content" ||
-            //          name.IndexOf("__inline_content") != -1 )
-            //         continue;
+            int searchStart = _el.children.Count-1;
+            bool hasInlineContent = (_el.IsEmptyContent() == false);
 
-            //     // BUG: the j index sometimes different when we have __inline_content { 
-            //     bool found = false;
-            //     for ( int j = searchStart; j >= 0; --j ) {
-            //         exUIElement childEL = _el.children[j];
-            //         if ( name == childEL.GetName(j) ) {
-            //             searchStart -= 1;
-            //             found = true;
-            //             break;
-            //         }
-            //     }
-            //     // } BUG end 
+            for ( int i = trans.childCount-1; i >= 0; --i ) {
+                Transform childTrans = trans.GetChild(i);
+                string name = childTrans.name;
+                if ( name == "__background" ||
+                     name == "__border" ||
+                     name == "__content" ||
+                     name == "[0]__inline_content"
+                     /*name.IndexOf("__inline_content") != -1*/ )
+                    continue;
 
-            //     if ( found == false )
-            //         UnityEngineExtends.Destroy(childTrans.gameObject);
-            // }
+                // 
+                bool found = false;
+                for ( int j = searchStart; j >= 0; --j ) {
+                    exUIElement childEL = _el.children[j];
+                    // NOTE: the j index sometimes different when we have __inline_content
+                    if ( name == childEL.GetName( hasInlineContent ? j+1 : j ) ) {
+                        searchStart -= 1;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if ( found == false )
+                    UnityEngineExtends.Destroy(childTrans.gameObject);
+            }
         }
 
         return null;
