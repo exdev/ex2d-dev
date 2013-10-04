@@ -356,13 +356,13 @@ public class exMesh : MonoBehaviour
             uvInfo += ",";
         }
         Debug.Log(uvInfo, this);
-
+        /*
         uvInfo = "Mesh.normals: ";
         foreach (var n in mesh.normals) {
             uvInfo += n;
             uvInfo += ",";
         }
-        Debug.Log(uvInfo, this);
+        Debug.Log(uvInfo, this);*/
     }
     
     ///////////////////////////////////////////////////////////////////////////////

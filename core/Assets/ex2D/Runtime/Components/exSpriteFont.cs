@@ -418,9 +418,9 @@ public class exSpriteFont : exLayeredSprite {
 
     protected override Vector3[] GetVertices (Space _space) {
         // TODO: only return the rotated bounding box of the sprite font
-        int visibleVertexCount = text_.Length * 4;
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
-        vertices.AddRange(visibleVertexCount);
+        vertices.AddRange(vertexCount_);
+        exDebug.Assert(vertexCount_ >= text_.Length * 4);
         
         SpriteFontParams sfp;
         sfp.text = text_;
@@ -824,8 +824,8 @@ namespace ex2D.Detail {
                 Debug.LogError("顶点缓冲长度不够，是否绕开属性直接修改了text_?: " + sfp.vertexCount, _sprite);
                 return _sprite.updateFlags;
             }
-            #endif
-            
+#endif
+            //Debug.Log(string.Format("[UpdateBuffers|SpriteFontBuilder] _vbIndex: {0} _ibIndex: {1}", _vbIndex, _ibIndex));
             if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
                 //exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
                 BuildText(_sprite, ref sfp, _space, _vertices, _vbIndex, _uvs);
@@ -882,7 +882,6 @@ namespace ex2D.Detail {
             // even if the characters are currently present in the texture, to make sure they don't get purged during texture rebuild.
             sfp.font.RequestCharactersInTexture (sfp.text);
             
-            // TODO: use space instead of _spriteMatrix
             _sprite.width = 0.0f;    // 和SpriteBase一致，用于表示实际宽度
             _sprite.height = 0.0f;   // 和SpriteBase一致，用于表示实际高度
             int invisibleVertexStart = -1;
@@ -896,11 +895,10 @@ namespace ex2D.Detail {
                 visibleVertexCount = 0;
             }
             if (_sprite.vertexCount > visibleVertexCount) {
-                invisibleVertexStart = visibleVertexCount;
-                _vertices.buffer[invisibleVertexStart + 0] = new Vector3();
-                _vertices.buffer[invisibleVertexStart + 1] = new Vector3();
-                _vertices.buffer[invisibleVertexStart + 2] = new Vector3();
-                _vertices.buffer[invisibleVertexStart + 3] = new Vector3();
+                // hide invisible vertex
+                for (int i = _vbIndex + visibleVertexCount, iMax = _vbIndex + _sprite.vertexCount; i < iMax; ++i) {
+                    _vertices.buffer[i] = new Vector3();
+                }
             }
 
             // calculate anchor and offset
