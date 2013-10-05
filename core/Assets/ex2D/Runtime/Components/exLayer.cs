@@ -139,19 +139,19 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
-
+    // TODO: save z even if not using custom z
     [SerializeField] 
-    private float customZ_;
+    private float zMin_;
     public float customZ {
         get {
-            return customZ_;
+            return zMin_;
         }
         set {
-            if (customZ_ == value) {
+            if (zMin_ == value) {
                 return;
             }
-            customZ_ = value;
-            SetWorldBoundsMinZ(customZ_);
+            zMin_ = value;
+            SetWorldBoundsMinZ(zMin_);
         }
     }
     
@@ -217,8 +217,7 @@ public class exLayer : MonoBehaviour
                         ShiftSpritesDown (m - 1, maxVertexCount, maxVertexCount);
                     }
                 }
-
-                UpdateMeshDebugName (m);
+                mesh.UpdateDebugName(this);
             }
             else {
                 ++m;
@@ -553,24 +552,25 @@ public class exLayer : MonoBehaviour
         mesh.material = _mat;
         mesh.SetDynamic(layerType_ == exLayerType.Dynamic);
         meshList.Insert(_index, mesh);
-        UpdateMeshDebugName(_index);
+        mesh.UpdateDebugName(this);
         ex2DRenderer.instance.ResortLayerDepth();
         return mesh;
     }
-    
+
     // ------------------------------------------------------------------ 
-    // Desc:
+    /// 从当前mesh list里查找空的mesh，如果找到则直接拿来用，找不到则创建一个新的
     // ------------------------------------------------------------------ 
 
-    [System.Diagnostics.Conditional("EX_DEBUG")]
-    private void UpdateMeshDebugName (int _start) {
-#if EX_DEBUG
-        for (int i = _start; i < meshList.Count; ++i) {
-            if (meshList[i] != null) {
-                meshList[i].UpdateDebugName (this);
+    private exMesh GetNewMesh (Material _mat, int _index) {
+        for (int i = 0; i < meshList.Count; i++) {
+            exMesh mesh = meshList[i];
+            if (mesh != null && mesh.spriteList.Count == 0) {
+                mesh.material = _mat;
+                mesh.UpdateDebugName(this);
+                return mesh;
             }
         }
-#endif
+        return CreateNewMesh(_mat, _index);
     }
 
     // ------------------------------------------------------------------ 
@@ -635,7 +635,7 @@ public class exLayer : MonoBehaviour
                 exMesh dstMesh;
                 bool noAboveMesh = (_meshIndex == meshList.Count - 1 || ReferenceEquals (meshList [_meshIndex + 1].material, mesh.material) == false);
                 if (noAboveMesh) {
-                    dstMesh = CreateNewMesh (mesh.material, _meshIndex + 1);
+                    dstMesh = GetNewMesh (mesh.material, _meshIndex + 1);
                     exDebug.Assert (dstMesh.vertices.Count + realDelta <= _maxVertexCount);
                 }
                 else {
@@ -771,7 +771,7 @@ public class exLayer : MonoBehaviour
             
             //split mesh if batch failed
             exDebug.Assert(exLayeredSprite.enableFastShowHide);    // 要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中
-            if (mesh.sortedSpriteList.Count == 0) continue;
+            if (mesh.sortedSpriteList.Count == 0) continue;        // 跳过空的mesh，尽量把sprite合并到已有的mesh里面
 
             exLayeredSprite top = mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1];
             bool aboveTopSprite = _sprite >= top;
@@ -780,7 +780,7 @@ public class exLayer : MonoBehaviour
                     return mesh;
                 }
                 else {
-                    return CreateNewMesh(mat, i + 1);   //在mesh上层创建一个新mesh
+                    return GetNewMesh(mat, i + 1);   //在mesh上层创建一个新mesh
                 }
             }
             else {
@@ -800,7 +800,7 @@ public class exLayer : MonoBehaviour
                         // 两个相同材质的sprite中间插入了另一个材质的sprite，则需要将上下两个sprite拆分到两个不同的mesh
                         // 然后将上面的sprite往上移动，直到该mesh只包含下面的sprite，然后插入其它材质的mesh
                         SplitMesh(i, _sprite, maxVertexCount);
-                        return CreateNewMesh(mat, i + 1);
+                        return GetNewMesh(mat, i + 1);
                     }
                 }
                 // 否则和bot的深度相等，这时交由下层的mesh去处理
@@ -813,13 +813,13 @@ public class exLayer : MonoBehaviour
                 return bottomMesh;
             }
             // 在最下面创建一个新mesh
-            exMesh newMesh = CreateNewMesh(mat, 0);
+            exMesh newMesh = GetNewMesh(mat, 0);
             if (ReferenceEquals(bottomMesh.material, mat)) {
                 ShiftSpritesDown(0, restVertexCount, maxVertexCount);   // 向下把mesh都填满
             }
             return newMesh;
         }
-        return CreateNewMesh(mat, 0);
+        return GetNewMesh(mat, 0);
     }
     
     // ------------------------------------------------------------------ 
