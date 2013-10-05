@@ -150,5 +150,20 @@ public class exUIEventTrigger : MonoBehaviour {
             _dispatcher.parent = null;
         }
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public exUIEventTrigger FindParent () {
+        Transform tranParent = transform.parent;
+        while ( tranParent != null ) {
+            exUIEventTrigger el = tranParent.GetComponent<exUIEventTrigger>();
+            if ( el != null )
+                return el;
+            tranParent = tranParent.parent;
+        }
+        return null;
+    } 
 }
 
