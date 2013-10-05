@@ -40,7 +40,6 @@ Shader "ex2D/Alpha Blended (Clipping)" {
 			#include "UnityCG.cginc"
 
 			sampler2D _MainTex;
-			float4 _MainTex_ST;
 			float4 _ClipRect = float4(0.0, 0.0, 1.0, 1.0);
 			float4x4 _ClipMatrix;
 
@@ -63,7 +62,7 @@ Shader "ex2D/Alpha Blended (Clipping)" {
                 o.worldPosition = mul(_ClipMatrix, wpos).xy;
 				o.vertex = mul(UNITY_MATRIX_MVP, _in.vertex);
 				o.color = _in.color;
-				o.texcoord = TRANSFORM_TEX(_in.texcoord, _MainTex);
+				o.texcoord = _in.texcoord;
 				return o;
 			}
 
