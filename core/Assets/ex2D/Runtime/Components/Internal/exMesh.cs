@@ -485,7 +485,7 @@ public class exMesh : MonoBehaviour
         else {
             matName = "None";
         }
-        gameObject.name = string.Format("_exMesh@{0}({2})", layerForDebug.name, matName);
+        gameObject.name = string.Format("_exMesh@{0}({1})", layerForDebug.name, matName);
 #endif
     }
 }

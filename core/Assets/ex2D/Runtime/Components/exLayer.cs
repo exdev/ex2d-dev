@@ -139,19 +139,19 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
-
+    // TODO: save z even if not using custom z
     [SerializeField] 
-    private float customZ_;
+    private float zMin_;
     public float customZ {
         get {
-            return customZ_;
+            return zMin_;
         }
         set {
-            if (customZ_ == value) {
+            if (zMin_ == value) {
                 return;
             }
-            customZ_ = value;
-            SetWorldBoundsMinZ(customZ_);
+            zMin_ = value;
+            SetWorldBoundsMinZ(zMin_);
         }
     }
     
