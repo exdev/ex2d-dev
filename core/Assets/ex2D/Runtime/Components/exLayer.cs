@@ -210,8 +210,7 @@ public class exLayer : MonoBehaviour
                     mesh.gameObject.Destroy ();
                 }
                 meshList.RemoveAt (m);
-
-                if (m - 1 > 0 && m < meshList.Count) {
+                if (m - 1 >= 0 && m < meshList.Count) {
                     int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT;
                     if (meshList [m - 1].vertices.Count < maxVertexCount) {
                         ShiftSpritesDown (m - 1, maxVertexCount, maxVertexCount);
