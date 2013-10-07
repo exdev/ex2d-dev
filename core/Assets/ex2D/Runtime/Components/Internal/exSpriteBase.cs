@@ -39,7 +39,68 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
             updateFlags |= exUpdateFlags.Vertex;
         }
     }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Color color_ = new Color(1f, 1f, 1f, 1f);
+    /// the color of the sprite
+    // ------------------------------------------------------------------ 
+
+    public Color color {
+        get { return color_; }
+        set {
+            if ( color_ != value ) {
+                color_ = value;
+                updateFlags |= exUpdateFlags.Color;
+            }
+        }
+    }
     
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Vector2 shear_ = Vector2.zero;
+    /// stretch sprite into skew
+    // ------------------------------------------------------------------ 
+
+    public Vector2 shear {
+        get { return shear_; }
+        set { 
+            if ( shear_ != value ) {
+                shear_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    [SerializeField] private Shader shader_ = null;
+    /// The shader used to render this sprite
+    // ------------------------------------------------------------------ 
+
+    public Shader shader {
+        get { return shader_; }
+        set {
+            if (ReferenceEquals(shader_, value)) {
+                return;
+            }
+            shader_ = value;
+            UpdateMaterial();
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // non-serialized
+    ///////////////////////////////////////////////////////////////////////////////
+    
+    /// If OnEnable, isOnEnabled_ is true. If OnDisable, isOnEnabled_ is false.
+    [System.NonSerialized] protected bool isOnEnabled;
+
+    [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
+    
+    [System.NonSerialized] internal Matrix4x4 cachedWorldMatrix;    // 内部使用，只有exLayeredSprite的值才可读
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // non-serialized properties
+    ///////////////////////////////////////////////////////////////////////////////
+
     // ------------------------------------------------------------------ 
     /// \note if you want to custom the width of it, you need to set exSpriteBase.customSize to true
     // ------------------------------------------------------------------ 
@@ -92,25 +153,6 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
         }
     }
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Color color_ = new Color(1f, 1f, 1f, 1f);
-    /// the color of the sprite
-    // ------------------------------------------------------------------ 
-
-    public Color color {
-        get { return color_; }
-        set {
-            if ( color_ != value ) {
-                color_ = value;
-                updateFlags |= exUpdateFlags.Color;
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    /// the offset based on the anchor
-    // ------------------------------------------------------------------ 
-
     public override Vector2 offset {
         get { return offset_; }
         set { 
@@ -120,52 +162,6 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
             }
         }
     }
-    
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 shear_ = Vector2.zero;
-    /// stretch sprite into skew
-    // ------------------------------------------------------------------ 
-
-    public Vector2 shear {
-        get { return shear_; }
-        set { 
-            if ( shear_ != value ) {
-                shear_ = value;
-                updateFlags |= exUpdateFlags.Vertex;
-            }
-        }
-    }
-    
-    // ------------------------------------------------------------------ 
-    [SerializeField] private Shader shader_ = null;
-    /// The shader used to render this sprite
-    // ------------------------------------------------------------------ 
-
-    public Shader shader {
-        get { return shader_; }
-        set {
-            if (ReferenceEquals(shader_, value)) {
-                return;
-            }
-            shader_ = value;
-            UpdateMaterial();
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // non-serialized
-    ///////////////////////////////////////////////////////////////////////////////
-    
-    /// If OnEnable, isOnEnabled_ is true. If OnDisable, isOnEnabled_ is false.
-    [System.NonSerialized] protected bool isOnEnabled;
-
-    [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
-    
-    [System.NonSerialized] internal Matrix4x4 cachedWorldMatrix;    // 内部使用，只有exLayeredSprite的值才可读
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // non-serialized properties
-    ///////////////////////////////////////////////////////////////////////////////
     
     [System.NonSerialized] protected int vertexCount_ = -1;
     public int vertexCount {
