@@ -108,11 +108,10 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     }
 
     // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 offset_ = Vector2.zero;
-    /// the offset based on the anchor, the final position of the sprite equals to offset + anchor
+    /// the offset based on the anchor
     // ------------------------------------------------------------------ 
 
-    public Vector2 offset {
+    public override Vector2 offset {
         get { return offset_; }
         set { 
             if ( offset_ != value ) {

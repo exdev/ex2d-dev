@@ -71,5 +71,14 @@ public abstract class exPlane : MonoBehaviour {
         get { return anchor_; }
         set { anchor_ = value; }
     }
+    
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected Vector2 offset_ = Vector2.zero;
+    /// the offset based on the anchor, the final position of the plane equals to offset + anchor
+    // ------------------------------------------------------------------ 
 
+    public virtual Vector2 offset {
+        get { return offset_; }
+        set { offset_ = value; }
+    }
 }
