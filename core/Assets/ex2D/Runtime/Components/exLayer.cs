@@ -217,7 +217,6 @@ public class exLayer : MonoBehaviour
                         ShiftSpritesDown (m - 1, maxVertexCount, maxVertexCount);
                     }
                 }
-                mesh.UpdateDebugName(this);
             }
             else {
                 ++m;
