@@ -81,4 +81,39 @@ public abstract class exPlane : MonoBehaviour {
         get { return offset_; }
         set { offset_ = value; }
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public virtual Rect GetAABoundingRect () {
+        Vector2 anchorOffset;
+        float halfHeight = height_ * 0.5f;
+        float halfWidth = width_ * 0.5f;
+
+        switch ( anchor_ ) {
+        case Anchor.TopLeft   : anchorOffset.x = halfWidth;   anchorOffset.y = -halfHeight;  break;
+        case Anchor.TopCenter : anchorOffset.x = 0.0f;        anchorOffset.y = -halfHeight;  break;
+        case Anchor.TopRight  : anchorOffset.x = -halfWidth;  anchorOffset.y = -halfHeight;  break;
+
+        case Anchor.MidLeft   : anchorOffset.x = halfWidth;   anchorOffset.y = 0.0f;         break;
+        case Anchor.MidCenter : anchorOffset.x = 0.0f;        anchorOffset.y = 0.0f;         break;
+        case Anchor.MidRight  : anchorOffset.x = -halfWidth;  anchorOffset.y = 0.0f;         break;
+
+        case Anchor.BotLeft   : anchorOffset.x = halfWidth;   anchorOffset.y = halfHeight;   break;
+        case Anchor.BotCenter : anchorOffset.x = 0.0f;        anchorOffset.y = halfHeight;   break;
+        case Anchor.BotRight  : anchorOffset.x = -halfWidth;  anchorOffset.y = halfHeight;   break;
+
+        default               : anchorOffset.x = 0.0f;        anchorOffset.y = 0.0f;         break;
+        }
+        anchorOffset.x += offset_.x;
+        anchorOffset.y += offset_.y;
+
+        // 
+        Vector3 vMin = new Vector3 (-halfWidth + anchorOffset.x, -halfHeight + anchorOffset.y, 0.0f);
+        Vector3 vMax = new Vector3 ( halfWidth + anchorOffset.x,  halfHeight + anchorOffset.y, 0.0f);
+
+        Vector3 center = new Vector3 ( (vMin.x + vMax.x) * 0.5f, (vMin.y + vMax.y) * 0.5f, 0.0f );
+        return new Rect ( center.x, center.y, width_, height_ );
+    }
 }

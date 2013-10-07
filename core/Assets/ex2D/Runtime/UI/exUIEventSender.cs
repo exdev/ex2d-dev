@@ -42,13 +42,13 @@ public class exUIEventSender : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void Awake () {
-        exUIEventTrigger trigger = GetComponent<exUIEventTrigger>();
-        if ( trigger != null ) {
-            Type triggerType = trigger.GetType();
+        exUIControl control = GetComponent<exUIControl>();
+        if ( control != null ) {
+            Type controlType = control.GetType();
 
             foreach ( Emitter emitter in emitterList ) {
 
-                EventInfo eventInfo = triggerType.GetEvent(emitter.eventName);
+                EventInfo eventInfo = controlType.GetEvent(emitter.eventName);
                 if ( eventInfo != null ) {
 
                     foreach ( SlotInfo slot in emitter.slots ) {
@@ -61,7 +61,7 @@ public class exUIEventSender : MonoBehaviour {
                             MethodInfo mi = comp.GetType().GetMethod( slot.method, 
                                                                       BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic );
                             if ( mi != null ) {
-                                var delegateForMethod = Delegate.CreateDelegate( typeof(System.Action), comp, mi);
+                                var delegateForMethod = Delegate.CreateDelegate( typeof(System.Action<GameObject>), comp, mi);
                                 eventInfo.AddEventHandler(comp, delegateForMethod);
                                 foundMethod = true;
                             }
@@ -78,7 +78,7 @@ public class exUIEventSender : MonoBehaviour {
             }
         }
         else {
-            Debug.LogWarning ("Can not find exUIEventTrigger in this GameObject");
+            Debug.LogWarning ("Can not find exUIControl in this GameObject");
         }
     } 
 

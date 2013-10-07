@@ -420,7 +420,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     /// Calculate the world AA bounding rect of the sprite
     // ------------------------------------------------------------------ 
 
-    public Rect GetAABoundingRect () {
+    public override Rect GetAABoundingRect () {
         Vector3[] vertices = GetWorldVertices();
         return exGeometryUtility.GetAABoundingRect(vertices);
     }

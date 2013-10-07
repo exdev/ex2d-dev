@@ -1,5 +1,5 @@
 // ======================================================================================
-// File         : exUIEventTrigger.cs
+// File         : exUIControl.cs
 // Author       : Wu Jie 
 // Last Change  : 10/04/2013 | 15:59:02 PM | Friday,October
 // Description  : 
@@ -19,10 +19,7 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-public class exUIEventTrigger : MonoBehaviour {
-
-    public float width = 0.0f;
-    public float height = 0.0f;
+public class exUIControl : exPlane {
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -35,7 +32,7 @@ public class exUIEventTrigger : MonoBehaviour {
 
             if ( enabled == false )
                 return false;
-            exUIEventTrigger p = parent;
+            exUIControl p = parent;
             while ( p != null ) {
                 if ( p.enabled == false )
                     return false;
@@ -45,8 +42,16 @@ public class exUIEventTrigger : MonoBehaviour {
         }
     }
 
-    public exUIEventTrigger parent;
-    public List<exUIEventTrigger> children = new List<exUIEventTrigger>();
+    [System.NonSerialized] public exUIControl parent;
+    [System.NonSerialized] public List<exUIControl> children = new List<exUIControl>();
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // events
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // action ( sender )
+    public event System.Action<GameObject> onHoverIn;
+    public event System.Action<GameObject> onHoverOut;
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -56,7 +61,7 @@ public class exUIEventTrigger : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static void FindAndAddChild ( exUIEventTrigger _dispatcher ) {
+    public static void FindAndAddChild ( exUIControl _dispatcher ) {
         _dispatcher.children.Clear();
         FindAndAddChildRecursively (_dispatcher, _dispatcher.transform );
     }
@@ -65,12 +70,12 @@ public class exUIEventTrigger : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    static void FindAndAddChildRecursively ( exUIEventTrigger _dispatcher, Transform _trans ) {
+    static void FindAndAddChildRecursively ( exUIControl _dispatcher, Transform _trans ) {
         foreach ( Transform child in _trans ) {
-            exUIEventTrigger child_dispatcher = child.GetComponent<exUIEventTrigger>();
+            exUIControl child_dispatcher = child.GetComponent<exUIControl>();
             if ( child_dispatcher ) {
                 _dispatcher.AddChild (child_dispatcher);
-                exUIEventTrigger.FindAndAddChild (child_dispatcher);
+                exUIControl.FindAndAddChild (child_dispatcher);
             }
             else {
                 FindAndAddChildRecursively( _dispatcher, child );
@@ -96,14 +101,14 @@ public class exUIEventTrigger : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public bool IsSelfOrAncestorOf ( exUIEventTrigger _dispatcher ) {
+    public bool IsSelfOrAncestorOf ( exUIControl _dispatcher ) {
         if ( _dispatcher == null )
             return false;
 
         if ( _dispatcher == this )
             return true;
 
-        exUIEventTrigger next = _dispatcher.parent;
+        exUIControl next = _dispatcher.parent;
         while ( next != null ) {
             if ( next == this )
                 return true;
@@ -116,7 +121,7 @@ public class exUIEventTrigger : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void AddChild ( exUIEventTrigger _dispatcher ) {
+    public void AddChild ( exUIControl _dispatcher ) {
         if ( _dispatcher == null )
             return;
 
@@ -127,7 +132,7 @@ public class exUIEventTrigger : MonoBehaviour {
         if ( _dispatcher.IsSelfOrAncestorOf (this) )
             return;
 
-        exUIEventTrigger lastParent = _dispatcher.parent;
+        exUIControl lastParent = _dispatcher.parent;
         if ( lastParent != null ) {
             lastParent.RemoveChild(_dispatcher);
         }
@@ -140,7 +145,7 @@ public class exUIEventTrigger : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void RemoveChild ( exUIEventTrigger _dispatcher ) {
+    public void RemoveChild ( exUIControl _dispatcher ) {
         if ( _dispatcher == null )
             return;
 
@@ -155,10 +160,10 @@ public class exUIEventTrigger : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public exUIEventTrigger FindParent () {
+    public exUIControl FindParent () {
         Transform tranParent = transform.parent;
         while ( tranParent != null ) {
-            exUIEventTrigger el = tranParent.GetComponent<exUIEventTrigger>();
+            exUIControl el = tranParent.GetComponent<exUIControl>();
             if ( el != null )
                 return el;
             tranParent = tranParent.parent;

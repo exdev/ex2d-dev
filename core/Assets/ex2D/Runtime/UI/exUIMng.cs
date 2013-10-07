@@ -37,9 +37,9 @@ public class RaycastSorter : IComparer {
 // Desc: 
 // ------------------------------------------------------------------ 
 
-public class ElementSorter: IComparer<exUIEventTrigger> {
-    public int Compare( exUIEventTrigger _a, exUIEventTrigger _b ) {
-        exUIEventTrigger parent = null;
+public class ControlSorter: IComparer<exUIControl> {
+    public int Compare( exUIControl _a, exUIControl _b ) {
+        exUIControl parent = null;
         int level_a = 0;
         int level_b = 0;
 
@@ -65,8 +65,8 @@ public class ElementSorter: IComparer<exUIEventTrigger> {
 // Desc: 
 // ------------------------------------------------------------------ 
 
-public class ElementSorterByZ: IComparer<exUIEventTrigger> {
-    public int Compare( exUIEventTrigger _a, exUIEventTrigger _b ) {
+public class ControlSorterByZ: IComparer<exUIControl> {
+    public int Compare( exUIControl _a, exUIControl _b ) {
         int r = Mathf.CeilToInt(_a.transform.position.z - _b.transform.position.z);
         if ( r != 0 )
             return r;
@@ -153,30 +153,30 @@ public class exUIMng : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
 
     public class EventInfo { 
-        public exUIEventTrigger primaryElement = null;
+        public exUIControl primaryControl = null;
         public exUIEvent uiEvent = null;
     }
 
     //
     public class TouchState {
         public int touchID = -1;
-        public exUIEventTrigger hotElement = null;
-        public exUIEventTrigger focusElement = null;
+        public exUIControl hotControl = null;
+        public exUIControl keyboardControl = null;
     }
 
     //
     public class MouseState {
         public Vector2 currentPos = Vector2.zero;
         public exUIEvent.MouseButtonFlags currentButtons = exUIEvent.MouseButtonFlags.None;
-        public exUIEventTrigger hotElement = null;
-        public exUIEventTrigger focusElement = null;
+        public exUIControl hotControl = null;
+        public exUIControl keyboardControl = null;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     // serializable 
     ///////////////////////////////////////////////////////////////////////////////
 
-    public bool useRayCast = false; /// if your UI element is in 3D space, turn this on.
+    public bool useRayCast = false; /// if your UI control is in 3D space, turn this on.
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -185,8 +185,8 @@ public class exUIMng : MonoBehaviour {
     bool initialized = false;
 
     // private RaycastSorter raycastSorter = new RaycastSorter();
-    ElementSorter elementSorter = new ElementSorter();
-    ElementSorterByZ elementSorterByZ = new ElementSorterByZ();
+    ControlSorter controlSorter = new ControlSorter();
+    ControlSorterByZ controlSorterByZ = new ControlSorterByZ();
 
     // internal ui status
     MouseState mouseState = new MouseState();
@@ -194,7 +194,7 @@ public class exUIMng : MonoBehaviour {
 
     //
     List<EventInfo> eventInfoList = new List<EventInfo>();
-    List<exUIEventTrigger> rootElements = new List<exUIEventTrigger>();
+    List<exUIControl> rootControls = new List<exUIControl>();
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
@@ -256,16 +256,16 @@ public class exUIMng : MonoBehaviour {
         }
 
         // recursively add ui-tree
-        exUIEventTrigger[] elements = FindObjectsOfType(typeof(exUIEventTrigger)) as exUIEventTrigger[];
-        for ( int i = 0; i < elements.Length; ++i ) {
-            exUIEventTrigger el = elements[i];
-            exUIEventTrigger parent_el = el.FindParent();
-            if ( parent_el == null ) {
-                exUIEventTrigger.FindAndAddChild (el);
+        exUIControl[] controls = FindObjectsOfType(typeof(exUIControl)) as exUIControl[];
+        for ( int i = 0; i < controls.Length; ++i ) {
+            exUIControl ctrl = controls[i];
+            exUIControl parent_ctrl = ctrl.FindParent();
+            if ( parent_ctrl == null ) {
+                exUIControl.FindAndAddChild (ctrl);
 
                 //
-                if ( rootElements.IndexOf(el) == -1 ) {
-                    rootElements.Add(el);
+                if ( rootControls.IndexOf(ctrl) == -1 ) {
+                    rootControls.Add(ctrl);
                 }
             }
         }
@@ -273,8 +273,8 @@ public class exUIMng : MonoBehaviour {
         //
         mouseState.currentPos = Vector2.zero;
         mouseState.currentButtons = exUIEvent.MouseButtonFlags.None;
-        mouseState.hotElement = null;
-        mouseState.focusElement = null;
+        mouseState.hotControl = null;
+        mouseState.keyboardControl = null;
 
         //
         initialized = true;
@@ -284,9 +284,9 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void AddRootElement ( exUIEventTrigger _el ) {
-        if ( rootElements.IndexOf(_el) == -1 )
-            rootElements.Add(_el);
+    public void AddRootControl ( exUIControl _ctrl ) {
+        if ( rootControls.IndexOf(_ctrl) == -1 )
+            rootControls.Add(_ctrl);
     }
 
     // ------------------------------------------------------------------ 
@@ -304,8 +304,8 @@ public class exUIMng : MonoBehaviour {
     void DispatchEvents () {
         // for ( int i = 0; i < eventInfoList.Count; ++i ) {
         //     EventInfo info = eventInfoList[i];
-        //     bool used = info.primaryElement.OnEvent(info.uiEvent);
-        //     exUIEventTrigger uiParent = info.primaryElement;
+        //     bool used = info.primaryControl.OnEvent(info.uiEvent);
+        //     exUIControl uiParent = info.primaryControl;
         //     while ( used == false ) {
         //         uiParent = uiParent.parent;
         //         if ( uiParent == null )
@@ -343,11 +343,11 @@ public class exUIMng : MonoBehaviour {
                 continue;
 
             TouchState touchState = null;
-            exUIEventTrigger hotElement = PickElement(touch.position);
+            exUIControl hotControl = PickControl(touch.position);
             
             //
             if ( touch.phase == TouchPhase.Began ) {
-                if ( hotElement != null ) {
+                if ( hotControl != null ) {
                     exUIEvent e = new exUIEvent(); 
                     e.category = exUIEvent.Category.Touch;
                     e.type =  exUIEvent.Type.TouchDown;
@@ -356,31 +356,31 @@ public class exUIMng : MonoBehaviour {
                     e.touchID = touch.fingerId;
 
                     EventInfo info = new EventInfo();
-                    info.primaryElement = hotElement;
+                    info.primaryControl = hotControl;
                     info.uiEvent = e;
                     eventInfoList.Add(info);
                 }
 
                 // NOTE: it must be null
                 SetTouchFocus ( touch.fingerId, null );
-                touchStateList[touch.fingerId].hotElement = hotElement;
+                touchStateList[touch.fingerId].hotControl = hotControl;
             }
             else {
                 // find the touch state
                 touchState = touchStateList[touch.fingerId];
 
-                // set the last and current hot element 
-                exUIEventTrigger focusElement = null;
-                exUIEventTrigger lastHotElement = null;
+                // set the last and current hot control 
+                exUIControl keyboardControl = null;
+                exUIControl lastHotControl = null;
                 if ( touchState != null ) {
-                    lastHotElement = touchState.hotElement;
-                    touchState.hotElement = hotElement;
-                    focusElement = touchState.focusElement;
+                    lastHotControl = touchState.hotControl;
+                    touchState.hotControl = hotControl;
+                    keyboardControl = touchState.keyboardControl;
                 }
 
                 if ( touch.phase == TouchPhase.Ended ) {
                     if ( touchState != null ) {
-                        if ( focusElement != null ) {
+                        if ( keyboardControl != null ) {
                             exUIEvent e = new exUIEvent(); 
                             e.category = exUIEvent.Category.Touch;
                             e.type =  exUIEvent.Type.TouchUp;
@@ -389,7 +389,7 @@ public class exUIMng : MonoBehaviour {
                             e.touchID = touch.fingerId;
 
                             EventInfo info = new EventInfo();
-                            info.primaryElement = focusElement;
+                            info.primaryControl = keyboardControl;
                             info.uiEvent = e;
                             eventInfoList.Add(info);
                         }
@@ -401,9 +401,9 @@ public class exUIMng : MonoBehaviour {
                 }
                 else if ( touch.phase == TouchPhase.Moved ) {
                     // process hover event
-                    if ( lastHotElement != hotElement ) {
+                    if ( lastHotControl != hotControl ) {
                         // add hover-in event
-                        if ( hotElement != null ) {
+                        if ( hotControl != null ) {
                             exUIEvent e = new exUIEvent(); 
                             e.category = exUIEvent.Category.Touch;
                             e.type =  exUIEvent.Type.TouchEnter;
@@ -412,13 +412,13 @@ public class exUIMng : MonoBehaviour {
                             e.touchID = touch.fingerId;
 
                             EventInfo info = new EventInfo();
-                            info.primaryElement = hotElement;
+                            info.primaryControl = hotControl;
                             info.uiEvent = e;
                             eventInfoList.Add(info);
                         }
 
                         // add hover-out event
-                        if ( lastHotElement != null ) {
+                        if ( lastHotControl != null ) {
                             exUIEvent e = new exUIEvent(); 
                             e.category = exUIEvent.Category.Touch;
                             e.type =  exUIEvent.Type.TouchExit;
@@ -427,14 +427,14 @@ public class exUIMng : MonoBehaviour {
                             e.touchID = touch.fingerId;
 
                             EventInfo info = new EventInfo();
-                            info.primaryElement = lastHotElement;
+                            info.primaryControl = lastHotControl;
                             info.uiEvent = e;
                             eventInfoList.Add(info);
                         }
                     }
 
                     //
-                    if ( hotElement != null || focusElement != null ) {
+                    if ( hotControl != null || keyboardControl != null ) {
                         exUIEvent e = new exUIEvent(); 
                         e.category = exUIEvent.Category.Touch;
                         e.type =  exUIEvent.Type.TouchMove;
@@ -443,7 +443,7 @@ public class exUIMng : MonoBehaviour {
                         e.touchID = touch.fingerId;
 
                         EventInfo info = new EventInfo();
-                        info.primaryElement = (focusElement != null) ? focusElement : hotElement;
+                        info.primaryControl = (keyboardControl != null) ? keyboardControl : hotControl;
                         info.uiEvent = e;
                         eventInfoList.Add(info);
                     }
@@ -498,14 +498,14 @@ public class exUIMng : MonoBehaviour {
                 buttonUp = exUIEvent.MouseButtonFlags.Middle;
         }
         
-        // get hot element
-        exUIEventTrigger lastHotElement = mouseState.hotElement;
-        mouseState.hotElement = PickElement(mouseState.currentPos);
+        // get hot control
+        exUIControl lastHotControl = mouseState.hotControl;
+        mouseState.hotControl = PickControl(mouseState.currentPos);
 
         // process hover event
-        if ( lastHotElement != mouseState.hotElement ) {
+        if ( lastHotControl != mouseState.hotControl ) {
             // add hover-in event
-            if ( mouseState.hotElement != null ) {
+            if ( mouseState.hotControl != null ) {
                 exUIEvent e = new exUIEvent(); 
                 e.category = exUIEvent.Category.Mouse;
                 e.type =  exUIEvent.Type.MouseEnter;
@@ -514,13 +514,13 @@ public class exUIMng : MonoBehaviour {
                 e.buttons = mouseState.currentButtons;
 
                 EventInfo info = new EventInfo();
-                info.primaryElement = mouseState.hotElement;
+                info.primaryControl = mouseState.hotControl;
                 info.uiEvent = e;
                 eventInfoList.Add(info);
             }
 
             // add hover-out event
-            if ( lastHotElement != null ) {
+            if ( lastHotControl != null ) {
                 exUIEvent e = new exUIEvent(); 
                 e.category = exUIEvent.Category.Mouse;
                 e.type =  exUIEvent.Type.MouseExit;
@@ -529,14 +529,14 @@ public class exUIMng : MonoBehaviour {
                 e.buttons = mouseState.currentButtons;
 
                 EventInfo info = new EventInfo();
-                info.primaryElement = lastHotElement;
+                info.primaryControl = lastHotControl;
                 info.uiEvent = e;
                 eventInfoList.Add(info);
             }
         }
 
         // add pointer-move event
-        if ( (mouseState.hotElement != null || mouseState.focusElement != null) && deltaPos != Vector2.zero ) {
+        if ( (mouseState.hotControl != null || mouseState.keyboardControl != null) && deltaPos != Vector2.zero ) {
             exUIEvent e = new exUIEvent(); 
             e.category = exUIEvent.Category.Mouse;
             e.type =  exUIEvent.Type.MouseMove;
@@ -545,13 +545,13 @@ public class exUIMng : MonoBehaviour {
             e.buttons = mouseState.currentButtons;
 
             EventInfo info = new EventInfo();
-            info.primaryElement = (mouseState.focusElement != null) ? mouseState.focusElement : mouseState.hotElement;
+            info.primaryControl = (mouseState.keyboardControl != null) ? mouseState.keyboardControl : mouseState.hotControl;
             info.uiEvent = e;
             eventInfoList.Add(info);
         }
 
         // add pointer-press event
-        if ( mouseState.hotElement != null && buttonDown != exUIEvent.MouseButtonFlags.None ) {
+        if ( mouseState.hotControl != null && buttonDown != exUIEvent.MouseButtonFlags.None ) {
             exUIEvent e = new exUIEvent(); 
             e.category = exUIEvent.Category.Mouse;
             e.type =  exUIEvent.Type.MouseDown;
@@ -560,13 +560,13 @@ public class exUIMng : MonoBehaviour {
             e.buttons = buttonDown;
 
             EventInfo info = new EventInfo();
-            info.primaryElement = mouseState.hotElement;
+            info.primaryControl = mouseState.hotControl;
             info.uiEvent = e;
             eventInfoList.Add(info);
         }
 
         // add pointer-release event
-        if ( mouseState.focusElement != null && buttonUp != exUIEvent.MouseButtonFlags.None ) {
+        if ( mouseState.keyboardControl != null && buttonUp != exUIEvent.MouseButtonFlags.None ) {
             exUIEvent e = new exUIEvent(); 
             e.category = exUIEvent.Category.Mouse;
             e.type =  exUIEvent.Type.MouseUp;
@@ -575,7 +575,7 @@ public class exUIMng : MonoBehaviour {
             e.buttons = buttonUp;
 
             EventInfo info = new EventInfo();
-            info.primaryElement = mouseState.focusElement;
+            info.primaryControl = mouseState.keyboardControl;
             info.uiEvent = e;
             eventInfoList.Add(info);
         }
@@ -585,9 +585,9 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    exUIEventTrigger PickElement ( Vector2 _pos ) {
+    exUIControl PickControl ( Vector2 _screenPos ) {
         if ( useRayCast ) {
-            Ray ray = camera.ScreenPointToRay ( _pos );
+            Ray ray = camera.ScreenPointToRay ( _screenPos );
             ray.origin = new Vector3 ( ray.origin.x, ray.origin.y, camera.transform.position.z );
             RaycastHit[] hits = Physics.RaycastAll(ray);
             // DISABLE { 
@@ -596,40 +596,38 @@ public class exUIMng : MonoBehaviour {
             //     for ( int i = 0; i < hits.Length; ++i ) {
             //         RaycastHit hit = hits[i];
             //         GameObject go = hit.collider.gameObject;
-            //         exUIEventTrigger el = go.GetComponent<exUIEventTrigger>();
-            //         if ( el && el.enabled ) {
-            //             return el;
+            //         exUIControl ctrl = go.GetComponent<exUIControl>();
+            //         if ( ctrl && ctrl.enabled ) {
+            //             return ctrl;
             //         }
             //     }
             // }
             // return null;
             // } DISABLE end 
 
-            // TODO: consider clipping plane
-
-            List<exUIEventTrigger> elements = new List<exUIEventTrigger>();
+            List<exUIControl> controls = new List<exUIControl>();
             for ( int i = 0; i < hits.Length; ++i ) {
                 RaycastHit hit = hits[i];
                 GameObject go = hit.collider.gameObject;
-                exUIEventTrigger el = go.GetComponent<exUIEventTrigger>();
-                if ( el && el.isActive ) {
-                    elements.Add(el);
+                exUIControl ctrl = go.GetComponent<exUIControl>();
+                if ( ctrl && ctrl.isActive ) {
+                    controls.Add(ctrl);
                 }
             }
-            if ( elements.Count > 0 ) {
-                elements.Sort(elementSorter);
-                return elements[elements.Count-1]; 
+            if ( controls.Count > 0 ) {
+                controls.Sort(controlSorter);
+                return controls[controls.Count-1]; 
             }
             return null;
         }
         else {
-            Vector3 worldPointerPos = camera.ScreenToWorldPoint ( _pos );
-            rootElements.Sort(elementSorterByZ);
-            for ( int i = 0; i < rootElements.Count; ++i ) {
-                exUIEventTrigger el = rootElements[i];
-                exUIEventTrigger resultEL = RecursivelyGetUIElement ( el, worldPointerPos );
-                if ( resultEL != null )
-                    return resultEL;
+            Vector3 worldPointerPos = camera.ScreenToWorldPoint ( _screenPos );
+            rootControls.Sort(controlSorterByZ);
+            for ( int i = 0; i < rootControls.Count; ++i ) {
+                exUIControl ctrl = rootControls[i];
+                exUIControl resultCtrl = RecursivelyGetUIControl ( ctrl, worldPointerPos );
+                if ( resultCtrl != null )
+                    return resultCtrl;
             }
             return null;
         }
@@ -639,33 +637,25 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    exUIEventTrigger RecursivelyGetUIElement ( exUIEventTrigger _el, Vector2 _pos ) {
-        // TODO { 
-        // if ( _el.gameObject.activeInHierarchy == false || _el.enabled == false )
-        //     return null;
+    exUIControl RecursivelyGetUIControl ( exUIControl _ctrl, Vector2 _worldPos ) {
+        if ( _ctrl.gameObject.activeInHierarchy == false || _ctrl.enabled == false )
+            return null;
 
-        // // if we are out of clipping plane
-        // if ( _el.clippingPlane != null ) {
-        //     Vector2 clipPos = new Vector2( _pos.x - _el.clippingPlane.transform.position.x, 
-        //                                    _pos.y - _el.clippingPlane.transform.position.y );
-        //     if ( _el.clippingPlane.boundingRect.Contains(clipPos) == false )
-        //         return null;
-        // }
+        //
+        Vector2 localPos = new Vector2( _worldPos.x - _ctrl.transform.position.x, 
+                                        _worldPos.y - _ctrl.transform.position.y );
+        localPos.y = -localPos.y;
 
-        // //
-        // Vector2 localPos = new Vector2( _pos.x - _el.transform.position.x, 
-        //                                 _pos.y - _el.transform.position.y );
-        // if ( _el.boundingRect.Contains(localPos) ) {
-        //     _el.children.Sort(elementSorterByZ);
-        //     for ( int i = 0; i < _el.children.Count; ++i ) {
-        //         exUIEventTrigger childEL = _el.children[i];
-        //         exUIEventTrigger resultEL = RecursivelyGetUIElement ( childEL, _pos );
-        //         if ( resultEL != null )
-        //             return resultEL;
-        //     }
-        //     return _el;
-        // }
-        // } TODO end 
+        Rect boundingRect = _ctrl.GetAABoundingRect();
+        if ( boundingRect.Contains(localPos) ) {
+            for ( int i = 0; i < _ctrl.children.Count; ++i ) {
+                exUIControl childCtrl = _ctrl.children[i];
+                exUIControl resultCtrl = RecursivelyGetUIControl ( childCtrl, _worldPos );
+                if ( resultCtrl != null )
+                    return resultCtrl;
+            }
+            return _ctrl;
+        }
 
         return null;
     } 
@@ -674,25 +664,25 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public exUIEventTrigger GetTouchFocus ( int _touchID ) { 
-        return touchStateList[_touchID].focusElement;
+    public exUIControl GetTouchFocus ( int _touchID ) { 
+        return touchStateList[_touchID].keyboardControl;
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void SetTouchFocus ( int _touchID, exUIEventTrigger _el ) { 
-        touchStateList[_touchID].focusElement = _el;
+    public void SetTouchFocus ( int _touchID, exUIControl _ctrl ) { 
+        touchStateList[_touchID].keyboardControl = _ctrl;
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void SetTouchFocus_NoticeUnfocusTarget ( int _touchID, exUIEventTrigger _el ) { 
-        if ( touchStateList[_touchID].focusElement != null &&
-             _el != touchStateList[_touchID].focusElement ) {
+    public void SetTouchFocus_NoticeUnfocusTarget ( int _touchID, exUIControl _ctrl ) { 
+        if ( touchStateList[_touchID].keyboardControl != null &&
+             _ctrl != touchStateList[_touchID].keyboardControl ) {
 
             // add hover-out event
             exUIEvent e = new exUIEvent(); 
@@ -703,37 +693,37 @@ public class exUIMng : MonoBehaviour {
             e.touchID = _touchID;
 
             EventInfo info = new EventInfo();
-            info.primaryElement = touchStateList[_touchID].focusElement;
+            info.primaryControl = touchStateList[_touchID].keyboardControl;
             info.uiEvent = e;
             eventInfoList.Add(info);
         }
 
-        touchStateList[_touchID].focusElement = _el;
+        touchStateList[_touchID].keyboardControl = _ctrl;
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public exUIEventTrigger GetMouseFocus () {
-        return mouseState.focusElement;
+    public exUIControl GetMouseFocus () {
+        return mouseState.keyboardControl;
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void SetMouseFocus ( exUIEventTrigger _el ) {
-        mouseState.focusElement = _el;
+    public void SetMouseFocus ( exUIControl _ctrl ) {
+        mouseState.keyboardControl = _ctrl;
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void SetMouseFocus_NoticeUnfocusTarget ( exUIEventTrigger _el ) {
-        if ( mouseState.focusElement != null &&
-             _el != mouseState.focusElement ) {
+    public void SetMouseFocus_NoticeUnfocusTarget ( exUIControl _ctrl ) {
+        if ( mouseState.keyboardControl != null &&
+             _ctrl != mouseState.keyboardControl ) {
 
             // add hover-out event
             exUIEvent e = new exUIEvent(); 
@@ -744,12 +734,12 @@ public class exUIMng : MonoBehaviour {
             // e.buttons = mouseState.currentButtons;
 
             EventInfo info = new EventInfo();
-            info.primaryElement = mouseState.focusElement;
+            info.primaryControl = mouseState.keyboardControl;
             info.uiEvent = e;
             eventInfoList.Add(info);
         }
 
-        mouseState.focusElement = _el;
+        mouseState.keyboardControl = _ctrl;
     }
 
 }
