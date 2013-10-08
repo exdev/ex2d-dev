@@ -818,7 +818,11 @@ class exSceneEditor : EditorWindow {
                 exLayeredSprite layeredSprite = trans.GetComponent<exLayeredSprite>();
                 if ( layeredSprite ) {
                     // DrawAABoundingRect (layeredSprite);
-                    exSpriteBaseInspector.DrawBoundingRect (layeredSprite, true);
+                    exEditorUtility.GL_DrawWireFrame (layeredSprite, Color.white, true);
+                }
+                exPlane plane = trans.GetComponent<exPlane>();
+                if ( plane && plane != layeredSprite ) {
+                    exEditorUtility.GL_DrawWireFrame (plane, new Color( 1.0f, 0.0f, 0.5f, 1.0f ), true);
                 }
             }
 

@@ -86,7 +86,29 @@ public abstract class exPlane : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public virtual Rect GetAABoundingRect () {
+    public bool hasSprite {
+        get {
+            exSpriteBase sprite = GetComponent<exSpriteBase>();
+            if ( sprite != null && sprite != this )
+                return true;
+            return false;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Calculate the world AA bounding rect of the sprite
+    // ------------------------------------------------------------------ 
+
+    public Rect GetAABoundingRect () {
+        Vector3[] vertices = GetWorldVertices();
+        return exGeometryUtility.GetAABoundingRect(vertices);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected virtual Vector3[] GetVertices (Space _space) {
         Vector2 anchorOffset;
         float halfHeight = height_ * 0.5f;
         float halfWidth = width_ * 0.5f;
@@ -110,10 +132,39 @@ public abstract class exPlane : MonoBehaviour {
         anchorOffset.y += offset_.y;
 
         // 
-        Vector3 vMin = new Vector3 (-halfWidth + anchorOffset.x, -halfHeight + anchorOffset.y, 0.0f);
-        Vector3 vMax = new Vector3 ( halfWidth + anchorOffset.x,  halfHeight + anchorOffset.y, 0.0f);
+        Vector3 v0 = new Vector3 (-halfWidth + anchorOffset.x, -halfHeight + anchorOffset.y, 0.0f);
+        Vector3 v1 = new Vector3 (-halfWidth + anchorOffset.x, halfHeight + anchorOffset.y, 0.0f);
+        Vector3 v2 = new Vector3 (halfWidth + anchorOffset.x, halfHeight + anchorOffset.y, 0.0f);
+        Vector3 v3 = new Vector3 (halfWidth + anchorOffset.x, -halfHeight + anchorOffset.y, 0.0f);
 
-        Vector3 center = new Vector3 ( (vMin.x + vMax.x) * 0.5f, (vMin.y + vMax.y) * 0.5f, 0.0f );
-        return new Rect ( center.x, center.y, width_, height_ );
+        if (_space == Space.World) {
+            Matrix4x4 worldMatrix = transform.localToWorldMatrix;
+            v0 = worldMatrix.MultiplyPoint3x4(v0);
+            v1 = worldMatrix.MultiplyPoint3x4(v1);
+            v2 = worldMatrix.MultiplyPoint3x4(v2);
+            v3 = worldMatrix.MultiplyPoint3x4(v3);
+        }
+
+        return new Vector3[4] {
+            v0, v1, v2, v3
+        };
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Get vertices of the sprite
+    /// NOTE: This function returns an empty array If sprite is invisible
+    // ------------------------------------------------------------------ 
+
+    public virtual Vector3[] GetLocalVertices () {
+        return GetVertices(Space.Self);
+    }
+
+    // ------------------------------------------------------------------ 
+    /// Get vertices of the sprite
+    /// NOTE: This function returns an empty array If sprite is invisible
+    // ------------------------------------------------------------------ 
+
+    public virtual Vector3[] GetWorldVertices () {
+        return GetVertices(Space.World);
     }
 }

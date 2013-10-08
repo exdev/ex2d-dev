@@ -678,6 +678,54 @@ public static class exEditorUtility {
         GL.End();
     }
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void GL_DrawWireFrame ( exPlane _node, Color _color, bool ignoreZ = true ) {
+        exISprite sprite = _node as exISprite;
+        if ( sprite == null || sprite.vertexCount < 1000) {
+            Vector3[] vertices = _node.GetWorldVertices();
+            if (vertices.Length > 0) {
+                if ( sprite != null && sprite.spriteType == exSpriteType.Sliced) {
+                    Vector3[] rectVertices = new Vector3[16];
+                    rectVertices[0] = vertices[0];
+                    rectVertices[1] = vertices[4];
+                    rectVertices[2] = vertices[7];
+                    rectVertices[3] = vertices[3];
+                    rectVertices[4] = vertices[8];
+                    rectVertices[5] = vertices[12];
+                    rectVertices[6] = vertices[15];
+                    rectVertices[7] = vertices[11];
+                    rectVertices[8] = vertices[0];
+                    rectVertices[9] = vertices[12];
+                    rectVertices[10] = vertices[13];
+                    rectVertices[11] = vertices[1];
+                    rectVertices[12] = vertices[2];
+                    rectVertices[13] = vertices[14];
+                    rectVertices[14] = vertices[15];
+                    rectVertices[15] = vertices[3];
+                    vertices = rectVertices;
+                }
+                GL_DrawRectLine(vertices, _color, ignoreZ);
+            }
+        }
+        else {
+            Vector3[] vertices = _node.GetLocalVertices();
+            if (vertices.Length > 0) {
+                Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
+                Matrix4x4 l2w = _node.transform.localToWorldMatrix;
+                vertices = new Vector3[4] {
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMin, 0)),
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMax, 0)),
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMax, 0)),
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMin, 0)),
+                };
+                GL_DrawRectLine(vertices, _color, ignoreZ);
+            }
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // GL_UI
     ///////////////////////////////////////////////////////////////////////////////

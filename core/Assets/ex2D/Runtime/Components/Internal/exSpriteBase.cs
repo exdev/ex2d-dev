@@ -224,30 +224,6 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
 #region Functions used to update geometry buffer.
 
     // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected abstract Vector3[] GetVertices (Space _space);
-
-    // ------------------------------------------------------------------ 
-    /// Get vertices of the sprite
-    /// NOTE: This function returns an empty array If sprite is invisible
-    // ------------------------------------------------------------------ 
-
-    public virtual Vector3[] GetLocalVertices () {
-        return GetVertices(Space.Self);
-    }
-
-    // ------------------------------------------------------------------ 
-    /// Get vertices of the sprite
-    /// NOTE: This function returns an empty array If sprite is invisible
-    // ------------------------------------------------------------------ 
-
-    public virtual Vector3[] GetWorldVertices () {
-        return GetVertices(Space.World);
-    }
-
-    // ------------------------------------------------------------------ 
     /// \return the update flags of changed buffer
     /// 
     /// Update sprite's geometry data to buffers selectively depending on what has changed. 

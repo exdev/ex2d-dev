@@ -323,7 +323,7 @@ public class exUIMng : MonoBehaviour {
     void HandlePointerEvents () {
 #if UNITY_IPHONE
         if ( Application.isEditor == false ) {
-            ProcessTouch();
+            ProcessTouches();
         } else {
 #endif
             ProcessMouse();
@@ -336,7 +336,7 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void ProcessTouch () {
+    void ProcessTouches () {
         for ( int i = 0; i < Input.touches.Length; ++i ) {
             Touch touch = Input.touches[i];
             if ( touch.fingerId >= 10 )
