@@ -565,6 +565,16 @@ public class exLayer : MonoBehaviour
             if (mesh != null && mesh.spriteList.Count == 0) {
                 mesh.material = _mat;
                 mesh.UpdateDebugName(this);
+                if (i < _index) {
+                    meshList.RemoveAt(i);
+                    meshList.Insert(_index - 1, mesh);
+                    ex2DRenderer.instance.ResortLayerDepth();
+                }
+                else if (i > _index) {
+                    meshList.RemoveAt(i);
+                    meshList.Insert(_index, mesh);
+                    ex2DRenderer.instance.ResortLayerDepth();
+                }
                 return mesh;
             }
         }
