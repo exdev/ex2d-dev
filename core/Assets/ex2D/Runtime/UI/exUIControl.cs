@@ -91,6 +91,24 @@ public class exUIControl : exPlane {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public void OnHoverIn () {
+        if ( onHoverIn != null )
+            onHoverIn (gameObject);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void OnHoverOut () {
+        if ( onHoverOut != null )
+            onHoverOut (gameObject);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void OnDestroy () {
         if ( parent != null ) {
             parent.RemoveChild(this);

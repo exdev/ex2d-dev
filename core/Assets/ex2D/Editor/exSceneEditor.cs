@@ -815,15 +815,22 @@ class exSceneEditor : EditorWindow {
             Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
             for ( int i = 0; i < selection.Length; ++i ) {
                 Transform trans = selection[i];
+
+                // draw layered sprite first
                 exLayeredSprite layeredSprite = trans.GetComponent<exLayeredSprite>();
                 if ( layeredSprite ) {
-                    // DrawAABoundingRect (layeredSprite);
                     exEditorUtility.GL_DrawWireFrame (layeredSprite, Color.white, true);
                 }
-                exPlane plane = trans.GetComponent<exPlane>();
-                if ( plane && plane != layeredSprite ) {
-                    exEditorUtility.GL_DrawWireFrame (plane, new Color( 1.0f, 0.0f, 0.5f, 1.0f ), true);
+
+                // draw rest plane
+                exPlane[] planes = trans.GetComponents<exPlane>();
+                for ( int j = 0; j < planes.Length; ++j ) {
+                    exPlane plane = planes[j];
+                    if ( plane != layeredSprite ) {
+                        exEditorUtility.GL_DrawWireFrame (plane, new Color( 1.0f, 0.0f, 0.5f, 1.0f ), true);
+                    }
                 }
+
             }
 
             // draw resolution line
@@ -974,21 +981,27 @@ class exSceneEditor : EditorWindow {
             float handleSize = HandleUtility.GetHandleSize(trans_position);
 
             // resize
+            exPlane resizePlane = null;
             exLayeredSprite layeredSprite = trans.GetComponent<exLayeredSprite>();
-            if ( layeredSprite && layeredSprite.customSize ) {
+            if ( layeredSprite != null ) {
+                resizePlane = layeredSprite.customSize ? layeredSprite : null;
+            }
+            else {
+                resizePlane = trans.GetComponent<exPlane>();
+            }
+
+            if ( resizePlane != null ) {
                 // TODO: limit the size { 
                 // float minWidth = float.MinValue;
                 // float minHeight = float.MinValue;
-                // if ( layeredSprite is exSprite ) {
-                //     exSprite sp = layeredSprite as exSprite;
-                //     if ( sp.spriteType == exSpriteType.Sliced ) {
+                //     exSprite sp = resizePlane as exSprite;
+                //     if ( sp != null && sp.spriteType == exSpriteType.Sliced ) {
                 //         minWidth = sp.textureInfo.borderLeft + sp.textureInfo.borderRight;
                 //         minHeight = sp.textureInfo.borderTop + sp.textureInfo.borderBottom;
                 //     }
-                // }
                 // } TODO end 
 
-                Vector3[] vertices = layeredSprite.GetLocalVertices();
+                Vector3[] vertices = resizePlane.GetLocalVertices();
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
                 Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
                 Vector3 size = new Vector3( aabb.width, aabb.height, 0.0f );
@@ -1125,9 +1138,24 @@ class exSceneEditor : EditorWindow {
                 }
 
                 if ( changed ) {
-                    exSprite sprite = layeredSprite as exSprite;
+                    exSprite sprite = resizePlane as exSprite;
                     if (sprite != null) {
                         exSpriteBaseInspector.ApplySpriteScale(sprite, size, center);
+
+                        // also update all planes in the same compnent
+                        exPlane[] planes = sprite.GetComponents<exPlane>();
+                        for ( int i = 0; i < planes.Length; ++i ) {
+                            exPlane plane = planes[i];
+                            if ( plane != this ) {
+                                plane.width = sprite.width;
+                                plane.height = sprite.height;
+                                plane.anchor = sprite.anchor;
+                                plane.offset = sprite.offset;
+                            }
+                        }
+                    }
+                    else {
+                        exPlaneInspector.ApplyPlaneScale(resizePlane, size, center);
                     }
                 }
             }

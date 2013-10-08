@@ -158,6 +158,7 @@ public class exUIMng : MonoBehaviour {
     }
 
     //
+    [System.Serializable]
     public class TouchState {
         public int touchID = -1;
         public exUIControl hotControl = null;
@@ -165,6 +166,7 @@ public class exUIMng : MonoBehaviour {
     }
 
     //
+    [System.Serializable]
     public class MouseState {
         public Vector2 currentPos = Vector2.zero;
         public exUIEvent.MouseButtonFlags currentButtons = exUIEvent.MouseButtonFlags.None;
@@ -371,9 +373,9 @@ public class exUIMng : MonoBehaviour {
 
                 // set the last and current hot control 
                 exUIControl keyboardControl = null;
-                exUIControl lastHotControl = null;
+                exUIControl lastCtrl = null;
                 if ( touchState != null ) {
-                    lastHotControl = touchState.hotControl;
+                    lastCtrl = touchState.hotControl;
                     touchState.hotControl = hotControl;
                     keyboardControl = touchState.keyboardControl;
                 }
@@ -401,7 +403,7 @@ public class exUIMng : MonoBehaviour {
                 }
                 else if ( touch.phase == TouchPhase.Moved ) {
                     // process hover event
-                    if ( lastHotControl != hotControl ) {
+                    if ( lastCtrl != hotControl ) {
                         // add hover-in event
                         if ( hotControl != null ) {
                             exUIEvent e = new exUIEvent(); 
@@ -418,7 +420,7 @@ public class exUIMng : MonoBehaviour {
                         }
 
                         // add hover-out event
-                        if ( lastHotControl != null ) {
+                        if ( lastCtrl != null ) {
                             exUIEvent e = new exUIEvent(); 
                             e.category = exUIEvent.Category.Touch;
                             e.type =  exUIEvent.Type.TouchExit;
@@ -427,7 +429,7 @@ public class exUIMng : MonoBehaviour {
                             e.touchID = touch.fingerId;
 
                             EventInfo info = new EventInfo();
-                            info.primaryControl = lastHotControl;
+                            info.primaryControl = lastCtrl;
                             info.uiEvent = e;
                             eventInfoList.Add(info);
                         }
@@ -499,86 +501,74 @@ public class exUIMng : MonoBehaviour {
         }
         
         // get hot control
-        exUIControl lastHotControl = mouseState.hotControl;
-        mouseState.hotControl = PickControl(mouseState.currentPos);
+        exUIControl lastCtrl = mouseState.hotControl;
+        exUIControl curCtrl = PickControl(mouseState.currentPos);
+        mouseState.hotControl = curCtrl;
+
+        // DEBUG { 
+        // if ( curCtrl != null )
+        //     Debug.Log("curCtrl = " + curCtrl.name);
+        // } DEBUG end 
 
         // process hover event
-        if ( lastHotControl != mouseState.hotControl ) {
-            // add hover-in event
-            if ( mouseState.hotControl != null ) {
-                exUIEvent e = new exUIEvent(); 
-                e.category = exUIEvent.Category.Mouse;
-                e.type =  exUIEvent.Type.MouseEnter;
-                e.position = mouseState.currentPos;
-                e.delta = deltaPos;
-                e.buttons = mouseState.currentButtons;
-
-                EventInfo info = new EventInfo();
-                info.primaryControl = mouseState.hotControl;
-                info.uiEvent = e;
-                eventInfoList.Add(info);
+        if ( lastCtrl != curCtrl ) {
+            // on hover in
+            if ( curCtrl != null ) {
+                curCtrl.OnHoverIn();
             }
 
-            // add hover-out event
-            if ( lastHotControl != null ) {
-                exUIEvent e = new exUIEvent(); 
-                e.category = exUIEvent.Category.Mouse;
-                e.type =  exUIEvent.Type.MouseExit;
-                e.position = mouseState.currentPos;
-                e.delta = deltaPos;
-                e.buttons = mouseState.currentButtons;
-
-                EventInfo info = new EventInfo();
-                info.primaryControl = lastHotControl;
-                info.uiEvent = e;
-                eventInfoList.Add(info);
+            // on hover out
+            if ( lastCtrl != null ) {
+                if ( lastCtrl.IsSelfOrAncestorOf(curCtrl) == false ) {
+                    lastCtrl.OnHoverOut();
+                }
             }
         }
 
-        // add pointer-move event
-        if ( (mouseState.hotControl != null || mouseState.keyboardControl != null) && deltaPos != Vector2.zero ) {
-            exUIEvent e = new exUIEvent(); 
-            e.category = exUIEvent.Category.Mouse;
-            e.type =  exUIEvent.Type.MouseMove;
-            e.position = mouseState.currentPos;
-            e.delta = deltaPos;
-            e.buttons = mouseState.currentButtons;
+        // // add pointer-move event
+        // if ( (mouseState.hotControl != null || mouseState.keyboardControl != null) && deltaPos != Vector2.zero ) {
+        //     exUIEvent e = new exUIEvent(); 
+        //     e.category = exUIEvent.Category.Mouse;
+        //     e.type =  exUIEvent.Type.MouseMove;
+        //     e.position = mouseState.currentPos;
+        //     e.delta = deltaPos;
+        //     e.buttons = mouseState.currentButtons;
 
-            EventInfo info = new EventInfo();
-            info.primaryControl = (mouseState.keyboardControl != null) ? mouseState.keyboardControl : mouseState.hotControl;
-            info.uiEvent = e;
-            eventInfoList.Add(info);
-        }
+        //     EventInfo info = new EventInfo();
+        //     info.primaryControl = (mouseState.keyboardControl != null) ? mouseState.keyboardControl : mouseState.hotControl;
+        //     info.uiEvent = e;
+        //     eventInfoList.Add(info);
+        // }
 
-        // add pointer-press event
-        if ( mouseState.hotControl != null && buttonDown != exUIEvent.MouseButtonFlags.None ) {
-            exUIEvent e = new exUIEvent(); 
-            e.category = exUIEvent.Category.Mouse;
-            e.type =  exUIEvent.Type.MouseDown;
-            e.position = mouseState.currentPos;
-            e.delta = deltaPos;
-            e.buttons = buttonDown;
+        // // add pointer-press event
+        // if ( mouseState.hotControl != null && buttonDown != exUIEvent.MouseButtonFlags.None ) {
+        //     exUIEvent e = new exUIEvent(); 
+        //     e.category = exUIEvent.Category.Mouse;
+        //     e.type =  exUIEvent.Type.MouseDown;
+        //     e.position = mouseState.currentPos;
+        //     e.delta = deltaPos;
+        //     e.buttons = buttonDown;
 
-            EventInfo info = new EventInfo();
-            info.primaryControl = mouseState.hotControl;
-            info.uiEvent = e;
-            eventInfoList.Add(info);
-        }
+        //     EventInfo info = new EventInfo();
+        //     info.primaryControl = mouseState.hotControl;
+        //     info.uiEvent = e;
+        //     eventInfoList.Add(info);
+        // }
 
-        // add pointer-release event
-        if ( mouseState.keyboardControl != null && buttonUp != exUIEvent.MouseButtonFlags.None ) {
-            exUIEvent e = new exUIEvent(); 
-            e.category = exUIEvent.Category.Mouse;
-            e.type =  exUIEvent.Type.MouseUp;
-            e.position = mouseState.currentPos;
-            e.delta = deltaPos;
-            e.buttons = buttonUp;
+        // // add pointer-release event
+        // if ( mouseState.keyboardControl != null && buttonUp != exUIEvent.MouseButtonFlags.None ) {
+        //     exUIEvent e = new exUIEvent(); 
+        //     e.category = exUIEvent.Category.Mouse;
+        //     e.type =  exUIEvent.Type.MouseUp;
+        //     e.position = mouseState.currentPos;
+        //     e.delta = deltaPos;
+        //     e.buttons = buttonUp;
 
-            EventInfo info = new EventInfo();
-            info.primaryControl = mouseState.keyboardControl;
-            info.uiEvent = e;
-            eventInfoList.Add(info);
-        }
+        //     EventInfo info = new EventInfo();
+        //     info.primaryControl = mouseState.keyboardControl;
+        //     info.uiEvent = e;
+        //     eventInfoList.Add(info);
+        // }
     }
 
     // ------------------------------------------------------------------ 

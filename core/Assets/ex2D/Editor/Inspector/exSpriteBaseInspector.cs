@@ -349,6 +349,18 @@ class exSpriteBaseInspector : Editor {
                     exISprite sprite = spriteBase as exISprite;
                     if (sprite != null) {
                         ApplySpriteScale (sprite, size, center);
+
+                        // also update all planes in the same compnent
+                        exPlane[] planes = spriteBase.GetComponents<exPlane>();
+                        for ( int i = 0; i < planes.Length; ++i ) {
+                            exPlane plane = planes[i];
+                            if ( plane != this ) {
+                                plane.width = sprite.width;
+                                plane.height = sprite.height;
+                                plane.anchor = sprite.anchor;
+                                plane.offset = sprite.offset;
+                            }
+                        }
                     }
                 }
             }

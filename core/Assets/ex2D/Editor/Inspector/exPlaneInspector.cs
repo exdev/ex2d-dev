@@ -151,18 +151,6 @@ class exPlaneInspector : Editor {
 
             // resize
             if ( plane ) {
-                // TODO: limit the size { 
-                // float minWidth = float.MinValue;
-                // float minHeight = float.MinValue;
-                // if ( layeredSprite is exSprite ) {
-                //     exSprite sp = layeredSprite as exSprite;
-                //     if ( sp.spriteType == exSpriteType.Sliced ) {
-                //         minWidth = sp.textureInfo.borderLeft + sp.textureInfo.borderRight;
-                //         minHeight = sp.textureInfo.borderTop + sp.textureInfo.borderBottom;
-                //     }
-                // }
-                // } TODO end 
-
                 Vector3[] vertices = plane.GetLocalVertices();
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
                 Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
