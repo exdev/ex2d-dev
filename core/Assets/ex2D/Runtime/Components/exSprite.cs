@@ -748,8 +748,8 @@ namespace ex2D.Detail {
             }
             else {
                 leftBorderSize = (float)textureInfo_.borderLeft;
-                rightBorderSize = (float)textureInfo_.borderTop;
-                topBorderSize = (float)textureInfo_.borderRight;
+                rightBorderSize = (float)textureInfo_.borderRight;
+                topBorderSize = (float)textureInfo_.borderTop;
                 bottomBorderSize = (float)textureInfo_.borderBottom;
             }
             

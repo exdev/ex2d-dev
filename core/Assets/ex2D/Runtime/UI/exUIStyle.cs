@@ -375,12 +375,14 @@ public class exUIStyle {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public exUIStyle InlineContent () {
+    public exUIStyle InlineContent ( int _width, int _height ) {
         exUIStyle newStyle = new exUIStyle ();
 
+        newStyle.display = exCSS_display.Inline;
+
         //
-        newStyle.width     = new exCSS_size_push( width.type, width.val );
-        newStyle.height    = new exCSS_size_push( height.type, height.val );
+        newStyle.width     = new exCSS_size_push( width.type, _width );
+        newStyle.height    = new exCSS_size_push( height.type, _height );
         newStyle.minWidth  = new exCSS_min_size( minWidth.type, minWidth.val );
         newStyle.minHeight = new exCSS_min_size( minHeight.type, minHeight.val );
         newStyle.maxWidth  = new exCSS_max_size( maxWidth.type, maxWidth.val );

@@ -108,7 +108,7 @@ public class exUILayout : MonoBehaviour {
                                                                _el.height + _el.paddingTop + _el.paddingBottom, 
                                                                _el.backgroundColor );
             sprite.anchor = Anchor.TopLeft;
-            sprite.depth = _depth;
+            sprite.depth = _depth + 0.1f;
         }
         else {
             Transform backgroundTrans = trans.Find("__background");
@@ -139,7 +139,7 @@ public class exUILayout : MonoBehaviour {
 
                     if ( spriteFont != null ) {
                         spriteFont.anchor = Anchor.TopLeft;
-                        spriteFont.depth = _depth+1;
+                        spriteFont.depth = _depth + 0.2f;
                     }
                 }
                 break;
@@ -155,7 +155,7 @@ public class exUILayout : MonoBehaviour {
 
                     if ( sprite != null ) {
                         sprite.anchor = Anchor.TopLeft;
-                        sprite.depth = _depth+1;
+                        sprite.depth = _depth + 0.2f;
                     }
 
                     contentGO.transform.position = new Vector3 ( x + _el.borderSizeLeft, y - _el.borderSizeTop, 0.0f );

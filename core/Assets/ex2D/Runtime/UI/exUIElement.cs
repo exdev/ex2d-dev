@@ -1036,8 +1036,15 @@ public class exUIElement {
         newEL.text = text;
         newEL.image = image;
         newEL.contentType = contentType;
-        newEL.style = style.InlineContent();
-        newEL.style.display = exCSS_display.Inline;
+        newEL.style = style.InlineContent( _width, _height );
+        if ( newEL.style.width.type != exCSS_size_push.Type.Auto ) {
+            newEL.style.width.type = exCSS_size_push.Type.Length;
+            newEL.style.width.val = _width;
+        }
+        if ( newEL.style.height.type != exCSS_size_push.Type.Auto ) {
+            newEL.style.height.type = exCSS_size_push.Type.Length;
+            newEL.style.height.val = _height;
+        }
         newEL.parent_ = parent_; // NOTE: DO NOT use AddElement which will make this element become real child.
 
         normalFlows_.Add(newEL);
