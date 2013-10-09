@@ -23,8 +23,8 @@ using System.IO;
 [CustomEditor(typeof(exUIControl))]
 class exUIControlInspector : exPlaneInspector {
 
-    // SerializedProperty onHoverInProp;
-    // SerializedProperty onHoverOutProp;
+    SerializedProperty onHoverInSlotsProp;
+    SerializedProperty onHoverOutSlotsProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -46,7 +46,11 @@ class exUIControlInspector : exPlaneInspector {
 
         EditorGUILayout.Space();
 
-        // TODO: message
+        // slots
+        EditorGUILayout.PropertyField (onHoverInSlotsProp, true );
+        EditorGUILayout.PropertyField (onHoverOutSlotsProp, true );
+
+        serializedObject.ApplyModifiedProperties();
     }
 
     // ------------------------------------------------------------------ 
@@ -63,8 +67,8 @@ class exUIControlInspector : exPlaneInspector {
 
     protected new void InitProperties () {
         base.InitProperties();
-        // onHoverInProp = serializedObject.FindProperty("textureInfo_");
-        // onHoverOutProp = serializedObject.FindProperty("useTextureOffset_");
+        onHoverInSlotsProp = serializedObject.FindProperty("onHoverInSlots");
+        onHoverOutSlotsProp = serializedObject.FindProperty("onHoverOutSlots");
     }
 }
 

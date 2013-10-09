@@ -148,6 +148,10 @@ public class exUIMng : MonoBehaviour {
         }
     }
 
+    // static  RaycastSorter raycastSorter = new RaycastSorter();
+    static ControlSorter controlSorter = new ControlSorter();
+    static ControlSorterByZ controlSorterByZ = new ControlSorterByZ();
+
     ///////////////////////////////////////////////////////////////////////////////
     // structures
     ///////////////////////////////////////////////////////////////////////////////
@@ -160,6 +164,7 @@ public class exUIMng : MonoBehaviour {
     //
     [System.Serializable]
     public class TouchState {
+        public bool active = false;
         public int touchID = -1;
         public exUIControl hotControl = null;
         public exUIControl keyboardControl = null;
@@ -179,24 +184,22 @@ public class exUIMng : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
 
     public bool useRayCast = false; /// if your UI control is in 3D space, turn this on.
+    public bool showDebugInfo = false;
+    public bool showDebugInfoInGameView = false;
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
     bool initialized = false;
-
-    // private RaycastSorter raycastSorter = new RaycastSorter();
-    ControlSorter controlSorter = new ControlSorter();
-    ControlSorterByZ controlSorterByZ = new ControlSorterByZ();
+    List<exUIControl> rootControls = new List<exUIControl>();
 
     // internal ui status
     MouseState mouseState = new MouseState();
-    TouchState[] touchStateList = new TouchState[10];
+    TouchState[] touchStates = new TouchState[10];
 
     //
-    List<EventInfo> eventInfoList = new List<EventInfo>();
-    List<exUIControl> rootControls = new List<exUIControl>();
+    List<EventInfo> eventInfos = new List<EventInfo>();
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
@@ -217,7 +220,8 @@ public class exUIMng : MonoBehaviour {
     void Start () {
 #if UNITY_IPHONE
         if ( Application.isEditor == false ) {
-        } else {
+        } 
+        else {
 #endif
             mouseState.currentPos = Input.mousePosition;
 #if UNITY_IPHONE
@@ -233,6 +237,16 @@ public class exUIMng : MonoBehaviour {
         HandleEvents ();
         DispatchEvents ();
 	}
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnGUI () {
+        if ( showDebugInfoInGameView ) {
+            ShowDebugInfo ( new Rect(10, 10, 300, 300) );
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -254,7 +268,7 @@ public class exUIMng : MonoBehaviour {
 
         //
         for ( int i = 0; i < 10; ++i ) {
-            touchStateList[i] = new TouchState();
+            touchStates[i] = new TouchState();
         }
 
         // recursively add ui-tree
@@ -304,8 +318,8 @@ public class exUIMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void DispatchEvents () {
-        // for ( int i = 0; i < eventInfoList.Count; ++i ) {
-        //     EventInfo info = eventInfoList[i];
+        // for ( int i = 0; i < eventInfos.Count; ++i ) {
+        //     EventInfo info = eventInfos[i];
         //     bool used = info.primaryControl.OnEvent(info.uiEvent);
         //     exUIControl uiParent = info.primaryControl;
         //     while ( used == false ) {
@@ -315,7 +329,7 @@ public class exUIMng : MonoBehaviour {
         //         used = uiParent.OnEvent(info.uiEvent);
         //     }
         // }
-        // eventInfoList.Clear();
+        // eventInfos.Clear();
     }
 
     // ------------------------------------------------------------------ 
@@ -360,16 +374,16 @@ public class exUIMng : MonoBehaviour {
                     EventInfo info = new EventInfo();
                     info.primaryControl = hotControl;
                     info.uiEvent = e;
-                    eventInfoList.Add(info);
+                    eventInfos.Add(info);
                 }
 
                 // NOTE: it must be null
                 SetTouchFocus ( touch.fingerId, null );
-                touchStateList[touch.fingerId].hotControl = hotControl;
+                touchStates[touch.fingerId].hotControl = hotControl;
             }
             else {
                 // find the touch state
-                touchState = touchStateList[touch.fingerId];
+                touchState = touchStates[touch.fingerId];
 
                 // set the last and current hot control 
                 exUIControl keyboardControl = null;
@@ -393,7 +407,7 @@ public class exUIMng : MonoBehaviour {
                             EventInfo info = new EventInfo();
                             info.primaryControl = keyboardControl;
                             info.uiEvent = e;
-                            eventInfoList.Add(info);
+                            eventInfos.Add(info);
                         }
                     }
                 }
@@ -416,7 +430,7 @@ public class exUIMng : MonoBehaviour {
                             EventInfo info = new EventInfo();
                             info.primaryControl = hotControl;
                             info.uiEvent = e;
-                            eventInfoList.Add(info);
+                            eventInfos.Add(info);
                         }
 
                         // add hover-out event
@@ -431,7 +445,7 @@ public class exUIMng : MonoBehaviour {
                             EventInfo info = new EventInfo();
                             info.primaryControl = lastCtrl;
                             info.uiEvent = e;
-                            eventInfoList.Add(info);
+                            eventInfos.Add(info);
                         }
                     }
 
@@ -447,7 +461,7 @@ public class exUIMng : MonoBehaviour {
                         EventInfo info = new EventInfo();
                         info.primaryControl = (keyboardControl != null) ? keyboardControl : hotControl;
                         info.uiEvent = e;
-                        eventInfoList.Add(info);
+                        eventInfos.Add(info);
                     }
                 }
             }
@@ -512,16 +526,14 @@ public class exUIMng : MonoBehaviour {
 
         // process hover event
         if ( lastCtrl != curCtrl ) {
-            // on hover in
-            if ( curCtrl != null ) {
-                curCtrl.OnHoverIn();
-            }
-
             // on hover out
             if ( lastCtrl != null ) {
-                if ( lastCtrl.IsSelfOrAncestorOf(curCtrl) == false ) {
-                    lastCtrl.OnHoverOut();
-                }
+                lastCtrl.Send_OnHoverOut();
+            }
+
+            // on hover in
+            if ( curCtrl != null ) {
+                curCtrl.Send_OnHoverIn();
             }
         }
 
@@ -537,7 +549,7 @@ public class exUIMng : MonoBehaviour {
         //     EventInfo info = new EventInfo();
         //     info.primaryControl = (mouseState.keyboardControl != null) ? mouseState.keyboardControl : mouseState.hotControl;
         //     info.uiEvent = e;
-        //     eventInfoList.Add(info);
+        //     eventInfos.Add(info);
         // }
 
         // // add pointer-press event
@@ -552,7 +564,7 @@ public class exUIMng : MonoBehaviour {
         //     EventInfo info = new EventInfo();
         //     info.primaryControl = mouseState.hotControl;
         //     info.uiEvent = e;
-        //     eventInfoList.Add(info);
+        //     eventInfos.Add(info);
         // }
 
         // // add pointer-release event
@@ -567,7 +579,7 @@ public class exUIMng : MonoBehaviour {
         //     EventInfo info = new EventInfo();
         //     info.primaryControl = mouseState.keyboardControl;
         //     info.uiEvent = e;
-        //     eventInfoList.Add(info);
+        //     eventInfos.Add(info);
         // }
     }
 
@@ -636,7 +648,7 @@ public class exUIMng : MonoBehaviour {
                                         _worldPos.y - _ctrl.transform.position.y );
         localPos.y = -localPos.y;
 
-        Rect boundingRect = _ctrl.GetAABoundingRect();
+        Rect boundingRect = _ctrl.GetLocalAABoundingRect();
         if ( boundingRect.Contains(localPos) ) {
             for ( int i = 0; i < _ctrl.children.Count; ++i ) {
                 exUIControl childCtrl = _ctrl.children[i];
@@ -655,7 +667,7 @@ public class exUIMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public exUIControl GetTouchFocus ( int _touchID ) { 
-        return touchStateList[_touchID].keyboardControl;
+        return touchStates[_touchID].keyboardControl;
     }
 
     // ------------------------------------------------------------------ 
@@ -663,7 +675,7 @@ public class exUIMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void SetTouchFocus ( int _touchID, exUIControl _ctrl ) { 
-        touchStateList[_touchID].keyboardControl = _ctrl;
+        touchStates[_touchID].keyboardControl = _ctrl;
     }
 
     // ------------------------------------------------------------------ 
@@ -671,8 +683,8 @@ public class exUIMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void SetTouchFocus_NoticeUnfocusTarget ( int _touchID, exUIControl _ctrl ) { 
-        if ( touchStateList[_touchID].keyboardControl != null &&
-             _ctrl != touchStateList[_touchID].keyboardControl ) {
+        if ( touchStates[_touchID].keyboardControl != null &&
+             _ctrl != touchStates[_touchID].keyboardControl ) {
 
             // add hover-out event
             exUIEvent e = new exUIEvent(); 
@@ -683,12 +695,12 @@ public class exUIMng : MonoBehaviour {
             e.touchID = _touchID;
 
             EventInfo info = new EventInfo();
-            info.primaryControl = touchStateList[_touchID].keyboardControl;
+            info.primaryControl = touchStates[_touchID].keyboardControl;
             info.uiEvent = e;
-            eventInfoList.Add(info);
+            eventInfos.Add(info);
         }
 
-        touchStateList[_touchID].keyboardControl = _ctrl;
+        touchStates[_touchID].keyboardControl = _ctrl;
     }
 
     // ------------------------------------------------------------------ 
@@ -726,10 +738,49 @@ public class exUIMng : MonoBehaviour {
             EventInfo info = new EventInfo();
             info.primaryControl = mouseState.keyboardControl;
             info.uiEvent = e;
-            eventInfoList.Add(info);
+            eventInfos.Add(info);
         }
 
         mouseState.keyboardControl = _ctrl;
     }
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // Debug
+    ///////////////////////////////////////////////////////////////////////////////
+
+    public void ShowDebugInfo ( Rect _pos ) {
+        GUILayout.BeginArea( new Rect( _pos.x, _pos.y, _pos.width, _pos.height), "Debug", GUI.skin.window);
+
+            // Mouse State
+            GUILayout.Label( "Mouse State" );
+
+            GUILayout.BeginHorizontal ();
+            GUILayout.Space (15);
+                GUILayout.BeginVertical ();
+                    GUILayout.Label( "Current Pos: " + mouseState.currentPos.ToString() );
+
+                    string buttons = (mouseState.currentButtons & exUIEvent.MouseButtonFlags.Left) != 0 ? "Left | " : "";
+                    buttons += (mouseState.currentButtons & exUIEvent.MouseButtonFlags.Middle) != 0 ? "Middle | " : "";
+                    buttons += (mouseState.currentButtons & exUIEvent.MouseButtonFlags.Right) != 0 ? "Right | " : "";
+                    GUILayout.Label( "Current Buttons: " + buttons );
+
+                    GUILayout.Label( "Hot Control: " + (mouseState.hotControl ? mouseState.hotControl.name : "None") );
+                    GUILayout.Label( "Keyboard Control: " + (mouseState.keyboardControl ? mouseState.keyboardControl.name : "None") );
+
+                GUILayout.EndVertical ();
+            GUILayout.EndHorizontal ();
+
+            // Root Controls
+            GUILayout.Label( "Root Controls" );
+
+            GUILayout.BeginHorizontal ();
+            GUILayout.Space (15);
+                GUILayout.BeginVertical ();
+                    for ( int i = 0; i < rootControls.Count; ++i ) {
+                        GUILayout.Label( "[" + i + "] " + rootControls[i].name );
+                    }
+                GUILayout.EndVertical ();
+            GUILayout.EndHorizontal ();
+        GUILayout.EndArea();
+    }
 }

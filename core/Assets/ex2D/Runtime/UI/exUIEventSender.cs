@@ -59,10 +59,15 @@ public class exUIEventSender : MonoBehaviour {
                         foreach ( Component comp in allComponents ) {
 
                             MethodInfo mi = comp.GetType().GetMethod( slot.method, 
-                                                                      BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic );
+                                                                      BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                                                                      null,
+                                                                      new Type [] {
+                                                                        typeof(GameObject),
+                                                                      }, 
+                                                                      null );
                             if ( mi != null ) {
                                 var delegateForMethod = Delegate.CreateDelegate( typeof(System.Action<GameObject>), comp, mi);
-                                eventInfo.AddEventHandler(comp, delegateForMethod);
+                                eventInfo.AddEventHandler(control, delegateForMethod);
                                 foundMethod = true;
                             }
                         }

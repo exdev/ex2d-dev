@@ -10,6 +10,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
+using System;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -20,6 +22,12 @@ using System.Collections.Generic;
 ///////////////////////////////////////////////////////////////////////////////
 
 public class exUIControl : exPlane {
+
+    [System.Serializable]
+    public class SlotInfo {
+        public GameObject receiver = null;
+        public string method = "";
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -52,6 +60,13 @@ public class exUIControl : exPlane {
     // action ( sender )
     public event System.Action<GameObject> onHoverIn;
     public event System.Action<GameObject> onHoverOut;
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // slots
+    ///////////////////////////////////////////////////////////////////////////////
+
+    public List<SlotInfo> onHoverInSlots;
+    public List<SlotInfo> onHoverOutSlots;
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -91,7 +106,54 @@ public class exUIControl : exPlane {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void OnHoverIn () {
+    protected void Awake () {
+        AddSlotsToEvent ( "onHoverIn", onHoverInSlots, new Type[] { typeof(GameObject) }, typeof(System.Action<GameObject>) );
+        AddSlotsToEvent ( "onHoverOut", onHoverOutSlots, new Type[] { typeof(GameObject) }, typeof(System.Action<GameObject>) );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void AddSlotsToEvent ( string _eventName, List<SlotInfo> _slots, Type[] _parameterTypes, Type _delegateType ) {
+        Type controlType = this.GetType();
+        EventInfo eventInfo = controlType.GetEvent(_eventName);
+        if ( eventInfo != null ) {
+
+            foreach ( SlotInfo slot in _slots ) {
+
+                bool foundMethod = false;
+
+                Component[] allComponents = slot.receiver.GetComponents<Component>();
+                foreach ( Component comp in allComponents ) {
+
+                    MethodInfo mi = comp.GetType().GetMethod( slot.method, 
+                                                              BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                                                              null,
+                                                              _parameterTypes,
+                                                              null );
+                    if ( mi != null ) {
+                        var delegateForMethod = Delegate.CreateDelegate( _delegateType, comp, mi);
+                        eventInfo.AddEventHandler(this, delegateForMethod);
+                        foundMethod = true;
+                    }
+                }
+
+                if ( foundMethod == false ) {
+                    Debug.LogWarning ("Can not find method " + slot.method + " in " + slot.receiver.name );
+                }
+            } 
+        }
+        else {
+            Debug.LogWarning ("Can not find event " + _eventName + " in " + gameObject.name );
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void Send_OnHoverIn () {
         if ( onHoverIn != null )
             onHoverIn (gameObject);
     }
@@ -100,7 +162,7 @@ public class exUIControl : exPlane {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void OnHoverOut () {
+    public void Send_OnHoverOut () {
         if ( onHoverOut != null )
             onHoverOut (gameObject);
     }
