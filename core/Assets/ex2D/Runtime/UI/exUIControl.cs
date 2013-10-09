@@ -124,16 +124,16 @@ public class exUIControl : exPlane {
 
                 bool foundMethod = false;
 
-                Component[] allComponents = slot.receiver.GetComponents<Component>();
-                foreach ( Component comp in allComponents ) {
+                MonoBehaviour[] allMonoBehaviours = slot.receiver.GetComponents<MonoBehaviour>();
+                foreach ( MonoBehaviour monoBehaviour in allMonoBehaviours ) {
 
-                    MethodInfo mi = comp.GetType().GetMethod( slot.method, 
-                                                              BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                                                              null,
-                                                              _parameterTypes,
-                                                              null );
+                    MethodInfo mi = monoBehaviour.GetType().GetMethod( slot.method, 
+                                                                       BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                                                                       null,
+                                                                       _parameterTypes,
+                                                                       null );
                     if ( mi != null ) {
-                        var delegateForMethod = Delegate.CreateDelegate( _delegateType, comp, mi);
+                        var delegateForMethod = Delegate.CreateDelegate( _delegateType, monoBehaviour, mi);
                         eventInfo.AddEventHandler(this, delegateForMethod);
                         foundMethod = true;
                     }

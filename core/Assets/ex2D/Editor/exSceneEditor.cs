@@ -1179,6 +1179,8 @@ class exSceneEditor : EditorWindow {
                 trans_rotation = Handles.Disc ( trans_rotation, trans_position, Vector3.forward, handleSize * 0.5f, true, 1 );
 
             if ( EditorGUI.EndChangeCheck() ) {
+                UnityEditor.Undo.RegisterUndo(Selection.transforms, "Change Transform");
+
                 if ( Selection.transforms.Length == 1 ) {
                     trans.position = trans_position;
                     trans.rotation = trans_rotation;
