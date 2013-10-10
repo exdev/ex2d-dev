@@ -99,8 +99,17 @@ public abstract class exPlane : MonoBehaviour {
     /// Calculate the world AA bounding rect of the sprite
     // ------------------------------------------------------------------ 
 
-    public Rect GetAABoundingRect () {
+    public Rect GetWorldAABoundingRect () {
         Vector3[] vertices = GetWorldVertices();
+        return exGeometryUtility.GetAABoundingRect(vertices);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public Rect GetLocalAABoundingRect () {
+        Vector3[] vertices = GetLocalVertices();
         return exGeometryUtility.GetAABoundingRect(vertices);
     }
 

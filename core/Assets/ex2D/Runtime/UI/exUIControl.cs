@@ -10,6 +10,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
+using System;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -21,40 +23,116 @@ using System.Collections.Generic;
 
 public class exUIControl : exPlane {
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
+    [System.Serializable]
+    public class SlotInfo {
+        public GameObject receiver = null;
+        public string method = "";
+    }
 
-    public bool isActive {
+    ///////////////////////////////////////////////////////////////////////////////
+    // events, slots and senders
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // focus
+    public event Action<exUIControl> onFocus;
+    public List<SlotInfo> onFocusSlots = new List<SlotInfo>();
+    public void Send_OnFocus () { if ( onFocus != null ) onFocus (this); }
+
+    // unfocus
+    public event Action<exUIControl> onUnFocus;
+    public List<SlotInfo> onUnFocusSlots = new List<SlotInfo>();
+    public void Send_OnUnFocus () { if ( onUnFocus != null ) onUnFocus (this); }
+
+    // active
+    public event Action<exUIControl> onActive;
+    public List<SlotInfo> onActiveSlots = new List<SlotInfo>();
+    public void Send_OnActive () { if ( onActive != null ) onActive (this); }
+
+    // deactive
+    public event Action<exUIControl> onDeactive;
+    public List<SlotInfo> onDeactiveSlots = new List<SlotInfo>();
+    public void Send_OnDeactive () { if ( onDeactive != null ) onDeactive (this); }
+
+    // hover-in
+    public event Action<exUIControl> onHoverIn;
+    public List<SlotInfo> onHoverInSlots = new List<SlotInfo>();
+    public void Send_OnHoverIn () { if ( onHoverIn != null ) onHoverIn (this); }
+
+    // hover-out
+    public event Action<exUIControl> onHoverOut;
+    public List<SlotInfo> onHoverOutSlots = new List<SlotInfo>();
+    public void Send_OnHoverOut () { if ( onHoverOut != null ) onHoverOut (this); }
+
+    // press-down
+    public event Action<exUIControl,int> onPressDown;
+    public List<SlotInfo> onPressDownSlots = new List<SlotInfo>();
+    public void Send_OnPressDown ( int _pressID ) { if ( onPressDown != null ) onPressDown (this, _pressID); }
+
+    // press-up
+    public event Action<exUIControl,int> onPressUp;
+    public List<SlotInfo> onPressUpSlots = new List<SlotInfo>();
+    public void Send_OnPressUp ( int _pressID ) { if ( onPressUp != null ) onPressUp (this, _pressID); }
+
+    // press-move
+    public event Action<exUIControl,Vector2,List<int>> onPressMove;
+    public List<SlotInfo> onPressMoveSlots = new List<SlotInfo>();
+    public void Send_OnPressMove ( Vector2 _pos, List<int> _pressIDs ) { if ( onPressMove != null ) onPressMove (this, _pos, _pressIDs); }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // properties
+    ///////////////////////////////////////////////////////////////////////////////
+
+    [System.NonSerialized] public exUIControl parent;
+    [System.NonSerialized] public List<exUIControl> children = new List<exUIControl>();
+
+    [SerializeField] protected bool active_ = true;
+    public bool activeInHierarchy {
         get {
-            if ( gameObject.activeInHierarchy == false )
+            if ( active_ == false )
                 return false;
 
-            if ( enabled == false )
-                return false;
             exUIControl p = parent;
             while ( p != null ) {
-                if ( p.enabled == false )
+                if ( p.active_ == false )
                     return false;
                 p = p.parent;
             }
             return true;
         }
+        set {
+            if ( active_ != value ) {
+                active_ = value;
+                if ( active_ )
+                    Send_OnActive();
+                else 
+                    Send_OnDeactive();
+
+                for ( int i = 0; i < children.Count; ++i ) {
+                    children[i].activeInHierarchy = value;
+                }
+            }
+        }
+    }
+    public bool activeSelf {
+        get { 
+            return active_; 
+        }
+        set { 
+            if ( active_ != value ) {
+                active_ = value;
+                if ( active_ )
+                    Send_OnActive();
+                else 
+                    Send_OnDeactive();
+            }
+        }
     }
 
-    [System.NonSerialized] public exUIControl parent;
-    [System.NonSerialized] public List<exUIControl> children = new List<exUIControl>();
+    public bool useCollider = false;
+    public bool grabMouseOrTouch = false;
 
     ///////////////////////////////////////////////////////////////////////////////
-    // events
-    ///////////////////////////////////////////////////////////////////////////////
-
-    // action ( sender )
-    public event System.Action<GameObject> onHoverIn;
-    public event System.Action<GameObject> onHoverOut;
-
-    ///////////////////////////////////////////////////////////////////////////////
-    //
+    // static functions
     ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
@@ -91,18 +169,16 @@ public class exUIControl : exPlane {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void OnHoverIn () {
-        if ( onHoverIn != null )
-            onHoverIn (gameObject);
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public void OnHoverOut () {
-        if ( onHoverOut != null )
-            onHoverOut (gameObject);
+    protected void Awake () {
+        AddSlotsToEvent ( "onFocus",        onFocusSlots,       new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
+        AddSlotsToEvent ( "onUnFocus",      onUnFocusSlots,     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
+        AddSlotsToEvent ( "onActive",       onActiveSlots,      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
+        AddSlotsToEvent ( "onDeactive",     onDeactiveSlots,    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
+        AddSlotsToEvent ( "onHoverIn",      onHoverInSlots,     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
+        AddSlotsToEvent ( "onHoverOut",     onHoverOutSlots,    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
+        AddSlotsToEvent ( "onPressDown",    onPressDownSlots,   new Type[] { typeof(exUIControl), typeof(int) }, typeof(Action<exUIControl,int>) );
+        AddSlotsToEvent ( "onPressUp",      onPressUpSlots,     new Type[] { typeof(exUIControl), typeof(int) }, typeof(Action<exUIControl,int>) );
+        AddSlotsToEvent ( "onPressMove",    onPressMoveSlots,   new Type[] { typeof(exUIControl), typeof(Vector2), typeof(List<int>) }, typeof(Action<exUIControl,Vector2,List<int>>) );
     }
 
     // ------------------------------------------------------------------ 
@@ -112,6 +188,48 @@ public class exUIControl : exPlane {
     void OnDestroy () {
         if ( parent != null ) {
             parent.RemoveChild(this);
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void AddSlotsToEvent ( string _eventName, List<SlotInfo> _slots, Type[] _parameterTypes, Type _delegateType ) {
+        Type controlType = this.GetType();
+        EventInfo eventInfo = controlType.GetEvent(_eventName);
+        if ( eventInfo != null ) {
+
+            foreach ( SlotInfo slot in _slots ) {
+
+                bool foundMethod = false;
+
+                MonoBehaviour[] allMonoBehaviours = slot.receiver.GetComponents<MonoBehaviour>();
+                foreach ( MonoBehaviour monoBehaviour in allMonoBehaviours ) {
+
+                    MethodInfo mi = monoBehaviour.GetType().GetMethod( slot.method, 
+                                                                       BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                                                                       null,
+                                                                       _parameterTypes,
+                                                                       null );
+                    if ( mi != null ) {
+                        var delegateForMethod = Delegate.CreateDelegate( _delegateType, monoBehaviour, mi);
+                        eventInfo.AddEventHandler(this, delegateForMethod);
+                        foundMethod = true;
+                    }
+                }
+
+                if ( foundMethod == false ) {
+                    Debug.LogWarning ("Can not find method " + slot.method + " in " + slot.receiver.name );
+                }
+            } 
+        }
+        else {
+            Debug.LogWarning ("Can not find event " + _eventName + " in " + gameObject.name );
         }
     }
 

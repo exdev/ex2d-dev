@@ -750,6 +750,8 @@ class exSceneEditor : EditorWindow {
             else if ( _sprite.textureInfo.hasBorder ) {
                 _sprite.spriteType = exSpriteType.Sliced;
                 _sprite.customSize = true;
+                _sprite.width = _sprite.textureInfo.width;
+                _sprite.height = _sprite.textureInfo.height;
             }
         }
     }
@@ -897,7 +899,7 @@ class exSceneEditor : EditorWindow {
     // ------------------------------------------------------------------ 
 
     void DrawAABoundingRect ( exLayeredSprite _node ) {
-        Rect boundingRect = _node.GetAABoundingRect();
+        Rect boundingRect = _node.GetWorldAABoundingRect();
 
         exEditorUtility.GL_DrawRectLine ( new Vector3[] {
                                           new Vector3 ( boundingRect.xMin, boundingRect.yMin, 0.0f ),
@@ -1177,6 +1179,8 @@ class exSceneEditor : EditorWindow {
                 trans_rotation = Handles.Disc ( trans_rotation, trans_position, Vector3.forward, handleSize * 0.5f, true, 1 );
 
             if ( EditorGUI.EndChangeCheck() ) {
+                UnityEditor.Undo.RegisterUndo(Selection.transforms, "Change Transform");
+
                 if ( Selection.transforms.Length == 1 ) {
                     trans.position = trans_position;
                     trans.rotation = trans_rotation;
@@ -1303,7 +1307,7 @@ class exSceneEditor : EditorWindow {
         Vector2 screenPos = Vector2.zero;
 
         if ( layeredSprite ) {
-            Rect boundingRect = layeredSprite.GetAABoundingRect();
+            Rect boundingRect = layeredSprite.GetWorldAABoundingRect();
             screenPos = SceneField_WorldToScreen ( _rect, boundingRect.center );
             boundingRect = new Rect ( screenPos.x - boundingRect.width * scale / 2.0f,
                                       screenPos.y - boundingRect.height * scale / 2.0f,
