@@ -40,6 +40,14 @@ public enum exLayerType
 public class exLayer : MonoBehaviour
 {
     public static int maxDynamicMeshVertex = 90000;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
+
+    // ------------------------------------------------------------------ 
+    /// 实现此接口用于绕开sprite的setter直接给字段赋值
+    // ------------------------------------------------------------------ 
+
+    public interface IFriendOfLayer {
+        void DoSetDepth (float _depth);
+    }
     
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -484,6 +492,27 @@ public class exLayer : MonoBehaviour
         meshList.Clear();
     }
 
+    // ------------------------------------------------------------------ 
+    /// Desc:
+    // ------------------------------------------------------------------ 
+
+    internal void SetSpriteDepth (exLayeredSprite _sprite, float _newDepth) {
+        // get old render order
+        int oldMeshIndex = IndexOfMesh (_sprite);
+        exDebug.Assert(oldMeshIndex != -1);
+        exMesh mesh = meshList[oldMeshIndex];
+        int oldSortedSpriteIndex = mesh.sortedSpriteList.BinarySearch(_sprite);
+        exDebug.Assert(oldSortedSpriteIndex >= 0);
+        bool addDepth = _newDepth > _sprite.depth;
+        // apply depth change
+        (_sprite as IFriendOfLayer).DoSetDepth(_newDepth);
+        //
+        if (IsRenderOrderChanged(_sprite, oldMeshIndex, oldSortedSpriteIndex, addDepth)) {
+            RemoveFromMesh (_sprite, mesh); // 这里需要保证depth改变后也能正常remove
+            AddToMesh(_sprite, GetMeshToAdd(_sprite));
+        }
+    }
+    
     // ------------------------------------------------------------------ 
     /// 用于更新sprite的depth、material、vertex count等数据
     // ------------------------------------------------------------------ 
@@ -1008,6 +1037,52 @@ public class exLayer : MonoBehaviour
                 }
             }
             _sprite.isInIndexBuffer = false;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private bool IsRenderOrderChanged (exLayeredSprite _sprite, int _oldMeshIndex, int _oldSortedSpriteIndex, bool _addDepth) { 
+        exMesh mesh = meshList[_oldMeshIndex];
+        if (_addDepth) {
+            // 检查是否需要向上调整渲染层次
+            if (_oldSortedSpriteIndex < mesh.sortedSpriteList.Count - 1) {
+                exLayeredSprite aboveSprite = mesh.sortedSpriteList[_oldSortedSpriteIndex + 1];
+                return (_sprite > aboveSprite); // 返回是否变更后渲染
+            }
+            else {
+                // 检查上面的mesh
+                for (int aboveMeshIndex = _oldMeshIndex + 1; aboveMeshIndex < meshList.Count; ++aboveMeshIndex) {
+                    exMesh aboveMesh = meshList[aboveMeshIndex];
+                    if (aboveMesh != null && aboveMesh.sortedSpriteList.Count > 0) {
+                        exLayeredSprite aboveSprite = aboveMesh.sortedSpriteList[0];
+                        return (_sprite > aboveSprite); // 返回是否变更后渲染
+                    }
+                }
+                // 上面没有其它sprite
+                return false;
+            }
+        }
+        else {
+            // 检查是否需要向下调整渲染层次
+            if (_oldSortedSpriteIndex > 0) {
+                exLayeredSprite belowSprite = mesh.sortedSpriteList[_oldSortedSpriteIndex - 1];
+                return (_sprite < belowSprite);
+            }
+            else {
+                // 检查下面的mesh
+                for (int belowMeshIndex = _oldMeshIndex - 1; belowMeshIndex >= 0; --belowMeshIndex) {
+                    exMesh belowMesh = meshList[belowMeshIndex];
+                    if (belowMesh != null && belowMesh.sortedSpriteList.Count > 0) {
+                        exLayeredSprite belowSprite = belowMesh.sortedSpriteList[belowMesh.sortedSpriteList.Count - 1];
+                        return (_sprite < belowSprite);
+                    }
+                }
+                // 下面没有其它sprite
+                return false;
+            }
         }
     }
 }

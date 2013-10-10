@@ -19,7 +19,7 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayeredSprite> {
+public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayeredSprite>, exLayer.IFriendOfLayer {
 
     public static bool enableFastShowHide = true;
 
@@ -36,10 +36,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         get { return depth_; }
         set {
             if ( depth_ != value ) {
-                if (layer_ != null) {
-                    layer_.OnPreSpriteChange(this);
-                    depth_ = value;
-                    layer_.OnAfterSpriteChange(this);
+                if (layer_ != null && isInIndexBuffer) {
+                    layer_.SetSpriteDepth(this, value);
                 }
                 else {
                     depth_ = value;
@@ -316,6 +314,10 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     }
     
     #endregion
+
+    void exLayer.IFriendOfLayer.DoSetDepth (float _depth) {
+        depth_ = _depth;
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
