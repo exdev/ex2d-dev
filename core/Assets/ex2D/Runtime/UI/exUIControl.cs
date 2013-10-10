@@ -33,21 +33,50 @@ public class exUIControl : exPlane {
     // events, slots and senders
     ///////////////////////////////////////////////////////////////////////////////
 
-    public event System.Action<exUIControl> onActive;
+    // focus
+    public event Action<exUIControl> onFocus;
+    public List<SlotInfo> onFocusSlots = new List<SlotInfo>();
+    public void Send_OnFocus () { if ( onFocus != null ) onFocus (this); }
+
+    // unfocus
+    public event Action<exUIControl> onUnFocus;
+    public List<SlotInfo> onUnFocusSlots = new List<SlotInfo>();
+    public void Send_OnUnFocus () { if ( onUnFocus != null ) onUnFocus (this); }
+
+    // active
+    public event Action<exUIControl> onActive;
     public List<SlotInfo> onActiveSlots = new List<SlotInfo>();
     public void Send_OnActive () { if ( onActive != null ) onActive (this); }
 
-    public event System.Action<exUIControl> onDeactive;
+    // deactive
+    public event Action<exUIControl> onDeactive;
     public List<SlotInfo> onDeactiveSlots = new List<SlotInfo>();
     public void Send_OnDeactive () { if ( onDeactive != null ) onDeactive (this); }
 
-    public event System.Action<exUIControl> onHoverIn;
+    // hover-in
+    public event Action<exUIControl> onHoverIn;
     public List<SlotInfo> onHoverInSlots = new List<SlotInfo>();
     public void Send_OnHoverIn () { if ( onHoverIn != null ) onHoverIn (this); }
 
-    public event System.Action<exUIControl> onHoverOut;
+    // hover-out
+    public event Action<exUIControl> onHoverOut;
     public List<SlotInfo> onHoverOutSlots = new List<SlotInfo>();
     public void Send_OnHoverOut () { if ( onHoverOut != null ) onHoverOut (this); }
+
+    // press-down
+    public event Action<exUIControl,int> onPressDown;
+    public List<SlotInfo> onPressDownSlots = new List<SlotInfo>();
+    public void Send_OnPressDown ( int _pressID ) { if ( onPressDown != null ) onPressDown (this, _pressID); }
+
+    // press-up
+    public event Action<exUIControl,int> onPressUp;
+    public List<SlotInfo> onPressUpSlots = new List<SlotInfo>();
+    public void Send_OnPressUp ( int _pressID ) { if ( onPressUp != null ) onPressUp (this, _pressID); }
+
+    // press-move
+    public event Action<exUIControl,Vector2,List<int>> onPressMove;
+    public List<SlotInfo> onPressMoveSlots = new List<SlotInfo>();
+    public void Send_OnPressMove ( Vector2 _pos, List<int> _pressIDs ) { if ( onPressMove != null ) onPressMove (this, _pos, _pressIDs); }
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -99,6 +128,9 @@ public class exUIControl : exPlane {
         }
     }
 
+    public bool useCollider = false;
+    public bool grabMouseOrTouch = false;
+
     ///////////////////////////////////////////////////////////////////////////////
     // static functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -138,10 +170,15 @@ public class exUIControl : exPlane {
     // ------------------------------------------------------------------ 
 
     protected void Awake () {
-        AddSlotsToEvent ( "onActive", onActiveSlots, new Type[] { typeof(exUIControl) }, typeof(System.Action<exUIControl>) );
-        AddSlotsToEvent ( "onDeactive", onDeactiveSlots, new Type[] { typeof(exUIControl) }, typeof(System.Action<exUIControl>) );
-        AddSlotsToEvent ( "onHoverIn", onHoverInSlots, new Type[] { typeof(exUIControl) }, typeof(System.Action<exUIControl>) );
-        AddSlotsToEvent ( "onHoverOut", onHoverOutSlots, new Type[] { typeof(exUIControl) }, typeof(System.Action<exUIControl>) );
+        AddSlotsToEvent ( "onFocus",        onFocusSlots,       new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
+        AddSlotsToEvent ( "onUnFocus",      onUnFocusSlots,     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
+        AddSlotsToEvent ( "onActive",       onActiveSlots,      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
+        AddSlotsToEvent ( "onDeactive",     onDeactiveSlots,    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
+        AddSlotsToEvent ( "onHoverIn",      onHoverInSlots,     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
+        AddSlotsToEvent ( "onHoverOut",     onHoverOutSlots,    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
+        AddSlotsToEvent ( "onPressDown",    onPressDownSlots,   new Type[] { typeof(exUIControl), typeof(int) }, typeof(Action<exUIControl,int>) );
+        AddSlotsToEvent ( "onPressUp",      onPressUpSlots,     new Type[] { typeof(exUIControl), typeof(int) }, typeof(Action<exUIControl,int>) );
+        AddSlotsToEvent ( "onPressMove",    onPressMoveSlots,   new Type[] { typeof(exUIControl), typeof(Vector2), typeof(List<int>) }, typeof(Action<exUIControl,Vector2,List<int>>) );
     }
 
     // ------------------------------------------------------------------ 
