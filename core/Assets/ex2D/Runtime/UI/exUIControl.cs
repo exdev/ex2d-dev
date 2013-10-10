@@ -29,47 +29,78 @@ public class exUIControl : exPlane {
         public string method = "";
     }
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
+    ///////////////////////////////////////////////////////////////////////////////
+    // events, slots and senders
+    ///////////////////////////////////////////////////////////////////////////////
 
-    public bool isActive {
+    public event System.Action<exUIControl> onActive;
+    public List<SlotInfo> onActiveSlots = new List<SlotInfo>();
+    public void Send_OnActive () { if ( onActive != null ) onActive (this); }
+
+    public event System.Action<exUIControl> onDeactive;
+    public List<SlotInfo> onDeactiveSlots = new List<SlotInfo>();
+    public void Send_OnDeactive () { if ( onDeactive != null ) onDeactive (this); }
+
+    public event System.Action<exUIControl> onHoverIn;
+    public List<SlotInfo> onHoverInSlots = new List<SlotInfo>();
+    public void Send_OnHoverIn () { if ( onHoverIn != null ) onHoverIn (this); }
+
+    public event System.Action<exUIControl> onHoverOut;
+    public List<SlotInfo> onHoverOutSlots = new List<SlotInfo>();
+    public void Send_OnHoverOut () { if ( onHoverOut != null ) onHoverOut (this); }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // properties
+    ///////////////////////////////////////////////////////////////////////////////
+
+    [System.NonSerialized] public exUIControl parent;
+    [System.NonSerialized] public List<exUIControl> children = new List<exUIControl>();
+
+    [SerializeField] protected bool active_ = true;
+    public bool activeInHierarchy {
         get {
-            if ( gameObject.activeInHierarchy == false )
+            if ( active_ == false )
                 return false;
 
-            if ( enabled == false )
-                return false;
             exUIControl p = parent;
             while ( p != null ) {
-                if ( p.enabled == false )
+                if ( p.active_ == false )
                     return false;
                 p = p.parent;
             }
             return true;
         }
+        set {
+            if ( active_ != value ) {
+                active_ = value;
+                if ( active_ )
+                    Send_OnActive();
+                else 
+                    Send_OnDeactive();
+
+                for ( int i = 0; i < children.Count; ++i ) {
+                    children[i].activeInHierarchy = value;
+                }
+            }
+        }
+    }
+    public bool activeSelf {
+        get { 
+            return active_; 
+        }
+        set { 
+            if ( active_ != value ) {
+                active_ = value;
+                if ( active_ )
+                    Send_OnActive();
+                else 
+                    Send_OnDeactive();
+            }
+        }
     }
 
-    [System.NonSerialized] public exUIControl parent;
-    [System.NonSerialized] public List<exUIControl> children = new List<exUIControl>();
-
     ///////////////////////////////////////////////////////////////////////////////
-    // events
-    ///////////////////////////////////////////////////////////////////////////////
-
-    // action ( sender )
-    public event System.Action<GameObject> onHoverIn;
-    public event System.Action<GameObject> onHoverOut;
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // slots
-    ///////////////////////////////////////////////////////////////////////////////
-
-    public List<SlotInfo> onHoverInSlots;
-    public List<SlotInfo> onHoverOutSlots;
-
-    ///////////////////////////////////////////////////////////////////////////////
-    //
+    // static functions
     ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
@@ -107,9 +138,25 @@ public class exUIControl : exPlane {
     // ------------------------------------------------------------------ 
 
     protected void Awake () {
-        AddSlotsToEvent ( "onHoverIn", onHoverInSlots, new Type[] { typeof(GameObject) }, typeof(System.Action<GameObject>) );
-        AddSlotsToEvent ( "onHoverOut", onHoverOutSlots, new Type[] { typeof(GameObject) }, typeof(System.Action<GameObject>) );
+        AddSlotsToEvent ( "onActive", onActiveSlots, new Type[] { typeof(exUIControl) }, typeof(System.Action<exUIControl>) );
+        AddSlotsToEvent ( "onDeactive", onDeactiveSlots, new Type[] { typeof(exUIControl) }, typeof(System.Action<exUIControl>) );
+        AddSlotsToEvent ( "onHoverIn", onHoverInSlots, new Type[] { typeof(exUIControl) }, typeof(System.Action<exUIControl>) );
+        AddSlotsToEvent ( "onHoverOut", onHoverOutSlots, new Type[] { typeof(exUIControl) }, typeof(System.Action<exUIControl>) );
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnDestroy () {
+        if ( parent != null ) {
+            parent.RemoveChild(this);
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -146,34 +193,6 @@ public class exUIControl : exPlane {
         }
         else {
             Debug.LogWarning ("Can not find event " + _eventName + " in " + gameObject.name );
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public void Send_OnHoverIn () {
-        if ( onHoverIn != null )
-            onHoverIn (gameObject);
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public void Send_OnHoverOut () {
-        if ( onHoverOut != null )
-            onHoverOut (gameObject);
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void OnDestroy () {
-        if ( parent != null ) {
-            parent.RemoveChild(this);
         }
     }
 

@@ -519,11 +519,6 @@ public class exUIMng : MonoBehaviour {
         exUIControl curCtrl = PickControl(mouseState.currentPos);
         mouseState.hotControl = curCtrl;
 
-        // DEBUG { 
-        // if ( curCtrl != null )
-        //     Debug.Log("curCtrl = " + curCtrl.name);
-        // } DEBUG end 
-
         // process hover event
         if ( lastCtrl != curCtrl ) {
             // on hover out
@@ -599,7 +594,7 @@ public class exUIMng : MonoBehaviour {
             //         RaycastHit hit = hits[i];
             //         GameObject go = hit.collider.gameObject;
             //         exUIControl ctrl = go.GetComponent<exUIControl>();
-            //         if ( ctrl && ctrl.enabled ) {
+            //         if ( ctrl && ctrl.activeSelf ) {
             //             return ctrl;
             //         }
             //     }
@@ -612,7 +607,7 @@ public class exUIMng : MonoBehaviour {
                 RaycastHit hit = hits[i];
                 GameObject go = hit.collider.gameObject;
                 exUIControl ctrl = go.GetComponent<exUIControl>();
-                if ( ctrl && ctrl.isActive ) {
+                if ( ctrl && ctrl.gameObject.activeInHierarchy && ctrl.activeInHierarchy ) {
                     controls.Add(ctrl);
                 }
             }
@@ -640,7 +635,7 @@ public class exUIMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     exUIControl RecursivelyGetUIControl ( exUIControl _ctrl, Vector2 _worldPos ) {
-        if ( _ctrl.gameObject.activeInHierarchy == false || _ctrl.enabled == false )
+        if ( _ctrl.gameObject.activeSelf == false || _ctrl.activeSelf == false )
             return null;
 
         //
