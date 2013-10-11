@@ -199,7 +199,7 @@ public class exUIControl : exPlane {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void AddSlotsToEvent ( string _eventName, List<SlotInfo> _slots, Type[] _parameterTypes, Type _delegateType ) {
+    protected void AddSlotsToEvent ( string _eventName, List<SlotInfo> _slots, Type[] _parameterTypes, Type _delegateType ) {
         Type controlType = this.GetType();
         EventInfo eventInfo = controlType.GetEvent(_eventName);
         if ( eventInfo != null ) {

@@ -79,6 +79,8 @@ public class ControlSorterByZ: IComparer<exUIControl> {
 // ------------------------------------------------------------------ 
 
 public struct exHotPoint {
+    public int id;
+    public bool isMouse;
     public bool active;
     public bool pressDown;
     public bool pressUp;
@@ -121,27 +123,6 @@ public class exUIMng : MonoBehaviour {
     static ControlSorterByZ controlSorterByZ = new ControlSorterByZ();
 
     ///////////////////////////////////////////////////////////////////////////////
-    // structures
-    ///////////////////////////////////////////////////////////////////////////////
-
-    // DELME { 
-    //
-    [System.Serializable]
-    public class TouchState {
-        public bool active = false;
-        public exUIControl hover = null;
-    }
-
-    //
-    [System.Serializable]
-    public class MouseState {
-        public Vector2 pos = Vector2.zero;
-        public exUIControl hover = null;
-        public exUIControl pressed = null;
-    }
-    // } DELME end 
-
-    ///////////////////////////////////////////////////////////////////////////////
     // serializable 
     ///////////////////////////////////////////////////////////////////////////////
 
@@ -161,12 +142,9 @@ public class exUIMng : MonoBehaviour {
 
     List<exUIControl> controls = new List<exUIControl>(); // root contrls
 
-    // TODO: some control needs two more finger to make it drag or accept events, 
-    //       when this happens, you need to detect all TouchState and generate hotPoint state based on your touches.
-    // hotpointState
-
     // internal ui status
-    exHotPoint[] hotPoints = new exHotPoint[10];
+    exHotPoint[] mousePoints = new exHotPoint[3];
+    exHotPoint[] touchPoints = new exHotPoint[10];
     exUIControl focus = null; // the Input focus ( usually, the keyboard focus )
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -277,8 +255,15 @@ public class exUIMng : MonoBehaviour {
 
         //
         for ( int i = 0; i < 10; ++i ) {
-            hotPoints[i] = new exHotPoint();
-            hotPoints[i].Reset();
+            touchPoints[i] = new exHotPoint();
+            touchPoints[i].Reset();
+            touchPoints[i].id = i;
+        }
+        for ( int i = 0; i < 3; ++i ) {
+            mousePoints[i] = new exHotPoint();
+            mousePoints[i].Reset();
+            mousePoints[i].id = i;
+            mousePoints[i].isMouse = true;
         }
 
         // recursively add ui-tree
@@ -306,8 +291,14 @@ public class exUIMng : MonoBehaviour {
 
     void HandleEvents () {
         // make sure all hotpoints de-active at first
-        for ( int i = 0; i < hotPoints.Length; ++i ) {
-            exHotPoint hotPoint = hotPoints[i];
+        for ( int i = 0; i < touchPoints.Length; ++i ) {
+            exHotPoint hotPoint = touchPoints[i];
+            hotPoint.active = false;
+            hotPoint.pressDown = false;
+            hotPoint.pressUp = false;
+        }
+        for ( int i = 0; i < mousePoints.Length; ++i ) {
+            exHotPoint hotPoint = mousePoints[i];
             hotPoint.active = false;
             hotPoint.pressDown = false;
             hotPoint.pressUp = false;
@@ -315,34 +306,25 @@ public class exUIMng : MonoBehaviour {
 
         //
         if ( hasMouse )
-            ProcessMouse();
+            HandleMouse();
 
         if ( hasTouch )
-            ProcessTouches();
-
-        //
-        DispatchEvents ();
+            HandleTouches();
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DispatchEvents () {
+    void DispatchHotPoints ( exHotPoint[] _hotPoints, bool _isMouse ) {
 
         // ======================================================== 
         // handle hover event
         // ======================================================== 
 
-        // NOTE: make sure we use 
-        int hotPointCount = hotPoints.Length;
-        if ( hasMouse && simulateMouseAsTouch == false ) {
-            hotPointCount = 1;
-        }
-
-        // NOTE: 
-        for ( int i = 0; i < hotPointCount; ++i ) {
-            exHotPoint hotPoint = hotPoints[i];
+        int hotPointCountForMouse = _isMouse ? 1 : _hotPoints.Length;
+        for ( int i = 0; i < hotPointCountForMouse; ++i ) {
+            exHotPoint hotPoint = _hotPoints[i];
 
             if ( hotPoint.active == false )
                 continue;
@@ -364,13 +346,12 @@ public class exUIMng : MonoBehaviour {
                 }
             }
 
-            hotPoints[i] = hotPoint;
+            _hotPoints[i] = hotPoint;
         }
 
-        // set other hotpoints' hover as the first one
-        if ( hasMouse && simulateMouseAsTouch == false ) {
-            for ( int i = 1; i < hotPoints.Length; ++i ) {
-                hotPoints[i].hover = hotPoints[0].hover;
+        if ( _isMouse ) {
+            for ( int i = 1; i < _hotPoints.Length; ++i ) {
+                _hotPoints[i].hover = _hotPoints[0].hover;
             }
         }
 
@@ -378,8 +359,8 @@ public class exUIMng : MonoBehaviour {
         // handle press down event
         // ======================================================== 
 
-        for ( int i = 0; i < hotPoints.Length; ++i ) {
-            exHotPoint hotPoint = hotPoints[i];
+        for ( int i = 0; i < _hotPoints.Length; ++i ) {
+            exHotPoint hotPoint = _hotPoints[i];
 
             if ( hotPoint.active == false )
                 continue;
@@ -396,7 +377,7 @@ public class exUIMng : MonoBehaviour {
                 }
                 hotPoint.pressed = curPressCtrl;
 
-                hotPoints[i] = hotPoint;
+                _hotPoints[i] = hotPoint;
             }
         }
 
@@ -407,8 +388,8 @@ public class exUIMng : MonoBehaviour {
         Dictionary<exUIControl, List<exHotPoint>> moveEvents = new Dictionary<exUIControl, List<exHotPoint>>();
 
         // collect press move event
-        for ( int i = 0; i < hotPointCount; ++i ) {
-            exHotPoint hotPoint = hotPoints[i];
+        for ( int i = 0; i < _hotPoints.Length; ++i ) {
+            exHotPoint hotPoint = _hotPoints[i];
 
             if ( hotPoint.active == false )
                 continue;
@@ -442,8 +423,8 @@ public class exUIMng : MonoBehaviour {
         // handle press up event 
         // ======================================================== 
 
-        for ( int i = 0; i < hotPoints.Length; ++i ) {
-            exHotPoint hotPoint = hotPoints[i];
+        for ( int i = 0; i < _hotPoints.Length; ++i ) {
+            exHotPoint hotPoint = _hotPoints[i];
 
             if ( hotPoint.active == false )
                 continue;
@@ -461,7 +442,7 @@ public class exUIMng : MonoBehaviour {
                 }
 
                 hotPoint.pressed = null;
-                hotPoints[i] = hotPoint;
+                _hotPoints[i] = hotPoint;
             }
         }
     }
@@ -470,14 +451,14 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void ProcessTouches () {
+    void HandleTouches () {
 		for ( int i = 0; i < Input.touchCount; ++i ) {
 			Touch touch = Input.GetTouch(i);
 
             if ( touch.fingerId >= 10 )
                 continue;
 
-            exHotPoint hotPoint = hotPoints[touch.fingerId];
+            exHotPoint hotPoint = touchPoints[touch.fingerId];
             hotPoint.active = true;
 
             // we need clear all internal state when hotpoint is de-active
@@ -492,39 +473,64 @@ public class exUIMng : MonoBehaviour {
                 hotPoint.pressUp = (touch.phase == TouchPhase.Canceled || touch.phase == TouchPhase.Ended);
             }
 
-            hotPoints[i] = hotPoint;
+            touchPoints[touch.fingerId] = hotPoint;
         }
+
+        DispatchHotPoints ( touchPoints, false );
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void ProcessMouse () {
-        for ( int i = 0; i < 3; ++i ) {
-            exHotPoint hotPoint = hotPoints[i];
+    void HandleMouse () {
+        if ( simulateMouseAsTouch ) {
+            for ( int i = 0; i < 3; ++i ) {
+                exHotPoint hotPoint = touchPoints[i];
 
-            // check if active the hotPoint
-            if ( simulateMouseAsTouch ) {
+                // check if active the hotPoint
                 hotPoint.active = Input.GetMouseButton(i) || Input.GetMouseButtonUp(i);
+
+                // we need clear all internal state when hotpoint is de-active
+                if ( hotPoint.active == false ) {
+                    hotPoint.Reset();
+                }
+                else {
+                    Vector2 lastMousePos = hotPoint.pos;
+                    hotPoint.pos = Input.mousePosition;
+                    hotPoint.delta = hotPoint.pos - lastMousePos;
+                    hotPoint.pressDown = Input.GetMouseButtonDown(i);
+                    hotPoint.pressUp = Input.GetMouseButtonUp(i);
+                }
+
+                touchPoints[i] = hotPoint;
             }
-            else {
+
+            DispatchHotPoints ( touchPoints, false );
+        }
+        else {
+            for ( int i = 0; i < 3; ++i ) {
+                exHotPoint hotPoint = mousePoints[i];
+
+                // check if active the hotPoint
                 hotPoint.active = true;
+
+                // we need clear all internal state when hotpoint is de-active
+                if ( hotPoint.active == false ) {
+                    hotPoint.Reset();
+                }
+                else {
+                    Vector2 lastMousePos = hotPoint.pos;
+                    hotPoint.pos = Input.mousePosition;
+                    hotPoint.delta = hotPoint.pos - lastMousePos;
+                    hotPoint.pressDown = Input.GetMouseButtonDown(i);
+                    hotPoint.pressUp = Input.GetMouseButtonUp(i);
+                }
+
+                mousePoints[i] = hotPoint;
             }
 
-            // we need clear all internal state when hotpoint is de-active
-            if ( hotPoint.active == false ) {
-                hotPoint.Reset();
-            }
-            else {
-                Vector2 lastMousePos = hotPoint.pos;
-                hotPoint.pos = Input.mousePosition;
-                hotPoint.delta = hotPoint.pos - lastMousePos;
-                hotPoint.pressDown = Input.GetMouseButtonDown(i);
-                hotPoint.pressUp = Input.GetMouseButtonUp(i);
-            }
-
-            hotPoints[i] = hotPoint;
+            DispatchHotPoints ( mousePoints, true );
         }
     }
 
@@ -629,21 +635,37 @@ public class exUIMng : MonoBehaviour {
             // Keyboard
             GUILayout.Label( "Keyboard Focus: " + (focus ? focus.name : "None") );
 
-            // Hotpoint State
-            for ( int i = 0; i < hotPoints.Length; ++i ) {
-                exHotPoint hotPoint = hotPoints[i];
+            // Touch-Point State
+            if ( hasTouch || simulateMouseAsTouch ) {
+                for ( int i = 0; i < touchPoints.Length; ++i ) {
+                    exHotPoint hotPoint = touchPoints[i];
 
-                if ( hotPoint.active == false )
-                    continue;
+                    if ( hotPoint.active == false )
+                        continue;
 
-                GUILayout.Label( "hot-point[" + i + "]" );
+                    GUILayout.Label( "Touch[" + i + "]" );
+                    GUILayout.BeginHorizontal ();
+                        GUILayout.Space (15);
+                        GUILayout.BeginVertical ();
+                            GUILayout.Label( "pos: " + hotPoint.pos.ToString() );
+                            GUILayout.Label( "hover: " + (hotPoint.hover ? hotPoint.hover.name : "None") );
+                            GUILayout.Label( "pressed: " + (hotPoint.pressed ? hotPoint.pressed.name : "None") );
+                        GUILayout.EndVertical ();
+                    GUILayout.EndHorizontal ();
+                }
+            }
+
+            // Mouse-Point State
+            if ( hasMouse && simulateMouseAsTouch == false ) {
+                GUILayout.Label( "Mouse" );
                 GUILayout.BeginHorizontal ();
-                GUILayout.Space (15);
+                    GUILayout.Space (15);
                     GUILayout.BeginVertical ();
-                        GUILayout.Label( "pos: " + hotPoint.pos.ToString() );
-                        GUILayout.Label( "hover: " + (hotPoint.hover ? hotPoint.hover.name : "None") );
-                        GUILayout.Label( "pressed: " + (hotPoint.pressed ? hotPoint.pressed.name : "None") );
-
+                        GUILayout.Label( "pos: " + mousePoints[0].pos.ToString() );
+                        GUILayout.Label( "hover: " + (mousePoints[0].hover ? mousePoints[0].hover.name : "None") );
+                        GUILayout.Label( "left-pressed: " + (mousePoints[0].pressed ? mousePoints[0].pressed.name : "None") );
+                        GUILayout.Label( "right-pressed: " + (mousePoints[1].pressed ? mousePoints[1].pressed.name : "None") );
+                        GUILayout.Label( "middle-pressed: " + (mousePoints[2].pressed ? mousePoints[2].pressed.name : "None") );
                     GUILayout.EndVertical ();
                 GUILayout.EndHorizontal ();
             }
