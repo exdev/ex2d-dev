@@ -497,19 +497,30 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     internal void SetSpriteDepth (exLayeredSprite _sprite, float _newDepth) {
-        // get old render order
         int oldMeshIndex = IndexOfMesh (_sprite);
         exDebug.Assert(oldMeshIndex != -1);
         exMesh mesh = meshList[oldMeshIndex];
-        int oldSortedSpriteIndex = mesh.sortedSpriteList.BinarySearch(_sprite);
-        exDebug.Assert(oldSortedSpriteIndex >= 0);
-        bool addDepth = _newDepth > _sprite.depth;
+        float oldDepth = _sprite.depth;
+        bool addDepth = _newDepth > oldDepth;
         // apply depth change
         (_sprite as IFriendOfLayer).DoSetDepth(_newDepth);
         //
-        if (IsRenderOrderChanged(_sprite, oldMeshIndex, oldSortedSpriteIndex, addDepth)) {
+        if (IsMeshChanged(_sprite, oldMeshIndex, addDepth)) {
             RemoveFromMesh (_sprite, mesh); // 这里需要保证depth改变后也能正常remove
             AddToMesh(_sprite, GetMeshToAdd(_sprite));
+        }
+        else {
+            // get old render order in mesh
+            // TODO: remove DoSetDepth
+            (_sprite as IFriendOfLayer).DoSetDepth(oldDepth);
+            int oldSortedSpriteIndex = mesh.sortedSpriteList.BinarySearch(_sprite);
+            exDebug.Assert(oldSortedSpriteIndex >= 0);
+            (_sprite as IFriendOfLayer).DoSetDepth(_newDepth);
+            //
+            if (IsRenderOrderChangedInMesh(_sprite, oldMeshIndex, oldSortedSpriteIndex, addDepth)) {
+                RemoveFromMesh (_sprite, mesh); // 这里需要保证depth改变后也能正常remove
+                AddToMesh(_sprite, mesh);
+            }
         }
     }
     
@@ -1044,45 +1055,63 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private bool IsRenderOrderChanged (exLayeredSprite _sprite, int _oldMeshIndex, int _oldSortedSpriteIndex, bool _addDepth) { 
+    private exLayeredSprite GetNearestSpriteFromBelowMesh (int _curMeshIndex) {
+        for (int belowMeshIndex = _curMeshIndex - 1; belowMeshIndex >= 0; --belowMeshIndex) {
+            exMesh belowMesh = meshList[belowMeshIndex];
+            if (belowMesh != null && belowMesh.sortedSpriteList.Count > 0) {
+                return belowMesh.sortedSpriteList[belowMesh.sortedSpriteList.Count - 1];
+            }
+        }
+        return null;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private exLayeredSprite GetNearestSpriteFromAboveMesh (int _curMeshIndex) {
+        for (int aboveMeshIndex = _curMeshIndex + 1; aboveMeshIndex < meshList.Count; ++aboveMeshIndex) {
+            exMesh aboveMesh = meshList[aboveMeshIndex];
+            if (aboveMesh != null && aboveMesh.sortedSpriteList.Count > 0) {
+                return aboveMesh.sortedSpriteList[0];
+            }
+        }
+        return null;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private bool IsMeshChanged (exLayeredSprite _sprite, int _oldMeshIndex, bool _addDepth) { 
+        if (_addDepth) {
+            exLayeredSprite aboveSprite = GetNearestSpriteFromAboveMesh(_oldMeshIndex);
+            return (aboveSprite != null && _sprite > aboveSprite);
+        }
+        else {
+            exLayeredSprite belowSprite = GetNearestSpriteFromBelowMesh(_oldMeshIndex);
+            return (belowSprite != null && _sprite < belowSprite);
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private bool IsRenderOrderChangedInMesh (exLayeredSprite _sprite, int _oldMeshIndex, int _oldSortedSpriteIndex, bool _addDepth) { 
         exMesh mesh = meshList[_oldMeshIndex];
         if (_addDepth) {
-            // 检查是否需要向上调整渲染层次
             if (_oldSortedSpriteIndex < mesh.sortedSpriteList.Count - 1) {
                 exLayeredSprite aboveSprite = mesh.sortedSpriteList[_oldSortedSpriteIndex + 1];
-                return (_sprite > aboveSprite); // 返回是否变更后渲染
-            }
-            else {
-                // 检查上面的mesh
-                for (int aboveMeshIndex = _oldMeshIndex + 1; aboveMeshIndex < meshList.Count; ++aboveMeshIndex) {
-                    exMesh aboveMesh = meshList[aboveMeshIndex];
-                    if (aboveMesh != null && aboveMesh.sortedSpriteList.Count > 0) {
-                        exLayeredSprite aboveSprite = aboveMesh.sortedSpriteList[0];
-                        return (_sprite > aboveSprite); // 返回是否变更后渲染
-                    }
-                }
-                // 上面没有其它sprite
-                return false;
+                return (_sprite > aboveSprite); // 是否要更后渲染;
             }
         }
         else {
-            // 检查是否需要向下调整渲染层次
             if (_oldSortedSpriteIndex > 0) {
                 exLayeredSprite belowSprite = mesh.sortedSpriteList[_oldSortedSpriteIndex - 1];
                 return (_sprite < belowSprite);
             }
-            else {
-                // 检查下面的mesh
-                for (int belowMeshIndex = _oldMeshIndex - 1; belowMeshIndex >= 0; --belowMeshIndex) {
-                    exMesh belowMesh = meshList[belowMeshIndex];
-                    if (belowMesh != null && belowMesh.sortedSpriteList.Count > 0) {
-                        exLayeredSprite belowSprite = belowMesh.sortedSpriteList[belowMesh.sortedSpriteList.Count - 1];
-                        return (_sprite < belowSprite);
-                    }
-                }
-                // 下面没有其它sprite
-                return false;
-            }
         }
+        return false;
     }
 }
