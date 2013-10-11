@@ -156,8 +156,8 @@ public class exUIMng : MonoBehaviour {
     bool initialized = false;
     bool hasMouse = false;
     bool hasTouch = false;
-    bool hasKeyboard = false;
-    bool hasController = false;
+    // bool hasKeyboard = false;
+    // bool hasController = false;
 
     List<exUIControl> controls = new List<exUIControl>(); // root contrls
 
@@ -253,8 +253,8 @@ public class exUIMng : MonoBehaviour {
 		{
 			hasMouse = false;
 			hasTouch = true;
-			hasKeyboard = false;
-			hasController = true;
+            // hasKeyboard = false;
+            // hasController = true;
 		}
         else if ( Application.platform == RuntimePlatform.PS3
                || Application.platform == RuntimePlatform.XBOX360 
@@ -262,8 +262,8 @@ public class exUIMng : MonoBehaviour {
 		{
 			hasMouse = false;
 			hasTouch = false;
-			hasKeyboard = false;
-			hasController = true;
+            // hasKeyboard = false;
+            // hasController = true;
 		}
 		else if ( Application.platform == RuntimePlatform.WindowsEditor 
                || Application.platform == RuntimePlatform.OSXEditor
@@ -271,8 +271,8 @@ public class exUIMng : MonoBehaviour {
 		{
 			hasMouse = true;
 			hasTouch = false;
-			hasKeyboard = true;
-			hasController = true;
+            // hasKeyboard = true;
+            // hasController = true;
 		}
 
         //
