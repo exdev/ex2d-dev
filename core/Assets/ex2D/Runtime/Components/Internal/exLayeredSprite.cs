@@ -146,7 +146,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         }
     }
 
-    void OnDestroy () {
+    protected new void OnDestroy () {
+        base.OnDestroy ();
         if (layer_ != null) {
             layer_.Remove(this, false);
         }
@@ -157,7 +158,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
 #if UNITY_EDITOR
     
     // Allows drag & dropping of this sprite onto layer in the editor
-    void LateUpdate () {
+    protected new void LateUpdate () {
+        base.LateUpdate ();
         if (UnityEditor.EditorApplication.isPlaying == false) {
             // Run through the parents and see if this sprite attached to a layer
             Transform parentTransform = cachedTransform.parent;
@@ -252,7 +254,21 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         }
         return dest;
     }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
 
+    public virtual void SetClip (exClipping _clip = null) {
+        if (_clip != null) {
+            if (_clip.transform.IsChildOf (layer_.transform) == false) {
+                Debug.LogError ("Can not add to clip which not in current layer!");
+                return;
+            }
+        }
+        base.SetClip (_clip);
+    }
+    
     #region System.IComparable<exLayeredSprite>
     
     // ------------------------------------------------------------------ 
@@ -340,15 +356,12 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         if (ReferenceEquals(layer_, _layer)) {
             return;
         }
-        //bool isInited = (cachedTransform != null);
-        //if (isInited) {
         if (_layer != null) {
             _layer.Add(this);
         }
         else if (layer_ != null) {
             layer_.Remove(this);
         }
-        //}
     }
     
     // ------------------------------------------------------------------ 
