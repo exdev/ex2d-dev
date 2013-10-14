@@ -79,7 +79,6 @@ public class exDebugHelperEditor : Editor {
 
     override public void OnInspectorGUI () {
 
-        EditorGUIUtility.LookLikeInspector ();
         EditorGUILayout.Space ();
         EditorGUI.indentLevel = 0;
 

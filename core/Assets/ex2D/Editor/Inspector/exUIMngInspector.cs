@@ -30,7 +30,6 @@ class exUIMngInspector : Editor {
     // ------------------------------------------------------------------ 
 
 	public override void OnInspectorGUI () {
-        EditorGUIUtility.LookLikeInspector();
         DrawDefaultInspector(); 
 
         EditorGUILayout.Space();
@@ -42,7 +41,7 @@ class exUIMngInspector : Editor {
         exUIMng mng = target as exUIMng;
         if ( mng.showDebugInfo ) {
 
-            int areaWidth = Screen.width-20;
+            int areaWidth = Screen.width-40;
             int areaHeight = 300;
 
             mng.ShowDebugInfo ( new Rect ( 10, areaY, areaWidth, areaHeight ) );

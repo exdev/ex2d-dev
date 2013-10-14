@@ -50,6 +50,7 @@ class exSpriteBaseInspector : Editor {
         serializedObject.Update ();
 
         EditorGUILayout.Space();
+        // EditorGUIUtility.LookLikeInspector();
 
         // customSize
         EditorGUI.BeginChangeCheck();
