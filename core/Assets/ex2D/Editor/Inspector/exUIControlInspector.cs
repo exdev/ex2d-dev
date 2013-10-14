@@ -27,9 +27,6 @@ class exUIControlInspector : exPlaneInspector {
     SerializedProperty grabMouseOrTouchProp;
     SerializedProperty useColliderProp;
 
-    SerializedProperty onHoverInSlotsProp;
-    SerializedProperty onHoverOutSlotsProp;
-
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
@@ -118,11 +115,71 @@ class exUIControlInspector : exPlaneInspector {
             EditorGUILayout.EndHorizontal();
         }
 
-        // slots
-        EditorGUILayout.PropertyField (onHoverInSlotsProp, true );
-        EditorGUILayout.PropertyField (onHoverOutSlotsProp, true );
+        // event slots
+        EditorGUILayout.Space();
+        if ( serializedObject.isEditingMultipleObjects == false ) {
+            exUIControl uiControl = target as exUIControl;
+            for ( int i = 0; i < uiControl.exUIControl_events.Length; ++i ) {
+                exUIControl.EventSlot eventSlot = uiControl.exUIControl_events[i];
+                EventField ( eventSlot );
+                EditorGUILayout.Space();
+            }
+        }
 
         serializedObject.ApplyModifiedProperties();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected void EventField ( exUIControl.EventSlot _eventSlot ) {
+		GUILayout.BeginHorizontal();
+		GUILayout.Space(4f);
+
+            GUILayout.BeginVertical();
+                // name
+                GUILayout.Toggle( true, _eventSlot.name, "dragtab");
+
+                EditorGUILayout.BeginHorizontal("AS TextArea", GUILayout.MinHeight(10f));
+                GUILayout.BeginVertical();
+
+                    // slots
+                    for ( int i = 0; i < _eventSlot.slots.Count; ++i ) {
+                        exUIControl.SlotInfo slotInfo = _eventSlot.slots[i];
+                        SlotField (slotInfo);
+                    }
+                    SlotField (null);
+
+                GUILayout.EndVertical();
+                EditorGUILayout.EndHorizontal();
+            GUILayout.EndVertical();
+
+		GUILayout.Space(4f);
+		GUILayout.EndHorizontal();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected exUIControl.SlotInfo SlotField ( exUIControl.SlotInfo _slot ) {
+        bool isNew = _slot == null ? true : false;
+        exUIControl.SlotInfo slot = _slot;
+        if ( isNew )
+            slot = new exUIControl.SlotInfo();
+
+        EditorGUILayout.BeginHorizontal();
+            slot.receiver = EditorGUILayout.ObjectField( "Receiver", slot.receiver, typeof(GameObject), true ) as GameObject;
+
+            if ( isNew == false ) {
+                if ( GUILayout.Button( EditorGUIUtility.FindTexture("Toolbar Minus"), "InvisibleButton", GUILayout.Width(20f) ) ) {
+                }
+            }
+            GUILayout.Space(3f);
+        GUILayout.EndHorizontal();
+
+        return slot;
     }
 
     // ------------------------------------------------------------------ 
@@ -143,9 +200,6 @@ class exUIControlInspector : exPlaneInspector {
         activeProp = serializedObject.FindProperty("active_");
         grabMouseOrTouchProp = serializedObject.FindProperty("grabMouseOrTouch");
         useColliderProp = serializedObject.FindProperty("useCollider");
-
-        onHoverInSlotsProp = serializedObject.FindProperty("onHoverInSlots");
-        onHoverOutSlotsProp = serializedObject.FindProperty("onHoverOutSlots");
     }
 }
 

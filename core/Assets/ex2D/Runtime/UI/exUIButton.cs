@@ -10,6 +10,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -21,24 +22,21 @@ using System.Collections.Generic;
 
 public class exUIButton : exUIControl {
 
-    // click
+    // events
     public event System.Action<exUIControl> onClick;
-    public void Send_OnClick () { if ( onClick != null ) onClick (this); }
-    public List<SlotInfo> onClickSlots = new List<SlotInfo>();
-
-    // button-down
     public event System.Action<exUIControl> onButtonDown;
-    public void Send_OnButtonDown () { if ( onButtonDown != null ) onButtonDown (this); }
-    public List<SlotInfo> onButtonDownSlots = new List<SlotInfo>();
-
-    // button-up
     public event System.Action<exUIControl> onButtonUp;
-    public void Send_OnButtonUp () { if ( onButtonUp != null ) onButtonUp (this); }
-    public List<SlotInfo> onButtonUpSlots = new List<SlotInfo>();
+
+    // event slots
+    public EventSlot[] exUIButton_events = new EventSlot[] {
+        new EventSlot ( "onClick",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventSlot ( "onButtonDown", new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventSlot ( "onButtonUp",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+    };
 
     //
     bool pressing = false;
-    Vector2 pressDownAt = Vector2.zero; 
+    // Vector2 pressDownAt = Vector2.zero; 
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -50,31 +48,28 @@ public class exUIButton : exUIControl {
 
     protected new void Awake () {
         base.Awake();
-
-        AddSlotsToEvent ( "onClick",       onClickSlots,       new System.Type[] { typeof(exUIControl) }, typeof(System.Action<exUIControl>) );
-        AddSlotsToEvent ( "onButtonDown",  onButtonDownSlots,  new System.Type[] { typeof(exUIControl) }, typeof(System.Action<exUIControl>) );
-        AddSlotsToEvent ( "onButtonUp",    onButtonUpSlots,    new System.Type[] { typeof(exUIControl) }, typeof(System.Action<exUIControl>) );
+        InitEvents (exUIButton_events);
 
         onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
             // only accept on hot-point
             if ( pressing )
                 return;
 
-            if ( (_point.isMouse == false) || _point.isMouse && _point.id == 0 ) {
+            if ( _point.isTouch || _point.GetMouseButton(0) ) {
                 pressing = true;
-                pressDownAt = _point.pos;
+                // pressDownAt = _point.pos;
 
                 exUIMng.inst.SetFocus(this);
-                Send_OnButtonDown ();
+                if ( onButtonDown != null ) onButtonDown (this);
             }
         };
 
         onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
-            Send_OnButtonUp ();
+            if ( onButtonUp != null ) onButtonUp (this);
 
             if ( pressing ) {
                 pressing = false;
-                Send_OnClick ();
+                if ( onClick != null ) onClick (this);
             }
         };
 

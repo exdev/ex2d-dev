@@ -29,54 +29,59 @@ public class exUIControl : exPlane {
         public string method = "";
     }
 
+    [System.Serializable]
+    public class EventSlot {
+        public string name;
+        public List<SlotInfo> slots;
+        public Type[] parameterTypes;
+        public Type delegateType;
+
+        public EventSlot ( string _name, Type[] _parameterTypes, Type _delegateType ) {
+            name = _name;
+            parameterTypes = _parameterTypes;
+            delegateType = _delegateType;
+            slots = new List<SlotInfo>();
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // events, slots and senders
     ///////////////////////////////////////////////////////////////////////////////
 
-    // focus
+    // events
     public event Action<exUIControl> onFocus;
-    public void Send_OnFocus () { if ( onFocus != null ) onFocus (this); }
-    public List<SlotInfo> onFocusSlots = new List<SlotInfo>();
-
-    // unfocus
-    public event Action<exUIControl> onUnFocus;
-    public void Send_OnUnFocus () { if ( onUnFocus != null ) onUnFocus (this); }
-    public List<SlotInfo> onUnFocusSlots = new List<SlotInfo>();
-
-    // active
+    public event Action<exUIControl> onUnfocus;
     public event Action<exUIControl> onActive;
-    public void Send_OnActive () { if ( onActive != null ) onActive (this); }
-    public List<SlotInfo> onActiveSlots = new List<SlotInfo>();
-
-    // deactive
     public event Action<exUIControl> onDeactive;
-    public void Send_OnDeactive () { if ( onDeactive != null ) onDeactive (this); }
-    public List<SlotInfo> onDeactiveSlots = new List<SlotInfo>();
-
-    // hover-in
     public event Action<exUIControl,exHotPoint> onHoverIn;
-    public void Send_OnHoverIn ( exHotPoint _hotPoint ) { if ( onHoverIn != null ) onHoverIn (this,_hotPoint); }
-    public List<SlotInfo> onHoverInSlots = new List<SlotInfo>();
-
-    // hover-out
     public event Action<exUIControl,exHotPoint> onHoverOut;
-    public void Send_OnHoverOut ( exHotPoint _hotPoint ) { if ( onHoverOut != null ) onHoverOut (this,_hotPoint); }
-    public List<SlotInfo> onHoverOutSlots = new List<SlotInfo>();
-
-    // press-down
     public event Action<exUIControl,exHotPoint> onPressDown;
-    public void Send_OnPressDown ( exHotPoint _hotPoint ) { if ( onPressDown != null ) onPressDown (this,_hotPoint); }
-    public List<SlotInfo> onPressDownSlots = new List<SlotInfo>();
-
-    // press-up
     public event Action<exUIControl,exHotPoint> onPressUp;
-    public void Send_OnPressUp ( exHotPoint _hotPoint ) { if ( onPressUp != null ) onPressUp (this,_hotPoint); }
-    public List<SlotInfo> onPressUpSlots = new List<SlotInfo>();
-
-    // press-move
     public event Action<exUIControl,List<exHotPoint>> onPressMove;
+
+    // event slots
+    public EventSlot[] exUIControl_events = new EventSlot[] {
+        new EventSlot ( "onFocus",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventSlot ( "onUnfocus",    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventSlot ( "onActive",     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventSlot ( "onDeactive",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventSlot ( "onHoverIn",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventSlot ( "onHoverOut",   new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventSlot ( "onPressDown",  new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventSlot ( "onPressUp",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventSlot ( "onPressMove",  new Type[] { typeof(exUIControl), typeof(List<exHotPoint>) }, typeof(Action<exUIControl,List<exHotPoint>>) ),
+    };
+
+    // event easy function
+    public void Send_OnFocus () { if ( onFocus != null ) onFocus (this); }
+    public void Send_OnUnfocus () { if ( onUnfocus != null ) onUnfocus (this); }
+    public void Send_OnActive () { if ( onActive != null ) onActive (this); }
+    public void Send_OnDeactive () { if ( onDeactive != null ) onDeactive (this); }
+    public void Send_OnHoverIn ( exHotPoint _hotPoint ) { if ( onHoverIn != null ) onHoverIn (this,_hotPoint); }
+    public void Send_OnHoverOut ( exHotPoint _hotPoint ) { if ( onHoverOut != null ) onHoverOut (this,_hotPoint); }
+    public void Send_OnPressDown ( exHotPoint _hotPoint ) { if ( onPressDown != null ) onPressDown (this,_hotPoint); }
+    public void Send_OnPressUp ( exHotPoint _hotPoint ) { if ( onPressUp != null ) onPressUp (this,_hotPoint); }
     public void Send_OnPressMove ( List<exHotPoint> _hotPoints ) { if ( onPressMove != null ) onPressMove (this,_hotPoints); }
-    public List<SlotInfo> onPressMoveSlots = new List<SlotInfo>();
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -170,15 +175,7 @@ public class exUIControl : exPlane {
     // ------------------------------------------------------------------ 
 
     protected void Awake () {
-        AddSlotsToEvent ( "onFocus",        onFocusSlots,       new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
-        AddSlotsToEvent ( "onUnFocus",      onUnFocusSlots,     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
-        AddSlotsToEvent ( "onActive",       onActiveSlots,      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
-        AddSlotsToEvent ( "onDeactive",     onDeactiveSlots,    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
-        AddSlotsToEvent ( "onHoverIn",      onHoverInSlots,     new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) );
-        AddSlotsToEvent ( "onHoverOut",     onHoverOutSlots,    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) );
-        AddSlotsToEvent ( "onPressDown",    onPressDownSlots,   new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) );
-        AddSlotsToEvent ( "onPressUp",      onPressUpSlots,     new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) );
-        AddSlotsToEvent ( "onPressMove",    onPressMoveSlots,   new Type[] { typeof(exUIControl), typeof(List<exHotPoint>) }, typeof(Action<exUIControl,List<exHotPoint>>) );
+        InitEvents (exUIControl_events);
     }
 
     // ------------------------------------------------------------------ 
@@ -194,6 +191,16 @@ public class exUIControl : exPlane {
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected void InitEvents ( EventSlot[] _events ) {
+        foreach ( EventSlot eventSlot in _events ) {
+            AddSlotsToEvent ( eventSlot.name, eventSlot.slots, eventSlot.parameterTypes, eventSlot.delegateType );
+        }
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 

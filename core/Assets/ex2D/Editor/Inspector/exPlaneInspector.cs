@@ -46,7 +46,6 @@ class exPlaneInspector : Editor {
         serializedObject.Update ();
 
         EditorGUILayout.Space();
-        EditorGUIUtility.LookLikeInspector();
 
         // width
         EditorGUI.BeginChangeCheck();

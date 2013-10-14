@@ -80,7 +80,6 @@ public class ControlSorterByZ: IComparer<exUIControl> {
 
 public struct exHotPoint {
     public int id;
-    public bool isMouse;
     public bool active;
     public bool pressDown;
     public bool pressUp;
@@ -89,6 +88,12 @@ public struct exHotPoint {
 
     public exUIControl hover;
     public exUIControl pressed;
+
+    public bool isMouse;
+    public bool isTouch { get { return isMouse == false; } }  
+
+    // 0: left, 1: right, 2: middle
+    public bool GetMouseButton ( int _id ) { return isMouse && (id == _id); }
 
     public void Reset () {
         active = false;
@@ -197,7 +202,7 @@ public class exUIMng : MonoBehaviour {
     public void SetFocus ( exUIControl _ctrl ) {
         if ( focus != _ctrl ) {
             if ( focus != null ) {
-                focus.Send_OnUnFocus();
+                focus.Send_OnUnfocus();
             }
 
             focus = _ctrl;
