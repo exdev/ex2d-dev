@@ -222,7 +222,7 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
 
     protected void OnDestroy () {
         if (clip_ != null) {
-            clip_.Remove(this, false);
+            clip_.Remove(this);
         }
     }
     
@@ -236,23 +236,45 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
             while (parentTransform != null) {
                 exClipping parentClip = parentTransform.GetComponent<exClipping>();
                 if (parentClip != null) {
-                    // Checks to ensure that the sprite is still parented to the right layer
-                    SetLayer(parentClip);
-                    return;
+                    if (ReferenceEquals(clip_, parentClip))
+                        break;
+                    if (parentClip.clipChildren) {
+                        SetClip(parentClip);
+                    }
                 }
                 else {
-                    exLayeredSprite parentSprite = parentTransform.GetComponent<exLayeredSprite>();
+                    // TODO: SetClip里面检查以下代码
+                    //        if (clip_ != null) {
+                    //            if (clip_.clipChildren) {
+                    //                if (clip_.transform.IsChildOf(parentClip.transform)) {
+                    //                    return;
+                    //                }
+                    //            }
+                    //            else {
+                    //                if () {
+
+                    //                }
+                    //            }
+                    //        }
+                    //        SetClip(parentClip);
+                    //    }
+                    //}           
+                    //if (parentClip) {
+                    //}
+                    //return;
+                    exSpriteBase parentSprite = parentTransform.GetComponent<exSpriteBase>();
                     if (parentSprite != null) {
-                        SetLayer(parentSprite.layer_);
+                        if (parentSprite.clip_ != null && parentSprite.clip_.clipChildren) {
+                            SetClip(parentSprite.clip_);
+                        }
                         return;
-                    }
-                    else {
-                        parentTransform = parentTransform.parent;
                     }
                 }
             }
-            // No parent
-            SetLayer(null);
+            // No clip
+            if (clip_ != null && clip_.clipChildren) {
+                SetClip(null);
+            }
         }
     }
 
@@ -272,9 +294,11 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
         }
         if (_clip != null) {
             _clip.Add(this);
+            UpdateMaterial();
         }
         else if (clip_ != null) {
             clip_.Remove(this);
+            UpdateMaterial();
         }
     }
 

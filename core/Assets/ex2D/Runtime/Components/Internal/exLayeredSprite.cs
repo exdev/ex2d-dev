@@ -259,7 +259,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public virtual void SetClip (exClipping _clip = null) {
+    public override void SetClip (exClipping _clip = null) {
         if (_clip != null) {
             if (_clip.transform.IsChildOf (layer_.transform) == false) {
                 Debug.LogError ("Can not add to clip which not in current layer!");
