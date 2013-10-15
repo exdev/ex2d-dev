@@ -23,23 +23,36 @@ using System.Collections.Generic;
 
 public class exUIControl : exPlane {
 
-    public static EventTrigger[] eventDefs = new EventTrigger[] {
-        new EventTrigger ( "onFocus",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventTrigger ( "onUnfocus",    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventTrigger ( "onActive",     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventTrigger ( "onDeactive",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventTrigger ( "onHoverIn",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
-        new EventTrigger ( "onHoverOut",   new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
-        new EventTrigger ( "onPressDown",  new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
-        new EventTrigger ( "onPressUp",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
-        new EventTrigger ( "onPressMove",  new Type[] { typeof(exUIControl), typeof(List<exHotPoint>) }, typeof(Action<exUIControl,List<exHotPoint>>) ),
+    [System.Serializable]
+    public class EventDef {
+        public string name;
+        public Type[] parameterTypes;
+        public Type delegateType;
+
+        public EventDef ( string _name, Type[] _parameterTypes, Type _delegateType ) {
+            name = _name;
+            parameterTypes = _parameterTypes;
+            delegateType = _delegateType;
+        }
+    }
+
+    public static EventDef[] eventDefs = new EventDef[] {
+        new EventDef ( "onFocus",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onUnfocus",    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onActive",     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onDeactive",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onHoverIn",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventDef ( "onHoverOut",   new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventDef ( "onPressDown",  new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventDef ( "onPressUp",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventDef ( "onPressMove",  new Type[] { typeof(exUIControl), typeof(List<exHotPoint>) }, typeof(Action<exUIControl,List<exHotPoint>>) ),
     };
 
-    public static EventTrigger FindEvent ( EventTrigger[] _eventDefs, string _name ) {
+    public static EventDef FindEventDef ( EventDef[] _eventDefs, string _name ) {
         for ( int i = 0; i < _eventDefs.Length; ++i ) {
-            EventTrigger eventTrigger = _eventDefs[i];
-            if ( eventTrigger.name == _name )
-                return eventTrigger; 
+            EventDef eventDef = _eventDefs[i];
+            if ( eventDef.name == _name )
+                return eventDef; 
         }
         return null;
     }
@@ -52,20 +65,14 @@ public class exUIControl : exPlane {
 
     [System.Serializable]
     public class EventTrigger {
-        public string name;
+        public EventDef def;
         public List<SlotInfo> slots;
-        public Type[] parameterTypes;
-        public Type delegateType;
 
-        public EventTrigger ( string _name, Type[] _parameterTypes, Type _delegateType ) {
-            name = _name;
-            parameterTypes = _parameterTypes;
-            delegateType = _delegateType;
+        public EventTrigger ( EventDef _def ) {
+            def = _def;
             slots = new List<SlotInfo>();
         }
     }
-
-    // TODO: EventDef, EventTrigger reference EventDef
 
     ///////////////////////////////////////////////////////////////////////////////
     // events, slots and senders
@@ -158,7 +165,10 @@ public class exUIControl : exPlane {
     protected void Awake () {
         for ( int i = 0; i < events.Count; ++i ) {
             EventTrigger eventTrigger = events[i];
-            AddEventHandlers ( eventTrigger.name, eventTrigger.slots, eventTrigger.parameterTypes, eventTrigger.delegateType );
+            AddEventHandlers ( eventTrigger.def.name, 
+                               eventTrigger.def.parameterTypes, 
+                               eventTrigger.def.delegateType, 
+                               eventTrigger.slots );
         }
     }
 
@@ -180,15 +190,15 @@ public class exUIControl : exPlane {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public virtual EventTrigger GetEvent ( string _name ) {
-        return exUIControl.FindEvent ( eventDefs, _name );
+    public virtual EventDef GetEventDef ( string _name ) {
+        return exUIControl.FindEventDef ( eventDefs, _name );
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public virtual string[] GetEventNames () {
+    public virtual string[] GetEventDefNames () {
         string[] names = new string[eventDefs.Length];
         for ( int i = 0; i < eventDefs.Length; ++i ) {
             names[i] = eventDefs[i].name;
@@ -200,7 +210,7 @@ public class exUIControl : exPlane {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void AddEventHandlers ( string _eventName, List<SlotInfo> _slots, Type[] _parameterTypes, Type _delegateType ) {
+    void AddEventHandlers ( string _eventName, Type[] _parameterTypes, Type _delegateType, List<SlotInfo> _slots ) {
         Type controlType = this.GetType();
         EventInfo eventInfo = controlType.GetEvent(_eventName);
         if ( eventInfo != null ) {

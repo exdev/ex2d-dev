@@ -131,20 +131,23 @@ class exUIControlInspector : exPlaneInspector {
             exUIControl uiControl = target as exUIControl;
 
             // event adding selector
-            List<string> eventNameList = new List<string>(); 
-            eventNameList.Add( "Event List" );
-            eventNameList.AddRange( uiControl.GetEventNames() );
+            List<string> eventDefNameList = new List<string>(); 
+            eventDefNameList.Add( "Event List" );
+            eventDefNameList.AddRange( uiControl.GetEventDefNames() );
 
             foreach ( exUIControl.EventTrigger eventTrigger in uiControl.events ) {
-                int idx = eventNameList.IndexOf(eventTrigger.name);
+                int idx = eventDefNameList.IndexOf(eventTrigger.def.name);
                 if ( idx != -1 ) {
-                    eventNameList.RemoveAt(idx);
+                    eventDefNameList.RemoveAt(idx);
                 }
             }
 
-            int choice = EditorGUILayout.Popup ( "Add Event", 0, eventNameList.ToArray() );
+            int choice = EditorGUILayout.Popup ( "Add Event", 0, eventDefNameList.ToArray() );
             if ( choice != 0 ) {
-                // exUIControl.EventTrigger eventTrigger = uiControl.GetEvent( eventNameList[choice] )
+                exUIControl.EventDef eventDef = uiControl.GetEventDef( eventDefNameList[choice] );
+                exUIControl.EventTrigger newTrigger = new exUIControl.EventTrigger ( eventDef );
+                uiControl.events.Add(newTrigger);
+                EditorUtility.SetDirty(target);
             }
 
             EditorGUILayout.Space();
@@ -169,21 +172,41 @@ class exUIControlInspector : exPlaneInspector {
 		GUILayout.Space(4f);
 
             GUILayout.BeginVertical();
-                // name
-                GUILayout.Toggle( true, _eventTrigger.name, "dragtab");
+                EditorGUILayout.BeginHorizontal();
+                    // name
+                    GUILayout.Toggle( true, _eventTrigger.def.name, "dragtab");
+
+                    // TODO { 
+                    // // delete
+                    // if ( GUILayout.Button( "delete", GUILayout.Width(50) ) ) {
+                    // }
+                    // } TODO end 
+                EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.BeginHorizontal("AS TextArea", GUILayout.MinHeight(10f));
                 GUILayout.BeginVertical();
 
                     // slots
+                    exUIControl.SlotInfo slotInfo = null;
                     for ( int i = 0; i < _eventTrigger.slots.Count; ++i ) {
-                        exUIControl.SlotInfo slotInfo = _eventTrigger.slots[i];
-                        SlotField (slotInfo);
+                        slotInfo = SlotField ( _eventTrigger.slots[i] );
+                        if ( slotInfo == null ) {
+                            _eventTrigger.slots.RemoveAt(i);
+                            --i;
+                            EditorUtility.SetDirty(target);
+                        }
                     }
-                    SlotField (null);
+
+                    // new slot
+                    slotInfo = SlotField (null);
+                    if ( slotInfo != null ) {
+                        _eventTrigger.slots.Add(slotInfo);
+                        EditorUtility.SetDirty(target);
+                    }
 
                 GUILayout.EndVertical();
                 EditorGUILayout.EndHorizontal();
+
             GUILayout.EndVertical();
 
 		GUILayout.Space(4f);
@@ -197,18 +220,48 @@ class exUIControlInspector : exPlaneInspector {
     protected exUIControl.SlotInfo SlotField ( exUIControl.SlotInfo _slot ) {
         bool isNew = _slot == null ? true : false;
         exUIControl.SlotInfo slot = _slot;
-        if ( isNew )
-            slot = new exUIControl.SlotInfo();
-
-        EditorGUILayout.BeginHorizontal();
-            slot.receiver = EditorGUILayout.ObjectField( "Receiver", slot.receiver, typeof(GameObject), true ) as GameObject;
-
-            if ( isNew == false ) {
-                if ( GUILayout.Button( styles.iconToolbarMinus, "InvisibleButton", GUILayout.Width(20f) ) ) {
-                }
+        if ( isNew ) {
+            GameObject receiver = EditorGUILayout.ObjectField( "Add Receiver", null, typeof(GameObject), true ) as GameObject;
+            if ( receiver != null ) {
+                slot = new exUIControl.SlotInfo();
+                slot.receiver = receiver;
             }
-            GUILayout.Space(3f);
-        GUILayout.EndHorizontal();
+        }
+        else {
+
+            EditorGUILayout.BeginHorizontal();
+                // receiver
+                slot.receiver = EditorGUILayout.ObjectField( slot.receiver, typeof(GameObject), true ) as GameObject;
+
+                // TODO: method
+                List<string> methodNames = new List<string>(); 
+                methodNames.Add( "None" );
+                methodNames.Add( "OnClick" );
+                // MonoBehaviour[] allMonoBehaviours = slot.receiver.GetComponents<MonoBehaviour>();
+                // foreach ( MonoBehaviour monoBehaviour in allMonoBehaviours ) {
+
+                //     MethodInfo mi = monoBehaviour.GetType().GetMethod( slot.method, 
+                //                                                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                //                                                        null,
+                //                                                        _parameterTypes,
+                //                                                        null );
+                //     if ( mi != null ) {
+                //         var delegateForMethod = Delegate.CreateDelegate( _delegateType, monoBehaviour, mi);
+                //         eventInfo.AddEventHandler(this, delegateForMethod);
+                //         foundMethod = true;
+                //     }
+                // }
+                int choice = EditorGUILayout.Popup ( 0, methodNames.ToArray() );
+                if ( choice != 0 ) {
+                }
+
+                // Delete
+                if ( GUILayout.Button( styles.iconToolbarMinus, "InvisibleButton", GUILayout.Width(20f) ) ) {
+                    slot = null;
+                }
+                GUILayout.Space(3f);
+            GUILayout.EndHorizontal();
+        }
 
         return slot;
     }

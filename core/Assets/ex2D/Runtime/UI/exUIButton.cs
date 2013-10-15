@@ -26,10 +26,10 @@ public class exUIButton : exUIControl {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    public static new EventTrigger[] eventDefs = new EventTrigger[] {
-        new EventTrigger ( "onClick",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventTrigger ( "onButtonDown", new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventTrigger ( "onButtonUp",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+    public static new EventDef[] eventDefs = new EventDef[] {
+        new EventDef ( "onClick",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onButtonDown", new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onButtonUp",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
     };
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -92,19 +92,19 @@ public class exUIButton : exUIControl {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public override EventTrigger GetEvent ( string _name ) {
-        EventTrigger eventTrigger = exUIControl.FindEvent ( eventDefs, _name );
-        if ( eventTrigger == null )
-            eventTrigger = base.GetEvent(_name);
-        return eventTrigger;
+    public override EventDef GetEventDef ( string _name ) {
+        EventDef eventDef = exUIControl.FindEventDef ( eventDefs, _name );
+        if ( eventDef == null )
+            eventDef = base.GetEventDef(_name);
+        return eventDef;
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public override string[] GetEventNames () {
-        string[] baseNames = base.GetEventNames();
+    public override string[] GetEventDefNames () {
+        string[] baseNames = base.GetEventDefNames();
         string[] names = new string[baseNames.Length + eventDefs.Length];
 
         for ( int i = 0; i < baseNames.Length; ++i ) {
