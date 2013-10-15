@@ -23,6 +23,13 @@ using System.IO;
 [CustomEditor(typeof(exUIControl))]
 class exUIControlInspector : exPlaneInspector {
 
+    public class Styles {
+        public GUIStyle toolbarDropDown = "TE ToolbarDropDown";
+        public Texture iconToolbarPlus = EditorGUIUtility.FindTexture ("Toolbar Plus");
+        public Texture iconToolbarMinus = EditorGUIUtility.FindTexture("Toolbar Minus");
+    }
+    protected static Styles styles = null;
+
     SerializedProperty activeProp;
     SerializedProperty grabMouseOrTouchProp;
     SerializedProperty useColliderProp;
@@ -41,6 +48,11 @@ class exUIControlInspector : exPlaneInspector {
 
 	public override void OnInspectorGUI () {
         base.OnInspectorGUI();
+
+        // if settingsStyles is null
+        if ( styles == null ) {
+            styles = new Styles();
+        }
 
         // NOTE: DO NOT call serializedObject.ApplyModifiedProperties ();
         serializedObject.Update ();
@@ -115,13 +127,32 @@ class exUIControlInspector : exPlaneInspector {
             EditorGUILayout.EndHorizontal();
         }
 
-        // event slots
-        EditorGUILayout.Space();
         if ( serializedObject.isEditingMultipleObjects == false ) {
             exUIControl uiControl = target as exUIControl;
-            for ( int i = 0; i < uiControl.exUIControl_events.Length; ++i ) {
-                exUIControl.EventSlot eventSlot = uiControl.exUIControl_events[i];
-                EventField ( eventSlot );
+
+            // event adding selector
+            List<string> eventNameList = new List<string>(); 
+            eventNameList.Add( "Event List" );
+            eventNameList.AddRange( uiControl.GetEventNames() );
+
+            foreach ( exUIControl.EventTrigger eventTrigger in uiControl.events ) {
+                int idx = eventNameList.IndexOf(eventTrigger.name);
+                if ( idx != -1 ) {
+                    eventNameList.RemoveAt(idx);
+                }
+            }
+
+            int choice = EditorGUILayout.Popup ( "Add Event", 0, eventNameList.ToArray() );
+            if ( choice != 0 ) {
+                // exUIControl.EventTrigger eventTrigger = uiControl.GetEvent( eventNameList[choice] )
+            }
+
+            EditorGUILayout.Space();
+
+            // event triggers
+            for ( int i = 0; i < uiControl.events.Count; ++i ) {
+                exUIControl.EventTrigger eventTrigger = uiControl.events[i];
+                EventField ( eventTrigger );
                 EditorGUILayout.Space();
             }
         }
@@ -133,20 +164,20 @@ class exUIControlInspector : exPlaneInspector {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    protected void EventField ( exUIControl.EventSlot _eventSlot ) {
+    protected void EventField ( exUIControl.EventTrigger _eventTrigger ) {
 		GUILayout.BeginHorizontal();
 		GUILayout.Space(4f);
 
             GUILayout.BeginVertical();
                 // name
-                GUILayout.Toggle( true, _eventSlot.name, "dragtab");
+                GUILayout.Toggle( true, _eventTrigger.name, "dragtab");
 
                 EditorGUILayout.BeginHorizontal("AS TextArea", GUILayout.MinHeight(10f));
                 GUILayout.BeginVertical();
 
                     // slots
-                    for ( int i = 0; i < _eventSlot.slots.Count; ++i ) {
-                        exUIControl.SlotInfo slotInfo = _eventSlot.slots[i];
+                    for ( int i = 0; i < _eventTrigger.slots.Count; ++i ) {
+                        exUIControl.SlotInfo slotInfo = _eventTrigger.slots[i];
                         SlotField (slotInfo);
                     }
                     SlotField (null);
@@ -173,7 +204,7 @@ class exUIControlInspector : exPlaneInspector {
             slot.receiver = EditorGUILayout.ObjectField( "Receiver", slot.receiver, typeof(GameObject), true ) as GameObject;
 
             if ( isNew == false ) {
-                if ( GUILayout.Button( EditorGUIUtility.FindTexture("Toolbar Minus"), "InvisibleButton", GUILayout.Width(20f) ) ) {
+                if ( GUILayout.Button( styles.iconToolbarMinus, "InvisibleButton", GUILayout.Width(20f) ) ) {
                 }
             }
             GUILayout.Space(3f);

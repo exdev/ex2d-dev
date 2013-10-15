@@ -152,6 +152,52 @@ public class exUIMng : MonoBehaviour {
     exHotPoint[] touchPoints = new exHotPoint[10];
     exUIControl focus = null; // the Input focus ( usually, the keyboard focus )
 
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // static functions
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static exUIControl FindParent ( exUIControl _ctrl ) {
+        Transform tranParent = _ctrl.transform.parent;
+        while ( tranParent != null ) {
+            exUIControl el = tranParent.GetComponent<exUIControl>();
+            if ( el != null )
+                return el;
+            tranParent = tranParent.parent;
+        }
+        return null;
+    } 
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void FindAndAddChild ( exUIControl _ctrl ) {
+        _ctrl.children.Clear();
+        FindAndAddChildRecursively (_ctrl, _ctrl.transform );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    static void FindAndAddChildRecursively ( exUIControl _ctrl, Transform _trans ) {
+        foreach ( Transform child in _trans ) {
+            exUIControl childCtrl = child.GetComponent<exUIControl>();
+            if ( childCtrl ) {
+                _ctrl.AddChild (childCtrl);
+                FindAndAddChild (childCtrl);
+            }
+            else {
+                FindAndAddChildRecursively( _ctrl, child );
+            }
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -191,8 +237,10 @@ public class exUIMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void AddControl ( exUIControl _ctrl ) {
-        if ( controls.IndexOf(_ctrl) == -1 )
+        if ( controls.IndexOf(_ctrl) == -1 ) {
             controls.Add(_ctrl);
+            exUIMng.FindAndAddChild (_ctrl);
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -271,18 +319,13 @@ public class exUIMng : MonoBehaviour {
             mousePoints[i].isMouse = true;
         }
 
-        // recursively add ui-tree
+        // find all controls in the scene, and add root controls to UIMng
         exUIControl[] allControls = FindObjectsOfType(typeof(exUIControl)) as exUIControl[];
         for ( int i = 0; i < allControls.Length; ++i ) {
             exUIControl ctrl = allControls[i];
-            exUIControl parent_ctrl = ctrl.FindParent();
+            exUIControl parent_ctrl = exUIMng.FindParent(ctrl);
             if ( parent_ctrl == null ) {
-                exUIControl.FindAndAddChild (ctrl);
-
-                //
-                if ( controls.IndexOf(ctrl) == -1 ) {
-                    controls.Add(ctrl);
-                }
+                AddControl (ctrl);
             }
         }
 

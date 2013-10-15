@@ -22,17 +22,24 @@ using System.Collections.Generic;
 
 public class exUIButton : exUIControl {
 
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+
+    public static new EventTrigger[] eventDefs = new EventTrigger[] {
+        new EventTrigger ( "onClick",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventTrigger ( "onButtonDown", new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventTrigger ( "onButtonUp",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+
     // events
     public event System.Action<exUIControl> onClick;
     public event System.Action<exUIControl> onButtonDown;
     public event System.Action<exUIControl> onButtonUp;
-
-    // event slots
-    public EventSlot[] exUIButton_events = new EventSlot[] {
-        new EventSlot ( "onClick",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventSlot ( "onButtonDown", new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventSlot ( "onButtonUp",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-    };
 
     //
     bool pressing = false;
@@ -48,7 +55,6 @@ public class exUIButton : exUIControl {
 
     protected new void Awake () {
         base.Awake();
-        InitEvents (exUIButton_events);
 
         onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
             // only accept on hot-point
@@ -76,5 +82,39 @@ public class exUIButton : exUIControl {
         onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
             pressing = false;
         };
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public override EventTrigger GetEvent ( string _name ) {
+        EventTrigger eventTrigger = exUIControl.FindEvent ( eventDefs, _name );
+        if ( eventTrigger == null )
+            eventTrigger = base.GetEvent(_name);
+        return eventTrigger;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public override string[] GetEventNames () {
+        string[] baseNames = base.GetEventNames();
+        string[] names = new string[baseNames.Length + eventDefs.Length];
+
+        for ( int i = 0; i < baseNames.Length; ++i ) {
+            names[i] = baseNames[i];
+        }
+
+        for ( int i = 0; i < eventDefs.Length; ++i ) {
+            names[i+baseNames.Length] = eventDefs[i].name;
+        }
+
+        return names;
     }
 }
