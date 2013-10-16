@@ -85,6 +85,8 @@ public struct exHotPoint {
     public bool pressUp;
     public Vector2 pos;
     public Vector2 delta;
+    public Vector3 worldPos;
+    public Vector3 worldDelta;
 
     public exUIControl hover;
     public exUIControl pressed;
@@ -101,6 +103,8 @@ public struct exHotPoint {
         pressUp = false;
         pos = Vector2.zero;
         delta = Vector2.zero;
+        worldPos = Vector3.zero;
+        worldDelta = Vector3.zero;
         hover = null;
         pressed = null;
     } 
@@ -110,7 +114,6 @@ public struct exHotPoint {
 // Desc: 
 // ------------------------------------------------------------------ 
 
-[ExecuteInEditMode]
 public class exUIMng : MonoBehaviour {
 
     protected static exUIMng inst_ = null; 
@@ -401,6 +404,15 @@ public class exUIMng : MonoBehaviour {
             for ( int i = 1; i < _hotPoints.Length; ++i ) {
                 _hotPoints[i].hover = _hotPoints[0].hover;
             }
+
+            // ======================================================== 
+            // send scroll wheel event
+            // ======================================================== 
+
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if ( scroll != 0.0f && _hotPoints[0].hover != null ) {
+                _hotPoints[0].hover.Send_OnMouseWheel(scroll);
+            }
         }
 
         // ======================================================== 
@@ -414,16 +426,16 @@ public class exUIMng : MonoBehaviour {
                 continue;
 
             if ( hotPoint.pressDown ) {
-                exUIControl curPressCtrl = hotPoint.hover;
+                exUIControl curCtrl = hotPoint.hover;
                 if ( hotPoint.pressed != null && hotPoint.pressed.grabMouseOrTouch ) {
-                    curPressCtrl = hotPoint.pressed;
+                    curCtrl = hotPoint.pressed;
                 }
 
                 // send press down event
-                if ( curPressCtrl != null ) {
-                    curPressCtrl.Send_OnPressDown(hotPoint);
+                if ( curCtrl != null ) {
+                    curCtrl.Send_OnPressDown(hotPoint);
                 }
-                hotPoint.pressed = curPressCtrl;
+                hotPoint.pressed = curCtrl;
 
                 _hotPoints[i] = hotPoint;
             }
@@ -443,28 +455,28 @@ public class exUIMng : MonoBehaviour {
                 continue;
 
             if ( hotPoint.delta != Vector2.zero ) {
-                exUIControl curPressCtrl = hotPoint.hover;
+                exUIControl curCtrl = hotPoint.hover;
                 if ( hotPoint.pressed != null && hotPoint.pressed.grabMouseOrTouch ) {
-                    curPressCtrl = hotPoint.pressed;
+                    curCtrl = hotPoint.pressed;
                 }
 
-                if ( curPressCtrl != null ) {
+                if ( curCtrl != null ) {
                     List<exHotPoint> hotPointList = null;
-                    if ( moveEvents.ContainsKey(curPressCtrl) ) {
-                        hotPointList = moveEvents[curPressCtrl];
+                    if ( moveEvents.ContainsKey(curCtrl) ) {
+                        hotPointList = moveEvents[curCtrl];
                     }
                     else {
                         hotPointList = new List<exHotPoint>();
-                        moveEvents.Add( curPressCtrl, hotPointList );
+                        moveEvents.Add( curCtrl, hotPointList );
                     }
                     hotPointList.Add(hotPoint);
                 }
             }
         }
 
-        // send press move event
+        // send hot-point move event
         foreach (KeyValuePair<exUIControl, List<exHotPoint>> iter in moveEvents ) {
-            iter.Key.Send_OnPressMove ( iter.Value );
+            iter.Key.Send_OnHoverMove ( iter.Value );
         }
 
         // ======================================================== 
@@ -479,14 +491,14 @@ public class exUIMng : MonoBehaviour {
 
             // 
             if ( hotPoint.pressUp ) {
-                exUIControl curPressCtrl = hotPoint.hover;
+                exUIControl curCtrl = hotPoint.hover;
                 if ( hotPoint.pressed != null && hotPoint.pressed.grabMouseOrTouch ) {
-                    curPressCtrl = hotPoint.pressed;
+                    curCtrl = hotPoint.pressed;
                 }
 
                 // send press down event
-                if ( curPressCtrl != null ) {
-                    curPressCtrl.Send_OnPressUp(hotPoint);
+                if ( curCtrl != null ) {
+                    curCtrl.Send_OnPressUp(hotPoint);
                 }
 
                 hotPoint.pressed = null;
@@ -517,6 +529,11 @@ public class exUIMng : MonoBehaviour {
                 Vector2 lastMousePos = hotPoint.pos;
                 hotPoint.pos = touch.position;
                 hotPoint.delta = hotPoint.pos - lastMousePos;
+
+                Vector3 lastMouseWorldPos = hotPoint.worldPos;
+                hotPoint.worldPos = camera.ScreenToWorldPoint(touch.position);
+                hotPoint.worldDelta = hotPoint.worldPos - lastMouseWorldPos;
+
                 hotPoint.pressDown = (touch.phase == TouchPhase.Began);
                 hotPoint.pressUp = (touch.phase == TouchPhase.Canceled || touch.phase == TouchPhase.Ended);
             }
@@ -547,6 +564,11 @@ public class exUIMng : MonoBehaviour {
                     Vector2 lastMousePos = hotPoint.pos;
                     hotPoint.pos = Input.mousePosition;
                     hotPoint.delta = hotPoint.pos - lastMousePos;
+
+                    Vector3 lastMouseWorldPos = hotPoint.worldPos;
+                    hotPoint.worldPos = camera.ScreenToWorldPoint(Input.mousePosition);
+                    hotPoint.worldDelta = hotPoint.worldPos - lastMouseWorldPos;
+
                     hotPoint.pressDown = Input.GetMouseButtonDown(i);
                     hotPoint.pressUp = Input.GetMouseButtonUp(i);
                 }
@@ -571,6 +593,11 @@ public class exUIMng : MonoBehaviour {
                     Vector2 lastMousePos = hotPoint.pos;
                     hotPoint.pos = Input.mousePosition;
                     hotPoint.delta = hotPoint.pos - lastMousePos;
+
+                    Vector3 lastMouseWorldPos = hotPoint.worldPos;
+                    hotPoint.worldPos = camera.ScreenToWorldPoint(Input.mousePosition);
+                    hotPoint.worldDelta = hotPoint.worldPos - lastMouseWorldPos;
+
                     hotPoint.pressDown = Input.GetMouseButtonDown(i);
                     hotPoint.pressUp = Input.GetMouseButtonUp(i);
                 }

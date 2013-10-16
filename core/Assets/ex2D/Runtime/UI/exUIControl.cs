@@ -36,18 +36,6 @@ public class exUIControl : exPlane {
         }
     }
 
-    public static EventDef[] eventDefs = new EventDef[] {
-        new EventDef ( "onFocus",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onUnfocus",    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onActive",     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onDeactive",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onHoverIn",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
-        new EventDef ( "onHoverOut",   new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
-        new EventDef ( "onPressDown",  new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
-        new EventDef ( "onPressUp",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
-        new EventDef ( "onPressMove",  new Type[] { typeof(exUIControl), typeof(List<exHotPoint>) }, typeof(Action<exUIControl,List<exHotPoint>>) ),
-    };
-
     public static EventDef FindEventDef ( EventDef[] _eventDefs, string _name ) {
         for ( int i = 0; i < _eventDefs.Length; ++i ) {
             EventDef eventDef = _eventDefs[i];
@@ -78,6 +66,20 @@ public class exUIControl : exPlane {
     // events, slots and senders
     ///////////////////////////////////////////////////////////////////////////////
 
+    // event-defs
+    public static EventDef[] eventDefs = new EventDef[] {
+        new EventDef ( "onFocus",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onUnfocus",    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onActive",     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onDeactive",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onHoverIn",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventDef ( "onHoverOut",   new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventDef ( "onHoverMove",  new Type[] { typeof(exUIControl), typeof(List<exHotPoint>) }, typeof(Action<exUIControl,List<exHotPoint>>) ),
+        new EventDef ( "onPressDown",  new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventDef ( "onPressUp",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventDef ( "onMouseWheel", new Type[] { typeof(exUIControl), typeof(float) }, typeof(Action<exUIControl,float>) ),
+    };
+
     // events
     public event Action<exUIControl> onFocus;
     public event Action<exUIControl> onUnfocus;
@@ -85,9 +87,10 @@ public class exUIControl : exPlane {
     public event Action<exUIControl> onDeactive;
     public event Action<exUIControl,exHotPoint> onHoverIn;
     public event Action<exUIControl,exHotPoint> onHoverOut;
+    public event Action<exUIControl,List<exHotPoint>> onHoverMove;
     public event Action<exUIControl,exHotPoint> onPressDown;
     public event Action<exUIControl,exHotPoint> onPressUp;
-    public event Action<exUIControl,List<exHotPoint>> onPressMove;
+    public event Action<exUIControl,float> onMouseWheel;
 
     // event easy function
     public void Send_OnFocus () { if ( onFocus != null ) onFocus (this); }
@@ -96,9 +99,10 @@ public class exUIControl : exPlane {
     public void Send_OnDeactive () { if ( onDeactive != null ) onDeactive (this); }
     public void Send_OnHoverIn ( exHotPoint _hotPoint ) { if ( onHoverIn != null ) onHoverIn (this,_hotPoint); }
     public void Send_OnHoverOut ( exHotPoint _hotPoint ) { if ( onHoverOut != null ) onHoverOut (this,_hotPoint); }
+    public void Send_OnHoverMove ( List<exHotPoint> _hotPoints ) { if ( onHoverMove != null ) onHoverMove (this,_hotPoints); }
     public void Send_OnPressDown ( exHotPoint _hotPoint ) { if ( onPressDown != null ) onPressDown (this,_hotPoint); }
     public void Send_OnPressUp ( exHotPoint _hotPoint ) { if ( onPressUp != null ) onPressUp (this,_hotPoint); }
-    public void Send_OnPressMove ( List<exHotPoint> _hotPoints ) { if ( onPressMove != null ) onPressMove (this,_hotPoints); }
+    public void Send_OnMouseWheel ( float _delta ) { if ( onMouseWheel != null ) onMouseWheel (this,_delta); }
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties

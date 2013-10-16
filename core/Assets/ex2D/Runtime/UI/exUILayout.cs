@@ -18,6 +18,7 @@ using System.Collections;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
+[RequireComponent (typeof(exUIControl))]
 public class exUILayout : MonoBehaviour {
 
     public static exTextureInfo whiteTexture = null;
@@ -36,6 +37,14 @@ public class exUILayout : MonoBehaviour {
         layoutInfo.Apply();
 
         SyncElements ( transform, 0, layoutInfo.root, transform.position.x, transform.position.y, 0 );
+
+        // add ui-control at the root
+        exUIControl uiControl = GetComponent<exUIControl>();
+        if ( uiControl == null )
+            uiControl = gameObject.AddComponent<exUIControl>();
+        uiControl.width = layoutInfo.width;
+        uiControl.height = layoutInfo.height;
+        uiControl.anchor = Anchor.TopLeft;
     }
 
     // ------------------------------------------------------------------ 

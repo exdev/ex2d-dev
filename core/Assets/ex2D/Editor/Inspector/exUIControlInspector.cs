@@ -290,6 +290,9 @@ class exUIControlInspector : exPlaneInspector {
                     EditorUtility.SetDirty(target);
                 }
             }
+            else {
+                slot = null;
+            }
 
             // Delete
             if ( GUILayout.Button( styles.iconToolbarMinus, "InvisibleButton", GUILayout.Width(20f) ) ) {
