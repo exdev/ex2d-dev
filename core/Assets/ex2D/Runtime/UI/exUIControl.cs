@@ -65,11 +65,11 @@ public class exUIControl : exPlane {
 
     [System.Serializable]
     public class EventTrigger {
-        public EventDef def;
+        public string name;
         public List<SlotInfo> slots;
 
-        public EventTrigger ( EventDef _def ) {
-            def = _def;
+        public EventTrigger ( string _name ) {
+            name = _name;
             slots = new List<SlotInfo>();
         }
     }
@@ -165,9 +165,10 @@ public class exUIControl : exPlane {
     protected void Awake () {
         for ( int i = 0; i < events.Count; ++i ) {
             EventTrigger eventTrigger = events[i];
-            AddEventHandlers ( eventTrigger.def.name, 
-                               eventTrigger.def.parameterTypes, 
-                               eventTrigger.def.delegateType, 
+            EventDef def = GetEventDef(eventTrigger.name);
+            AddEventHandlers ( def.name, 
+                               def.parameterTypes, 
+                               def.delegateType, 
                                eventTrigger.slots );
         }
     }
@@ -220,7 +221,12 @@ public class exUIControl : exPlane {
                 bool foundMethod = false;
 
                 MonoBehaviour[] allMonoBehaviours = slot.receiver.GetComponents<MonoBehaviour>();
-                foreach ( MonoBehaviour monoBehaviour in allMonoBehaviours ) {
+                for ( int i = 0; i < allMonoBehaviours.Length; ++i ) {
+                    MonoBehaviour monoBehaviour =  allMonoBehaviours[i]; 
+
+                    // don't get method from control
+                    if ( monoBehaviour is exUIControl )
+                        continue;
 
                     MethodInfo mi = monoBehaviour.GetType().GetMethod( slot.method, 
                                                                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
