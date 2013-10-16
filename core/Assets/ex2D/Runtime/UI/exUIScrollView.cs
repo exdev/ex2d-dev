@@ -154,4 +154,12 @@ public class exUIScrollView : exUIControl {
         if ( onScroll != null ) 
             onScroll ( this, scrollOffset );
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public Vector2 GetScrollOffset () {
+        return scrollOffset;
+    }
 }
