@@ -64,19 +64,19 @@ public class exClipping : exPlane {
             return;
         }
         if (oldClip != null) {
-            oldClip.Remove (_sprite, true);
+            oldClip.Remove (_sprite);
         }
         if (clipChildren_) {
             exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase> (true);
             for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
-                DoAddSprite (spritesToAdd [spriteIndex], true);
+                spritesToAdd [spriteIndex].SetClip(this);
             }
             if (_sprite.transform.IsChildOf (transform) == false) {
                 _sprite.transform.parent = transform;
             }
         }
         else {
-            DoAddSprite (_sprite, true);
+            _sprite.SetClip(this);
         }
     }
 
@@ -88,7 +88,7 @@ public class exClipping : exPlane {
         if (clipChildren_) {
             exSpriteBase[] spritesToAdd = _gameObject.GetComponentsInChildren<exSpriteBase> (true);
             for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
-                DoAddSprite (spritesToAdd [spriteIndex], true);
+                spritesToAdd [spriteIndex].SetClip(this);
             }
             if (_gameObject.transform.IsChildOf (transform) == false) {
                 _gameObject.transform.parent = transform;
@@ -104,15 +104,14 @@ public class exClipping : exPlane {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public void Remove (exLayeredSprite _sprite) {
+    public void Remove (exSpriteBase _sprite) {
         if (clipChildren_) {
             Remove(_sprite.gameObject);
         }
         else {
-            if (_sprite.clip != this) {
-                return;
+            if (ReferenceEquals(_sprite.clip, this)) {
+                _sprite.SetClip(null);
             }
-            _sprite.clip = null;
         }
     }
 
@@ -136,31 +135,6 @@ public class exClipping : exPlane {
     }
     
     // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
-    private void DoAddSprite (exSpriteBase _sprite) {
-        Material mat = _sprite.material;
-        _sprite.clip = this;
-
-        // set sprite id
-        CheckDuplicated(_sprite);
-        if (ordered_ && _newSprite || _sprite.spriteIdInLayer == -1) {
-            _sprite.spriteIdInLayer = nextSpriteUniqueId;
-            ++nextSpriteUniqueId;
-        }
-        else {
-            nextSpriteUniqueId = Mathf.Max(_sprite.spriteIdInLayer + 1, nextSpriteUniqueId);
-        }
-
-        // find available mesh
-        exMesh mesh = GetMeshToAdd(_sprite);
-        exDebug.Assert(mesh.vertices.Count + _sprite.vertexCount <= (layerType_ == exLayerType.Dynamic ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT),
-                       string.Format("Invalid mesh vertex count : {0}", (mesh.vertices.Count + _sprite.vertexCount)));
-        AddToMesh(_sprite, mesh);
-    }
-    
-    // ------------------------------------------------------------------ 
     /// Return shared material matchs given shader and texture for the clipping
     // ------------------------------------------------------------------ 
 
@@ -175,7 +149,7 @@ public class exClipping : exPlane {
             Shader clipShader = Shader.Find(_shader.name + shaderPostfix);
             if (clipShader == null) {
                 Debug.LogError("Failed to find clip shader named " + _shader.name + shaderPostfix);
-                return null;a
+                return null;
             }
             _shader = clipShader;
         }
