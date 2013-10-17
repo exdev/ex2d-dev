@@ -22,6 +22,18 @@ using System.Collections.Generic;
 
 public class exUIScrollView : exUIControl {
 
+	public enum DragEffect {
+		None,
+		Momentum,
+		MomentumAndSpring,
+	}
+
+    // public enum ShowCondition {
+    //     Always,
+    //     OnlyIfNeeded,
+    //     WhenDragging,
+    // }
+
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
@@ -79,7 +91,10 @@ public class exUIScrollView : exUIControl {
         }
     }
 
-    public bool acceptMouseDrag = false;
+    public bool draggable = true; // can use left-mouse or touch drag to scroll the view
+    public DragEffect dragEffect = DragEffect.MomentumAndSpring;
+    public bool allowHorizontalScroll = true;
+    public bool allowVerticalScroll = true;
     public Transform contentAnchor = null;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -91,6 +106,9 @@ public class exUIScrollView : exUIControl {
     int draggingID = -1;
     Vector3 originalAnchorPos = Vector3.zero;
     Vector2 scrollOffset = Vector2.zero;
+
+    bool damping = false;
+    bool bouncing = false;
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -111,7 +129,7 @@ public class exUIScrollView : exUIControl {
             if ( dragging )
                 return;
 
-            if ( _point.isTouch || ( acceptMouseDrag && _point.GetMouseButton(0) ) ) {
+            if ( draggable && ( _point.isTouch || _point.GetMouseButton(0) ) ) {
                 dragging = true;
                 draggingID = _point.id;
 
@@ -120,7 +138,7 @@ public class exUIScrollView : exUIControl {
         };
 
         onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
-            if ( ( _point.isTouch || ( acceptMouseDrag && _point.GetMouseButton(0)) ) && _point.id == draggingID  ) {
+            if ( draggable && ( _point.isTouch || _point.GetMouseButton(0) ) && _point.id == draggingID ) {
                 if ( dragging ) {
                     dragging = false;
                     draggingID = -1;
@@ -131,11 +149,21 @@ public class exUIScrollView : exUIControl {
         onHoverMove += delegate ( exUIControl _sender, List<exHotPoint> _points ) {
             for ( int i = 0; i < _points.Count; ++i ) {
                 exHotPoint point = _points[i];
-                if ( ( point.isTouch || ( acceptMouseDrag && point.GetMouseButton(0)) ) && point.id == draggingID  ) {
-                    Scroll ( point.worldDelta );
+                if ( draggable && ( point.isTouch || point.GetMouseButton(0) ) && point.id == draggingID  ) {
+                    Vector2 delta = point.worldDelta; 
+                    Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
+                                                                                     new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
+                    if ( constrainOffset.x > 0.001f ) delta.x *= 0.5f;
+                    if ( constrainOffset.y > 0.001f ) delta.y *= 0.5f;
+
+                    Scroll (delta);
                     break;
                 }
             }
+        };
+
+        onMouseWheel += delegate ( exUIControl _sender, float _delta ) {
+            // TODO: if ( mouseWheelByHorizontal )
         };
     }
 
@@ -143,8 +171,39 @@ public class exUIScrollView : exUIControl {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void Scroll ( Vector2 _delta ) {
+    void Update () {
+        // TODO:
+        if ( damping ) {
+        }
+
+        if ( bouncing ) {
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void StartScroll ( Vector2 _delta ) {
+        // TODO:
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void Scroll ( Vector2 _delta ) {
+        if ( allowHorizontalScroll == false )
+            _delta.x = 0.0f;
+        if ( allowVerticalScroll == false )
+            _delta.y = 0.0f;
+
         scrollOffset += _delta;
+
+        if ( dragEffect != DragEffect.MomentumAndSpring ) {
+            scrollOffset.x = Mathf.Clamp( scrollOffset.x, 0.0f, contentSize_.x - width );
+            scrollOffset.y = Mathf.Clamp( scrollOffset.y, 0.0f, contentSize_.y - height );
+        }
 
         if ( contentAnchor != null )
             contentAnchor.localPosition = new Vector3 ( originalAnchorPos.x + scrollOffset.x,

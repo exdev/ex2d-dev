@@ -11,6 +11,7 @@
 
 using UnityEngine;
 using UnityEditor;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -44,11 +45,12 @@ class exPlaneInspector : Editor {
 	public override void OnInspectorGUI () {
         serializedObject.Update ();
 
+        // NOTE DANGER: Unity didn't allow user change script in custom inspector { 
         SerializedProperty scriptProp = serializedObject.FindProperty("m_Script");
         EditorGUILayout.PropertyField ( scriptProp );
+        // } DANGER end 
 
         DoInspectorGUI ();
-
         serializedObject.ApplyModifiedProperties ();
     }
 

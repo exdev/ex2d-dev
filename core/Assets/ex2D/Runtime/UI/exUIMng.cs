@@ -677,7 +677,6 @@ public class exUIMng : MonoBehaviour {
         else {
             Vector2 localPos = new Vector2( _worldPos.x - _ctrl.transform.position.x, 
                                             _worldPos.y - _ctrl.transform.position.y );
-            localPos.y = -localPos.y;
 
             Rect boundingRect = _ctrl.GetLocalAABoundingRect();
             checkChildren = boundingRect.Contains(localPos);
