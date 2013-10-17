@@ -40,7 +40,6 @@ Shader "ex2D/Alpha Blended (Clipping)" {
 			#include "UnityCG.cginc"
 
 			sampler2D _MainTex;
-			float4 _MainTex_ST;
 			float4 _ClipRect = float4(0.0, 0.0, 1.0, 1.0);
 			float4x4 _ClipMatrix;
 
@@ -57,20 +56,20 @@ Shader "ex2D/Alpha Blended (Clipping)" {
 				float2 worldPosition : TEXCOORD1;
 			};
 
-			v2f vert ( appdata_t _in ) {
+			v2f vert ( appdata_t v ) {
 				v2f o;
-                float4 wpos = mul(_Object2World, _in.vertex);
+                float4 wpos = mul(_Object2World, v.vertex);
                 o.worldPosition = mul(_ClipMatrix, wpos).xy;
-				o.vertex = mul(UNITY_MATRIX_MVP, _in.vertex);
-				o.color = _in.color;
-				o.texcoord = TRANSFORM_TEX(_in.texcoord, _MainTex);
+				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+				o.color = v.color;
+				o.texcoord = v.texcoord;
 				return o;
 			}
 
-			fixed4 frag ( v2f _in ) : COLOR {
+			fixed4 frag ( v2f v ) : COLOR {
                 float2 half_wh = _ClipRect.zw * 0.5f;
-				float2 factor = abs ( _in.worldPosition - _ClipRect.xy ) / half_wh;
-				fixed4 outColor = tex2D ( _MainTex, _in.texcoord ) * _in.color;
+				float2 factor = abs ( v.worldPosition - _ClipRect.xy ) / half_wh;
+				fixed4 outColor = tex2D ( _MainTex, v.texcoord ) * v.color;
                 if ( 1.0 - max ( factor.x, factor.y ) <= 0.0f )
                     outColor.a = 0.0f;
                 return outColor; 

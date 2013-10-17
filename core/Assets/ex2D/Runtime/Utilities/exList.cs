@@ -87,7 +87,6 @@ public class exList<T> where T : struct {
     public void RemoveRange (int _index, int _count) {
         if (_count > 0) {
             Shift(_index, -_count);
-            Array.Clear(buffer, Count, _count);
         }
     }
     

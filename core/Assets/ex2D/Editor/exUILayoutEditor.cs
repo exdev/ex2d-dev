@@ -212,7 +212,7 @@ class exUILayoutEditor : EditorWindow {
         }
 
         int margin = 20;
-        int hierarchy_width = 300;
+        int hierarchy_width = 250;
         int style_width = 300;
         float toolbarHeight = EditorStyles.toolbar.CalcHeight( GUIContent.none, 0 );
 
@@ -229,6 +229,16 @@ class exUILayoutEditor : EditorWindow {
 
             EditorGUILayout.EndVertical();
 
+            // style settings
+            EditorGUILayout.BeginVertical();
+                // toolbar
+                Style_Toolbar ();
+
+                // hierarchy elements
+                Style ( style_width, (int)(position.height - toolbarHeight) );
+
+            EditorGUILayout.EndVertical();
+
             // scene filed
             EditorGUILayout.BeginVertical();
                 // toolbar
@@ -242,16 +252,6 @@ class exUILayoutEditor : EditorWindow {
                 Layout_SceneViewField ( Mathf.FloorToInt(position.width - hierarchy_width - style_width - margin - 5),
                                         Mathf.FloorToInt(position.height - toolbarHeight - margin - margin) );
                 EditorGUILayout.EndHorizontal();
-            EditorGUILayout.EndVertical();
-
-            // style settings
-            EditorGUILayout.BeginVertical();
-                // toolbar
-                Style_Toolbar ();
-
-                // hierarchy elements
-                Style ( style_width, (int)(position.height - toolbarHeight) );
-
             EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
 
@@ -513,7 +513,7 @@ class exUILayoutEditor : EditorWindow {
                 // TODO:
                 int controlID = GUIUtility.GetControlID(elementsFieldHash, FocusType.Passive);
                 bool isDeleted = false;
-                float totalHeight = ElementField ( controlID, 10.0f, 0.0f, 0, curEdit.root, ref isDeleted );
+                float totalHeight = ElementField ( controlID, 10.0f, 0.0f, _width, 0, curEdit.root, ref isDeleted );
                 totalHeight = Mathf.Min( _height, totalHeight );
                 GUILayoutUtility.GetRect ( _width, totalHeight );
 
@@ -664,14 +664,14 @@ class exUILayoutEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    float ElementField ( int _controlID, float _x, float _y, int _indentLevel, exUIElement _el, ref bool _deleted ) {
+    float ElementField ( int _controlID, float _x, float _y, int _width, int _indentLevel, exUIElement _el, ref bool _deleted ) {
         Event e = Event.current;
 
         float height = 25.0f;
         Vector2 size = Vector2.zero;
-        float cur_x = _x + _indentLevel * 15.0f + 5.0f;
+        float cur_x = _x + _indentLevel * 10.0f + 5.0f;
         float cur_y = _y;
-        Rect rect = new Rect ( _x, _y, 290.0f, height );
+        Rect rect = new Rect ( _x, _y, _width - 10.0f, height );
         bool deleted = false;
 
         // background
@@ -698,18 +698,23 @@ class exUILayoutEditor : EditorWindow {
             EditorGUIUtility.AddCursorRect ( draggingHandleRect, MouseCursor.Pan );
         }
 
+        //
+        Vector2 minuIconSize = hierarchyStyles.removeButton.CalcSize( new GUIContent(hierarchyStyles.iconToolbarMinus) );
+        float idWidth = 40.0f;
+        float nameWidth = (_width - (int)cur_x - idWidth - (int)minuIconSize.x - 40.0f);
+
         // name
         cur_x += 10.0f;
         cur_x += 5.0f;
         EditorGUI.BeginChangeCheck ();
-            _el.name = EditorGUI.TextField ( new Rect ( cur_x, cur_y + 4f, 100.0f, height - 8f ),
+            _el.name = EditorGUI.TextField ( new Rect ( cur_x, cur_y + 4f, nameWidth, height - 8f ),
                                              _el.name ); 
         if ( EditorGUI.EndChangeCheck () ) {
             EditorUtility.SetDirty ( curEdit );
         }
 
         // #
-        cur_x += 100.0f;
+        cur_x += nameWidth;
         cur_x += 5.0f;
         size = EditorStyles.label.CalcSize(new GUIContent("#") );
         EditorGUI.LabelField ( new Rect ( cur_x, cur_y + 4f, size.y, height - 8f ), "#" );
@@ -718,16 +723,15 @@ class exUILayoutEditor : EditorWindow {
         cur_x += 10.0f;
         cur_x += 2.0f;
         EditorGUI.BeginChangeCheck ();
-            _el.id = EditorGUI.TextField ( new Rect ( cur_x, cur_y + 4f, 80.0f, height - 8f ),
+            _el.id = EditorGUI.TextField ( new Rect ( cur_x, cur_y + 4f, idWidth, height - 8f ),
                                              _el.id ); 
         if ( EditorGUI.EndChangeCheck () ) {
             EditorUtility.SetDirty ( curEdit );
         }
 
         // delete
-        size = hierarchyStyles.removeButton.CalcSize( new GUIContent(hierarchyStyles.iconToolbarMinus) );
-        cur_x = rect.xMax - 5.0f - size.x;
-        if ( GUI.Button( new Rect( cur_x, rect.y + 2f, size.x, size.y ), 
+        cur_x = rect.xMax - 5.0f - minuIconSize.x;
+        if ( GUI.Button( new Rect( cur_x, rect.y + 2f, minuIconSize.x, minuIconSize.y ), 
                          hierarchyStyles.iconToolbarMinus, 
                          hierarchyStyles.removeButton) )
         {
@@ -843,7 +847,7 @@ class exUILayoutEditor : EditorWindow {
         cur_y += height;
         for ( int i = 0; i < _el.children.Count; ++i ) {
             bool isDeleted = false;
-            float totalHeight = ElementField ( _controlID, _x, cur_y, _indentLevel + 1, _el.children[i], ref isDeleted );
+            float totalHeight = ElementField ( _controlID, _x, cur_y, _width, _indentLevel + 1, _el.children[i], ref isDeleted );
             if ( isDeleted ) {
                 _el.children.RemoveAt(i);
                 --i;

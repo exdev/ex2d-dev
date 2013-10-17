@@ -130,8 +130,6 @@ public class exMesh : MonoBehaviour
     }
 
     void OnDestroy () {
-        Clear();
-        
         spriteList = null;
         sortedSpriteList = null;
         vertices = null;
@@ -356,13 +354,13 @@ public class exMesh : MonoBehaviour
             uvInfo += ",";
         }
         Debug.Log(uvInfo, this);
-
+        /*
         uvInfo = "Mesh.normals: ";
         foreach (var n in mesh.normals) {
             uvInfo += n;
             uvInfo += ",";
         }
-        Debug.Log(uvInfo, this);
+        Debug.Log(uvInfo, this);*/
     }
     
     ///////////////////////////////////////////////////////////////////////////////
@@ -468,9 +466,9 @@ public class exMesh : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    [System.Diagnostics.Conditional("UNITY_EDITOR"), System.Diagnostics.Conditional("EX_DEBUG")]
+    [System.Diagnostics.Conditional("EX_DEBUG")]
     public void UpdateDebugName (exLayer layer = null) {
-#if UNITY_EDITOR || EX_DEBUG
+#if EX_DEBUG
         if (ReferenceEquals(layer, null) == false) {
             layerForDebug = layer;
         }
@@ -487,14 +485,7 @@ public class exMesh : MonoBehaviour
         else {
             matName = "None";
         }
-        int meshIndex = -1;
-        for (int i = 0; i < layerForDebug.meshList.Count; ++i) {
-            if (ReferenceEquals(this, layerForDebug.meshList[i])) {
-                meshIndex = i;
-                break;
-            }
-        }
-        gameObject.name = string.Format("_exMesh@{0}[{1:D2}]({2})", layerForDebug.name, meshIndex, matName);
+        gameObject.name = string.Format("_exMesh@{0}({1})", layerForDebug.name, matName);
 #endif
     }
 }

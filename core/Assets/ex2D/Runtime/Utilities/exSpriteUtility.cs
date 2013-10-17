@@ -22,6 +22,84 @@ namespace ex2D.Detail {
 
 public static class exSpriteUtility {
 
+    public static exSprite NewSimpleSprite ( GameObject _go, exTextureInfo _info, 
+                                             int _width, int _height, Color _color ) {
+        exSprite sprite = _go.GetComponent<exSprite>();
+        if ( sprite == null ) {
+            sprite = _go.AddComponent<exSprite>();
+        }
+        if ( sprite.shader == null )
+            sprite.shader = Shader.Find("ex2D/Alpha Blended");
+        sprite.spriteType = exSpriteType.Simple;
+        sprite.textureInfo = _info;
+
+        sprite.customSize = true;
+        sprite.width = _width;
+        sprite.height = _height;
+
+        sprite.color = _color;
+
+        return sprite;
+    }
+
+    public static exSprite NewSlicedSprite ( GameObject _go, exTextureInfo _info, 
+                                             int _left, int _right, int _top, int _bottom,
+                                             int _width, int _height, Color _color, 
+                                             bool _borderOnly ) {
+        exSprite sprite = _go.GetComponent<exSprite>();
+        if ( sprite == null ) {
+            sprite = _go.AddComponent<exSprite>();
+        }
+        if ( sprite.shader == null )
+            sprite.shader = Shader.Find("ex2D/Alpha Blended");
+        sprite.spriteType = exSpriteType.Sliced;
+        sprite.textureInfo = _info;
+
+        sprite.borderOnly = _borderOnly;
+        sprite.customBorderSize = true;
+        sprite.leftBorderSize = _left;
+        sprite.rightBorderSize = _right;
+        sprite.topBorderSize = _top;
+        sprite.bottomBorderSize = _bottom;
+
+        sprite.customSize = true;
+        sprite.width = _width;
+        sprite.height = _height;
+
+        sprite.color = _color;
+
+        return sprite;
+    }
+
+    public static exSpriteFont NewSpriteFont ( GameObject _go, Font _font, int _fontSize, Color _color, string _text ) {
+        exSpriteFont spriteFont = _go.GetComponent<exSpriteFont>();
+        if ( spriteFont == null ) {
+            spriteFont = _go.AddComponent<exSpriteFont>();
+        }
+        if ( spriteFont.shader == null )
+            spriteFont.shader = Shader.Find("ex2D/Alpha Blended (Use Vertex Color)");
+        spriteFont.SetFont (_font);
+        spriteFont.fontSize = _fontSize;
+        spriteFont.color = _color;
+        spriteFont.text = _text;
+
+        return spriteFont;
+    }
+
+    public static exSpriteFont NewSpriteFont ( GameObject _go, exBitmapFont _font, Color _color, string _text ) {
+        exSpriteFont spriteFont = _go.GetComponent<exSpriteFont>();
+        if ( spriteFont == null ) {
+            spriteFont = _go.AddComponent<exSpriteFont>();
+        }
+        if ( spriteFont.shader == null )
+            spriteFont.shader = Shader.Find("ex2D/Alpha Blended");
+        spriteFont.SetFont (_font);
+        spriteFont.color = _color;
+        spriteFont.text = _text;
+
+        return spriteFont;
+    }
+
     public static void GetDicingCount (exTextureInfo _ti, out int _colCount, out int _rowCount) {
         _colCount = 1;
         _rowCount = 1;

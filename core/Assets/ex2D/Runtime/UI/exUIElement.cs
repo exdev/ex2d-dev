@@ -154,7 +154,7 @@ public class exUIElement {
     [System.NonSerialized] public int lineHeight = 0;
     [System.NonSerialized] public exCSS_display display = exCSS_display.Inline;
 
-    bool dirty = false;
+    // bool dirty = false;
     bool isContent_ = false;
     bool isFirstLine_ = false;
     bool hasPushHeightChild = false;
@@ -253,6 +253,25 @@ public class exUIElement {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public bool IsEmptyContent () {
+        switch ( contentType ) {
+        case ContentType.Text:
+        case ContentType.Markdown:
+            return string.IsNullOrEmpty(text);
+
+        case ContentType.TextureInfo:
+        case ContentType.Texture2D:
+            return (image == null);
+
+        default:
+            return false;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public void GetPosition ( out int _x, out int _y ) {
         _x = x;
         _y = y;
@@ -271,7 +290,7 @@ public class exUIElement {
     // ------------------------------------------------------------------ 
 
     public void SetDirty () {
-        dirty = true;
+        // dirty = true;
     }
 
     // ------------------------------------------------------------------ 
@@ -364,6 +383,16 @@ public class exUIElement {
         }
         return true;
     } 
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public string GetName ( int _idx ) {
+        if ( isContent )
+            return name;
+        return "[" + _idx + "]" + name;
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -523,7 +552,7 @@ public class exUIElement {
 
         lines.Clear();
         LineInfo curLine = new LineInfo();
-        curLine.name = name + "[" + lines.Count + "]";
+        curLine.name = "[" + lines.Count + "]" + name;
 
         for ( int i = 0; i < normalFlows_.Count; ++i ) {
             exUIElement childEL = normalFlows_[i];
@@ -539,7 +568,7 @@ public class exUIElement {
                         curLine.height = maxLineHeight;
                         lines.Add(curLine);
                         curLine = new LineInfo();
-                        curLine.name = name + "[" + lines.Count + "]";
+                        curLine.name = "[" + lines.Count + "]" + name;
                     }
 
                     // check and store max-line-width
@@ -590,7 +619,7 @@ public class exUIElement {
                 curLine.isBlock = true;
                 lines.Add(curLine);
                 curLine = new LineInfo();
-                curLine.name = name + "[" + lines.Count + "]";
+                curLine.name = "[" + lines.Count + "]" + name;
             }
             else {
                 // if this is not a content-inline element, we will BreakTextIntoElements here.
@@ -644,7 +673,7 @@ public class exUIElement {
                         curLine.height = maxLineHeight;
                         lines.Add(curLine);
                         curLine = new LineInfo();
-                        curLine.name = name + "[" + lines.Count + "]";
+                        curLine.name = "[" + lines.Count + "]" + name;
                     }
 
                     // check and store max-line-width
@@ -744,7 +773,7 @@ public class exUIElement {
         }
 
         // TODO: I think only parent set dirty
-        dirty = false;
+        // dirty = false;
     }
 
     // ------------------------------------------------------------------ 
@@ -1002,13 +1031,20 @@ public class exUIElement {
         normalFlows_.Clear();
 
         exUIElement newEL = new exUIElement ();
-        newEL.name = name;
+        newEL.name = "__inline_content";
         newEL.id = id;
         newEL.text = text;
         newEL.image = image;
         newEL.contentType = contentType;
-        newEL.style = style.InlineContent();
-        newEL.style.display = exCSS_display.Inline;
+        newEL.style = style.InlineContent( _width, _height );
+        if ( newEL.style.width.type != exCSS_size_push.Type.Auto ) {
+            newEL.style.width.type = exCSS_size_push.Type.Length;
+            newEL.style.width.val = _width;
+        }
+        if ( newEL.style.height.type != exCSS_size_push.Type.Auto ) {
+            newEL.style.height.type = exCSS_size_push.Type.Length;
+            newEL.style.height.val = _height;
+        }
         newEL.parent_ = parent_; // NOTE: DO NOT use AddElement which will make this element become real child.
 
         normalFlows_.Add(newEL);
@@ -1083,7 +1119,7 @@ public class exUIElement {
         exUIElement newEL = new exUIElement();
         newEL.CloneComputedStyle (this);
         newEL.owner = this;
-        newEL.name = name + " [0]";
+        newEL.name = "[0]" + "__line";
         newEL.isContent_ = true;
         newEL.isFirstLine_ = true;
         newEL.style = null;
@@ -1188,7 +1224,7 @@ public class exUIElement {
                 exUIElement newEL = new exUIElement();
                 newEL.CloneComputedStyle (this);
                 newEL.owner = this;
-                newEL.name = name + " [" + line_id + "]";
+                newEL.name = "[" + line_id + "]" + "__line";
                 newEL.isContent_ = true;
                 newEL.isFirstLine_ = begin;
                 newEL.style = null;
@@ -1281,7 +1317,7 @@ public class exUIElement {
                 exUIElement newEL = new exUIElement();
                 newEL.CloneComputedStyle (this);
                 newEL.owner = this;
-                newEL.name = name + " [" + line_id + "]";
+                newEL.name = "[" + line_id + "]" + "__line";
                 newEL.isContent_ = true;
                 newEL.isFirstLine_ = begin;
                 newEL.style = null;

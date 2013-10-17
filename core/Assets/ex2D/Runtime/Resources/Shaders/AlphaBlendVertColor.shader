@@ -49,7 +49,6 @@ Shader "ex2D/Alpha Blended (Use Vertex Color)" {
                 #include "UnityCG.cginc"
 
                 uniform sampler2D _MainTex;
-                uniform float4 _MainTex_ST;
 
                 struct appdata_t {
                     float4 vertex   : POSITION;
@@ -63,19 +62,19 @@ Shader "ex2D/Alpha Blended (Use Vertex Color)" {
                     float2 uv0        : TEXCOORD0;
                 };
 
-                v2f vert ( appdata_t _in ) {
+                v2f vert ( appdata_t v ) {
                     v2f o;
-                    o.pos = mul (UNITY_MATRIX_MVP, _in.vertex);
+                    o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
                     // Texture offset - GOOD
-                    o.uv0 = TRANSFORM_TEX(_in.texcoord, _MainTex);
-                    o.color = _in.color;
+                    o.uv0 = v.texcoord;
+                    o.color = v.color;
                     return o;
                 }
 
-                fixed4 frag ( v2f _in ) : COLOR {
-                    fixed4 main = tex2D(_MainTex, _in.uv0);
-                    main.rgb = _in.color.rgb;
-                    main.a = main.a * _in.color.a;
+                fixed4 frag ( v2f v ) : COLOR {
+                    fixed4 main = tex2D(_MainTex, v.uv0);
+                    main.rgb = v.color.rgb;
+                    main.a = main.a * v.color.a;
                     return main;
                 }
                 ENDCG

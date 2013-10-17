@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : ex2DRendererInspector.cs
+// File         : exUILayoutInspector.cs
 // Author       : Wu Jie 
-// Last Change  : 07/08/2013 | 10:51:18 AM | Monday,July
+// Last Change  : 10/03/2013 | 10:10:37 AM | Thursday,October
 // Description  : 
 // ======================================================================================
 
@@ -20,8 +20,8 @@ using System.IO;
 ///////////////////////////////////////////////////////////////////////////////
 
 [CanEditMultipleObjects]
-[CustomEditor(typeof(ex2DRenderer))]
-class ex2DRendererInspector : Editor {
+[CustomEditor(typeof(exUILayout))]
+class exUILayoutInspector : Editor {
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -33,11 +33,9 @@ class ex2DRendererInspector : Editor {
         EditorGUILayout.Space();
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
-            if ( GUILayout.Button("Reset Camera", GUILayout.Height(20) ) ) {
-                ((ex2DRenderer)target).ResetCamera(true);
-            }
-            if ( GUILayout.Button("Edit...", GUILayout.MinWidth(50), GUILayout.Height(20) ) ) {
-                EditorWindow.GetWindow<exSceneEditor>();
+            if ( GUILayout.Button("Sync...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
+                exUILayout layout = target as exUILayout;
+                layout.Sync();
             }
         GUILayout.Space(5);
         GUILayout.EndHorizontal();

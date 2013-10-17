@@ -19,7 +19,7 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayeredSprite> {
+public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayeredSprite>, exLayer.IFriendOfLayer {
 
     public static bool enableFastShowHide = true;
 
@@ -36,14 +36,12 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         get { return depth_; }
         set {
             if ( depth_ != value ) {
-                depth_ = value;
-                // 先直接重加到layer里，以后再做优化
-                if (layer_ != null) {
-                    exLayer originalLayer = layer_;
-                    originalLayer.Remove(this, false);
-                    originalLayer.Add(this, false);
+                if (layer_ != null && isInIndexBuffer) {
+                    layer_.SetSpriteDepth(this, value);
                 }
-                //updateFlags |= exUpdateFlags.Index;
+                else {
+                    depth_ = value;
+                }
             }
         }
     }
@@ -88,7 +86,9 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         internal set {
             if (value != null) {
                 exDebug.Assert(layer_ == null, "Sprite should remove from last layer before add to new one");
-                OnPreAddToLayer();
+                if (layer_ == null) {
+                    OnPreAddToLayer();
+                }
             }
             layer_ = value;
         }
@@ -192,12 +192,10 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     
     protected override void UpdateMaterial () {
         if (layer_ != null) {
-            exLayer myLayer = layer_;
-            myLayer.Remove(this, false);
+            layer_.OnPreSpriteChange(this);
             material_ = null;   // set dirty, make material update.
-            if (ReferenceEquals(material, null) == false) {
-                myLayer.Add(this, false);
-            }
+            exDebug.Assert(material != null);
+            layer_.OnAfterSpriteChange(this);
         }
         else {
             material_ = null;   // set dirty, make material update.
@@ -317,6 +315,10 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     
     #endregion
 
+    void exLayer.IFriendOfLayer.DoSetDepth (float _depth) {
+        depth_ = _depth;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -415,14 +417,4 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             updateFlags |= exUpdateFlags.Vertex;
         }
     }
-    
-    // ------------------------------------------------------------------ 
-    /// Calculate the world AA bounding rect of the sprite
-    // ------------------------------------------------------------------ 
-
-    public Rect GetAABoundingRect () {
-        Vector3[] vertices = GetWorldVertices();
-        return exGeometryUtility.GetAABoundingRect(vertices);
-    }
-    
 }

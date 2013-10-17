@@ -13,22 +13,6 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-// ------------------------------------------------------------------ 
-/// The anchor position of the exSpriteBase
-// ------------------------------------------------------------------ 
-
-public enum Anchor {
-    TopLeft = 0, ///< the top-left of the sprite  
-    TopCenter,   ///< the top-center of the sprite
-    TopRight,    ///< the top-right of the sprite
-    MidLeft,     ///< the middle-left of the sprite
-    MidCenter,   ///< the middle-center of the sprite
-    MidRight,    ///< the middle-right of the sprite
-    BotLeft,     ///< the bottom-left of the sprite
-    BotCenter,   ///< the bottom-center of the sprite
-    BotRight,    ///< the bottom-right of the sprite
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 ///
 /// The sprite base component
@@ -36,7 +20,7 @@ public enum Anchor {
 ///////////////////////////////////////////////////////////////////////////////
 
 [ExecuteInEditMode]
-public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
+public abstract class exSpriteBase : exPlane, exISpriteBase {
 
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -57,65 +41,6 @@ public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
     }
 
     // ------------------------------------------------------------------ 
-    [SerializeField] protected float width_ = 1.0f;
-    /// the width of the sprite
-    /// 
-    /// \note if you want to custom the width of it, you need to set exSpriteBase.customSize to true
-    // ------------------------------------------------------------------ 
-
-    public virtual float width {
-        get { return width_; }
-        set {
-            if (customSize_) {
-                if (width_ != value) {
-                    width_ = value;
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-            }
-            else {
-                Debug.LogWarning("Can not set sprite's width when sprite is not using customSize!");
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected float height_ = 1.0f;
-    /// the height of the sprite
-    /// 
-    /// \note if you want to custom the height of it, you need to set exSpriteBase.customSize to true
-    // ------------------------------------------------------------------ 
-
-    public virtual float height {
-        get { return height_; }
-        set {
-            if (customSize_) {
-                if (height_ != value) {
-                    height_ = value;
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-            }
-            else {
-                Debug.LogWarning("Can not set sprite's height when sprite is not using customSize!");
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Anchor anchor_ = Anchor.MidCenter;
-    /// the anchor position used in this sprite
-    // ------------------------------------------------------------------ 
-
-    public Anchor anchor {
-        get { return anchor_; }
-        set {
-            if ( anchor_ != value ) {
-                anchor_ = value;
-                updateFlags |= exUpdateFlags.Vertex;
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
     [SerializeField] protected Color color_ = new Color(1f, 1f, 1f, 1f);
     /// the color of the sprite
     // ------------------------------------------------------------------ 
@@ -126,21 +51,6 @@ public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
             if ( color_ != value ) {
                 color_ = value;
                 updateFlags |= exUpdateFlags.Color;
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 offset_ = Vector2.zero;
-    /// the offset based on the anchor, the final position of the sprite equals to offset + anchor
-    // ------------------------------------------------------------------ 
-
-    public Vector2 offset {
-        get { return offset_; }
-        set { 
-            if ( offset_ != value ) {
-                offset_ = value;
-                updateFlags |= exUpdateFlags.Vertex;
             }
         }
     }
@@ -190,6 +100,68 @@ public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    /// \note if you want to custom the width of it, you need to set exSpriteBase.customSize to true
+    // ------------------------------------------------------------------ 
+
+    public override float width {
+        get { return width_; }
+        set {
+            if (customSize_) {
+                if (width_ != value) {
+                    width_ = value;
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+            else {
+                Debug.LogWarning("Can not set sprite's width when sprite is not using customSize!");
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// \note if you want to custom the height of it, you need to set exSpriteBase.customSize to true
+    // ------------------------------------------------------------------ 
+
+    public override float height {
+        get { return height_; }
+        set {
+            if (customSize_) {
+                if (height_ != value) {
+                    height_ = value;
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+            else {
+                Debug.LogWarning("Can not set sprite's height when sprite is not using customSize!");
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// the anchor position used in this sprite
+    // ------------------------------------------------------------------ 
+
+    public override Anchor anchor {
+        get { return anchor_; }
+        set {
+            if ( anchor_ != value ) {
+                anchor_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+    public override Vector2 offset {
+        get { return offset_; }
+        set { 
+            if ( offset_ != value ) {
+                offset_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
     
     [System.NonSerialized] protected int vertexCount_ = -1;
     public int vertexCount {
@@ -250,30 +222,6 @@ public abstract class exSpriteBase : MonoBehaviour, exISpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
 
 #region Functions used to update geometry buffer.
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected abstract Vector3[] GetVertices (Space _space);
-
-    // ------------------------------------------------------------------ 
-    /// Get vertices of the sprite
-    /// NOTE: This function returns an empty array If sprite is invisible
-    // ------------------------------------------------------------------ 
-
-    public virtual Vector3[] GetLocalVertices () {
-        return GetVertices(Space.Self);
-    }
-
-    // ------------------------------------------------------------------ 
-    /// Get vertices of the sprite
-    /// NOTE: This function returns an empty array If sprite is invisible
-    // ------------------------------------------------------------------ 
-
-    public virtual Vector3[] GetWorldVertices () {
-        return GetVertices(Space.World);
-    }
 
     // ------------------------------------------------------------------ 
     /// \return the update flags of changed buffer

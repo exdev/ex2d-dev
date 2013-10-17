@@ -24,77 +24,7 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Camera))]
 [AddComponentMenu("ex2D/2D Renderer")]
 public class ex2DRenderer : MonoBehaviour {
-    
-    ///////////////////////////////////////////////////////////////////////////////
-    // nested classes, enums
-    ///////////////////////////////////////////////////////////////////////////////
-
-    public struct MaterialTableKey { /*: System.IComparable<MaterialTableKey>, System.IEquatable<MaterialTableKey>*/ 
         
-    // ------------------------------------------------------------------ 
-    /// In Xamarin.iOS, if MaterialTableKey is a type as dictionary keys, we should manually implement its IEqualityComparer,
-    /// and provide an instance to the Dictionary<TKey, TValue>(IEqualityComparer<TKey>) constructor.
-    /// See http://docs.xamarin.com/guides/ios/advanced_topics/limitations for more info.
-    // ------------------------------------------------------------------ 
-        
-        public class Comparer : IEqualityComparer<MaterialTableKey> {
-            static Comparer instance_;
-            public static Comparer instance {
-                get {
-                    if (instance_ == null) {
-                        instance_ = new Comparer();
-                    }
-                    return instance_;
-                }
-            }
-            public bool Equals (MaterialTableKey _lhs, MaterialTableKey _rhs) {
-                return object.ReferenceEquals(_lhs.shader, _rhs.shader) && object.ReferenceEquals(_lhs.texture, _rhs.texture);
-            }
-            public int GetHashCode(MaterialTableKey _obj) {
-                int shaderHashCode, texHashCode;
-                if (_obj.shader != null) {
-                    shaderHashCode = _obj.shader.GetHashCode();
-                }
-                else {
-                    shaderHashCode = 0x00000000;
-                }
-                if (_obj.texture != null) {
-                    texHashCode = _obj.texture.GetHashCode() * 1313;
-                }
-                else {
-                    texHashCode = 0x00000000;
-                }
-                return shaderHashCode ^ texHashCode;
-            }
-        } 
-        
-        public Shader shader;
-        public Texture texture;
-
-        public MaterialTableKey (Shader _shader, Texture _texture) {
-            shader = _shader;
-            texture = _texture;
-        }
-        public MaterialTableKey (Material _material) 
-            : this(_material.shader, _material.mainTexture) {
-        }
-//        public bool Equals (MaterialTableKey _other) {
-//            return Comparer.instance.Equals(this, _other);
-//        }
-//        public override int GetHashCode () {
-//            return Comparer.instance.GetHashCode(this);
-//        }
-//        public int CompareTo(MaterialTableKey _other) {
-//            int texCompare = texture.GetHashCode().CompareTo(_other.texture.GetHashCode());
-//            if (texCompare == 0) {
-//                return shader.GetHashCode().CompareTo(_other.shader.GetHashCode());
-//            }
-//            else {
-//                return texCompare;
-//            }
-//        }
-    }
-    
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -285,14 +215,8 @@ public class ex2DRenderer : MonoBehaviour {
 
     public void ResortLayerDepth () {
         float cameraZ = cachedCamera.transform.position.z + cachedCamera.nearClipPlane;
-        float interval = 0.01f;
-        //if (Mathf.Abs(cameraZ) < 100000) {
-        //    interval = 0.01f;
-        //}
-        //else {
-        //    interval = 1f;
-        //}
-        float occupiedZ = cameraZ;
+        float layerInterval = (cachedCamera.farClipPlane - cachedCamera.nearClipPlane) / (layerList.Count + 1);
+        float layerZ = cameraZ + layerInterval;
         for (int i = 0; i < layerList.Count; ++i) {
             exLayer layer = layerList[i];
             if (layer != null) {
@@ -300,7 +224,8 @@ public class ex2DRenderer : MonoBehaviour {
                     layer.SetWorldBoundsMinZ(layer.customZ);
                 }
                 else {
-                    occupiedZ = layer.SetWorldBoundsMinZ(occupiedZ + interval);
+                    layer.SetWorldBoundsMinZ(layerZ);
+                    layerZ += layerInterval;
                 }
             }
         }

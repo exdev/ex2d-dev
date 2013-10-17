@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : ex2DRendererInspector.cs
+// File         : exUIMngInspector.cs
 // Author       : Wu Jie 
-// Last Change  : 07/08/2013 | 10:51:18 AM | Monday,July
+// Last Change  : 10/09/2013 | 10:02:43 AM | Wednesday,October
 // Description  : 
 // ======================================================================================
 
@@ -20,27 +20,37 @@ using System.IO;
 ///////////////////////////////////////////////////////////////////////////////
 
 [CanEditMultipleObjects]
-[CustomEditor(typeof(ex2DRenderer))]
-class ex2DRendererInspector : Editor {
+[CustomEditor(typeof(exUIMng))]
+class exUIMngInspector : Editor {
+
+    float areaY = 0.0f;
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	override public void OnInspectorGUI () {
+	public override void OnInspectorGUI () {
         DrawDefaultInspector(); 
 
         EditorGUILayout.Space();
-        GUILayout.BeginHorizontal();
-        GUILayout.FlexibleSpace();
-            if ( GUILayout.Button("Reset Camera", GUILayout.Height(20) ) ) {
-                ((ex2DRenderer)target).ResetCamera(true);
-            }
-            if ( GUILayout.Button("Edit...", GUILayout.MinWidth(50), GUILayout.Height(20) ) ) {
-                EditorWindow.GetWindow<exSceneEditor>();
-            }
-        GUILayout.Space(5);
-        GUILayout.EndHorizontal();
+        if ( Event.current.type == EventType.Repaint ) {
+            Rect lastRect = GUILayoutUtility.GetLastRect ();
+            areaY = lastRect.yMax;
+        }
+
+        exUIMng mng = target as exUIMng;
+        if ( mng.showDebugInfo ) {
+
+            int areaWidth = Screen.width-40;
+            int areaHeight = 300;
+
+            mng.ShowDebugInfo ( new Rect ( 10, areaY, areaWidth, areaHeight ) );
+            GUILayoutUtility.GetRect ( areaWidth, areaHeight );
+            EditorGUILayout.Space();
+
+            // NOTE: without this, we can not catch state each frame.
+            Repaint();
+        }
     }
 }
 

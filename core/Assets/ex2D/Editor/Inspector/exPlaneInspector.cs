@@ -1,7 +1,7 @@
-﻿// ======================================================================================
-// File         : exSpriteBaseInspector.cs
+// ======================================================================================
+// File         : exPlaneInspector.cs
 // Author       : Wu Jie 
-// Last Change  : 07/04/2013 | 15:34:38 PM | Thursday,July
+// Last Change  : 10/08/2013 | 10:59:46 AM | Tuesday,October
 // Description  : 
 // ======================================================================================
 
@@ -21,17 +21,13 @@ using ex2D.Detail;
 ///////////////////////////////////////////////////////////////////////////////
 
 [CanEditMultipleObjects]
-[CustomEditor(typeof(exSpriteBase))]
-class exSpriteBaseInspector : Editor {
+[CustomEditor(typeof(exPlane))]
+class exPlaneInspector : Editor {
 
-    SerializedProperty customSizeProp;
-    SerializedProperty widthProp;
-    SerializedProperty heightProp;
-    SerializedProperty anchorProp;
-    SerializedProperty offsetProp;
-    SerializedProperty shearProp;
-    SerializedProperty colorProp;
-    SerializedProperty shaderProp;
+    protected SerializedProperty widthProp;
+    protected SerializedProperty heightProp;
+    protected SerializedProperty anchorProp;
+    protected SerializedProperty offsetProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -50,71 +46,42 @@ class exSpriteBaseInspector : Editor {
         serializedObject.Update ();
 
         EditorGUILayout.Space();
-        // EditorGUIUtility.LookLikeInspector();
 
-        // customSize
+        // width
         EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( customSizeProp, new GUIContent("Custom Size") );
+        EditorGUILayout.PropertyField ( widthProp, new GUIContent("Width") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteBase sp = obj as exSpriteBase;
-                if ( sp ) {
-                    sp.customSize = customSizeProp.boolValue;
-                    EditorUtility.SetDirty(sp);
+                exPlane plane = obj as exPlane;
+                if ( plane ) {
+                    plane.width = Mathf.Max(widthProp.floatValue, 0f);
+                    EditorUtility.SetDirty(plane);
                 }
             }
         }
 
-        // if customSize == true
-        EditorGUI.indentLevel++;
-        if ( customSizeProp.boolValue ) {
-            // width
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField ( widthProp, new GUIContent("Width") );
-            if ( EditorGUI.EndChangeCheck() ) {
-                foreach ( Object obj in serializedObject.targetObjects ) {
-                    exSpriteBase sp = obj as exSpriteBase;
-                    if ( sp ) {
-                        sp.width = Mathf.Max(widthProp.floatValue, 0f);
-                        EditorUtility.SetDirty(sp);
-                    }
-                }
-            }
-
-            // height
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField ( heightProp, new GUIContent("Height") );
-            if ( EditorGUI.EndChangeCheck() ) {
-                foreach ( Object obj in serializedObject.targetObjects ) {
-                    exSpriteBase sp = obj as exSpriteBase;
-                    if ( sp ) {
-                        sp.height = Mathf.Max(heightProp.floatValue, 0f);
-                        EditorUtility.SetDirty(sp);
-                    }
+        // height
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( heightProp, new GUIContent("Height") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exPlane plane = obj as exPlane;
+                if ( plane ) {
+                    plane.height = Mathf.Max(heightProp.floatValue, 0f);
+                    EditorUtility.SetDirty(plane);
                 }
             }
         }
-        // if customSize == false
-        else {
-            GUI.enabled = false;
-            if ( serializedObject.isEditingMultipleObjects == false ) {
-                exSpriteBase spriteBase = serializedObject.targetObject as exSpriteBase;
-                EditorGUILayout.FloatField ( new GUIContent("Width"), spriteBase.width );
-                EditorGUILayout.FloatField ( new GUIContent("Height"), spriteBase.height );
-            }
-            GUI.enabled = true;
-        }
-        EditorGUI.indentLevel--;
 
         // anchor
         EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( anchorProp, new GUIContent("Anchor") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteBase sp = obj as exSpriteBase;
-                if ( sp ) {
-                    sp.anchor = (Anchor)anchorProp.enumValueIndex;
-                    EditorUtility.SetDirty(sp);
+                exPlane plane = obj as exPlane;
+                if ( plane ) {
+                    plane.anchor = (Anchor)anchorProp.enumValueIndex;
+                    EditorUtility.SetDirty(plane);
                 }
             }
         }
@@ -124,50 +91,36 @@ class exSpriteBaseInspector : Editor {
         EditorGUILayout.PropertyField ( offsetProp, new GUIContent("Offset"), true );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteBase sp = obj as exSpriteBase;
-                if ( sp ) {
-                    sp.offset = offsetProp.vector2Value;
-                    EditorUtility.SetDirty(sp);
+                exPlane plane = obj as exPlane;
+                if ( plane ) {
+                    plane.offset = offsetProp.vector2Value;
+                    EditorUtility.SetDirty(plane);
                 }
             }
         }
 
-        // shear
-        EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( shearProp, new GUIContent("Shear"), true );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteBase sp = obj as exSpriteBase;
-                if ( sp ) {
-                    sp.shear = shearProp.vector2Value;
-                    EditorUtility.SetDirty(sp);
-                }
+        // if we have sprite
+        exPlane targetPlane = target as exPlane;
+        if ( targetPlane.hasSprite ) {
+            exSpriteBase spriteBase = targetPlane.GetComponent<exSpriteBase>();
+            if ( targetPlane.width != spriteBase.width ) {
+                targetPlane.width = spriteBase.width;
+                EditorUtility.SetDirty(targetPlane);
             }
-        }
 
-        // color
-        EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( colorProp, new GUIContent("Color"), true );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteBase sp = obj as exSpriteBase;
-                if ( sp ) {
-                    sp.color = colorProp.colorValue;
-                    EditorUtility.SetDirty(sp);
-                }
+            if ( targetPlane.height != spriteBase.height ) {
+                targetPlane.height = spriteBase.height;
+                EditorUtility.SetDirty(targetPlane);
             }
-        }
-        
-        // shader
-        EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( shaderProp, new GUIContent("Shader") );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteBase sp = obj as exSpriteBase;
-                if ( sp ) {
-                    sp.shader = shaderProp.objectReferenceValue as Shader;
-                    EditorUtility.SetDirty(sp);
-                }
+
+            if ( targetPlane.anchor != spriteBase.anchor ) {
+                targetPlane.anchor = spriteBase.anchor;
+                EditorUtility.SetDirty(targetPlane);
+            }
+
+            if ( targetPlane.offset != spriteBase.offset ) {
+                targetPlane.offset = spriteBase.offset;
+                EditorUtility.SetDirty(targetPlane);
             }
         }
     }
@@ -177,9 +130,11 @@ class exSpriteBaseInspector : Editor {
     // ------------------------------------------------------------------ 
 
 	protected virtual void OnSceneGUI () {
-        exSpriteBase sprite = target as exSpriteBase;
-        exEditorUtility.GL_DrawWireFrame(sprite, Color.white, false);
-        ProcessSceneEditorHandles ();
+        exPlane plane = target as exPlane;
+        exEditorUtility.GL_DrawWireFrame(plane, new Color( 1.0f, 0.0f, 0.5f, 1.0f ), false);
+        if ( plane.hasSprite == false ) {
+            ProcessSceneEditorHandles ();
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -187,28 +142,15 @@ class exSpriteBaseInspector : Editor {
     // ------------------------------------------------------------------ 
 
     void ProcessSceneEditorHandles () {
-        // TODO: 由于mesh的transform，exLayeredSprite的控制点会有一定的z位移
-        exSpriteBase spriteBase = target as exSpriteBase;
-        Transform trans = spriteBase.transform;
+        exPlane plane = target as exPlane;
+        Transform trans = plane.transform;
         if ( trans ) {
             Vector3 trans_position = trans.position;
             float handleSize = HandleUtility.GetHandleSize(trans_position);
 
             // resize
-            if ( spriteBase && spriteBase.customSize ) {
-                // TODO: limit the size { 
-                // float minWidth = float.MinValue;
-                // float minHeight = float.MinValue;
-                // if ( layeredSprite is exSprite ) {
-                //     exSprite sp = layeredSprite as exSprite;
-                //     if ( sp.spriteType == exSpriteType.Sliced ) {
-                //         minWidth = sp.textureInfo.borderLeft + sp.textureInfo.borderRight;
-                //         minHeight = sp.textureInfo.borderTop + sp.textureInfo.borderBottom;
-                //     }
-                // }
-                // } TODO end 
-
-                Vector3[] vertices = spriteBase.GetLocalVertices();
+            if ( plane ) {
+                Vector3[] vertices = plane.GetLocalVertices();
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
                 Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
                 Vector3 size = new Vector3( aabb.width, aabb.height, 0.0f );
@@ -345,23 +287,7 @@ class exSpriteBaseInspector : Editor {
                 }
 
                 if ( changed ) {
-                    //center.z = originalCenterZ;
-                    exISprite sprite = spriteBase as exISprite;
-                    if (sprite != null) {
-                        ApplySpriteScale (sprite, size, center);
-
-                        // also update all planes in the same compnent
-                        exPlane[] planes = spriteBase.GetComponents<exPlane>();
-                        for ( int i = 0; i < planes.Length; ++i ) {
-                            exPlane plane = planes[i];
-                            if ( plane != this ) {
-                                plane.width = sprite.width;
-                                plane.height = sprite.height;
-                                plane.anchor = sprite.anchor;
-                                plane.offset = sprite.offset;
-                            }
-                        }
-                    }
+                    ApplyPlaneScale (plane, size, center);
                 }
             }
 
@@ -373,19 +299,14 @@ class exSpriteBaseInspector : Editor {
     // Apply exSprite or ex3DSprite change 
     // ------------------------------------------------------------------ 
 
-    public static void ApplySpriteScale (exISprite _sprite, Vector3 _size, Vector3 _center) {
-        if (_sprite.spriteType == exSpriteType.Sliced && _sprite.textureInfo != null && _sprite.textureInfo.hasBorder) {
-            _size.x = Mathf.Max(_size.x, _sprite.leftBorderSize + _sprite.rightBorderSize);
-            _size.y = Mathf.Max(_size.y, _sprite.bottomBorderSize + _sprite.topBorderSize);
-        }
+    public static void ApplyPlaneScale (exPlane _plane, Vector3 _size, Vector3 _center) {
+        _plane.width = _size.x;
+        _plane.height = _size.y;
 
-        _sprite.width = _size.x;
-        _sprite.height = _size.y;
-
-        Vector3 offset = new Vector3( -_sprite.offset.x, -_sprite.offset.y, 0.0f );
+        Vector3 offset = new Vector3( -_plane.offset.x, -_plane.offset.y, 0.0f );
         Vector3 anchorOffset = Vector3.zero;
 
-        switch (_sprite.anchor) {
+        switch (_plane.anchor) {
         case Anchor.TopLeft:    anchorOffset = new Vector3( -_size.x*0.5f,  _size.y*0.5f, 0.0f ); break;
         case Anchor.TopCenter:  anchorOffset = new Vector3(          0.0f,  _size.y*0.5f, 0.0f ); break;
         case Anchor.TopRight:   anchorOffset = new Vector3(  _size.x*0.5f,  _size.y*0.5f, 0.0f ); break;
@@ -397,8 +318,8 @@ class exSpriteBaseInspector : Editor {
         case Anchor.BotRight:   anchorOffset = new Vector3(  _size.x*0.5f, -_size.y*0.5f, 0.0f ); break;
         }
 
-        Vector3 scaledOffset = offset + anchorOffset - (Vector3)_sprite.GetTextureOffset();
-        Transform trans = _sprite.transform;
+        Vector3 scaledOffset = offset + anchorOffset;
+        Transform trans = _plane.transform;
         Vector3 lossyScale = trans.lossyScale;
         scaledOffset.x *= lossyScale.x;
         scaledOffset.y *= lossyScale.y;
@@ -413,14 +334,10 @@ class exSpriteBaseInspector : Editor {
     // ------------------------------------------------------------------ 
 
     protected void InitProperties () {
-        customSizeProp = serializedObject.FindProperty("customSize_");
         widthProp = serializedObject.FindProperty("width_");
         heightProp = serializedObject.FindProperty("height_");
         anchorProp = serializedObject.FindProperty("anchor_");
         offsetProp = serializedObject.FindProperty("offset_");
-        shearProp = serializedObject.FindProperty("shear_");
-        colorProp = serializedObject.FindProperty("color_");
-        shaderProp = serializedObject.FindProperty("shader_");
     }
 }
 

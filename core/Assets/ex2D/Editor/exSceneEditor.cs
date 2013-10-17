@@ -642,7 +642,8 @@ class exSceneEditor : EditorWindow {
                 foreach ( Object o in DragAndDrop.objectReferences ) {
                     if ( o is exTextureInfo ||
                          o is exBitmapFont ||
-                         o is exSpriteAnimationClip ) 
+                         o is exSpriteAnimationClip ||
+                         o is exUILayoutInfo ) 
                     {
                         DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
                         break;
@@ -678,6 +679,13 @@ class exSceneEditor : EditorWindow {
                             spriteFont.shader = Shader.Find("ex2D/Alpha Blended");
                         spriteFont.SetFont(o as exBitmapFont);
                     }
+                    else if ( o is Font ) {
+                        newGO = new GameObject(o.name);
+                        exSpriteFont spriteFont = newGO.AddComponent<exSpriteFont>();
+                        if ( spriteFont.shader == null )
+                            spriteFont.shader = Shader.Find("ex2D/Alpha Blended (Use Vertex Color) ");
+                        spriteFont.SetFont(o as Font);
+                    }
                     else if ( o is exSpriteAnimationClip ) {
                         exSpriteAnimationClip clip = o as exSpriteAnimationClip;
                         newGO = new GameObject(o.name);
@@ -693,17 +701,22 @@ class exSceneEditor : EditorWindow {
                         }
                         InitSprite(sprite);
                     }
+                    else if ( o is exUILayoutInfo ) {
+                        newGO = new GameObject(o.name);
+                        exUILayout layout = newGO.AddComponent<exUILayout>();
+                        layout.layoutInfo = o as exUILayoutInfo;
+                        layout.Sync();
+                    }
 
                     if ( newGO != null && activeLayer != null ) {
                         newGO.transform.position = SceneField_MapToWorld( _rect, e.mousePosition);
                         newGO.transform.localScale = Vector3.one;
                         newGO.transform.rotation = Quaternion.identity;
 
-                        exLayeredSprite sp = newGO.GetComponent<exLayeredSprite>();
-                        activeLayer.Add(sp);
+                        activeLayer.Add(newGO);
 
                         EditorUtility.SetDirty(activeLayer);
-                        EditorUtility.SetDirty(sp);
+                        EditorUtility.SetDirty(newGO);
 
                         Selection.activeObject = newGO;
                     }
@@ -737,6 +750,8 @@ class exSceneEditor : EditorWindow {
             else if ( _sprite.textureInfo.hasBorder ) {
                 _sprite.spriteType = exSpriteType.Sliced;
                 _sprite.customSize = true;
+                _sprite.width = _sprite.textureInfo.width;
+                _sprite.height = _sprite.textureInfo.height;
             }
         }
     }
@@ -802,11 +817,20 @@ class exSceneEditor : EditorWindow {
             Transform[] selection = Selection.GetTransforms(SelectionMode.Editable);
             for ( int i = 0; i < selection.Length; ++i ) {
                 Transform trans = selection[i];
+
+                // draw layered sprite first
                 exLayeredSprite layeredSprite = trans.GetComponent<exLayeredSprite>();
                 if ( layeredSprite ) {
-                    // DrawAABoundingRect (layeredSprite);
-                    exSpriteBaseInspector.DrawBoundingRect (layeredSprite, true);
+                    exEditorUtility.GL_DrawWireFrame (layeredSprite, Color.white, true);
                 }
+
+                // draw ui-control
+                exUIControl[] controls = trans.GetComponents<exUIControl>();
+                for ( int j = 0; j < controls.Length; ++j ) {
+                    exUIControl control = controls[j];
+                    DrawControlNode (control);
+                }
+
             }
 
             // draw resolution line
@@ -872,8 +896,44 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void DrawControlNode ( exUIControl _ctrl ) {
+        Vector3[] vertices = _ctrl.GetLocalVertices();
+        if (vertices.Length > 0) {
+            Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
+            Matrix4x4 l2w = _ctrl.transform.localToWorldMatrix;
+
+            // draw control rect
+            vertices = new Vector3[4] {
+                l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMin, 0)),
+                l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMax, 0)),
+                l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMax, 0)),
+                l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMin, 0)),
+            };
+            exEditorUtility.GL_DrawRectLine(vertices, new Color( 1.0f, 0.0f, 0.5f, 1.0f ), true);
+
+            // draw scroll-view content
+            exUIScrollView scrollView = _ctrl as exUIScrollView;
+            if ( scrollView != null ) {
+                aabb.width = scrollView.contentSize.x;
+                aabb.yMin = aabb.yMax - scrollView.contentSize.y;
+                aabb.center += scrollView.GetScrollOffset();
+                vertices = new Vector3[4] {
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMin, 0)),
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMax, 0)),
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMax, 0)),
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMin, 0)),
+                };
+                exEditorUtility.GL_DrawRectLine(vertices, new Color( 0.0f, 0.5f, 1.0f, 1.0f ), true);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void DrawAABoundingRect ( exLayeredSprite _node ) {
-        Rect boundingRect = _node.GetAABoundingRect();
+        Rect boundingRect = _node.GetWorldAABoundingRect();
 
         exEditorUtility.GL_DrawRectLine ( new Vector3[] {
                                           new Vector3 ( boundingRect.xMin, boundingRect.yMin, 0.0f ),
@@ -957,21 +1017,27 @@ class exSceneEditor : EditorWindow {
             float handleSize = HandleUtility.GetHandleSize(trans_position);
 
             // resize
+            exPlane resizePlane = null;
             exLayeredSprite layeredSprite = trans.GetComponent<exLayeredSprite>();
-            if ( layeredSprite && layeredSprite.customSize ) {
+            if ( layeredSprite != null ) {
+                resizePlane = layeredSprite.customSize ? layeredSprite : null;
+            }
+            else {
+                resizePlane = trans.GetComponent<exPlane>();
+            }
+
+            if ( resizePlane != null ) {
                 // TODO: limit the size { 
                 // float minWidth = float.MinValue;
                 // float minHeight = float.MinValue;
-                // if ( layeredSprite is exSprite ) {
-                //     exSprite sp = layeredSprite as exSprite;
-                //     if ( sp.spriteType == exSpriteType.Sliced ) {
+                //     exSprite sp = resizePlane as exSprite;
+                //     if ( sp != null && sp.spriteType == exSpriteType.Sliced ) {
                 //         minWidth = sp.textureInfo.borderLeft + sp.textureInfo.borderRight;
                 //         minHeight = sp.textureInfo.borderTop + sp.textureInfo.borderBottom;
                 //     }
-                // }
                 // } TODO end 
 
-                Vector3[] vertices = layeredSprite.GetLocalVertices();
+                Vector3[] vertices = resizePlane.GetLocalVertices();
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
                 Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
                 Vector3 size = new Vector3( aabb.width, aabb.height, 0.0f );
@@ -1108,9 +1174,24 @@ class exSceneEditor : EditorWindow {
                 }
 
                 if ( changed ) {
-                    exSprite sprite = layeredSprite as exSprite;
+                    exSprite sprite = resizePlane as exSprite;
                     if (sprite != null) {
                         exSpriteBaseInspector.ApplySpriteScale(sprite, size, center);
+
+                        // also update all planes in the same compnent
+                        exPlane[] planes = sprite.GetComponents<exPlane>();
+                        for ( int i = 0; i < planes.Length; ++i ) {
+                            exPlane plane = planes[i];
+                            if ( plane != this ) {
+                                plane.width = sprite.width;
+                                plane.height = sprite.height;
+                                plane.anchor = sprite.anchor;
+                                plane.offset = sprite.offset;
+                            }
+                        }
+                    }
+                    else {
+                        exPlaneInspector.ApplyPlaneScale(resizePlane, size, center);
                     }
                 }
             }
@@ -1132,6 +1213,8 @@ class exSceneEditor : EditorWindow {
                 trans_rotation = Handles.Disc ( trans_rotation, trans_position, Vector3.forward, handleSize * 0.5f, true, 1 );
 
             if ( EditorGUI.EndChangeCheck() ) {
+                UnityEditor.Undo.RegisterUndo(Selection.transforms, "Change Transform");
+
                 if ( Selection.transforms.Length == 1 ) {
                     trans.position = trans_position;
                     trans.rotation = trans_rotation;
@@ -1258,7 +1341,7 @@ class exSceneEditor : EditorWindow {
         Vector2 screenPos = Vector2.zero;
 
         if ( layeredSprite ) {
-            Rect boundingRect = layeredSprite.GetAABoundingRect();
+            Rect boundingRect = layeredSprite.GetWorldAABoundingRect();
             screenPos = SceneField_WorldToScreen ( _rect, boundingRect.center );
             boundingRect = new Rect ( screenPos.x - boundingRect.width * scale / 2.0f,
                                       screenPos.y - boundingRect.height * scale / 2.0f,

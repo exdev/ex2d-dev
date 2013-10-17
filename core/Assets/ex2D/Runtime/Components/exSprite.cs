@@ -412,8 +412,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
     
     protected override void OnPreAddToLayer () {
-        exDebug.Assert(layer_ == null);
-        UpdateVertexAndIndexCount();
+        this.GetVertexAndIndexCount(out vertexCount_, out indexCount_);
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -423,26 +422,21 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
-    
-    void UpdateVertexAndIndexCount () {
-        if (layer_ == null) {
-            this.GetVertexAndIndexCount(out vertexCount_, out indexCount_);
-        }
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
 
     void UpdateBufferSize () {
         int newVertexCount, newIndexCount;
         this.GetVertexAndIndexCount (out newVertexCount, out newIndexCount);
         if (vertexCount_ != newVertexCount || indexCount_ != newIndexCount) {
-            // rebuild geometry
-            exLayer myLayer = layer_;
-            myLayer.Remove (this, false);
-            myLayer.Add (this, false);
-            exDebug.Assert (vertexCount_ == newVertexCount && indexCount_ == newIndexCount);
+            if (layer_ != null) {
+                layer_.OnPreSpriteChange(this);
+                vertexCount_ = newVertexCount;
+                indexCount_ = newIndexCount;
+                layer_.OnAfterSpriteChange(this);
+            }
+            else {
+                vertexCount_ = newVertexCount;
+                indexCount_ = newIndexCount;
+            }
         }
     }
     
@@ -754,8 +748,8 @@ namespace ex2D.Detail {
             }
             else {
                 leftBorderSize = (float)textureInfo_.borderLeft;
-                rightBorderSize = (float)textureInfo_.borderTop;
-                topBorderSize = (float)textureInfo_.borderRight;
+                rightBorderSize = (float)textureInfo_.borderRight;
+                topBorderSize = (float)textureInfo_.borderTop;
                 bottomBorderSize = (float)textureInfo_.borderBottom;
             }
             

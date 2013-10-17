@@ -353,8 +353,6 @@ public class exSpriteFont : exLayeredSprite {
         set { height_ = value; }
     }
     
-    [System.NonSerialized] private bool lockCapacity = false;
-    
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -420,9 +418,9 @@ public class exSpriteFont : exLayeredSprite {
 
     protected override Vector3[] GetVertices (Space _space) {
         // TODO: only return the rotated bounding box of the sprite font
-        int visibleVertexCount = text_.Length * 4;
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
-        vertices.AddRange(visibleVertexCount);
+        vertices.AddRange(vertexCount_);
+        exDebug.Assert(vertexCount_ >= text_.Length * 4);
         
         SpriteFontParams sfp;
         sfp.text = text_;
@@ -442,10 +440,7 @@ public class exSpriteFont : exLayeredSprite {
     // ------------------------------------------------------------------ 
 
     protected override void OnPreAddToLayer () {
-        exDebug.Assert(layer_ == null);
-        if (layer_ == null) {
-            UpdateCapacity();
-        }
+        UpdateCapacity();
     }
 
     //// ------------------------------------------------------------------ 
@@ -754,26 +749,15 @@ public class exSpriteFont : exLayeredSprite {
     // ------------------------------------------------------------------ 
 
     void UpdateCapacity () {
-        if (lockCapacity) {
-            exDebug.Assert(text_ == null || vertexCount_ >= text_.Length * exMesh.QUAD_VERTEX_COUNT);
-            return;
-        }
         int oldTextCapacity = vertexCount_ / exMesh.QUAD_VERTEX_COUNT;
         int textCapacity = Mathf.Max(GetTextCapacity(oldTextCapacity), 1);  // layered sprite should always have at lease one quad
         
         if (textCapacity != oldTextCapacity) {
             if (layer_ != null) {
-                // remove from layer
-                exLayer myLayer = layer_;
-                myLayer.Remove(this, false);
-                // change capacity
+                layer_.OnPreSpriteChange(this);
                 vertexCount_ = textCapacity * exMesh.QUAD_VERTEX_COUNT;
                 indexCount_ = textCapacity * exMesh.QUAD_INDEX_COUNT;
-                // re-add to layer
-                lockCapacity = true;
-                myLayer.Add(this, false);
-                //Debug.Log("Update Capacity");
-                lockCapacity = false;
+                layer_.OnAfterSpriteChange(this);
             }
             else {
                 vertexCount_ = textCapacity * exMesh.QUAD_VERTEX_COUNT;
@@ -840,8 +824,8 @@ namespace ex2D.Detail {
                 Debug.LogError("顶点缓冲长度不够，是否绕开属性直接修改了text_?: " + sfp.vertexCount, _sprite);
                 return _sprite.updateFlags;
             }
-            #endif
-            
+#endif
+            //Debug.Log(string.Format("[UpdateBuffers|SpriteFontBuilder] _vbIndex: {0} _ibIndex: {1}", _vbIndex, _ibIndex));
             if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
                 //exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
                 BuildText(_sprite, ref sfp, _space, _vertices, _vbIndex, _uvs);
@@ -898,7 +882,6 @@ namespace ex2D.Detail {
             // even if the characters are currently present in the texture, to make sure they don't get purged during texture rebuild.
             sfp.font.RequestCharactersInTexture (sfp.text);
             
-            // TODO: use space instead of _spriteMatrix
             _sprite.width = 0.0f;    // 和SpriteBase一致，用于表示实际宽度
             _sprite.height = 0.0f;   // 和SpriteBase一致，用于表示实际高度
             int invisibleVertexStart = -1;
@@ -912,11 +895,10 @@ namespace ex2D.Detail {
                 visibleVertexCount = 0;
             }
             if (_sprite.vertexCount > visibleVertexCount) {
-                invisibleVertexStart = visibleVertexCount;
-                _vertices.buffer[invisibleVertexStart + 0] = new Vector3();
-                _vertices.buffer[invisibleVertexStart + 1] = new Vector3();
-                _vertices.buffer[invisibleVertexStart + 2] = new Vector3();
-                _vertices.buffer[invisibleVertexStart + 3] = new Vector3();
+                // hide invisible vertex
+                for (int i = _vbIndex + visibleVertexCount, iMax = _vbIndex + _sprite.vertexCount; i < iMax; ++i) {
+                    _vertices.buffer[i] = new Vector3();
+                }
             }
 
             // calculate anchor and offset
@@ -1126,35 +1108,6 @@ namespace ex2D.Detail {
                         _uvs.buffer [_vbIndex + 3] = new Vector2 (ci.uv.xMax, ci.uv.yMin);
                     }
                 }
-
-                /*// build text vertices
-                float x = curX + ci.xoffset;
-                float y = _top - ci.yoffset;
-                _vertices.buffer[_vbIndex + 0] = new Vector3(x, y - ci.height, 0.0f);
-                _vertices.buffer[_vbIndex + 1] = new Vector3(x, y, 0.0f);
-                _vertices.buffer[_vbIndex + 2] = new Vector3(x + ci.width, y, 0.0f);
-                _vertices.buffer[_vbIndex + 3] = new Vector3(x + ci.width, y - ci.height, 0.0f);
-                
-                lastWidth = ci.width;
-                lastAdvance = ci.xadvance;
-                
-                // build uv
-                if (_uvs != null) {
-                    Vector2 start = new Vector2(ci.x * _texelSize.x, ci.y * _texelSize.y);
-                    Vector2 end = new Vector2((ci.x + ci.rotatedWidth) * _texelSize.x, (ci.y + ci.rotatedHeight) * _texelSize.y);
-                    if (ci.rotated) {
-                        _uvs.buffer[_vbIndex + 0] = new Vector2(end.x, start.y);
-                        _uvs.buffer[_vbIndex + 1] = start;
-                        _uvs.buffer[_vbIndex + 2] = new Vector2(start.x, end.y);
-                        _uvs.buffer[_vbIndex + 3] = end;
-                    }
-                    else {
-                        _uvs.buffer[_vbIndex + 0] = start;
-                        _uvs.buffer[_vbIndex + 1] = new Vector2(start.x, end.y);
-                        _uvs.buffer[_vbIndex + 2] = end;
-                        _uvs.buffer[_vbIndex + 3] = new Vector2(end.x, start.y);
-                    }
-                }*/
             }
             return curX + lastWidth;
         }
