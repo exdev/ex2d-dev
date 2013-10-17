@@ -24,32 +24,32 @@ using System.Reflection;
 [CustomEditor(typeof(exUIScrollView))]
 class exUIScrollViewInspector : exUIControlInspector {
 
-    SerializedProperty contentSizeProp;
-    SerializedProperty acceptMouseDragProp;
-    SerializedProperty contentAnchorProp;
+    protected SerializedProperty contentSizeProp;
+    protected SerializedProperty acceptMouseDragProp;
+    protected SerializedProperty contentAnchorProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void OnEnable () {
-        InitProperties();
+    protected override void InitProperties () {
+        base.InitProperties();
+
+        contentSizeProp = serializedObject.FindProperty("contentSize_");
+        acceptMouseDragProp = serializedObject.FindProperty("acceptMouseDrag");
+        contentAnchorProp = serializedObject.FindProperty("contentAnchor");
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	public override void OnInspectorGUI () {
-        base.OnInspectorGUI();
+	protected override void DoInspectorGUI () {
+        base.DoInspectorGUI();
 
-        serializedObject.Update();
-
-            EditorGUILayout.PropertyField ( contentSizeProp, new GUIContent("Content Size") );
-            EditorGUILayout.PropertyField ( acceptMouseDragProp );
-            EditorGUILayout.PropertyField ( contentAnchorProp );
-
-        serializedObject.ApplyModifiedProperties();
+        EditorGUILayout.PropertyField ( contentSizeProp, new GUIContent("Content Size") );
+        EditorGUILayout.PropertyField ( acceptMouseDragProp );
+        EditorGUILayout.PropertyField ( contentAnchorProp );
 
         if ( serializedObject.isEditingMultipleObjects == false ) {
             exUIScrollView scrollView = target as exUIScrollView;
@@ -61,17 +61,7 @@ class exUIScrollViewInspector : exUIControlInspector {
                 EditorUtility.SetDirty (target);
             }
         }
-    }
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected new void InitProperties () {
-        base.InitProperties();
-
-        contentSizeProp = serializedObject.FindProperty("contentSize_");
-        acceptMouseDragProp = serializedObject.FindProperty("acceptMouseDrag");
-        contentAnchorProp = serializedObject.FindProperty("contentAnchor");
+        EditorGUILayout.Space();
     }
 }

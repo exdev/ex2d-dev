@@ -42,98 +42,31 @@ class exPlaneInspector : Editor {
     // ------------------------------------------------------------------ 
 
 	public override void OnInspectorGUI () {
-        // NOTE: DO NOT call serializedObject.ApplyModifiedProperties ();
         serializedObject.Update ();
 
-        EditorGUILayout.Space();
+        SerializedProperty scriptProp = serializedObject.FindProperty("m_Script");
+        EditorGUILayout.PropertyField ( scriptProp );
 
-        // width
-        EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( widthProp, new GUIContent("Width") );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exPlane plane = obj as exPlane;
-                if ( plane ) {
-                    plane.width = Mathf.Max(widthProp.floatValue, 0f);
-                    EditorUtility.SetDirty(plane);
-                }
-            }
-        }
+        DoInspectorGUI ();
 
-        // height
-        EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( heightProp, new GUIContent("Height") );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exPlane plane = obj as exPlane;
-                if ( plane ) {
-                    plane.height = Mathf.Max(heightProp.floatValue, 0f);
-                    EditorUtility.SetDirty(plane);
-                }
-            }
-        }
-
-        // anchor
-        EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( anchorProp, new GUIContent("Anchor") );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exPlane plane = obj as exPlane;
-                if ( plane ) {
-                    plane.anchor = (Anchor)anchorProp.enumValueIndex;
-                    EditorUtility.SetDirty(plane);
-                }
-            }
-        }
-
-        // offset
-        EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( offsetProp, new GUIContent("Offset"), true );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exPlane plane = obj as exPlane;
-                if ( plane ) {
-                    plane.offset = offsetProp.vector2Value;
-                    EditorUtility.SetDirty(plane);
-                }
-            }
-        }
-
-        // if we have sprite
-        exPlane targetPlane = target as exPlane;
-        if ( targetPlane.hasSprite ) {
-            exSpriteBase spriteBase = targetPlane.GetComponent<exSpriteBase>();
-            if ( targetPlane.width != spriteBase.width ) {
-                targetPlane.width = spriteBase.width;
-                EditorUtility.SetDirty(targetPlane);
-            }
-
-            if ( targetPlane.height != spriteBase.height ) {
-                targetPlane.height = spriteBase.height;
-                EditorUtility.SetDirty(targetPlane);
-            }
-
-            if ( targetPlane.anchor != spriteBase.anchor ) {
-                targetPlane.anchor = spriteBase.anchor;
-                EditorUtility.SetDirty(targetPlane);
-            }
-
-            if ( targetPlane.offset != spriteBase.offset ) {
-                targetPlane.offset = spriteBase.offset;
-                EditorUtility.SetDirty(targetPlane);
-            }
-        }
+        serializedObject.ApplyModifiedProperties ();
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	protected virtual void OnSceneGUI () {
+    public void OnSceneGUI () {
         exPlane plane = target as exPlane;
         exEditorUtility.GL_DrawWireFrame(plane, new Color( 1.0f, 0.0f, 0.5f, 1.0f ), false);
+
         if ( plane.hasSprite == false ) {
-            ProcessSceneEditorHandles ();
+            Vector3 size;
+            Vector3 center;
+            bool changed = ProcessSceneEditorHandles ( out size, out center );
+            if ( changed ) {
+                ApplyPlaneScale ( plane, size, center );
+            }
         }
     }
 
@@ -141,9 +74,13 @@ class exPlaneInspector : Editor {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void ProcessSceneEditorHandles () {
+    protected bool ProcessSceneEditorHandles ( out Vector3 _size, out Vector3 _center ) {
+        bool changed = false;
         exPlane plane = target as exPlane;
         Transform trans = plane.transform;
+        Vector3 size = Vector3.zero;
+        Vector3 center = Vector3.zero;
+
         if ( trans ) {
             Vector3 trans_position = trans.position;
             float handleSize = HandleUtility.GetHandleSize(trans_position);
@@ -152,8 +89,8 @@ class exPlaneInspector : Editor {
             if ( plane ) {
                 Vector3[] vertices = plane.GetLocalVertices();
                 Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
-                Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
-                Vector3 size = new Vector3( aabb.width, aabb.height, 0.0f );
+                center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
+                size = new Vector3( aabb.width, aabb.height, 0.0f );
 
                 Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,
                                                                  center.y + size.y * 0.5f,
@@ -183,7 +120,6 @@ class exPlaneInspector : Editor {
                 Vector3 dir_up = trans.up;
                 Vector3 dir_right = trans.right;
                 Vector3 delta = Vector3.zero;
-                bool changed = false;
 
                 EditorGUI.BeginChangeCheck();
                 Vector3 ml2 = Handles.Slider ( ml, dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
@@ -285,14 +221,12 @@ class exPlaneInspector : Editor {
                     center = (bl2 + tr) * 0.5f;
                     changed = true;
                 }
-
-                if ( changed ) {
-                    ApplyPlaneScale (plane, size, center);
-                }
             }
-
-            EditorGUI.BeginChangeCheck();
         }
+
+        _size = size;
+        _center = center;
+        return changed;
     }
     
     // ------------------------------------------------------------------ 
@@ -333,11 +267,94 @@ class exPlaneInspector : Editor {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    protected void InitProperties () {
+    protected virtual void InitProperties () {
         widthProp = serializedObject.FindProperty("width_");
         heightProp = serializedObject.FindProperty("height_");
         anchorProp = serializedObject.FindProperty("anchor_");
         offsetProp = serializedObject.FindProperty("offset_");
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected virtual void DoInspectorGUI () {
+        // width
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( widthProp, new GUIContent("Width") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exPlane plane = obj as exPlane;
+                if ( plane ) {
+                    plane.width = Mathf.Max(widthProp.floatValue, 0f);
+                    EditorUtility.SetDirty(plane);
+                }
+            }
+        }
+
+        // height
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( heightProp, new GUIContent("Height") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exPlane plane = obj as exPlane;
+                if ( plane ) {
+                    plane.height = Mathf.Max(heightProp.floatValue, 0f);
+                    EditorUtility.SetDirty(plane);
+                }
+            }
+        }
+
+        // anchor
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( anchorProp, new GUIContent("Anchor") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exPlane plane = obj as exPlane;
+                if ( plane ) {
+                    plane.anchor = (Anchor)anchorProp.enumValueIndex;
+                    EditorUtility.SetDirty(plane);
+                }
+            }
+        }
+
+        // offset
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( offsetProp, new GUIContent("Offset"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exPlane plane = obj as exPlane;
+                if ( plane ) {
+                    plane.offset = offsetProp.vector2Value;
+                    EditorUtility.SetDirty(plane);
+                }
+            }
+        }
+
+        // if we have sprite
+        exPlane targetPlane = target as exPlane;
+        if ( targetPlane.hasSprite ) {
+            exSpriteBase spriteBase = targetPlane.GetComponent<exSpriteBase>();
+            if ( targetPlane.width != spriteBase.width ) {
+                targetPlane.width = spriteBase.width;
+                EditorUtility.SetDirty(targetPlane);
+            }
+
+            if ( targetPlane.height != spriteBase.height ) {
+                targetPlane.height = spriteBase.height;
+                EditorUtility.SetDirty(targetPlane);
+            }
+
+            if ( targetPlane.anchor != spriteBase.anchor ) {
+                targetPlane.anchor = spriteBase.anchor;
+                EditorUtility.SetDirty(targetPlane);
+            }
+
+            if ( targetPlane.offset != spriteBase.offset ) {
+                targetPlane.offset = spriteBase.offset;
+                EditorUtility.SetDirty(targetPlane);
+            }
+        }
     }
 }
 

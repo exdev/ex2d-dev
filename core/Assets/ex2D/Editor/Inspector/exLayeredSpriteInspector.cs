@@ -23,27 +23,23 @@ using System.IO;
 [CustomEditor(typeof(exLayeredSpriteInspector))]
 class exLayeredSpriteInspector : exSpriteBaseInspector {
 
-    SerializedProperty depthProp;
+    protected SerializedProperty depthProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void OnEnable () {
-        InitProperties ();
+    protected override void InitProperties () {
+        base.InitProperties();
+        depthProp = serializedObject.FindProperty("depth_");
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	public override void OnInspectorGUI () {
-        base.OnInspectorGUI();
-
-        // NOTE: DO NOT call serializedObject.ApplyModifiedProperties ();
-        serializedObject.Update ();
-
-        EditorGUILayout.Space();
+    protected override void DoInspectorGUI () {
+        base.DoInspectorGUI();
 
         // depth
         EditorGUI.BeginChangeCheck();
@@ -57,15 +53,8 @@ class exLayeredSpriteInspector : exSpriteBaseInspector {
                 }
             }
         }
-    }
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected new void InitProperties () {
-        base.InitProperties();
-        depthProp = serializedObject.FindProperty("depth_");
+        EditorGUILayout.Space();
     }
 }
 

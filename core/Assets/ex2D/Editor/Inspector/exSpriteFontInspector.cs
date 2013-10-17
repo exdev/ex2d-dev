@@ -23,39 +23,46 @@ using System.IO;
 [CustomEditor(typeof(exSpriteFont))]
 class exSpriteFontInspector : exLayeredSpriteInspector {
 
-    //SerializedProperty fontProp;
-    SerializedProperty textProp;
-    SerializedProperty textAlignProp;
-    SerializedProperty useKerningProp;
-    SerializedProperty spacingProp;
-    SerializedProperty topColorProp;
-    SerializedProperty botColorProp;
-    SerializedProperty useOutlineProp;
-    SerializedProperty outlineWidthProp;
-    SerializedProperty outlineColorProp;
-    SerializedProperty useShadowProp;
-    SerializedProperty shadowBiasProp;
-    SerializedProperty shadowColorProp;
+    protected SerializedProperty textProp;
+    protected SerializedProperty textAlignProp;
+    protected SerializedProperty useKerningProp;
+    protected SerializedProperty spacingProp;
+    protected SerializedProperty topColorProp;
+    protected SerializedProperty botColorProp;
+    protected SerializedProperty useOutlineProp;
+    protected SerializedProperty outlineWidthProp;
+    protected SerializedProperty outlineColorProp;
+    protected SerializedProperty useShadowProp;
+    protected SerializedProperty shadowBiasProp;
+    protected SerializedProperty shadowColorProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void OnEnable () {
-        InitProperties();
+    protected override void InitProperties () {
+        base.InitProperties();
+
+        textProp = serializedObject.FindProperty("text_");
+        textAlignProp = serializedObject.FindProperty("textAlign_");
+        useKerningProp = serializedObject.FindProperty("useKerning_");
+        spacingProp = serializedObject.FindProperty("spacing_");
+        topColorProp = serializedObject.FindProperty("topColor_");
+        botColorProp = serializedObject.FindProperty("botColor_");
+        useOutlineProp = serializedObject.FindProperty("useOutline_");
+        outlineWidthProp = serializedObject.FindProperty("outlineWidth_");
+        outlineColorProp = serializedObject.FindProperty("outlineColor_");
+        useShadowProp = serializedObject.FindProperty("useShadow_");
+        shadowBiasProp = serializedObject.FindProperty("shadowBias_");
+        shadowColorProp = serializedObject.FindProperty("shadowColor_");
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	public override void OnInspectorGUI () {
-        base.OnInspectorGUI();
-
-        // NOTE: DO NOT call serializedObject.ApplyModifiedProperties ();
-        serializedObject.Update ();
-
-        EditorGUILayout.Space();
+	protected override void DoInspectorGUI () {
+        base.DoInspectorGUI();
 
         {
             // font
@@ -268,35 +275,8 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
             }
         GUILayout.Space(5);
         GUILayout.EndHorizontal();
-    }
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-	protected override void OnSceneGUI () {
-        base.OnSceneGUI();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected new void InitProperties () {
-        base.InitProperties();
-        //fontProp = serializedObject.FindProperty("font_");
-        textProp = serializedObject.FindProperty("text_");
-        textAlignProp = serializedObject.FindProperty("textAlign_");
-        useKerningProp = serializedObject.FindProperty("useKerning_");
-        spacingProp = serializedObject.FindProperty("spacing_");
-        topColorProp = serializedObject.FindProperty("topColor_");
-        botColorProp = serializedObject.FindProperty("botColor_");
-        useOutlineProp = serializedObject.FindProperty("useOutline_");
-        outlineWidthProp = serializedObject.FindProperty("outlineWidth_");
-        outlineColorProp = serializedObject.FindProperty("outlineColor_");
-        useShadowProp = serializedObject.FindProperty("useShadow_");
-        shadowBiasProp = serializedObject.FindProperty("shadowBias_");
-        shadowColorProp = serializedObject.FindProperty("shadowColor_");
+        EditorGUILayout.Space();
     }
 }
 
