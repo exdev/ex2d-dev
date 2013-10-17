@@ -127,7 +127,7 @@ public static class exGeometryUtility {
 		if ( _bound.xMin < _rect.xMin ) offset.x += _rect.xMin - _bound.xMin;
 		if ( _bound.xMax > _rect.xMax ) offset.x -= _bound.xMax - _rect.xMax;
 		if ( _bound.yMin < _rect.yMin ) offset.y += _rect.yMin - _bound.yMin;
-		if ( _bound.yMax > _rect.yMax ) offset.y -= _bound.xMax - _rect.yMax;
+		if ( _bound.yMax > _rect.yMax ) offset.y -= _bound.yMax - _rect.yMax;
 		
 		return offset;
 	}

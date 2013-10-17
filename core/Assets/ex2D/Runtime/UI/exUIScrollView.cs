@@ -153,8 +153,8 @@ public class exUIScrollView : exUIControl {
                     Vector2 delta = point.worldDelta; 
                     Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
                                                                                      new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
-                    if ( constrainOffset.x > 0.001f ) delta.x *= 0.5f;
-                    if ( constrainOffset.y > 0.001f ) delta.y *= 0.5f;
+                    if ( Mathf.Abs(constrainOffset.x) > 0.001f ) delta.x *= 0.5f;
+                    if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
 
                     Scroll (delta);
                     break;
