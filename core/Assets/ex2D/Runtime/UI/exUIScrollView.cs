@@ -97,6 +97,8 @@ public class exUIScrollView : exUIControl {
     public bool allowVerticalScroll = true;
     public Transform contentAnchor = null;
 
+    public float scrollSpeed = 35.0f;
+
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
@@ -108,7 +110,9 @@ public class exUIScrollView : exUIControl {
     Vector2 scrollOffset = Vector2.zero;
 
     bool damping = false;
-    bool bouncing = false;
+    Vector2 velocity = Vector2.zero;
+
+    bool spring = false;
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -133,6 +137,10 @@ public class exUIScrollView : exUIControl {
                 dragging = true;
                 draggingID = _point.id;
 
+                damping = false;
+                spring = false;
+                velocity = Vector2.zero;
+
                 exUIMng.inst.SetFocus(this);
             }
         };
@@ -142,6 +150,8 @@ public class exUIScrollView : exUIControl {
                 if ( dragging ) {
                     dragging = false;
                     draggingID = -1;
+
+                    StartScroll ( _point.worldDelta );
                 }
             }
         };
@@ -157,6 +167,7 @@ public class exUIScrollView : exUIControl {
                     if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
 
                     Scroll (delta);
+
                     break;
                 }
             }
@@ -171,12 +182,67 @@ public class exUIScrollView : exUIControl {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void Update () {
-        // TODO:
+    void LateUpdate () {
+        Vector2 constrainOffset = Vector2.zero;
+        Vector2 deltaScroll = Vector2.zero;
+        bool doScroll = (damping || spring);
+
+        if ( damping || spring  )
+            constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
+                                                                     new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
+
+        // process damping first
         if ( damping ) {
+
+            if ( Mathf.Abs(constrainOffset.x) > 0.001f ) {
+                if ( dragEffect != DragEffect.MomentumAndSpring ) {
+                    velocity.x = 0.0f;
+                }
+                else {
+                    spring = true;
+                }
+            }
+
+            if ( Mathf.Abs(constrainOffset.y) > 0.001f ) {
+                if ( dragEffect != DragEffect.MomentumAndSpring ) {
+                    velocity.y = 0.0f;
+                }
+                else {
+                    spring = true;
+                }
+            }
+
+            // deceleration
+            velocity.x *= 0.9f;
+            velocity.y *= 0.9f;
+
+            if ( velocity.sqrMagnitude < 0.001f ) {
+                damping = false;
+                velocity = Vector2.zero;
+            }
+            else {
+                deltaScroll = velocity * Time.deltaTime;
+            }
         }
 
-        if ( bouncing ) {
+        // process spring
+        if ( spring ) {
+            Vector2 before = contentAnchor.localPosition;
+            Vector2 after = exMath.SpringLerp ( before, before - constrainOffset, 15.0f, Time.deltaTime );
+            Vector2 deltaSpring = after - before;
+
+            if ( deltaSpring.sqrMagnitude < 0.001f ) {
+                deltaScroll = -constrainOffset;
+                spring = false;
+            }
+            else {
+                deltaScroll = deltaScroll + deltaSpring;
+            }
+        }
+
+        //
+        if ( doScroll ) {
+            Scroll ( deltaScroll );
         }
     }
 
@@ -185,7 +251,22 @@ public class exUIScrollView : exUIControl {
     // ------------------------------------------------------------------ 
 
     public void StartScroll ( Vector2 _delta ) {
-        // TODO:
+        damping = true;
+        velocity = _delta * scrollSpeed;
+
+        Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
+                                                                         new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
+        if ( Mathf.Abs(constrainOffset.x) > 0.001f ) {
+            if ( dragEffect == DragEffect.MomentumAndSpring ) {
+                velocity.x *= 0.5f;
+            }
+        }
+
+        if ( Mathf.Abs(constrainOffset.y) > 0.001f ) {
+            if ( dragEffect == DragEffect.MomentumAndSpring ) {
+                velocity.y *= 0.5f;
+            }
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -205,13 +286,15 @@ public class exUIScrollView : exUIControl {
             scrollOffset.y = Mathf.Clamp( scrollOffset.y, 0.0f, contentSize_.y - height );
         }
 
-        if ( contentAnchor != null )
+        if ( contentAnchor != null ) {
             contentAnchor.localPosition = new Vector3 ( originalAnchorPos.x + scrollOffset.x,
                                                         originalAnchorPos.y + scrollOffset.y,
                                                         originalAnchorPos.z );
+        }
 
-        if ( onScroll != null ) 
+        if ( onScroll != null ) {
             onScroll ( this, scrollOffset );
+        }
     }
 
     // ------------------------------------------------------------------ 
