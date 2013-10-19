@@ -97,7 +97,7 @@ public class exUIScrollView : exUIControl {
     public bool allowVerticalScroll = true;
     public Transform contentAnchor = null;
 
-    public float scrollSpeed = 35.0f;
+    public float scrollSpeed = 1.0f;
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -151,7 +151,7 @@ public class exUIScrollView : exUIControl {
                     dragging = false;
                     draggingID = -1;
 
-                    StartScroll ( _point.worldDelta );
+                    StartScroll ();
                 }
             }
         };
@@ -165,6 +165,9 @@ public class exUIScrollView : exUIControl {
                                                                                      new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
                     if ( Mathf.Abs(constrainOffset.x) > 0.001f ) delta.x *= 0.5f;
                     if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
+
+                    // TODO: change to momentum
+                    velocity = Vector2.Lerp ( velocity, velocity + (delta / Time.deltaTime) * scrollSpeed, 0.67f );
 
                     Scroll (delta);
 
@@ -201,6 +204,13 @@ public class exUIScrollView : exUIControl {
                 else {
                     spring = true;
                 }
+
+                // deceleration
+                velocity.x *= 0.5f;
+            }
+            else {
+                // deceleration
+                velocity.x *= 0.95f;
             }
 
             if ( Mathf.Abs(constrainOffset.y) > 0.001f ) {
@@ -210,12 +220,16 @@ public class exUIScrollView : exUIControl {
                 else {
                     spring = true;
                 }
+
+                // deceleration
+                velocity.y *= 0.5f;
+            }
+            else {
+                // deceleration
+                velocity.y *= 0.95f;
             }
 
-            // deceleration
-            velocity.x *= 0.9f;
-            velocity.y *= 0.9f;
-
+            //
             if ( velocity.sqrMagnitude < 0.001f ) {
                 damping = false;
                 velocity = Vector2.zero;
@@ -250,10 +264,8 @@ public class exUIScrollView : exUIControl {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void StartScroll ( Vector2 _delta ) {
+    public void StartScroll () {
         damping = true;
-        velocity = _delta * scrollSpeed;
-
         Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
                                                                          new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
         if ( Mathf.Abs(constrainOffset.x) > 0.001f ) {

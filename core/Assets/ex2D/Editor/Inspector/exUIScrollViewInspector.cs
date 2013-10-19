@@ -30,6 +30,7 @@ class exUIScrollViewInspector : exUIControlInspector {
     protected SerializedProperty contentSizeProp;
     protected SerializedProperty allowHorizontalScrollProp;
     protected SerializedProperty allowVerticalScrollProp;
+    protected SerializedProperty scrollSpeedProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -44,6 +45,7 @@ class exUIScrollViewInspector : exUIControlInspector {
         contentSizeProp = serializedObject.FindProperty("contentSize_");
         allowHorizontalScrollProp = serializedObject.FindProperty("allowHorizontalScroll");
         allowVerticalScrollProp = serializedObject.FindProperty("allowVerticalScroll");
+        scrollSpeedProp = serializedObject.FindProperty("scrollSpeed");
     }
 
     // ------------------------------------------------------------------ 
@@ -59,6 +61,7 @@ class exUIScrollViewInspector : exUIControlInspector {
         EditorGUILayout.PropertyField ( contentSizeProp, new GUIContent("Content Size") );
         EditorGUILayout.PropertyField ( allowHorizontalScrollProp );
         EditorGUILayout.PropertyField ( allowVerticalScrollProp );
+        EditorGUILayout.PropertyField ( scrollSpeedProp );
 
         if ( serializedObject.isEditingMultipleObjects == false ) {
             exUIScrollView scrollView = target as exUIScrollView;

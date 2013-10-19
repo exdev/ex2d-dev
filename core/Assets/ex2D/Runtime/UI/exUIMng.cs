@@ -526,13 +526,12 @@ public class exUIMng : MonoBehaviour {
                 hotPoint.Reset();
             }
             else {
-                Vector2 lastMousePos = hotPoint.pos;
                 hotPoint.pos = touch.position;
-                hotPoint.delta = hotPoint.pos - lastMousePos;
+                hotPoint.delta = touch.deltaPosition;
 
-                Vector3 lastMouseWorldPos = hotPoint.worldPos;
+                Vector3 lastWorldPos = camera.ScreenToWorldPoint(touch.position - touch.deltaPosition);
                 hotPoint.worldPos = camera.ScreenToWorldPoint(touch.position);
-                hotPoint.worldDelta = hotPoint.worldPos - lastMouseWorldPos;
+                hotPoint.worldDelta = hotPoint.worldPos - lastWorldPos;
 
                 hotPoint.pressDown = (touch.phase == TouchPhase.Began);
                 hotPoint.pressUp = (touch.phase == TouchPhase.Canceled || touch.phase == TouchPhase.Ended);
