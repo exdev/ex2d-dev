@@ -182,6 +182,20 @@ public class exUIScrollView : exUIControl {
 
         onMouseWheel += delegate ( exUIControl _sender, float _delta ) {
             // TODO: if ( mouseWheelByHorizontal )
+
+            Vector2 delta = new Vector2( 0.0f, -_delta * 100.0f );
+            Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
+                                                                             new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
+            if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
+
+            velocity = Vector2.Lerp ( velocity, velocity + (delta / Time.deltaTime) * scrollSpeed, 0.67f );
+            if ( Mathf.Sign(velocity.x) != Mathf.Sign(delta.x) )
+                velocity.x = 0.0f;
+            if ( Mathf.Sign(velocity.y) != Mathf.Sign(delta.y) )
+                velocity.y = 0.0f;
+
+            Scroll (delta);
+            StartScroll ();
         };
     }
 
@@ -265,19 +279,26 @@ public class exUIScrollView : exUIControl {
     // ------------------------------------------------------------------ 
 
     public void StartScroll () {
-        damping = true;
-        Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
-                                                                         new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
-        if ( Mathf.Abs(constrainOffset.x) > 0.001f ) {
-            if ( dragEffect == DragEffect.MomentumAndSpring ) {
-                velocity.x *= 0.5f;
+        if ( dragEffect != DragEffect.None ) {
+            damping = true;
+
+            Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
+                                                                             new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
+            if ( Mathf.Abs(constrainOffset.x) > 0.001f ) {
+                if ( dragEffect == DragEffect.MomentumAndSpring ) {
+                    velocity.x *= 0.5f;
+                }
+            }
+
+            if ( Mathf.Abs(constrainOffset.y) > 0.001f ) {
+                if ( dragEffect == DragEffect.MomentumAndSpring ) {
+                    velocity.y *= 0.5f;
+                }
             }
         }
-
-        if ( Mathf.Abs(constrainOffset.y) > 0.001f ) {
-            if ( dragEffect == DragEffect.MomentumAndSpring ) {
-                velocity.y *= 0.5f;
-            }
+        else {
+            velocity = Vector2.zero;
+            damping = false;
         }
     }
 
