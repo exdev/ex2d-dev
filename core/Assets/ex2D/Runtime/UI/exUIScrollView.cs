@@ -97,7 +97,7 @@ public class exUIScrollView : exUIControl {
     public bool allowVerticalScroll = true;
     public Transform contentAnchor = null;
 
-    public float scrollSpeed = 1.0f;
+    public float scrollSpeed = 0.5f;
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -166,8 +166,12 @@ public class exUIScrollView : exUIControl {
                     if ( Mathf.Abs(constrainOffset.x) > 0.001f ) delta.x *= 0.5f;
                     if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
 
-                    // TODO: change to momentum
+                    //
                     velocity = Vector2.Lerp ( velocity, velocity + (delta / Time.deltaTime) * scrollSpeed, 0.67f );
+                    if ( Mathf.Sign(velocity.x) != Mathf.Sign(delta.x) )
+                        velocity.x = 0.0f;
+                    if ( Mathf.Sign(velocity.y) != Mathf.Sign(delta.y) )
+                        velocity.y = 0.0f;
 
                     Scroll (delta);
 
@@ -194,6 +198,10 @@ public class exUIScrollView : exUIControl {
             constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
                                                                      new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
 
+        // deceleration
+        velocity.x *= 0.9f;
+        velocity.y *= 0.9f;
+
         // process damping first
         if ( damping ) {
 
@@ -205,12 +213,8 @@ public class exUIScrollView : exUIControl {
                     spring = true;
                 }
 
-                // deceleration
-                velocity.x *= 0.5f;
-            }
-            else {
-                // deceleration
-                velocity.x *= 0.95f;
+                // more deceleration
+                // velocity.x *= 0.8f;
             }
 
             if ( Mathf.Abs(constrainOffset.y) > 0.001f ) {
@@ -221,12 +225,8 @@ public class exUIScrollView : exUIControl {
                     spring = true;
                 }
 
-                // deceleration
-                velocity.y *= 0.5f;
-            }
-            else {
-                // deceleration
-                velocity.y *= 0.95f;
+                // more deceleration
+                // velocity.y *= 0.8f;
             }
 
             //
