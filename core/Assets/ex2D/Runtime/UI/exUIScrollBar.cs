@@ -49,7 +49,7 @@ public class exUIScrollBar : exUIControl {
         btnBar.grabMouseOrTouch = true;
         btnBar.onHoverMove += delegate ( exUIControl _sender, List<exHotPoint> _points ) {
             // TODO:
-        }
+        };
 
         btnBar.transform.localPosition = Vector3.zero;
     }
