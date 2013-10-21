@@ -48,6 +48,26 @@ class exUIScrollBarInspector : exUIControlInspector {
         EditorGUILayout.PropertyField ( directionProp );
         EditorGUILayout.PropertyField ( scrollViewProp );
 
+        //
+        if ( serializedObject.isEditingMultipleObjects == false ) {
+            exUIScrollBar scrollBar = target as exUIScrollBar;
+            Transform transBar = scrollBar.transform.Find("__bar");
+            if ( transBar ) {
+                GUIStyle style = EditorGUIUtility.GetBuiltinSkin(EditorSkin.Inspector).label;
+                style.normal.textColor = Color.green;
+                EditorGUILayout.LabelField( "__bar", "founded!", style );
+            }
+            else {
+                GUIStyle style = EditorGUIUtility.GetBuiltinSkin(EditorSkin.Inspector).label;
+
+                style.normal.textColor = Color.red;
+                EditorGUILayout.LabelField( "__bar", "not found!", style );
+
+                style.normal.textColor = Color.yellow;
+                EditorGUILayout.LabelField( "Please add a child named \"__bar\".", style );
+            }
+        }
+
         EditorGUILayout.Space();
     }
 }
