@@ -5,8 +5,6 @@
 // Description  : 
 // ======================================================================================
 
-// #define EX2D
-
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
@@ -30,20 +28,11 @@ public class exDebugHelperEditor : Editor {
     exDebugHelper curEdit;
 
     SerializedProperty offsetProp;
-
-#if EX2D
-    SerializedProperty debugTextPoolProp;
-    SerializedProperty txtPrintProp;
-    SerializedProperty txtFPSProp;
-    SerializedProperty txtLogProp;
-    SerializedProperty txtTimeScaleProp;
-#else
     SerializedProperty printStyleProp;
     SerializedProperty fpsStyleProp;
     SerializedProperty fpsAnchorProp;
     SerializedProperty logStyleProp;
     SerializedProperty timeScaleStyleProp;
-#endif
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
@@ -58,19 +47,11 @@ public class exDebugHelperEditor : Editor {
             curEdit = target as exDebugHelper;
         }
         offsetProp = serializedObject.FindProperty ("offset");
-#if EX2D
-        debugTextPoolProp = serializedObject.FindProperty ("debugTextPool");
-        txtPrintProp = serializedObject.FindProperty ("txtPrint");
-        txtFPSProp = serializedObject.FindProperty ("txtFPS");
-        txtLogProp = serializedObject.FindProperty ("txtLog");
-        txtTimeScaleProp = serializedObject.FindProperty ("txtTimeScale");
-#else
         printStyleProp = serializedObject.FindProperty ("printStyle");
         fpsStyleProp = serializedObject.FindProperty ("fpsStyle");
         fpsAnchorProp = serializedObject.FindProperty ("fpsAnchor");
         logStyleProp = serializedObject.FindProperty ("logStyle");
         timeScaleStyleProp = serializedObject.FindProperty ("timeScaleStyle");
-#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -79,47 +60,44 @@ public class exDebugHelperEditor : Editor {
 
     override public void OnInspectorGUI () {
 
-        EditorGUILayout.Space ();
-        EditorGUI.indentLevel = 0;
-
         // ======================================================== 
         // pool settings 
         // ======================================================== 
 
         serializedObject.Update();
+            // Show Fps
+            curEdit.showFps = EditorGUILayout.Toggle( "Show Fps", curEdit.showFps );
             EditorGUILayout.PropertyField (offsetProp, true);
-#if EX2D
-            if ( EditorGUILayout.PropertyField ( debugTextPoolProp, new GUIContent("Debug Text Pool") ) ) 
-            {
-                EditorGUI.indentLevel = 1;
-                curEdit.debugTextPool.prefab = EditorGUILayout.ObjectField( "Prefab"
-                                                                            , curEdit.debugTextPool.prefab
-                                                                            , typeof(GameObject)
-                                                                            , true 
-                                                                          ) as GameObject;
-                curEdit.debugTextPool.size = EditorGUILayout.IntField( "Size", curEdit.debugTextPool.size );
-                EditorGUI.indentLevel = 0;
-            }
-
-            EditorGUILayout.PropertyField (txtPrintProp);
-            EditorGUILayout.PropertyField (txtFPSProp);
-            EditorGUILayout.PropertyField (txtLogProp);
-            EditorGUILayout.PropertyField (txtTimeScaleProp);
-#else
-            EditorGUILayout.PropertyField (printStyleProp, true);
+            EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField (fpsStyleProp, true);
-            EditorGUILayout.PropertyField (logStyleProp, true);
-            EditorGUILayout.PropertyField (timeScaleStyleProp, true);
-
             EditorGUILayout.PropertyField (fpsAnchorProp, true);
-#endif
-        serializedObject.ApplyModifiedProperties();
+            EditorGUI.indentLevel--;
+            EditorGUILayout.Space();
 
-        curEdit.showFps = EditorGUILayout.Toggle( "Show Fps", curEdit.showFps );
-        curEdit.showScreenPrint = EditorGUILayout.Toggle( "Show Screen Print", curEdit.showScreenPrint );
-        curEdit.showScreenLog = EditorGUILayout.Toggle( "Show Screen Log", curEdit.showScreenLog );
-        curEdit.showScreenDebugText = EditorGUILayout.Toggle( "Show Screen Debug Text", curEdit.showScreenDebugText );
-        curEdit.enableTimeScaleDebug = EditorGUILayout.Toggle( "Enable Time Scale Debug", curEdit.enableTimeScaleDebug );
+            // Show Screen Print
+            curEdit.showScreenPrint = EditorGUILayout.Toggle( "Show Screen Print", curEdit.showScreenPrint );
+            EditorGUI.indentLevel++;
+            EditorGUILayout.PropertyField (printStyleProp, true);
+            EditorGUI.indentLevel--;
+            EditorGUILayout.Space();
+
+            // Show Screen Log
+            curEdit.showScreenLog = EditorGUILayout.Toggle( "Show Screen Log", curEdit.showScreenLog );
+            EditorGUI.indentLevel++;
+            EditorGUILayout.PropertyField (logStyleProp, true);
+            EditorGUI.indentLevel--;
+            EditorGUILayout.Space();
+
+            // Enable Time Scale Debug
+            curEdit.enableTimeScaleDebug = EditorGUILayout.Toggle( "Enable Time Scale Debug", curEdit.enableTimeScaleDebug );
+            EditorGUI.indentLevel++;
+            EditorGUILayout.PropertyField (timeScaleStyleProp, true);
+            EditorGUI.indentLevel--;
+            EditorGUILayout.Space();
+
+            // Show Screen Debug Text
+            curEdit.showScreenDebugText = EditorGUILayout.Toggle( "Show Screen Debug Text", curEdit.showScreenDebugText );
+        serializedObject.ApplyModifiedProperties();
 
         // ======================================================== 
         // check dirty 
