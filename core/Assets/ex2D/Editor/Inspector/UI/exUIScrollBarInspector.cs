@@ -53,12 +53,12 @@ class exUIScrollBarInspector : exUIControlInspector {
             exUIScrollBar scrollBar = target as exUIScrollBar;
             Transform transBar = scrollBar.transform.Find("__bar");
             if ( transBar ) {
-                GUIStyle style = EditorGUIUtility.GetBuiltinSkin(EditorSkin.Inspector).label;
+                GUIStyle style = new GUIStyle(EditorGUIUtility.GetBuiltinSkin(EditorSkin.Inspector).label);
                 style.normal.textColor = Color.green;
                 EditorGUILayout.LabelField( "__bar", "founded!", style );
             }
             else {
-                GUIStyle style = EditorGUIUtility.GetBuiltinSkin(EditorSkin.Inspector).label;
+                GUIStyle style = new GUIStyle(EditorGUIUtility.GetBuiltinSkin(EditorSkin.Inspector).label);
 
                 style.normal.textColor = Color.red;
                 EditorGUILayout.LabelField( "__bar", "not found!", style );

@@ -21,6 +21,13 @@ using System.Collections.Generic;
 
 public class exUIEffect : MonoBehaviour {
 
+    bool inverse = false;
+    bool start = false;
+    float timer = 0.0f;
+    float duration = 1.0f;
+    Vector3 src = Vector3.one;
+    Vector3 dest = new Vector3( 1.5f, 1.5f, 1.0f );
+
     ///////////////////////////////////////////////////////////////////////////////
     // functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -33,6 +40,14 @@ public class exUIEffect : MonoBehaviour {
         exUIControl ctrl = GetComponent<exUIControl>();
         if ( ctrl != null ) {
             ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
+                start = true;
+                inverse = false;
+                timer = 0.0f;
+                duration = 0.3f;
+            };
+            ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
+                start = true;
+                inverse = true;
             };
         }
     } 
@@ -42,5 +57,31 @@ public class exUIEffect : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void Update () {
+        if ( start ) {
+            if ( inverse )
+                timer -= Time.deltaTime;
+            else
+                timer += Time.deltaTime;
+
+            // float ratio = exEase.PingPong ( timer/duration, exEase.ExpoOut );
+            float ratio = exEase.QuadOut(timer/duration);
+            Vector3 result = Vector3.Lerp( src, dest, ratio );
+            transform.localScale = result;
+
+            if ( inverse ) {
+                if ( timer <= 0.0f ) {
+                    timer = 0.0f;
+                    start = false;
+                    transform.localScale = src;
+                }
+            }
+            else {
+                if ( timer >= duration ) {
+                    timer = duration;
+                    start = false;
+                    transform.localScale = dest;
+                }
+            }
+        }
     }
 }

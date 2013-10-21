@@ -60,10 +60,7 @@ public class exDebugHelperEditor : Editor {
 
     override public void OnInspectorGUI () {
 
-        // ======================================================== 
-        // pool settings 
-        // ======================================================== 
-
+        // settings 
         serializedObject.Update();
             // Show Fps
             curEdit.showFps = EditorGUILayout.Toggle( "Show Fps", curEdit.showFps );
@@ -99,10 +96,7 @@ public class exDebugHelperEditor : Editor {
             curEdit.showScreenDebugText = EditorGUILayout.Toggle( "Show Screen Debug Text", curEdit.showScreenDebugText );
         serializedObject.ApplyModifiedProperties();
 
-        // ======================================================== 
         // check dirty 
-        // ======================================================== 
-
         if ( GUI.changed ) {
             EditorUtility.SetDirty(curEdit);
         }
