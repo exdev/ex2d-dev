@@ -24,59 +24,85 @@ using System.Collections.Generic;
 public class exUIControl : exPlane {
 
     [System.Serializable]
+    public class EventDef {
+        public string name;
+        public Type[] parameterTypes;
+        public Type delegateType;
+
+        public EventDef ( string _name, Type[] _parameterTypes, Type _delegateType ) {
+            name = _name;
+            parameterTypes = _parameterTypes;
+            delegateType = _delegateType;
+        }
+    }
+
+    public static EventDef FindEventDef ( EventDef[] _eventDefs, string _name ) {
+        for ( int i = 0; i < _eventDefs.Length; ++i ) {
+            EventDef eventDef = _eventDefs[i];
+            if ( eventDef.name == _name )
+                return eventDef; 
+        }
+        return null;
+    }
+
+    [System.Serializable]
     public class SlotInfo {
         public GameObject receiver = null;
         public string method = "";
+    }
+
+    [System.Serializable]
+    public class EventTrigger {
+        public string name;
+        public List<SlotInfo> slots;
+
+        public EventTrigger ( string _name ) {
+            name = _name;
+            slots = new List<SlotInfo>();
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     // events, slots and senders
     ///////////////////////////////////////////////////////////////////////////////
 
-    // focus
+    // event-defs
+    public static EventDef[] eventDefs = new EventDef[] {
+        new EventDef ( "onFocus",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onUnfocus",    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onActive",     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onDeactive",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+        new EventDef ( "onHoverIn",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventDef ( "onHoverOut",   new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventDef ( "onHoverMove",  new Type[] { typeof(exUIControl), typeof(List<exHotPoint>) }, typeof(Action<exUIControl,List<exHotPoint>>) ),
+        new EventDef ( "onPressDown",  new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventDef ( "onPressUp",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
+        new EventDef ( "onMouseWheel", new Type[] { typeof(exUIControl), typeof(float) }, typeof(Action<exUIControl,float>) ),
+    };
+
+    // events
     public event Action<exUIControl> onFocus;
-    public List<SlotInfo> onFocusSlots = new List<SlotInfo>();
-    public void Send_OnFocus () { if ( onFocus != null ) onFocus (this); }
-
-    // unfocus
-    public event Action<exUIControl> onUnFocus;
-    public List<SlotInfo> onUnFocusSlots = new List<SlotInfo>();
-    public void Send_OnUnFocus () { if ( onUnFocus != null ) onUnFocus (this); }
-
-    // active
+    public event Action<exUIControl> onUnfocus;
     public event Action<exUIControl> onActive;
-    public List<SlotInfo> onActiveSlots = new List<SlotInfo>();
-    public void Send_OnActive () { if ( onActive != null ) onActive (this); }
-
-    // deactive
     public event Action<exUIControl> onDeactive;
-    public List<SlotInfo> onDeactiveSlots = new List<SlotInfo>();
+    public event Action<exUIControl,exHotPoint> onHoverIn;
+    public event Action<exUIControl,exHotPoint> onHoverOut;
+    public event Action<exUIControl,List<exHotPoint>> onHoverMove;
+    public event Action<exUIControl,exHotPoint> onPressDown;
+    public event Action<exUIControl,exHotPoint> onPressUp;
+    public event Action<exUIControl,float> onMouseWheel;
+
+    // event easy function
+    public void Send_OnFocus () { if ( onFocus != null ) onFocus (this); }
+    public void Send_OnUnfocus () { if ( onUnfocus != null ) onUnfocus (this); }
+    public void Send_OnActive () { if ( onActive != null ) onActive (this); }
     public void Send_OnDeactive () { if ( onDeactive != null ) onDeactive (this); }
-
-    // hover-in
-    public event Action<exUIControl> onHoverIn;
-    public List<SlotInfo> onHoverInSlots = new List<SlotInfo>();
-    public void Send_OnHoverIn () { if ( onHoverIn != null ) onHoverIn (this); }
-
-    // hover-out
-    public event Action<exUIControl> onHoverOut;
-    public List<SlotInfo> onHoverOutSlots = new List<SlotInfo>();
-    public void Send_OnHoverOut () { if ( onHoverOut != null ) onHoverOut (this); }
-
-    // press-down
-    public event Action<exUIControl,int> onPressDown;
-    public List<SlotInfo> onPressDownSlots = new List<SlotInfo>();
-    public void Send_OnPressDown ( int _pressID ) { if ( onPressDown != null ) onPressDown (this, _pressID); }
-
-    // press-up
-    public event Action<exUIControl,int> onPressUp;
-    public List<SlotInfo> onPressUpSlots = new List<SlotInfo>();
-    public void Send_OnPressUp ( int _pressID ) { if ( onPressUp != null ) onPressUp (this, _pressID); }
-
-    // press-move
-    public event Action<exUIControl,Vector2,List<int>> onPressMove;
-    public List<SlotInfo> onPressMoveSlots = new List<SlotInfo>();
-    public void Send_OnPressMove ( Vector2 _pos, List<int> _pressIDs ) { if ( onPressMove != null ) onPressMove (this, _pos, _pressIDs); }
+    public void Send_OnHoverIn ( exHotPoint _hotPoint ) { if ( onHoverIn != null ) onHoverIn (this,_hotPoint); }
+    public void Send_OnHoverOut ( exHotPoint _hotPoint ) { if ( onHoverOut != null ) onHoverOut (this,_hotPoint); }
+    public void Send_OnHoverMove ( List<exHotPoint> _hotPoints ) { if ( onHoverMove != null ) onHoverMove (this,_hotPoints); }
+    public void Send_OnPressDown ( exHotPoint _hotPoint ) { if ( onPressDown != null ) onPressDown (this,_hotPoint); }
+    public void Send_OnPressUp ( exHotPoint _hotPoint ) { if ( onPressUp != null ) onPressUp (this,_hotPoint); }
+    public void Send_OnMouseWheel ( float _delta ) { if ( onMouseWheel != null ) onMouseWheel (this,_delta); }
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -130,36 +156,7 @@ public class exUIControl : exPlane {
 
     public bool useCollider = false;
     public bool grabMouseOrTouch = false;
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // static functions
-    ///////////////////////////////////////////////////////////////////////////////
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public static void FindAndAddChild ( exUIControl _dispatcher ) {
-        _dispatcher.children.Clear();
-        FindAndAddChildRecursively (_dispatcher, _dispatcher.transform );
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    static void FindAndAddChildRecursively ( exUIControl _dispatcher, Transform _trans ) {
-        foreach ( Transform child in _trans ) {
-            exUIControl child_dispatcher = child.GetComponent<exUIControl>();
-            if ( child_dispatcher ) {
-                _dispatcher.AddChild (child_dispatcher);
-                exUIControl.FindAndAddChild (child_dispatcher);
-            }
-            else {
-                FindAndAddChildRecursively( _dispatcher, child );
-            }
-        }
-    }
+    public List<EventTrigger> events = new List<EventTrigger>();
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -170,15 +167,14 @@ public class exUIControl : exPlane {
     // ------------------------------------------------------------------ 
 
     protected void Awake () {
-        AddSlotsToEvent ( "onFocus",        onFocusSlots,       new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
-        AddSlotsToEvent ( "onUnFocus",      onUnFocusSlots,     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
-        AddSlotsToEvent ( "onActive",       onActiveSlots,      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
-        AddSlotsToEvent ( "onDeactive",     onDeactiveSlots,    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
-        AddSlotsToEvent ( "onHoverIn",      onHoverInSlots,     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
-        AddSlotsToEvent ( "onHoverOut",     onHoverOutSlots,    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) );
-        AddSlotsToEvent ( "onPressDown",    onPressDownSlots,   new Type[] { typeof(exUIControl), typeof(int) }, typeof(Action<exUIControl,int>) );
-        AddSlotsToEvent ( "onPressUp",      onPressUpSlots,     new Type[] { typeof(exUIControl), typeof(int) }, typeof(Action<exUIControl,int>) );
-        AddSlotsToEvent ( "onPressMove",    onPressMoveSlots,   new Type[] { typeof(exUIControl), typeof(Vector2), typeof(List<int>) }, typeof(Action<exUIControl,Vector2,List<int>>) );
+        for ( int i = 0; i < events.Count; ++i ) {
+            EventTrigger eventTrigger = events[i];
+            EventDef def = GetEventDef(eventTrigger.name);
+            AddEventHandlers ( def.name, 
+                               def.parameterTypes, 
+                               def.delegateType, 
+                               eventTrigger.slots );
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -199,7 +195,27 @@ public class exUIControl : exPlane {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void AddSlotsToEvent ( string _eventName, List<SlotInfo> _slots, Type[] _parameterTypes, Type _delegateType ) {
+    public virtual EventDef GetEventDef ( string _name ) {
+        return exUIControl.FindEventDef ( eventDefs, _name );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public virtual string[] GetEventDefNames () {
+        string[] names = new string[eventDefs.Length];
+        for ( int i = 0; i < eventDefs.Length; ++i ) {
+            names[i] = eventDefs[i].name;
+        }
+        return names;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void AddEventHandlers ( string _eventName, Type[] _parameterTypes, Type _delegateType, List<SlotInfo> _slots ) {
         Type controlType = this.GetType();
         EventInfo eventInfo = controlType.GetEvent(_eventName);
         if ( eventInfo != null ) {
@@ -209,7 +225,12 @@ public class exUIControl : exPlane {
                 bool foundMethod = false;
 
                 MonoBehaviour[] allMonoBehaviours = slot.receiver.GetComponents<MonoBehaviour>();
-                foreach ( MonoBehaviour monoBehaviour in allMonoBehaviours ) {
+                for ( int i = 0; i < allMonoBehaviours.Length; ++i ) {
+                    MonoBehaviour monoBehaviour =  allMonoBehaviours[i]; 
+
+                    // don't get method from control
+                    if ( monoBehaviour is exUIControl )
+                        continue;
 
                     MethodInfo mi = monoBehaviour.GetType().GetMethod( slot.method, 
                                                                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -237,14 +258,14 @@ public class exUIControl : exPlane {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public bool IsSelfOrAncestorOf ( exUIControl _dispatcher ) {
-        if ( _dispatcher == null )
+    public bool IsSelfOrAncestorOf ( exUIControl _ctrl ) {
+        if ( _ctrl == null )
             return false;
 
-        if ( _dispatcher == this )
+        if ( _ctrl == this )
             return true;
 
-        exUIControl next = _dispatcher.parent;
+        exUIControl next = _ctrl.parent;
         while ( next != null ) {
             if ( next == this )
                 return true;
@@ -257,54 +278,39 @@ public class exUIControl : exPlane {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void AddChild ( exUIControl _dispatcher ) {
-        if ( _dispatcher == null )
+    public void AddChild ( exUIControl _ctrl ) {
+        if ( _ctrl == null )
             return;
 
-        if ( _dispatcher.parent == this )
+        if ( _ctrl.parent == this )
             return;
 
         // you can not add your parent or yourself as your child
-        if ( _dispatcher.IsSelfOrAncestorOf (this) )
+        if ( _ctrl.IsSelfOrAncestorOf (this) )
             return;
 
-        exUIControl lastParent = _dispatcher.parent;
+        exUIControl lastParent = _ctrl.parent;
         if ( lastParent != null ) {
-            lastParent.RemoveChild(_dispatcher);
+            lastParent.RemoveChild(_ctrl);
         }
 
-        children.Add(_dispatcher);
-        _dispatcher.parent = this;
+        children.Add(_ctrl);
+        _ctrl.parent = this;
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void RemoveChild ( exUIControl _dispatcher ) {
-        if ( _dispatcher == null )
+    public void RemoveChild ( exUIControl _ctrl ) {
+        if ( _ctrl == null )
             return;
 
-        int idx = children.IndexOf(_dispatcher);
+        int idx = children.IndexOf(_ctrl);
         if ( idx != -1 ) {
             children.RemoveAt(idx);
-            _dispatcher.parent = null;
+            _ctrl.parent = null;
         }
     }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public exUIControl FindParent () {
-        Transform tranParent = transform.parent;
-        while ( tranParent != null ) {
-            exUIControl el = tranParent.GetComponent<exUIControl>();
-            if ( el != null )
-                return el;
-            tranParent = tranParent.parent;
-        }
-        return null;
-    } 
 }
 

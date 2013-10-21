@@ -463,6 +463,20 @@ public class exSpriteAnimation : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public exSpriteAnimationState GetCurrentAnimation () { return curAnimation; }
+    
+    // ------------------------------------------------------------------ 
+    /// \param _name the name of the animation
+    /// \return the boolean result
+    /// Check if the _name of the animation is the current playing animation.
+    /// If the _name is empty, it will check if there is animation playing now.
+    // ------------------------------------------------------------------ 
+
+    public bool IsPlaying ( string _name = "" ) {
+        if ( string.IsNullOrEmpty(_name) )
+            return enabled && curAnimation != null;
+        else
+            return ( enabled && curAnimation != null && curAnimation.name == _name );
+    }
 
     // ------------------------------------------------------------------ 
     /// \return the frame info

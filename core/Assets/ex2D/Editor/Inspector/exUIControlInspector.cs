@@ -14,6 +14,7 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoardPatternInspector
@@ -23,32 +24,40 @@ using System.IO;
 [CustomEditor(typeof(exUIControl))]
 class exUIControlInspector : exPlaneInspector {
 
-    SerializedProperty activeProp;
-    SerializedProperty grabMouseOrTouchProp;
-    SerializedProperty useColliderProp;
-
-    SerializedProperty onHoverInSlotsProp;
-    SerializedProperty onHoverOutSlotsProp;
+    public class Styles {
+        public GUIStyle toolbarDropDown = "TE ToolbarDropDown";
+        public Texture iconToolbarPlus = EditorGUIUtility.FindTexture ("Toolbar Plus");
+        public Texture iconToolbarMinus = EditorGUIUtility.FindTexture("Toolbar Minus");
+    }
+    protected static Styles styles = null;
+    
+    protected SerializedProperty activeProp;
+    protected SerializedProperty grabMouseOrTouchProp;
+    protected SerializedProperty useColliderProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void OnEnable () {
-        InitProperties();
+    protected override void InitProperties () {
+        base.InitProperties();
+
+        activeProp = serializedObject.FindProperty("active_");
+        grabMouseOrTouchProp = serializedObject.FindProperty("grabMouseOrTouch");
+        useColliderProp = serializedObject.FindProperty("useCollider");
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	public override void OnInspectorGUI () {
-        base.OnInspectorGUI();
+	protected override void DoInspectorGUI () {
+        base.DoInspectorGUI();
 
-        // NOTE: DO NOT call serializedObject.ApplyModifiedProperties ();
-        serializedObject.Update ();
-
-        EditorGUILayout.Space();
+        // if settingsStyles is null
+        if ( styles == null ) {
+            styles = new Styles();
+        }
 
         // active
         EditorGUI.BeginChangeCheck();
@@ -118,34 +127,180 @@ class exUIControlInspector : exPlaneInspector {
             EditorGUILayout.EndHorizontal();
         }
 
-        // slots
-        EditorGUILayout.PropertyField (onHoverInSlotsProp, true );
-        EditorGUILayout.PropertyField (onHoverOutSlotsProp, true );
+        if ( serializedObject.isEditingMultipleObjects == false ) {
+            exUIControl uiControl = target as exUIControl;
 
-        serializedObject.ApplyModifiedProperties();
+            // event adding selector
+            List<string> eventDefNameList = new List<string>(); 
+            eventDefNameList.Add( "Event List" );
+            eventDefNameList.AddRange( uiControl.GetEventDefNames() );
+
+            foreach ( exUIControl.EventTrigger eventTrigger in uiControl.events ) {
+                int idx = eventDefNameList.IndexOf(eventTrigger.name);
+                if ( idx != -1 ) {
+                    eventDefNameList.RemoveAt(idx);
+                }
+            }
+
+            int choice = EditorGUILayout.Popup ( "Add Event", 0, eventDefNameList.ToArray() );
+            if ( choice != 0 ) {
+                exUIControl.EventDef eventDef = uiControl.GetEventDef( eventDefNameList[choice] );
+                exUIControl.EventTrigger newTrigger = new exUIControl.EventTrigger ( eventDef.name );
+                uiControl.events.Add(newTrigger);
+                EditorUtility.SetDirty(target);
+            }
+
+            // event triggers
+            for ( int i = 0; i < uiControl.events.Count; ++i ) {
+                EditorGUILayout.Space();
+
+                exUIControl.EventTrigger eventTrigger = uiControl.events[i];
+                exUIControl.EventDef eventDef = uiControl.GetEventDef( eventTrigger.name );
+                if ( EventField ( eventTrigger, eventDef ) ) {
+                    uiControl.events.RemoveAt(i);
+                    --i;
+                    EditorUtility.SetDirty(target);
+                }
+
+                EditorGUILayout.Space();
+            }
+        }
+
+        EditorGUILayout.Space();
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	protected override void OnSceneGUI () {
-        base.OnSceneGUI();
+    protected bool EventField ( exUIControl.EventTrigger _eventTrigger, exUIControl.EventDef _def ) {
+        bool deleted = false;
+
+		GUILayout.BeginHorizontal();
+		GUILayout.Space(4f);
+
+            GUILayout.BeginVertical();
+                EditorGUILayout.BeginHorizontal();
+                    // name
+                    GUILayout.Toggle( true, _def.name, "dragtab");
+
+                    // delete
+                    if ( GUILayout.Button( styles.iconToolbarMinus, 
+                                           "InvisibleButton", 
+                                           GUILayout.Width(styles.iconToolbarMinus.width), 
+                                           GUILayout.Height(styles.iconToolbarMinus.height) ) ) 
+                    {
+                        deleted = true;
+                    }
+                EditorGUILayout.EndHorizontal();
+
+                EditorGUILayout.BeginHorizontal("AS TextArea", GUILayout.MinHeight(10f));
+                GUILayout.BeginVertical();
+
+                    // slots
+                    for ( int i = 0; i < _eventTrigger.slots.Count; ++i ) {
+                        exUIControl.SlotInfo slotInfo = SlotField ( _eventTrigger.slots[i], _def );
+                        if ( slotInfo == null ) {
+                            _eventTrigger.slots.RemoveAt(i);
+                            --i;
+                            EditorUtility.SetDirty(target);
+                        }
+                    }
+
+                    // new slot
+                    EditorGUILayout.BeginHorizontal();
+                        GUILayout.FlexibleSpace();
+                        GameObject receiver = EditorGUILayout.ObjectField( null, typeof(GameObject), true, GUILayout.Width(150) ) as GameObject;
+                        if ( receiver != null ) {
+                            exUIControl.SlotInfo slotInfo = new exUIControl.SlotInfo();
+                            slotInfo.receiver = receiver;
+                            _eventTrigger.slots.Add(slotInfo);
+                            EditorUtility.SetDirty(target);
+                        }
+                        GUILayout.Label( styles.iconToolbarPlus, GUILayout.Width(20) );
+                    EditorGUILayout.EndHorizontal();
+
+                GUILayout.EndVertical();
+                EditorGUILayout.EndHorizontal();
+
+            GUILayout.EndVertical();
+
+		GUILayout.Space(4f);
+		GUILayout.EndHorizontal();
+
+        return deleted;
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    protected new void InitProperties () {
-        base.InitProperties();
+    protected exUIControl.SlotInfo SlotField ( exUIControl.SlotInfo _slot, exUIControl.EventDef _eventDef ) {
+        exUIControl.SlotInfo slot = _slot;
 
-        activeProp = serializedObject.FindProperty("active_");
-        grabMouseOrTouchProp = serializedObject.FindProperty("grabMouseOrTouch");
-        useColliderProp = serializedObject.FindProperty("useCollider");
+        EditorGUILayout.BeginHorizontal();
+            // receiver
+            EditorGUI.BeginChangeCheck();
+            slot.receiver = EditorGUILayout.ObjectField( slot.receiver, typeof(GameObject), true ) as GameObject;
+            if ( EditorGUI.EndChangeCheck() ) {
+                EditorUtility.SetDirty(target);
+            }
 
-        onHoverInSlotsProp = serializedObject.FindProperty("onHoverInSlots");
-        onHoverOutSlotsProp = serializedObject.FindProperty("onHoverOutSlots");
+            if ( slot.receiver != null ) {
+                // get valid methods
+                List<string> methodNames = new List<string>(); 
+                methodNames.Add( "None" );
+
+                MonoBehaviour[] allMonoBehaviours = slot.receiver.GetComponents<MonoBehaviour>();
+                for ( int i = 0; i < allMonoBehaviours.Length; ++i ) {
+                    MonoBehaviour monoBehaviour =  allMonoBehaviours[i]; 
+
+                    // don't get method from control
+                    if ( monoBehaviour is exUIControl )
+                        continue;
+
+                    MethodInfo[] methods = monoBehaviour.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    for ( int m = 0; m < methods.Length; ++m ) {
+                        MethodInfo mi = methods[m];
+                        ParameterInfo[] miParameterTypes = mi.GetParameters();
+                        if ( mi.ReturnType == typeof(void) && 
+                             miParameterTypes.Length == _eventDef.parameterTypes.Length ) 
+                        {
+                            bool notMatch = false;
+                            for ( int p = 0; p < miParameterTypes.Length; ++p ) {
+                                if ( miParameterTypes[p].ParameterType != _eventDef.parameterTypes[p] ) {
+                                    notMatch = true;
+                                    break;
+                                }
+                            }
+
+                            if ( notMatch == false && methodNames.IndexOf(mi.Name) == -1 ) {
+                                methodNames.Add(mi.Name);
+                            }
+                        }
+                    }
+                }
+
+                EditorGUI.BeginChangeCheck();
+                int choice = methodNames.IndexOf(_slot.method);
+                choice = EditorGUILayout.Popup ( choice == -1 ? 0 : choice, methodNames.ToArray(), GUILayout.Width(100) );
+                if ( EditorGUI.EndChangeCheck() ) {
+                    _slot.method = methodNames[choice];
+                    EditorUtility.SetDirty(target);
+                }
+            }
+            else {
+                slot = null;
+            }
+
+            // Delete
+            if ( GUILayout.Button( styles.iconToolbarMinus, "InvisibleButton", GUILayout.Width(20f) ) ) {
+                slot = null;
+            }
+            GUILayout.Space(3f);
+        GUILayout.EndHorizontal();
+
+        return slot;
     }
 }
 

@@ -824,13 +824,11 @@ class exSceneEditor : EditorWindow {
                     exEditorUtility.GL_DrawWireFrame (layeredSprite, Color.white, true);
                 }
 
-                // draw rest plane
-                exPlane[] planes = trans.GetComponents<exPlane>();
-                for ( int j = 0; j < planes.Length; ++j ) {
-                    exPlane plane = planes[j];
-                    if ( plane != layeredSprite ) {
-                        exEditorUtility.GL_DrawWireFrame (plane, new Color( 1.0f, 0.0f, 0.5f, 1.0f ), true);
-                    }
+                // draw ui-control
+                exUIControl[] controls = trans.GetComponents<exUIControl>();
+                for ( int j = 0; j < controls.Length; ++j ) {
+                    exUIControl control = controls[j];
+                    DrawControlNode (control);
                 }
 
             }
@@ -892,6 +890,42 @@ class exSceneEditor : EditorWindow {
         }
         GL.End();
         //GL.PopMatrix();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DrawControlNode ( exUIControl _ctrl ) {
+        Vector3[] vertices = _ctrl.GetLocalVertices();
+        if (vertices.Length > 0) {
+            Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
+            Matrix4x4 l2w = _ctrl.transform.localToWorldMatrix;
+
+            // draw control rect
+            vertices = new Vector3[4] {
+                l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMin, 0)),
+                l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMax, 0)),
+                l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMax, 0)),
+                l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMin, 0)),
+            };
+            exEditorUtility.GL_DrawRectLine(vertices, new Color( 1.0f, 0.0f, 0.5f, 1.0f ), true);
+
+            // draw scroll-view content
+            exUIScrollView scrollView = _ctrl as exUIScrollView;
+            if ( scrollView != null ) {
+                aabb.width = scrollView.contentSize.x;
+                aabb.yMin = aabb.yMax - scrollView.contentSize.y;
+                aabb.center += scrollView.GetScrollOffset();
+                vertices = new Vector3[4] {
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMin, 0)),
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMax, 0)),
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMax, 0)),
+                    l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMin, 0)),
+                };
+                exEditorUtility.GL_DrawRectLine(vertices, new Color( 0.0f, 0.5f, 1.0f, 1.0f ), true);
+            }
+        }
     }
 
     // ------------------------------------------------------------------ 

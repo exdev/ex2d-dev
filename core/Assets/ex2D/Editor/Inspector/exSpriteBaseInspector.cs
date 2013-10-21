@@ -22,36 +22,31 @@ using ex2D.Detail;
 
 [CanEditMultipleObjects]
 [CustomEditor(typeof(exSpriteBase))]
-class exSpriteBaseInspector : Editor {
+class exSpriteBaseInspector : exPlaneInspector {
 
-    SerializedProperty customSizeProp;
-    SerializedProperty widthProp;
-    SerializedProperty heightProp;
-    SerializedProperty anchorProp;
-    SerializedProperty offsetProp;
-    SerializedProperty shearProp;
-    SerializedProperty colorProp;
-    SerializedProperty shaderProp;
+    protected SerializedProperty customSizeProp;
+    protected SerializedProperty shearProp;
+    protected SerializedProperty colorProp;
+    protected SerializedProperty shaderProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void OnEnable () {
-        InitProperties ();
+    protected override void InitProperties () {
+        base.InitProperties();
+
+        customSizeProp = serializedObject.FindProperty("customSize_");
+        shearProp = serializedObject.FindProperty("shear_");
+        colorProp = serializedObject.FindProperty("color_");
+        shaderProp = serializedObject.FindProperty("shader_");
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	public override void OnInspectorGUI () {
-        // NOTE: DO NOT call serializedObject.ApplyModifiedProperties ();
-        serializedObject.Update ();
-
-        EditorGUILayout.Space();
-        EditorGUIUtility.LookLikeInspector();
-
+	protected override void DoInspectorGUI () {
         // customSize
         EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( customSizeProp, new GUIContent("Custom Size") );
@@ -170,202 +165,41 @@ class exSpriteBaseInspector : Editor {
                 }
             }
         }
+
+        EditorGUILayout.Space();
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	protected virtual void OnSceneGUI () {
-        exSpriteBase sprite = target as exSpriteBase;
-        exEditorUtility.GL_DrawWireFrame(sprite, Color.white, false);
-        ProcessSceneEditorHandles ();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void ProcessSceneEditorHandles () {
-        // TODO: 由于mesh的transform，exLayeredSprite的控制点会有一定的z位移
+    public new void OnSceneGUI () {
         exSpriteBase spriteBase = target as exSpriteBase;
-        Transform trans = spriteBase.transform;
-        if ( trans ) {
-            Vector3 trans_position = trans.position;
-            float handleSize = HandleUtility.GetHandleSize(trans_position);
+        exEditorUtility.GL_DrawWireFrame(spriteBase, Color.white, false);
 
-            // resize
-            if ( spriteBase && spriteBase.customSize ) {
-                // TODO: limit the size { 
-                // float minWidth = float.MinValue;
-                // float minHeight = float.MinValue;
-                // if ( layeredSprite is exSprite ) {
-                //     exSprite sp = layeredSprite as exSprite;
-                //     if ( sp.spriteType == exSpriteType.Sliced ) {
-                //         minWidth = sp.textureInfo.borderLeft + sp.textureInfo.borderRight;
-                //         minHeight = sp.textureInfo.borderTop + sp.textureInfo.borderBottom;
-                //     }
-                // }
-                // } TODO end 
+        if ( spriteBase && spriteBase.customSize ) {
+            Vector3 size;
+            Vector3 center;
+            bool changed = ProcessSceneEditorHandles ( out size, out center );
+            if ( changed ) {
+                //center.z = originalCenterZ;
+                exISprite sprite = spriteBase as exISprite;
+                if (sprite != null) {
+                    ApplySpriteScale (sprite, size, center);
 
-                Vector3[] vertices = spriteBase.GetLocalVertices();
-                Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
-                Vector3 center = aabb.center; // NOTE: this value will become world center after Handles.Slider(s)
-                Vector3 size = new Vector3( aabb.width, aabb.height, 0.0f );
-
-                Vector3 tl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,
-                                                                 center.y + size.y * 0.5f,
-                                                                 0.0f ) );
-                Vector3 tc = trans.TransformPoint ( new Vector3 ( center.x,
-                                                                 center.y + size.y * 0.5f,
-                                                                 0.0f ) );
-                Vector3 tr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f,
-                                                                 center.y + size.y * 0.5f,
-                                                                 0.0f ) );
-                Vector3 ml = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,
-                                                                 center.y,
-                                                                 0.0f ) );
-                Vector3 mr = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f,
-                                                                 center.y,
-                                                                 0.0f ) );
-                Vector3 bl = trans.TransformPoint ( new Vector3 ( center.x - size.x * 0.5f,
-                                                                 center.y - size.y * 0.5f,
-                                                                 0.0f ) );
-                Vector3 bc = trans.TransformPoint ( new Vector3 ( center.x,
-                                                                 center.y - size.y * 0.5f,
-                                                                 0.0f ) );
-                Vector3 br = trans.TransformPoint ( new Vector3 ( center.x + size.x * 0.5f,
-                                                                 center.y - size.y * 0.5f,
-                                                                 0.0f ) );
-
-                Vector3 dir_up = trans.up;
-                Vector3 dir_right = trans.right;
-                Vector3 delta = Vector3.zero;
-                bool changed = false;
-
-                EditorGUI.BeginChangeCheck();
-                Vector3 ml2 = Handles.Slider ( ml, dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
-                if ( EditorGUI.EndChangeCheck() ) {
-                    delta = ml2 - ml;
-                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
-                    delta = -delta;
-                    delta.x /= trans.lossyScale.x;
-                    delta.y /= trans.lossyScale.y;
-                    size += delta;
-                    center = (ml2 + mr) * 0.5f;
-                    changed = true;
-                }
-
-                EditorGUI.BeginChangeCheck();
-                Vector3 mr2 = Handles.Slider ( mr, dir_right, handleSize * 0.05f, Handles.DotCap, -1 );
-                if ( EditorGUI.EndChangeCheck() ) {
-                    delta = mr2 - mr;
-                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
-                    delta.x /= trans.lossyScale.x;
-                    delta.y /= trans.lossyScale.y;
-                    size += delta;
-                    center = (mr2 + ml) * 0.5f;
-                    changed = true;
-                }
-
-                EditorGUI.BeginChangeCheck();
-                Vector3 tc2 = Handles.Slider ( tc, dir_up,    handleSize * 0.05f, Handles.DotCap, -1 );
-                if ( EditorGUI.EndChangeCheck() ) {
-                    delta = tc2 - tc;
-                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
-                    delta.x /= trans.lossyScale.x;
-                    delta.y /= trans.lossyScale.y;
-                    size += delta;
-                    center = (tc2 + bc) * 0.5f;
-                    changed = true;
-                }
-
-                EditorGUI.BeginChangeCheck();
-                Vector3 bc2 = Handles.Slider ( bc, dir_up,    handleSize * 0.05f, Handles.DotCap, -1 );
-                if ( EditorGUI.EndChangeCheck() ) {
-                    delta = bc2 - bc;
-                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
-                    delta = -delta;
-                    delta.x /= trans.lossyScale.x;
-                    delta.y /= trans.lossyScale.y;
-                    size += delta;
-                    center = (bc2 + tc) * 0.5f;
-                    changed = true;
-                }
-
-                EditorGUI.BeginChangeCheck();
-                Vector3 tr2 = Handles.FreeMoveHandle ( tr, trans.rotation, handleSize * 0.05f, Vector3.zero, Handles.DotCap );
-                if ( EditorGUI.EndChangeCheck() ) {
-                    delta = tr2 - tr;
-                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
-                    delta.x /= trans.lossyScale.x;
-                    delta.y /= trans.lossyScale.y;
-                    size += delta;
-                    center = (tr2 + bl) * 0.5f;
-                    changed = true;
-                }
-
-                EditorGUI.BeginChangeCheck();
-                Vector3 tl2 = Handles.FreeMoveHandle ( tl, trans.rotation, handleSize * 0.05f, Vector3.zero, Handles.DotCap );
-                if ( EditorGUI.EndChangeCheck() ) {
-                    delta = tl2 - tl;
-                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
-                    delta.x = -delta.x;
-                    delta.x /= trans.lossyScale.x;
-                    delta.y /= trans.lossyScale.y;
-                    size += delta;
-                    center = (tl2 + br) * 0.5f;
-                    changed = true;
-                }
-
-                EditorGUI.BeginChangeCheck();
-                Vector3 br2 = Handles.FreeMoveHandle ( br, trans.rotation, handleSize * 0.05f, Vector3.zero, Handles.DotCap );
-                if ( EditorGUI.EndChangeCheck() ) {
-                    delta = br2 - br;
-                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
-                    delta.y = -delta.y;
-                    delta.x /= trans.lossyScale.x;
-                    delta.y /= trans.lossyScale.y;
-                    size += delta;
-                    center = (br2 + tl) * 0.5f;
-                    changed = true;
-                }
-
-                EditorGUI.BeginChangeCheck();
-                Vector3 bl2 = Handles.FreeMoveHandle ( bl, trans.rotation, handleSize * 0.05f, Vector3.zero, Handles.DotCap );
-                if ( EditorGUI.EndChangeCheck() ) {
-                    delta = bl2 - bl;
-                    delta = Quaternion.Inverse(trans.rotation) * delta.normalized * delta.magnitude;
-                    delta = -delta;
-                    delta.x /= trans.lossyScale.x;
-                    delta.y /= trans.lossyScale.y;
-                    size += delta;
-                    center = (bl2 + tr) * 0.5f;
-                    changed = true;
-                }
-
-                if ( changed ) {
-                    //center.z = originalCenterZ;
-                    exISprite sprite = spriteBase as exISprite;
-                    if (sprite != null) {
-                        ApplySpriteScale (sprite, size, center);
-
-                        // also update all planes in the same compnent
-                        exPlane[] planes = spriteBase.GetComponents<exPlane>();
-                        for ( int i = 0; i < planes.Length; ++i ) {
-                            exPlane plane = planes[i];
-                            if ( plane != this ) {
-                                plane.width = sprite.width;
-                                plane.height = sprite.height;
-                                plane.anchor = sprite.anchor;
-                                plane.offset = sprite.offset;
-                            }
+                    // also update all planes in the same compnent
+                    exPlane[] planes = spriteBase.GetComponents<exPlane>();
+                    for ( int i = 0; i < planes.Length; ++i ) {
+                        exPlane plane = planes[i];
+                        if ( plane != this ) {
+                            plane.width = sprite.width;
+                            plane.height = sprite.height;
+                            plane.anchor = sprite.anchor;
+                            plane.offset = sprite.offset;
                         }
                     }
                 }
             }
-
-            EditorGUI.BeginChangeCheck();
         }
     }
     
@@ -406,21 +240,6 @@ class exSpriteBaseInspector : Editor {
         Vector3 localPos = trans.InverseTransformPoint (newPos);
         localPos.z = 0; // keep z unchagned
         trans.position = trans.TransformPoint (localPos);
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected void InitProperties () {
-        customSizeProp = serializedObject.FindProperty("customSize_");
-        widthProp = serializedObject.FindProperty("width_");
-        heightProp = serializedObject.FindProperty("height_");
-        anchorProp = serializedObject.FindProperty("anchor_");
-        offsetProp = serializedObject.FindProperty("offset_");
-        shearProp = serializedObject.FindProperty("shear_");
-        colorProp = serializedObject.FindProperty("color_");
-        shaderProp = serializedObject.FindProperty("shader_");
     }
 }
 

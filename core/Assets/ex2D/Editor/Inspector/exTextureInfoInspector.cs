@@ -56,7 +56,6 @@ class exTextureInfoInspector : Editor {
         SerializedProperty propTrim = serializedObject.FindProperty("trim");
         bool oldTrim = propTrim.boolValue;
 
-        EditorGUIUtility.LookLikeInspector();
         DrawDefaultInspector(); 
 
         // process trim property

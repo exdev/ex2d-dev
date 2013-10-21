@@ -154,7 +154,7 @@ public class exUIElement {
     [System.NonSerialized] public int lineHeight = 0;
     [System.NonSerialized] public exCSS_display display = exCSS_display.Inline;
 
-    bool dirty = false;
+    // bool dirty = false;
     bool isContent_ = false;
     bool isFirstLine_ = false;
     bool hasPushHeightChild = false;
@@ -290,7 +290,7 @@ public class exUIElement {
     // ------------------------------------------------------------------ 
 
     public void SetDirty () {
-        dirty = true;
+        // dirty = true;
     }
 
     // ------------------------------------------------------------------ 
@@ -773,7 +773,7 @@ public class exUIElement {
         }
 
         // TODO: I think only parent set dirty
-        dirty = false;
+        // dirty = false;
     }
 
     // ------------------------------------------------------------------ 

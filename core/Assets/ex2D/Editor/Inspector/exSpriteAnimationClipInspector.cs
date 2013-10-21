@@ -28,7 +28,6 @@ class exSpriteAnimationClipInspector : Editor {
     // ------------------------------------------------------------------ 
 
 	public override void OnInspectorGUI () {
-        EditorGUIUtility.LookLikeInspector();
         DrawDefaultInspector(); 
 
         // Edit

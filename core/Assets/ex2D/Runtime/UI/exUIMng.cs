@@ -78,7 +78,42 @@ public class ControlSorterByZ: IComparer<exUIControl> {
 // Desc: 
 // ------------------------------------------------------------------ 
 
-[ExecuteInEditMode]
+public struct exHotPoint {
+    public int id;
+    public bool active;
+    public bool pressDown;
+    public bool pressUp;
+    public Vector2 pos;
+    public Vector2 delta;
+    public Vector3 worldPos;
+    public Vector3 worldDelta;
+
+    public exUIControl hover;
+    public exUIControl pressed;
+
+    public bool isMouse;
+    public bool isTouch { get { return isMouse == false; } }  
+
+    // 0: left, 1: right, 2: middle
+    public bool GetMouseButton ( int _id ) { return isMouse && (id == _id); }
+
+    public void Reset () {
+        active = false;
+        pressDown = false;
+        pressUp = false;
+        pos = Vector2.zero;
+        delta = Vector2.zero;
+        worldPos = Vector3.zero;
+        worldDelta = Vector3.zero;
+        hover = null;
+        pressed = null;
+    } 
+}
+
+// ------------------------------------------------------------------ 
+// Desc: 
+// ------------------------------------------------------------------ 
+
 public class exUIMng : MonoBehaviour {
 
     protected static exUIMng inst_ = null; 
@@ -96,28 +131,10 @@ public class exUIMng : MonoBehaviour {
     static ControlSorterByZ controlSorterByZ = new ControlSorterByZ();
 
     ///////////////////////////////////////////////////////////////////////////////
-    // structures
-    ///////////////////////////////////////////////////////////////////////////////
-
-    //
-    [System.Serializable]
-    public class TouchState {
-        public bool active = false;
-        public exUIControl hover = null;
-    }
-
-    //
-    [System.Serializable]
-    public class MouseState {
-        public Vector2 pos = Vector2.zero;
-        public exUIControl hover = null;
-        public exUIControl pressed = null;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
     // serializable 
     ///////////////////////////////////////////////////////////////////////////////
 
+    public bool simulateMouseAsTouch = false;
     public bool showDebugInfo = false;
     public bool showDebugInfoInGameView = false;
 
@@ -126,16 +143,63 @@ public class exUIMng : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
 
     bool initialized = false;
+    bool hasMouse = false;
+    bool hasTouch = false;
+    // bool hasKeyboard = false;
+    // bool hasController = false;
+
     List<exUIControl> controls = new List<exUIControl>(); // root contrls
 
-    // TODO: some control needs two more finger to make it drag or accept events, 
-    //       when this happens, you need to detect all TouchState and generate hotPoint state based on your touches.
-    // hotpointState
-
     // internal ui status
-    MouseState mouseState = new MouseState();
-    TouchState[] touchStates = new TouchState[10];
+    exHotPoint[] mousePoints = new exHotPoint[3];
+    exHotPoint[] touchPoints = new exHotPoint[10];
     exUIControl focus = null; // the Input focus ( usually, the keyboard focus )
+
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // static functions
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static exUIControl FindParent ( exUIControl _ctrl ) {
+        Transform tranParent = _ctrl.transform.parent;
+        while ( tranParent != null ) {
+            exUIControl el = tranParent.GetComponent<exUIControl>();
+            if ( el != null )
+                return el;
+            tranParent = tranParent.parent;
+        }
+        return null;
+    } 
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static void FindAndAddChild ( exUIControl _ctrl ) {
+        _ctrl.children.Clear();
+        FindAndAddChildRecursively (_ctrl, _ctrl.transform );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    static void FindAndAddChildRecursively ( exUIControl _ctrl, Transform _trans ) {
+        foreach ( Transform child in _trans ) {
+            exUIControl childCtrl = child.GetComponent<exUIControl>();
+            if ( childCtrl ) {
+                _ctrl.AddChild (childCtrl);
+                FindAndAddChild (childCtrl);
+            }
+            else {
+                FindAndAddChildRecursively( _ctrl, child );
+            }
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
@@ -147,14 +211,6 @@ public class exUIMng : MonoBehaviour {
 
     void Awake () {
         Init ();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void Start () {
-        mouseState.pos = Input.mousePosition;
     }
 	
     // ------------------------------------------------------------------ 
@@ -184,8 +240,10 @@ public class exUIMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void AddControl ( exUIControl _ctrl ) {
-        if ( controls.IndexOf(_ctrl) == -1 )
+        if ( controls.IndexOf(_ctrl) == -1 ) {
             controls.Add(_ctrl);
+            exUIMng.FindAndAddChild (_ctrl);
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -195,7 +253,7 @@ public class exUIMng : MonoBehaviour {
     public void SetFocus ( exUIControl _ctrl ) {
         if ( focus != _ctrl ) {
             if ( focus != null ) {
-                focus.Send_OnUnFocus();
+                focus.Send_OnUnfocus();
             }
 
             focus = _ctrl;
@@ -221,29 +279,58 @@ public class exUIMng : MonoBehaviour {
         }
 
         //
+        if ( Application.platform == RuntimePlatform.Android
+          || Application.platform == RuntimePlatform.IPhonePlayer
+          || Application.platform == RuntimePlatform.WP8Player
+          || Application.platform == RuntimePlatform.BB10Player
+          )
+		{
+			hasMouse = false;
+			hasTouch = true;
+            // hasKeyboard = false;
+            // hasController = true;
+		}
+        else if ( Application.platform == RuntimePlatform.PS3
+               || Application.platform == RuntimePlatform.XBOX360 
+               )
+		{
+			hasMouse = false;
+			hasTouch = false;
+            // hasKeyboard = false;
+            // hasController = true;
+		}
+		else if ( Application.platform == RuntimePlatform.WindowsEditor 
+               || Application.platform == RuntimePlatform.OSXEditor
+               )
+		{
+			hasMouse = true;
+			hasTouch = false;
+            // hasKeyboard = true;
+            // hasController = true;
+		}
+
+        //
         for ( int i = 0; i < 10; ++i ) {
-            touchStates[i] = new TouchState();
+            touchPoints[i] = new exHotPoint();
+            touchPoints[i].Reset();
+            touchPoints[i].id = i;
+        }
+        for ( int i = 0; i < 3; ++i ) {
+            mousePoints[i] = new exHotPoint();
+            mousePoints[i].Reset();
+            mousePoints[i].id = i;
+            mousePoints[i].isMouse = true;
         }
 
-        // recursively add ui-tree
+        // find all controls in the scene, and add root controls to UIMng
         exUIControl[] allControls = FindObjectsOfType(typeof(exUIControl)) as exUIControl[];
         for ( int i = 0; i < allControls.Length; ++i ) {
             exUIControl ctrl = allControls[i];
-            exUIControl parent_ctrl = ctrl.FindParent();
+            exUIControl parent_ctrl = exUIMng.FindParent(ctrl);
             if ( parent_ctrl == null ) {
-                exUIControl.FindAndAddChild (ctrl);
-
-                //
-                if ( controls.IndexOf(ctrl) == -1 ) {
-                    controls.Add(ctrl);
-                }
+                AddControl (ctrl);
             }
         }
-
-        //
-        mouseState.pos = Vector2.zero;
-        mouseState.hover = null;
-        mouseState.pressed = null;
 
         //
         initialized = true;
@@ -254,156 +341,77 @@ public class exUIMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void HandleEvents () {
-        ProcessMouse();
+        // make sure all hotpoints de-active at first
+        for ( int i = 0; i < touchPoints.Length; ++i ) {
+            exHotPoint hotPoint = touchPoints[i];
+            hotPoint.active = false;
+            hotPoint.pressDown = false;
+            hotPoint.pressUp = false;
+        }
+        for ( int i = 0; i < mousePoints.Length; ++i ) {
+            exHotPoint hotPoint = mousePoints[i];
+            hotPoint.active = false;
+            hotPoint.pressDown = false;
+            hotPoint.pressUp = false;
+        }
+
+        //
+        if ( hasMouse )
+            HandleMouse();
+
+        if ( hasTouch )
+            HandleTouches();
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    // void ProcessTouches () {
-    //     for ( int i = 0; i < Input.touches.Length; ++i ) {
-    //         Touch touch = Input.touches[i];
-    //         if ( touch.fingerId >= 10 )
-    //             continue;
-
-    //         TouchState touchState = null;
-    //         exUIControl hover = PickControl(touch.position);
-    //         
-    //         //
-    //         if ( touch.phase == TouchPhase.Began ) {
-    //             if ( hover != null ) {
-    //                 e.category = exUIEvent.Category.Touch;
-    //                 e.type =  exUIEvent.Type.TouchDown;
-    //                 e.position = touch.position;
-    //                 e.delta = touch.deltaPosition;
-    //                 e.touchID = touch.fingerId;
-
-    //                 EventInfo info = new EventInfo();
-    //                 info.primaryControl = hover;
-    //                 info.uiEvent = e;
-    //                 eventInfos.Add(info);
-    //             }
-
-    //             // NOTE: it must be null
-    //             SetTouchFocus ( touch.fingerId, null );
-    //             touchStates[touch.fingerId].hover = hover;
-    //         }
-    //         else {
-    //             // find the touch state
-    //             touchState = touchStates[touch.fingerId];
-
-    //             // set the last and current hot control 
-    //             exUIControl keyboardControl = null;
-    //             exUIControl lastCtrl = null;
-    //             if ( touchState != null ) {
-    //                 lastCtrl = touchState.hover;
-    //                 touchState.hover = hover;
-    //                 keyboardControl = touchState.keyboardControl;
-    //             }
-
-    //             if ( touch.phase == TouchPhase.Ended ) {
-    //                 if ( touchState != null ) {
-    //                     if ( keyboardControl != null ) {
-    //                         exUIEvent e = new exUIEvent(); 
-    //                         e.category = exUIEvent.Category.Touch;
-    //                         e.type =  exUIEvent.Type.TouchUp;
-    //                         e.position = touch.position;
-    //                         e.delta = touch.deltaPosition;
-    //                         e.touchID = touch.fingerId;
-
-    //                         EventInfo info = new EventInfo();
-    //                         info.primaryControl = keyboardControl;
-    //                         info.uiEvent = e;
-    //                         eventInfos.Add(info);
-    //                     }
-    //                 }
-    //             }
-    //             else if ( touch.phase == TouchPhase.Canceled ) {
-    //                 if ( touchState != null )
-    //                     SetTouchFocus ( touch.fingerId, null );
-    //             }
-    //             else if ( touch.phase == TouchPhase.Moved ) {
-    //                 // process hover event
-    //                 if ( lastCtrl != hover ) {
-    //                     // add hover-in event
-    //                     if ( hover != null ) {
-    //                         exUIEvent e = new exUIEvent(); 
-    //                         e.category = exUIEvent.Category.Touch;
-    //                         e.type =  exUIEvent.Type.TouchEnter;
-    //                         e.position = touch.position;
-    //                         e.delta = touch.deltaPosition;
-    //                         e.touchID = touch.fingerId;
-
-    //                         EventInfo info = new EventInfo();
-    //                         info.primaryControl = hover;
-    //                         info.uiEvent = e;
-    //                         eventInfos.Add(info);
-    //                     }
-
-    //                     // add hover-out event
-    //                     if ( lastCtrl != null ) {
-    //                         exUIEvent e = new exUIEvent(); 
-    //                         e.category = exUIEvent.Category.Touch;
-    //                         e.type =  exUIEvent.Type.TouchExit;
-    //                         e.position = touch.position;
-    //                         e.delta = touch.deltaPosition;
-    //                         e.touchID = touch.fingerId;
-
-    //                         EventInfo info = new EventInfo();
-    //                         info.primaryControl = lastCtrl;
-    //                         info.uiEvent = e;
-    //                         eventInfos.Add(info);
-    //                     }
-    //                 }
-
-    //                 //
-    //                 if ( hover != null || keyboardControl != null ) {
-    //                     exUIEvent e = new exUIEvent(); 
-    //                     e.category = exUIEvent.Category.Touch;
-    //                     e.type =  exUIEvent.Type.TouchMove;
-    //                     e.position = touch.position;
-    //                     e.delta = touch.deltaPosition;
-    //                     e.touchID = touch.fingerId;
-
-    //                     EventInfo info = new EventInfo();
-    //                     info.primaryControl = (keyboardControl != null) ? keyboardControl : hover;
-    //                     info.uiEvent = e;
-    //                     eventInfos.Add(info);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void ProcessMouse () {
-        // get current position and delta pos
-        Vector2 lastMousePos = mouseState.pos;
-        mouseState.pos = Input.mousePosition;
-        Vector2 deltaPos = mouseState.pos - lastMousePos;
-        
-        // get hot control
-        exUIControl lastCtrl = mouseState.hover;
-        exUIControl curCtrl = PickControl(mouseState.pos);
-        mouseState.hover = curCtrl;
+    void DispatchHotPoints ( exHotPoint[] _hotPoints, bool _isMouse ) {
 
         // ======================================================== 
         // handle hover event
         // ======================================================== 
 
-        if ( lastCtrl != curCtrl ) {
-            // on hover out
-            if ( lastCtrl != null ) {
-                lastCtrl.Send_OnHoverOut();
+        int hotPointCountForMouse = _isMouse ? 1 : _hotPoints.Length;
+        for ( int i = 0; i < hotPointCountForMouse; ++i ) {
+            exHotPoint hotPoint = _hotPoints[i];
+
+            if ( hotPoint.active == false )
+                continue;
+
+            // get hot control
+            exUIControl lastCtrl = hotPoint.hover;
+            exUIControl curCtrl = PickControl(hotPoint.pos);
+            hotPoint.hover = curCtrl;
+
+            if ( lastCtrl != curCtrl ) {
+                // on hover out
+                if ( lastCtrl != null ) {
+                    lastCtrl.Send_OnHoverOut(hotPoint);
+                }
+
+                // on hover in
+                if ( curCtrl != null ) {
+                    curCtrl.Send_OnHoverIn(hotPoint);
+                }
             }
 
-            // on hover in
-            if ( curCtrl != null ) {
-                curCtrl.Send_OnHoverIn();
+            _hotPoints[i] = hotPoint;
+        }
+
+        if ( _isMouse ) {
+            for ( int i = 1; i < _hotPoints.Length; ++i ) {
+                _hotPoints[i].hover = _hotPoints[0].hover;
+            }
+
+            // ======================================================== 
+            // send scroll wheel event
+            // ======================================================== 
+
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if ( scroll != 0.0f && _hotPoints[0].hover != null ) {
+                _hotPoints[0].hover.Send_OnMouseWheel(scroll);
             }
         }
 
@@ -411,91 +419,192 @@ public class exUIMng : MonoBehaviour {
         // handle press down event
         // ======================================================== 
 
-        // get press down ID
-        int pressDownID = -1;
-        if ( Input.GetMouseButtonDown(0) ) {
-            pressDownID = 0;
-        }
-        else if ( Input.GetMouseButtonDown(1) ) {
-            pressDownID = 1;
-        }
-        else if ( Input.GetMouseButtonDown(2) ) {
-            pressDownID = 2;
-        }
+        for ( int i = 0; i < _hotPoints.Length; ++i ) {
+            exHotPoint hotPoint = _hotPoints[i];
 
-        // send event
-        if ( pressDownID != -1 ) {
-            exUIControl curPressCtrl = curCtrl;
-            if ( mouseState.pressed != null && mouseState.pressed.grabMouseOrTouch ) {
-                curPressCtrl = mouseState.pressed;
-            }
+            if ( hotPoint.active == false )
+                continue;
 
-            // send press down event
-            if ( curPressCtrl != null ) {
-                curPressCtrl.Send_OnPressDown(pressDownID);
+            if ( hotPoint.pressDown ) {
+                exUIControl curCtrl = hotPoint.hover;
+                if ( hotPoint.pressed != null && hotPoint.pressed.grabMouseOrTouch ) {
+                    curCtrl = hotPoint.pressed;
+                }
+
+                // send press down event
+                if ( curCtrl != null ) {
+                    curCtrl.Send_OnPressDown(hotPoint);
+                }
+                hotPoint.pressed = curCtrl;
+
+                _hotPoints[i] = hotPoint;
             }
-            mouseState.pressed = curPressCtrl;
         }
 
         // ======================================================== 
         // handle moving before press-up
         // ======================================================== 
 
-        List<int> pressingIDs = new List<int>();
-        if ( Input.GetMouseButton(0) ) {
-            pressingIDs.Add(0);
-        }
-        if ( Input.GetMouseButton(1) ) {
-            pressingIDs.Add(1);
-        }
-        if ( Input.GetMouseButton(2) ) {
-            pressingIDs.Add(2);
-        }
+        Dictionary<exUIControl, List<exHotPoint>> moveEvents = new Dictionary<exUIControl, List<exHotPoint>>();
 
-        if ( deltaPos != Vector2.zero ) {
+        // collect press move event
+        for ( int i = 0; i < _hotPoints.Length; ++i ) {
+            exHotPoint hotPoint = _hotPoints[i];
 
-            exUIControl curPressCtrl = curCtrl;
-            if ( mouseState.pressed != null && mouseState.pressed.grabMouseOrTouch ) {
-                curPressCtrl = mouseState.pressed;
+            if ( hotPoint.active == false )
+                continue;
+
+            if ( hotPoint.delta != Vector2.zero ) {
+                exUIControl curCtrl = hotPoint.hover;
+                if ( hotPoint.pressed != null && hotPoint.pressed.grabMouseOrTouch ) {
+                    curCtrl = hotPoint.pressed;
+                }
+
+                if ( curCtrl != null ) {
+                    List<exHotPoint> hotPointList = null;
+                    if ( moveEvents.ContainsKey(curCtrl) ) {
+                        hotPointList = moveEvents[curCtrl];
+                    }
+                    else {
+                        hotPointList = new List<exHotPoint>();
+                        moveEvents.Add( curCtrl, hotPointList );
+                    }
+                    hotPointList.Add(hotPoint);
+                }
             }
+        }
 
-            // send press down event
-            if ( curPressCtrl != null ) {
-                curPressCtrl.Send_OnPressMove(mouseState.pos, pressingIDs);
-            }
+        // send hot-point move event
+        foreach (KeyValuePair<exUIControl, List<exHotPoint>> iter in moveEvents ) {
+            iter.Key.Send_OnHoverMove ( iter.Value );
         }
 
         // ======================================================== 
         // handle press up event 
         // ======================================================== 
 
-        // get press up ID
-        int pressUpID = -1;
-        if ( Input.GetMouseButtonUp(0) ) {
-            pressUpID = 0;
-        }
-        else if ( Input.GetMouseButtonUp(1) ) {
-            pressUpID = 1;
-        }
-        else if ( Input.GetMouseButtonUp(2) ) {
-            pressUpID = 2;
-        }
+        for ( int i = 0; i < _hotPoints.Length; ++i ) {
+            exHotPoint hotPoint = _hotPoints[i];
 
-        // send event
-        if ( pressUpID != -1 ) {
-            exUIControl curPressCtrl = curCtrl;
-            if ( mouseState.pressed != null && mouseState.pressed.grabMouseOrTouch ) {
-                curPressCtrl = mouseState.pressed;
+            if ( hotPoint.active == false )
+                continue;
+
+            // 
+            if ( hotPoint.pressUp ) {
+                exUIControl curCtrl = hotPoint.hover;
+                if ( hotPoint.pressed != null && hotPoint.pressed.grabMouseOrTouch ) {
+                    curCtrl = hotPoint.pressed;
+                }
+
+                // send press down event
+                if ( curCtrl != null ) {
+                    curCtrl.Send_OnPressUp(hotPoint);
+                }
+
+                hotPoint.pressed = null;
+                _hotPoints[i] = hotPoint;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void HandleTouches () {
+		for ( int i = 0; i < Input.touchCount; ++i ) {
+			Touch touch = Input.GetTouch(i);
+
+            if ( touch.fingerId >= 10 )
+                continue;
+
+            exHotPoint hotPoint = touchPoints[touch.fingerId];
+            hotPoint.active = true;
+
+            // we need clear all internal state when hotpoint is de-active
+            if ( hotPoint.active == false ) {
+                hotPoint.Reset();
+            }
+            else {
+                hotPoint.pos = touch.position;
+                hotPoint.delta = touch.deltaPosition;
+
+                Vector3 lastWorldPos = camera.ScreenToWorldPoint(touch.position - touch.deltaPosition);
+                hotPoint.worldPos = camera.ScreenToWorldPoint(touch.position);
+                hotPoint.worldDelta = hotPoint.worldPos - lastWorldPos;
+
+                hotPoint.pressDown = (touch.phase == TouchPhase.Began);
+                hotPoint.pressUp = (touch.phase == TouchPhase.Canceled || touch.phase == TouchPhase.Ended);
             }
 
-            // send press down event
-            if ( curPressCtrl != null ) {
-                curPressCtrl.Send_OnPressUp(pressUpID);
+            touchPoints[touch.fingerId] = hotPoint;
+        }
+
+        DispatchHotPoints ( touchPoints, false );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void HandleMouse () {
+        if ( simulateMouseAsTouch ) {
+            for ( int i = 0; i < 3; ++i ) {
+                exHotPoint hotPoint = touchPoints[i];
+
+                // check if active the hotPoint
+                hotPoint.active = Input.GetMouseButton(i) || Input.GetMouseButtonUp(i);
+
+                // we need clear all internal state when hotpoint is de-active
+                if ( hotPoint.active == false ) {
+                    hotPoint.Reset();
+                }
+                else {
+                    Vector2 lastMousePos = hotPoint.pos;
+                    hotPoint.pos = Input.mousePosition;
+                    hotPoint.delta = hotPoint.pos - lastMousePos;
+
+                    Vector3 lastMouseWorldPos = hotPoint.worldPos;
+                    hotPoint.worldPos = camera.ScreenToWorldPoint(Input.mousePosition);
+                    hotPoint.worldDelta = hotPoint.worldPos - lastMouseWorldPos;
+
+                    hotPoint.pressDown = Input.GetMouseButtonDown(i);
+                    hotPoint.pressUp = Input.GetMouseButtonUp(i);
+                }
+
+                touchPoints[i] = hotPoint;
             }
 
-            // only be null when no button pressed
-            if ( pressingIDs.Count == 0 )
-                mouseState.pressed = null;
+            DispatchHotPoints ( touchPoints, false );
+        }
+        else {
+            for ( int i = 0; i < 3; ++i ) {
+                exHotPoint hotPoint = mousePoints[i];
+
+                // check if active the hotPoint
+                hotPoint.active = true;
+
+                // we need clear all internal state when hotpoint is de-active
+                if ( hotPoint.active == false ) {
+                    hotPoint.Reset();
+                }
+                else {
+                    Vector2 lastMousePos = hotPoint.pos;
+                    hotPoint.pos = Input.mousePosition;
+                    hotPoint.delta = hotPoint.pos - lastMousePos;
+
+                    Vector3 lastMouseWorldPos = hotPoint.worldPos;
+                    hotPoint.worldPos = camera.ScreenToWorldPoint(Input.mousePosition);
+                    hotPoint.worldDelta = hotPoint.worldPos - lastMouseWorldPos;
+
+                    hotPoint.pressDown = Input.GetMouseButtonDown(i);
+                    hotPoint.pressUp = Input.GetMouseButtonUp(i);
+                }
+
+                mousePoints[i] = hotPoint;
+            }
+
+            DispatchHotPoints ( mousePoints, true );
         }
     }
 
@@ -567,7 +676,6 @@ public class exUIMng : MonoBehaviour {
         else {
             Vector2 localPos = new Vector2( _worldPos.x - _ctrl.transform.position.x, 
                                             _worldPos.y - _ctrl.transform.position.y );
-            localPos.y = -localPos.y;
 
             Rect boundingRect = _ctrl.GetLocalAABoundingRect();
             checkChildren = boundingRect.Contains(localPos);
@@ -600,18 +708,40 @@ public class exUIMng : MonoBehaviour {
             // Keyboard
             GUILayout.Label( "Keyboard Focus: " + (focus ? focus.name : "None") );
 
-            // Mouse State
-            GUILayout.Label( "Mouse State" );
+            // Touch-Point State
+            if ( hasTouch || simulateMouseAsTouch ) {
+                for ( int i = 0; i < touchPoints.Length; ++i ) {
+                    exHotPoint hotPoint = touchPoints[i];
 
-            GUILayout.BeginHorizontal ();
-            GUILayout.Space (15);
-                GUILayout.BeginVertical ();
-                    GUILayout.Label( "pos: " + mouseState.pos.ToString() );
-                    GUILayout.Label( "hover: " + (mouseState.hover ? mouseState.hover.name : "None") );
-                    GUILayout.Label( "pressed: " + (mouseState.pressed ? mouseState.pressed.name : "None") );
+                    if ( hotPoint.active == false )
+                        continue;
 
-                GUILayout.EndVertical ();
-            GUILayout.EndHorizontal ();
+                    GUILayout.Label( "Touch[" + i + "]" );
+                    GUILayout.BeginHorizontal ();
+                        GUILayout.Space (15);
+                        GUILayout.BeginVertical ();
+                            GUILayout.Label( "pos: " + hotPoint.pos.ToString() );
+                            GUILayout.Label( "hover: " + (hotPoint.hover ? hotPoint.hover.name : "None") );
+                            GUILayout.Label( "pressed: " + (hotPoint.pressed ? hotPoint.pressed.name : "None") );
+                        GUILayout.EndVertical ();
+                    GUILayout.EndHorizontal ();
+                }
+            }
+
+            // Mouse-Point State
+            if ( hasMouse && simulateMouseAsTouch == false ) {
+                GUILayout.Label( "Mouse" );
+                GUILayout.BeginHorizontal ();
+                    GUILayout.Space (15);
+                    GUILayout.BeginVertical ();
+                        GUILayout.Label( "pos: " + mousePoints[0].pos.ToString() );
+                        GUILayout.Label( "hover: " + (mousePoints[0].hover ? mousePoints[0].hover.name : "None") );
+                        GUILayout.Label( "left-pressed: " + (mousePoints[0].pressed ? mousePoints[0].pressed.name : "None") );
+                        GUILayout.Label( "right-pressed: " + (mousePoints[1].pressed ? mousePoints[1].pressed.name : "None") );
+                        GUILayout.Label( "middle-pressed: " + (mousePoints[2].pressed ? mousePoints[2].pressed.name : "None") );
+                    GUILayout.EndVertical ();
+                GUILayout.EndHorizontal ();
+            }
 
             // Root Controls
             GUILayout.Label( "Root Controls" );

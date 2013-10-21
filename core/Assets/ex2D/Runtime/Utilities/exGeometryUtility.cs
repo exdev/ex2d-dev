@@ -104,4 +104,31 @@ public static class exGeometryUtility {
         }
         return boundingRect;
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+	public static Vector2 GetConstrainOffset ( Rect _rect, Rect _bound ) {
+		Vector2 offset = Vector2.zero;
+
+		if ( _bound.width > _rect.width ) {
+			float diff = _bound.width - _rect.width;
+			_rect.xMin -= diff;
+			_rect.xMax += diff;
+		}
+
+		if ( _bound.height > _rect.height ) {
+			float diff = _bound.height - _rect.height;
+			_rect.yMin -= diff;
+			_rect.yMax += diff;
+		}
+
+		if ( _bound.xMin < _rect.xMin ) offset.x += _rect.xMin - _bound.xMin;
+		if ( _bound.xMax > _rect.xMax ) offset.x -= _bound.xMax - _rect.xMax;
+		if ( _bound.yMin < _rect.yMin ) offset.y += _rect.yMin - _bound.yMin;
+		if ( _bound.yMax > _rect.yMax ) offset.y -= _bound.yMax - _rect.yMax;
+		
+		return offset;
+	}
 }

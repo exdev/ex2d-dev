@@ -23,36 +23,42 @@ using System.IO;
 [CustomEditor(typeof(ex3DSprite))]
 class ex3DSpriteInspector : exSpriteBaseInspector {
 
-    SerializedProperty textureInfoProp;
-    SerializedProperty useTextureOffsetProp;
-    SerializedProperty spriteTypeProp;
-    SerializedProperty tiledSpacingProp;
-    SerializedProperty borderOnlyProp;
-    SerializedProperty customBorderSizeProp;
-    SerializedProperty leftProp;
-    SerializedProperty rightProp;
-    SerializedProperty topProp;
-    SerializedProperty bottomProp;
+    protected SerializedProperty textureInfoProp;
+    protected SerializedProperty useTextureOffsetProp;
+    protected SerializedProperty spriteTypeProp;
+    protected SerializedProperty tiledSpacingProp;
+    protected SerializedProperty borderOnlyProp;
+    protected SerializedProperty customBorderSizeProp;
+    protected SerializedProperty leftProp;
+    protected SerializedProperty rightProp;
+    protected SerializedProperty topProp;
+    protected SerializedProperty bottomProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void OnEnable () {
-        InitProperties();
+    protected override void InitProperties () {
+        base.InitProperties();
+
+        textureInfoProp = serializedObject.FindProperty("textureInfo_");
+        useTextureOffsetProp = serializedObject.FindProperty("useTextureOffset_");
+        spriteTypeProp = serializedObject.FindProperty("spriteType_");
+        tiledSpacingProp = serializedObject.FindProperty("tiledSpacing_");
+        borderOnlyProp = serializedObject.FindProperty("borderOnly_");
+        customBorderSizeProp = serializedObject.FindProperty("customBorderSize_");
+        leftProp = serializedObject.FindProperty("leftBorderSize_");
+        rightProp = serializedObject.FindProperty("rightBorderSize_");
+        topProp = serializedObject.FindProperty("topBorderSize_");
+        bottomProp = serializedObject.FindProperty("bottomBorderSize_");
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	public override void OnInspectorGUI () {
-        base.OnInspectorGUI();
-
-        // NOTE: DO NOT call serializedObject.ApplyModifiedProperties ();
-        serializedObject.Update ();
-
-        EditorGUILayout.Space();
+    protected override void DoInspectorGUI () {
+        base.DoInspectorGUI();
 
         // textureInfo
         EditorGUILayout.BeginHorizontal();
@@ -281,24 +287,8 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
             
             --EditorGUI.indentLevel;
         }
-    }
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected new void InitProperties () {
-        base.InitProperties();
-        textureInfoProp = serializedObject.FindProperty("textureInfo_");
-        useTextureOffsetProp = serializedObject.FindProperty("useTextureOffset_");
-        spriteTypeProp = serializedObject.FindProperty("spriteType_");
-        tiledSpacingProp = serializedObject.FindProperty("tiledSpacing_");
-        borderOnlyProp = serializedObject.FindProperty("borderOnly_");
-        customBorderSizeProp = serializedObject.FindProperty("customBorderSize_");
-        leftProp = serializedObject.FindProperty("leftBorderSize_");
-        rightProp = serializedObject.FindProperty("rightBorderSize_");
-        topProp = serializedObject.FindProperty("topBorderSize_");
-        bottomProp = serializedObject.FindProperty("bottomBorderSize_");
+        EditorGUILayout.Space();
     }
 }
 

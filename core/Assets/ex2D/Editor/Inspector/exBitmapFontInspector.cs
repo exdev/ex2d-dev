@@ -27,8 +27,7 @@ class exBitmapFontInspector : Editor {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	override public void OnInspectorGUI () {
-        EditorGUIUtility.LookLikeInspector();
+	public override void OnInspectorGUI () {
         DrawDefaultInspector(); 
 
         EditorGUILayout.Space();
