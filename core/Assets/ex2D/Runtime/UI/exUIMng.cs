@@ -281,8 +281,10 @@ public class exUIMng : MonoBehaviour {
         //
         if ( Application.platform == RuntimePlatform.Android
           || Application.platform == RuntimePlatform.IPhonePlayer
+#if UNITY_4_2
           || Application.platform == RuntimePlatform.WP8Player
           || Application.platform == RuntimePlatform.BB10Player
+#endif
           )
 		{
 			hasMouse = false;
