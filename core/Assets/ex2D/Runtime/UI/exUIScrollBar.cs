@@ -41,6 +41,9 @@ public class exUIScrollBar : exUIControl {
     protected float scrollOffset = 0.0f;
     protected Vector3 scrollStart = Vector3.zero;
 
+    protected bool dragging = false;
+    protected int draggingID = -1;
+
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
@@ -64,8 +67,39 @@ public class exUIScrollBar : exUIControl {
             exUIButton btnBar = transBar.GetComponent<exUIButton>();
             if ( btnBar ) {
                 btnBar.grabMouseOrTouch = true;
+
+                btnBar.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    if ( dragging )
+                        return;
+
+                    if ( _point.isTouch || _point.GetMouseButton(0) ) {
+                        dragging = true;
+                        draggingID = _point.id;
+
+                        exUIMng.inst.SetFocus(this);
+                    }
+                };
+
+                btnBar.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    if ( ( _point.isTouch || _point.GetMouseButton(0) ) && _point.id == draggingID ) {
+                        if ( dragging ) {
+                            dragging = false;
+                            draggingID = -1;
+                        }
+                    }
+                };
+
                 btnBar.onHoverMove += delegate ( exUIControl _sender, List<exHotPoint> _points ) {
-                    // TODO:
+                    if ( scrollView ) {
+                        for ( int i = 0; i < _points.Count; ++i ) {
+                            exHotPoint point = _points[i];
+                            if ( dragging && ( point.isTouch || point.GetMouseButton(0) ) && point.id == draggingID  ) {
+                                Vector2 delta = point.worldDelta; 
+                                delta.y = -delta.y;
+                                scrollView.Scroll (delta/ratio);
+                            }
+                        }
+                    }
                 };
             }
         }
