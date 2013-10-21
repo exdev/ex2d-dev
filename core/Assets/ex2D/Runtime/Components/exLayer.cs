@@ -505,7 +505,7 @@ public class exLayer : MonoBehaviour
         // apply depth change
         (_sprite as IFriendOfLayer).DoSetDepth(_newDepth);
         //
-        if (IsMeshChanged(_sprite, oldMeshIndex, addDepth)) {
+        if (IsRenderOrderChangedBetweenMesh(_sprite, oldMeshIndex, addDepth)) {
             RemoveFromMesh (_sprite, mesh); // 这里需要保证depth改变后也能正常remove
             AddToMesh(_sprite, GetMeshToAdd(_sprite));
         }
@@ -1083,7 +1083,7 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private bool IsMeshChanged (exLayeredSprite _sprite, int _oldMeshIndex, bool _addDepth) { 
+    private bool IsRenderOrderChangedBetweenMesh (exLayeredSprite _sprite, int _oldMeshIndex, bool _addDepth) { 
         if (_addDepth) {
             exLayeredSprite aboveSprite = GetNearestSpriteFromAboveMesh(_oldMeshIndex);
             return (aboveSprite != null && _sprite > aboveSprite);
