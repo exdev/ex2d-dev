@@ -143,16 +143,16 @@ public class EffectInfo_Base {
 // Scale
 [System.Serializable]
 public class EffectInfo_Scale : EffectInfo_Base {
-    public Transform target; 
+    public Transform target = null; 
 
-    public bool hasDeactive;
-    public Vector3 deactive;
+    public bool hasDeactive = false;
+    public Vector3 deactive = Vector3.one;
 
-    public bool hasPress;
-    public Vector3 press;
+    public bool hasPress = false;
+    public Vector3 press = Vector3.one;
 
-    public bool hasHover;
-    public Vector3 hover;
+    public bool hasHover = false;
+    public Vector3 hover = Vector3.one;
 
     [System.NonSerialized] public Vector3 normal;
 }
@@ -160,16 +160,16 @@ public class EffectInfo_Scale : EffectInfo_Base {
 // Color
 [System.Serializable]
 public class EffectInfo_Color : EffectInfo_Base {
-    public exSpriteBase target; 
+    public exSpriteBase target = null; 
 
-    public bool hasDeactive;
-    public Color deactive;
+    public bool hasDeactive = false;
+    public Color deactive = Color.white;
 
-    public bool hasPress;
-    public Color press;
+    public bool hasPress = false;
+    public Color press = Color.white;
 
-    public bool hasHover;
-    public Color hover;
+    public bool hasHover = false;
+    public Color hover = Color.white;
 
     [System.NonSerialized] public Color normal;
 }
@@ -177,16 +177,16 @@ public class EffectInfo_Color : EffectInfo_Base {
 // Offset
 [System.Serializable]
 public class EffectInfo_Offset : EffectInfo_Base {
-    public exSpriteBase target; 
+    public exSpriteBase target = null; 
 
-    public bool hasDeactive;
-    public Vector2 deactive;
+    public bool hasDeactive = false;
+    public Vector2 deactive = Vector2.one;
 
-    public bool hasPress;
-    public Vector2 press;
+    public bool hasPress = false;
+    public Vector2 press = Vector2.one;
 
-    public bool hasHover;
-    public Vector2 hover;
+    public bool hasHover = false;
+    public Vector2 hover = Vector2.one;
 
     [System.NonSerialized] public Vector2 normal;
 }

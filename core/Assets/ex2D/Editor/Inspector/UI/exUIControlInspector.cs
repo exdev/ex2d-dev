@@ -298,7 +298,7 @@ class exUIControlInspector : exPlaneInspector {
                 slot = null;
             }
             GUILayout.Space(3f);
-        GUILayout.EndHorizontal();
+        EditorGUILayout.EndHorizontal();
 
         return slot;
     }
