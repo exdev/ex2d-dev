@@ -14,195 +14,181 @@ using System.Collections;
 using System.Collections.Generic;
 
 ///////////////////////////////////////////////////////////////////////////////
-//
+// EffectState
 ///////////////////////////////////////////////////////////////////////////////
 
-// float
-public class EffectState_Float {
-    public bool inverse;
-    public bool start;
-    public bool useCurve;
-    public float timer;
-    public float duration;
+public class EffectState_Base {
     public System.Func<float,float> func;
-    public AnimationCurve curve;
-    public float src;
-    public float dest;
+    protected float timer;
+    protected bool start;
 
-    public float Step ( float _delta ) {
-        if ( start ) {
-            if ( inverse )
-                timer -= _delta;
-            else
-                timer += _delta;
-
-            float ratio = 0.0f;
-            if ( useCurve )
-                ratio = curve.Evaluate(timer/duration);
-            else
-                ratio = func(timer/duration);
-
-            float result = Mathf.Lerp( src, dest, ratio );
-            if ( inverse ) {
-                if ( timer <= 0.0f ) {
-                    timer = 0.0f;
-                    start = false;
-                    result = src;
-                }
-            }
-            else {
-                if ( timer >= duration ) {
-                    timer = duration;
-                    start = false;
-                    result = dest;
-                }
-            }
-
-            return result;
-        }
-        return src;
+    public virtual void Tick ( float _delta ) {
     }
 }
 
-// Vector2
-public class EffectState_Vector2 {
-    public bool inverse;
-    public bool start;
-    public bool useCurve;
-    public float timer;
-    public float duration;
-    public System.Func<float,float> func;
-    public AnimationCurve curve;
-    public Vector2 src;
-    public Vector2 dest;
+// Scale
+public class EffectState_Scale : EffectState_Base {
+    public EffectInfo_Scale info;
 
-    public Vector2 Step ( float _delta ) {
+    Vector3 from;
+    Vector3 to;
+
+    public void Begin ( Vector3 _to ) {
+        timer = 0.0f;
+        start = true;
+        from = info.target.localScale;
+        to = _to;
+    }
+
+    public override void Tick ( float _delta ) {
         if ( start ) {
-            if ( inverse )
-                timer -= _delta;
-            else
-                timer += _delta;
+            timer += _delta;
 
-            float ratio = 0.0f;
-            if ( useCurve )
-                ratio = curve.Evaluate(timer/duration);
-            else
-                ratio = func(timer/duration);
-
-            Vector2 result = Vector2.Lerp( src, dest, ratio );
-            if ( inverse ) {
-                if ( timer <= 0.0f ) {
-                    timer = 0.0f;
-                    start = false;
-                    result = src;
-                }
-            }
-            else {
-                if ( timer >= duration ) {
-                    timer = duration;
-                    start = false;
-                    result = dest;
-                }
+            float ratio = func ( timer/info.duration );
+            Vector3 result = Vector3.Lerp( from, to, ratio );
+            if ( timer >= info.duration ) {
+                timer = 0.0f;
+                start = false;
+                result = to;
             }
 
-            return result;
+            info.target.localScale = result;
         }
-        return src;
     }
 }
 
-// Vector3
-public class EffectState_Vector3 {
-    public bool inverse;
-    public bool start;
-    public bool useCurve;
-    public float timer;
-    public float duration;
-    public System.Func<float,float> func;
-    public AnimationCurve curve;
-    public Vector3 src;
-    public Vector3 dest;
+// Offset
+public class EffectState_Offset : EffectState_Base {
+    public EffectInfo_Offset info;
 
-    public Vector3 Step ( float _delta ) {
+    public Vector2 from;
+    public Vector2 to;
+
+    public void Begin ( Vector2 _to ) {
+        timer = 0.0f;
+        start = true;
+        from = info.target.offset;
+        to = _to;
+    }
+
+    public override void Tick ( float _delta ) {
         if ( start ) {
-            if ( inverse )
-                timer -= _delta;
-            else
-                timer += _delta;
+            timer += _delta;
 
-            float ratio = 0.0f;
-            if ( useCurve )
-                ratio = curve.Evaluate(timer/duration);
-            else
-                ratio = func(timer/duration);
-
-            Vector3 result = Vector3.Lerp( src, dest, ratio );
-            if ( inverse ) {
-                if ( timer <= 0.0f ) {
-                    timer = 0.0f;
-                    start = false;
-                    result = src;
-                }
-            }
-            else {
-                if ( timer >= duration ) {
-                    timer = duration;
-                    start = false;
-                    result = dest;
-                }
+            float ratio = func ( timer/info.duration );
+            Vector2 result = Vector2.Lerp( from, to, ratio );
+            if ( timer >= info.duration ) {
+                timer = 0.0f;
+                start = false;
+                result = to;
             }
 
-            return result;
+            info.target.offset = result;
         }
-        return src;
     }
 }
 
 // Color
-public class EffectState_Color {
-    public bool inverse;
-    public bool start;
-    public bool useCurve;
-    public float timer;
-    public float duration;
-    public System.Func<float,float> func;
-    public AnimationCurve curve;
-    public Color src;
-    public Color dest;
+public class EffectState_Color : EffectState_Base {
+    public EffectInfo_Color info;
 
-    public Color Step ( float _delta ) {
-        if ( start ) {
-            if ( inverse )
-                timer -= _delta;
-            else
-                timer += _delta;
+    public Color from;
+    public Color to;
 
-            float ratio = 0.0f;
-            if ( useCurve )
-                ratio = curve.Evaluate(timer/duration);
-            else
-                ratio = func(timer/duration);
-
-            Color result = Color.Lerp( src, dest, ratio );
-            if ( inverse ) {
-                if ( timer <= 0.0f ) {
-                    timer = 0.0f;
-                    start = false;
-                    result = src;
-                }
-            }
-            else {
-                if ( timer >= duration ) {
-                    timer = duration;
-                    start = false;
-                    result = dest;
-                }
-            }
-
-            return result;
-        }
-        return src;
+    public void Begin ( Color _to ) {
+        timer = 0.0f;
+        start = true;
+        from = info.target.color;
+        to = _to;
     }
+
+    public override void Tick ( float _delta ) {
+        if ( start ) {
+            timer += _delta;
+
+            float ratio = func ( timer/info.duration );
+            Color result = Color.Lerp( from, to, ratio );
+            if ( timer >= info.duration ) {
+                timer = 0.0f;
+                start = false;
+                result = to;
+            }
+
+            info.target.color = result;
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// EffectInfo
+///////////////////////////////////////////////////////////////////////////////
+
+[System.Serializable]
+public class EffectInfo_Base {
+    public float duration = 1.0f;
+    public exEase.Type curveType = exEase.Type.Linear;
+    public bool customCurve = false; 
+    public AnimationCurve curve;
+
+    public System.Func<float,float> GetCurveFunction () {
+        if ( customCurve ) {
+            return delegate ( float _t ) {
+                return curve.Evaluate(_t);
+            };
+        }
+        return exEase.GetEaseFunc(curveType);
+    }
+}
+
+// Scale
+[System.Serializable]
+public class EffectInfo_Scale : EffectInfo_Base {
+    public Transform target; 
+
+    public bool hasDeactive;
+    public Vector3 deactive;
+
+    public bool hasPress;
+    public Vector3 press;
+
+    public bool hasHover;
+    public Vector3 hover;
+
+    [System.NonSerialized] public Vector3 normal;
+}
+
+// Color
+[System.Serializable]
+public class EffectInfo_Color : EffectInfo_Base {
+    public exSpriteBase target; 
+
+    public bool hasDeactive;
+    public Color deactive;
+
+    public bool hasPress;
+    public Color press;
+
+    public bool hasHover;
+    public Color hover;
+
+    [System.NonSerialized] public Color normal;
+}
+
+// Offset
+[System.Serializable]
+public class EffectInfo_Offset : EffectInfo_Base {
+    public exSpriteBase target; 
+
+    public bool hasDeactive;
+    public Vector2 deactive;
+
+    public bool hasPress;
+    public Vector2 press;
+
+    public bool hasHover;
+    public Vector2 hover;
+
+    [System.NonSerialized] public Vector2 normal;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -213,42 +199,15 @@ public class EffectState_Color {
 
 public class exUIEffect : MonoBehaviour {
 
-    // DELME { 
-    bool inverse = false;
-    bool start = false;
-    float timer = 0.0f;
-    float duration = 1.0f;
-    Vector3 src = Vector3.one;
-    Vector3 dest = new Vector3( 1.2f, 1.2f, 1.0f );
-    // } DELME end 
+    public List<EffectInfo_Scale> scaleInfos;
+    public List<EffectInfo_Offset> offsetInfos;
+    public List<EffectInfo_Color> colorInfos;
 
-    public enum EffectType {
-        Scale,
-        Color,
-        Offset,
-        Custom,
-    }
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    ///////////////////////////////////////////////////////////////////////////////
 
-    public enum EffectOp {
-        Func,
-        Curve,
-        Animation
-    }
-
-    public class EffectInfo {
-        public float duration = 1.0f;
-        public EffectOp op = EffectOp.Func;
-
-        // if op is Func, Curve
-        public MonoBehaviour target; 
-        public EffectType type = EffectType.Scale;
-        public System.Func<float,float> func = exEase.Linear;
-        public AnimationCurve curve;
-
-        // if op is Animation
-        public Animation anim; 
-        public string animName;
-    }
+    List<EffectState_Base> states = new List<EffectState_Base>();
 
     ///////////////////////////////////////////////////////////////////////////////
     // functions
@@ -260,17 +219,42 @@ public class exUIEffect : MonoBehaviour {
 
     void Awake () {
         exUIControl ctrl = GetComponent<exUIControl>();
-        if ( ctrl != null ) {
-            ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
-                start = true;
-                inverse = false;
-                timer = 0.0f;
-                duration = 0.2f;
-            };
-            ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
-                start = true;
-                inverse = true;
-            };
+        if ( ctrl ) {
+            if ( scaleInfos != null ) {
+                for ( int j = 0; j < scaleInfos.Count; ++j ) {
+                    EffectInfo_Scale info = scaleInfos[j];
+                    info.normal = info.target.localScale;
+
+                    EffectState_Scale state = new EffectState_Scale();
+                    state.info = info;
+                    state.func = info.GetCurveFunction();
+                    AddState_Scale (ctrl, state);
+                }
+            }
+
+            if ( offsetInfos != null ) {
+                for ( int j = 0; j < offsetInfos.Count; ++j ) {
+                    EffectInfo_Offset info = offsetInfos[j];
+                    info.normal = info.target.offset;
+
+                    EffectState_Offset state = new EffectState_Offset();
+                    state.info = info;
+                    state.func = info.GetCurveFunction();
+                    AddState_Offset (ctrl, state);
+                }
+            }
+
+            if ( colorInfos != null ) {
+                for ( int j = 0; j < colorInfos.Count; ++j ) {
+                    EffectInfo_Color info = colorInfos[j];
+                    info.normal = info.target.color;
+
+                    EffectState_Color state = new EffectState_Color();
+                    state.info = info;
+                    state.func = info.GetCurveFunction();
+                    AddState_Color (ctrl, state);
+                }
+            }
         }
     } 
 
@@ -279,33 +263,140 @@ public class exUIEffect : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void Update () {
-        // DELME { 
-        if ( start ) {
-            if ( inverse )
-                timer -= Time.deltaTime;
-            else
-                timer += Time.deltaTime;
-
-            // float ratio = exEase.PingPong ( timer/duration, exEase.ExpoOut );
-            float ratio = exEase.ExpoInOut(timer/duration);
-            Vector3 result = Vector3.Lerp( src, dest, ratio );
-            transform.localScale = result;
-
-            if ( inverse ) {
-                if ( timer <= 0.0f ) {
-                    timer = 0.0f;
-                    start = false;
-                    transform.localScale = src;
-                }
-            }
-            else {
-                if ( timer >= duration ) {
-                    timer = duration;
-                    start = false;
-                    transform.localScale = dest;
-                }
-            }
+        for ( int i = 0; i < states.Count; ++i ) {
+            states[i].Tick( Time.deltaTime );
         }
-        // } DELME end 
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void AddState_Scale ( exUIControl _ctrl, EffectState_Scale _state ) {
+        if ( _state.info.hasDeactive ) {
+            _ctrl.onDeactive += delegate ( exUIControl _sender ) {
+                _state.Begin( _state.info.deactive );
+            };
+            _ctrl.onActive += delegate ( exUIControl _sender ) {
+                _state.Begin( _state.info.normal );
+            };
+        }
+        else {
+            _state.info.deactive = _state.info.normal;
+        }
+
+        if ( _state.info.hasPress ) {
+            _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
+                _state.Begin( _state.info.press );
+            };
+            _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
+                _state.Begin( _state.info.hover );
+            };
+        }
+        else {
+            _state.info.press = _state.info.normal;
+        }
+
+        if ( _state.info.hasHover ) {
+            _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
+                _state.Begin( _state.info.hover );
+            };
+            _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
+                _state.Begin( _state.info.normal );
+            };
+        }
+        else {
+            _state.info.hover = _state.info.normal;
+        }
+
+        states.Add(_state);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void AddState_Offset ( exUIControl _ctrl, EffectState_Offset _state ) {
+        if ( _state.info.hasDeactive ) {
+            _ctrl.onDeactive += delegate ( exUIControl _sender ) {
+                _state.Begin( _state.info.deactive );
+            };
+            _ctrl.onActive += delegate ( exUIControl _sender ) {
+                _state.Begin( _state.info.normal );
+            };
+        }
+        else {
+            _state.info.deactive = _state.info.normal;
+        }
+
+        if ( _state.info.hasPress ) {
+            _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
+                _state.Begin( _state.info.press );
+            };
+            _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
+                _state.Begin( _state.info.hover );
+            };
+        }
+        else {
+            _state.info.press = _state.info.normal;
+        }
+
+        if ( _state.info.hasHover ) {
+            _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
+                _state.Begin( _state.info.hover );
+            };
+            _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
+                _state.Begin( _state.info.normal );
+            };
+        }
+        else {
+            _state.info.hover = _state.info.normal;
+        }
+
+        states.Add(_state);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void AddState_Color ( exUIControl _ctrl, EffectState_Color _state ) {
+        if ( _state.info.hasDeactive ) {
+            _ctrl.onDeactive += delegate ( exUIControl _sender ) {
+                _state.Begin( _state.info.deactive );
+            };
+            _ctrl.onActive += delegate ( exUIControl _sender ) {
+                _state.Begin( _state.info.normal );
+            };
+        }
+        else {
+            _state.info.deactive = _state.info.normal;
+        }
+
+        if ( _state.info.hasPress ) {
+            _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
+                _state.Begin( _state.info.press );
+            };
+            _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
+                _state.Begin( _state.info.hover );
+            };
+        }
+        else {
+            _state.info.press = _state.info.normal;
+        }
+
+        if ( _state.info.hasHover ) {
+            _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
+                _state.Begin( _state.info.hover );
+            };
+            _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
+                _state.Begin( _state.info.normal );
+            };
+        }
+        else {
+            _state.info.hover = _state.info.normal;
+        }
+
+        states.Add(_state);
     }
 }
