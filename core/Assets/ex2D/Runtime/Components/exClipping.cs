@@ -26,24 +26,11 @@ public class exClipping : exPlane {
     const string shaderPostfix = " (Clipping)";
     
     ///////////////////////////////////////////////////////////////////////////////
-    // serialized
-    ///////////////////////////////////////////////////////////////////////////////
-    
-    private bool clipChildren_ = true;
-    public bool clipChildren {
-        get {
-            return clipChildren_;
-        }
-        set {
-            clipChildren_ = value;
-        }
-    }
-    
-    ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
     
-    private Dictionary<MaterialTableKey, Material> materialTable = new Dictionary<MaterialTableKey, Material>(MaterialTableKey.Comparer.instance);
+    private Dictionary<MaterialTableKey, Material> materialTable = 
+        new Dictionary<MaterialTableKey, Material>(MaterialTableKey.Comparer.instance);
     
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable functions
@@ -66,17 +53,12 @@ public class exClipping : exPlane {
         if (oldClip != null) {
             oldClip.Remove (_sprite);
         }
-        if (clipChildren_) {
-            exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase> (true);
-            for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
-                spritesToAdd [spriteIndex].SetClip(this);
-            }
-            if (_sprite.transform.IsChildOf (transform) == false) {
-                _sprite.transform.parent = transform;
-            }
+        exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase> (true);
+        for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
+            spritesToAdd [spriteIndex].SetClip(this);
         }
-        else {
-            _sprite.SetClip(this);
+        if (_sprite.transform.IsChildOf (transform) == false) {
+            _sprite.transform.parent = transform;
         }
     }
 
@@ -85,18 +67,12 @@ public class exClipping : exPlane {
     // ------------------------------------------------------------------ 
 
     public void Add (GameObject _gameObject) {
-        if (clipChildren_) {
-            exSpriteBase[] spritesToAdd = _gameObject.GetComponentsInChildren<exSpriteBase> (true);
-            for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
-                spritesToAdd [spriteIndex].SetClip(this);
-            }
-            if (_gameObject.transform.IsChildOf (transform) == false) {
-                _gameObject.transform.parent = transform;
-            }
+        exSpriteBase[] spritesToAdd = _gameObject.GetComponentsInChildren<exSpriteBase> (true);
+        for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
+            spritesToAdd [spriteIndex].SetClip(this);
         }
-        else {
-            exSpriteBase sprite = _gameObject.GetComponent<exSpriteBase> ();
-            Add (sprite);
+        if (_gameObject.transform.IsChildOf (transform) == false) {
+            _gameObject.transform.parent = transform;
         }
     }
 
@@ -105,14 +81,7 @@ public class exClipping : exPlane {
     // ------------------------------------------------------------------ 
 
     public void Remove (exSpriteBase _sprite) {
-        if (clipChildren_) {
-            Remove(_sprite.gameObject);
-        }
-        else {
-            if (ReferenceEquals(_sprite.clip, this)) {
-                _sprite.SetClip(null);
-            }
-        }
+        Remove(_sprite.gameObject);
     }
 
     // ------------------------------------------------------------------ 
@@ -120,17 +89,9 @@ public class exClipping : exPlane {
     // ------------------------------------------------------------------ 
 
     public void Remove (GameObject _gameObject) {
-        if (clipChildren_) {
-            exSpriteBase[] spritesToRemove = _gameObject.GetComponentsInChildren<exSpriteBase> (true);
-            for (int i = 0; i < spritesToRemove.Length; ++i) {
-                Remove (spritesToRemove [i]);
-            }
-        }
-        else {
-            exSpriteBase sprite = _gameObject.GetComponent<exSpriteBase> ();
-            if (sprite != null) {
-                Remove (sprite);
-            }
+        exSpriteBase[] spritesToRemove = _gameObject.GetComponentsInChildren<exSpriteBase> (true);
+        for (int i = 0; i < spritesToRemove.Length; ++i) {
+            Remove (spritesToRemove [i]);
         }
     }
     

@@ -230,51 +230,30 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
 
     // Allows drag & dropping of this sprite to change its clip in the editor
     protected void LateUpdate () {
+        // 这里的处理方式和exLayeredSprite.LateUpdate一样
+        // 如果exClipping不单单clip子物体，那就会复杂很多
         if (UnityEditor.EditorApplication.isPlaying == false) {
             // Run through the parents and see if this sprite attached to a clip
             Transform parentTransform = transform.parent;
             while (parentTransform != null) {
                 exClipping parentClip = parentTransform.GetComponent<exClipping>();
                 if (parentClip != null) {
-                    if (ReferenceEquals(clip_, parentClip))
-                        break;
-                    if (parentClip.clipChildren) {
-                        SetClip(parentClip);
-                    }
+                    SetClip(parentClip);
+                    return;
                 }
                 else {
-                    // TODO: SetClip里面检查以下代码
-                    //        if (clip_ != null) {
-                    //            if (clip_.clipChildren) {
-                    //                if (clip_.transform.IsChildOf(parentClip.transform)) {
-                    //                    return;
-                    //                }
-                    //            }
-                    //            else {
-                    //                if () {
-
-                    //                }
-                    //            }
-                    //        }
-                    //        SetClip(parentClip);
-                    //    }
-                    //}           
-                    //if (parentClip) {
-                    //}
-                    //return;
                     exSpriteBase parentSprite = parentTransform.GetComponent<exSpriteBase>();
                     if (parentSprite != null) {
-                        if (parentSprite.clip_ != null && parentSprite.clip_.clipChildren) {
-                            SetClip(parentSprite.clip_);
-                        }
+                        SetClip(parentSprite.clip_);
                         return;
+                    }
+                    else {
+                        parentTransform = parentTransform.parent;
                     }
                 }
             }
             // No clip
-            if (clip_ != null && clip_.clipChildren) {
-                SetClip(null);
-            }
+            SetClip(null);
         }
     }
 
