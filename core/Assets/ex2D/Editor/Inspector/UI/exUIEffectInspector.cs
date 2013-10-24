@@ -72,7 +72,7 @@ class exUIEffectInspector : Editor {
 
                     // infos
                     for ( int i = 0; i < _infos.Count; ++i ) {
-                        bool delete = false;
+                        bool infoDeleted = false;
                         EffectInfo_Scale info = _infos[i];
 
                         // target
@@ -89,12 +89,12 @@ class exUIEffectInspector : Editor {
                             if ( info.target != null ) {
                             }
                             else {
-                                delete = true;
+                                infoDeleted = true;
                             }
 
                             // Delete
                             if ( GUILayout.Button( styles.iconToolbarMinus, "InvisibleButton", GUILayout.Width(20f) ) ) {
-                                delete = true;
+                                infoDeleted = true;
                             }
                             GUILayout.Space(3f);
 
@@ -123,74 +123,97 @@ class exUIEffectInspector : Editor {
                         float y = 0.0f;
                         float z = 0.0f;
 
-                        // deactive
+                        // normal
                         EditorGUILayout.BeginHorizontal();
                             GUILayout.Space(30);
-                            EditorGUI.BeginChangeCheck();
-                                info.hasDeactive = EditorGUILayout.Toggle(info.hasDeactive,GUILayout.Width(15));
-                                GUILayout.Label("Deactive");
-                                GUI.enabled = info.hasDeactive;
-
-                                GUILayout.Label("X", GUILayout.Width(10));
-                                x = EditorGUILayout.FloatField("",info.deactive.x,GUILayout.Width(30));
-                                GUILayout.Label("Y", GUILayout.Width(10));
-                                y = EditorGUILayout.FloatField("",info.deactive.y,GUILayout.Width(30));
-                                GUILayout.Label("Z", GUILayout.Width(10));
-                                z = EditorGUILayout.FloatField("",info.deactive.z,GUILayout.Width(30));
-                            if ( EditorGUI.EndChangeCheck() ) {
-                                info.deactive = new Vector3( x, y, z );
+                            if ( GUILayout.Button("Sync", GUILayout.Width(50)) ) {
+                                info.normal = info.target.localScale;
                                 EditorUtility.SetDirty(target);
                             }
 
-                            GUI.enabled = true;
+                            EditorGUI.BeginChangeCheck();
+
+                                GUILayout.Label("Normal");
+
+                                GUILayout.Label("X", GUILayout.Width(10));
+                                x = EditorGUILayout.FloatField("",info.normal.x,GUILayout.Width(30));
+                                GUILayout.Label("Y", GUILayout.Width(10));
+                                y = EditorGUILayout.FloatField("",info.normal.y,GUILayout.Width(30));
+                                GUILayout.Label("Z", GUILayout.Width(10));
+                                z = EditorGUILayout.FloatField("",info.normal.z,GUILayout.Width(30));
+                            if ( EditorGUI.EndChangeCheck() ) {
+                                info.normal = new Vector3( x, y, z );
+                                EditorUtility.SetDirty(target);
+                            }
                         EditorGUILayout.EndHorizontal();
 
-                        // press
-                        EditorGUILayout.BeginHorizontal();
-                            GUILayout.Space(30);
-                            EditorGUI.BeginChangeCheck();
-                                info.hasPress = EditorGUILayout.Toggle(info.hasPress,GUILayout.Width(15));
-                                GUILayout.Label("Press");
-                                GUI.enabled = info.hasPress;
+                        // Properties
+                        for ( int j = 0; j < info.propInfos.Count; ++j ) {
+                            EffectInfo_Scale.PropInfo propInfo = info.propInfos[j];
 
-                                GUILayout.Label("X", GUILayout.Width(10));
-                                x = EditorGUILayout.FloatField("",info.press.x,GUILayout.Width(30));
-                                GUILayout.Label("Y", GUILayout.Width(10));
-                                y = EditorGUILayout.FloatField("",info.press.y,GUILayout.Width(30));
-                                GUILayout.Label("Z", GUILayout.Width(10));
-                                z = EditorGUILayout.FloatField("",info.press.z,GUILayout.Width(30));
-                            if ( EditorGUI.EndChangeCheck() ) {
-                                info.press = new Vector3( x, y, z );
-                                EditorUtility.SetDirty(target);
+                            EditorGUILayout.BeginHorizontal();
+                                GUILayout.Space(30);
+                                // propInfoDeleted
+                                bool propInfoDeleted = false;
+                                if ( GUILayout.Button( styles.iconToolbarMinus, 
+                                                       "InvisibleButton", 
+                                                       GUILayout.Width(styles.iconToolbarMinus.width), 
+                                                       GUILayout.Height(styles.iconToolbarMinus.height) ) ) 
+                                {
+                                    propInfoDeleted = true;
+                                }
+
+                                EditorGUI.BeginChangeCheck();
+
+                                    GUILayout.Label(System.Enum.GetName( typeof(EffectEventType), propInfo.type ));
+                                    GUILayout.Label("X", GUILayout.Width(10));
+                                    x = EditorGUILayout.FloatField("",propInfo.val.x,GUILayout.Width(30));
+                                    GUILayout.Label("Y", GUILayout.Width(10));
+                                    y = EditorGUILayout.FloatField("",propInfo.val.y,GUILayout.Width(30));
+                                    GUILayout.Label("Z", GUILayout.Width(10));
+                                    z = EditorGUILayout.FloatField("",propInfo.val.z,GUILayout.Width(30));
+
+                                if ( EditorGUI.EndChangeCheck() ) {
+                                    propInfo.val = new Vector3( x, y, z );
+                                    EditorUtility.SetDirty(target);
+                                }
+
+                                if ( propInfoDeleted ) {
+                                    info.propInfos.RemoveAt(j);
+                                    --j;
+                                    EditorUtility.SetDirty(target);
+                                }
+
+                            EditorGUILayout.EndHorizontal();
+                            EditorGUILayout.Space();
+                        }
+
+                        // Add Property
+                        EditorGUILayout.BeginHorizontal();
+                            GUILayout.FlexibleSpace();
+                            List<string> eventNameList = new List<string>(); 
+                            eventNameList.Add( "Add Property" );
+                            eventNameList.AddRange( System.Enum.GetNames(typeof(EffectEventType)) );
+
+                            foreach ( EffectInfo_Scale.PropInfo propInfo in info.propInfos ) {
+                                int idx = eventNameList.IndexOf( System.Enum.GetName( typeof(EffectEventType), propInfo.type )  );
+                                if ( idx != -1 ) {
+                                    eventNameList.RemoveAt(idx);
+                                }
                             }
 
-                            GUI.enabled = true;
-                        EditorGUILayout.EndHorizontal();
-
-                        // hover
-                        EditorGUILayout.BeginHorizontal();
-                            GUILayout.Space(30);
-                            EditorGUI.BeginChangeCheck();
-                                info.hasHover = EditorGUILayout.Toggle(info.hasHover,GUILayout.Width(15));
-                                GUILayout.Label("Hover");
-                                GUI.enabled = info.hasHover;
-
-                                GUILayout.Label("X", GUILayout.Width(10));
-                                x = EditorGUILayout.FloatField("",info.hover.x,GUILayout.Width(30));
-                                GUILayout.Label("Y", GUILayout.Width(10));
-                                y = EditorGUILayout.FloatField("",info.hover.y,GUILayout.Width(30));
-                                GUILayout.Label("Z", GUILayout.Width(10));
-                                z = EditorGUILayout.FloatField("",info.hover.z,GUILayout.Width(30));
-                            if ( EditorGUI.EndChangeCheck() ) {
-                                info.hover = new Vector3( x, y, z );
+                            int choice = EditorGUILayout.Popup ( 0, eventNameList.ToArray(), GUILayout.Width(100) );
+                            if ( choice != 0 ) {
+                                EffectInfo_Scale.PropInfo propInfo = new EffectInfo_Scale.PropInfo();
+                                propInfo.type = (EffectEventType)System.Enum.Parse(typeof(EffectEventType), eventNameList[choice]);
+                                propInfo.val = info.normal;
+                                info.propInfos.Add(propInfo); 
                                 EditorUtility.SetDirty(target);
                             }
-
-                            GUI.enabled = true;
                         EditorGUILayout.EndHorizontal();
 
                         //
-                        if ( delete ) {
+                        if ( infoDeleted ) {
                             _infos.RemoveAt(i);
                             --i;
                             EditorUtility.SetDirty(target);
@@ -238,7 +261,7 @@ class exUIEffectInspector : Editor {
 
                     // infos
                     for ( int i = 0; i < _infos.Count; ++i ) {
-                        bool delete = false;
+                        bool infoDeleted = false;
                         EffectInfo_Color info = _infos[i];
 
                         // target
@@ -255,12 +278,12 @@ class exUIEffectInspector : Editor {
                             if ( info.target != null ) {
                             }
                             else {
-                                delete = true;
+                                infoDeleted = true;
                             }
 
                             // Delete
                             if ( GUILayout.Button( styles.iconToolbarMinus, "InvisibleButton", GUILayout.Width(20f) ) ) {
-                                delete = true;
+                                infoDeleted = true;
                             }
                             GUILayout.Space(3f);
 
@@ -285,53 +308,86 @@ class exUIEffectInspector : Editor {
                             }
                         EditorGUILayout.EndHorizontal();
 
-                        // deactive
+                        // normal
                         EditorGUILayout.BeginHorizontal();
                             GUILayout.Space(30);
-                            EditorGUI.BeginChangeCheck();
-                                info.hasDeactive = EditorGUILayout.Toggle(info.hasDeactive,GUILayout.Width(15));
-                                GUILayout.Label("Deactive");
-                                GUI.enabled = info.hasDeactive;
-                                info.deactive = EditorGUILayout.ColorField("",info.deactive,GUILayout.Width(80));
-                            if ( EditorGUI.EndChangeCheck() ) {
+                            if ( GUILayout.Button("Sync", GUILayout.Width(50)) ) {
+                                info.normal = info.target.color;
                                 EditorUtility.SetDirty(target);
                             }
 
-                            GUI.enabled = true;
+                            EditorGUI.BeginChangeCheck();
+
+                                GUILayout.Label("Normal");
+
+                                info.normal = EditorGUILayout.ColorField("",info.normal,GUILayout.Width(80));
+                            if ( EditorGUI.EndChangeCheck() ) {
+                                EditorUtility.SetDirty(target);
+                            }
                         EditorGUILayout.EndHorizontal();
 
-                        // press
+                        // Properties
+                        for ( int j = 0; j < info.propInfos.Count; ++j ) {
+                            EffectInfo_Color.PropInfo propInfo = info.propInfos[j];
+
+                            EditorGUILayout.BeginHorizontal();
+                                GUILayout.Space(30);
+                                // propInfoDeleted
+                                bool propInfoDeleted = false;
+                                if ( GUILayout.Button( styles.iconToolbarMinus, 
+                                                       "InvisibleButton", 
+                                                       GUILayout.Width(styles.iconToolbarMinus.width), 
+                                                       GUILayout.Height(styles.iconToolbarMinus.height) ) ) 
+                                {
+                                    propInfoDeleted = true;
+                                }
+
+                                EditorGUI.BeginChangeCheck();
+
+                                    GUILayout.Label(System.Enum.GetName( typeof(EffectEventType), propInfo.type ));
+                                    Color newColor = EditorGUILayout.ColorField("",propInfo.val,GUILayout.Width(80));
+
+                                if ( EditorGUI.EndChangeCheck() ) {
+                                    propInfo.val = newColor;
+                                    EditorUtility.SetDirty(target);
+                                }
+
+                                if ( propInfoDeleted ) {
+                                    info.propInfos.RemoveAt(j);
+                                    --j;
+                                    EditorUtility.SetDirty(target);
+                                }
+
+                            EditorGUILayout.EndHorizontal();
+                            EditorGUILayout.Space();
+                        }
+
+                        // Add Property
                         EditorGUILayout.BeginHorizontal();
-                            GUILayout.Space(30);
-                            EditorGUI.BeginChangeCheck();
-                                info.hasPress = EditorGUILayout.Toggle(info.hasPress,GUILayout.Width(15));
-                                GUILayout.Label("Press");
-                                GUI.enabled = info.hasPress;
-                                info.press = EditorGUILayout.ColorField("",info.press,GUILayout.Width(80));
-                            if ( EditorGUI.EndChangeCheck() ) {
-                                EditorUtility.SetDirty(target);
+                            GUILayout.FlexibleSpace();
+                            List<string> eventNameList = new List<string>(); 
+                            eventNameList.Add( "Add Property" );
+                            eventNameList.AddRange( System.Enum.GetNames(typeof(EffectEventType)) );
+
+                            foreach ( EffectInfo_Color.PropInfo propInfo in info.propInfos ) {
+                                int idx = eventNameList.IndexOf( System.Enum.GetName( typeof(EffectEventType), propInfo.type )  );
+                                if ( idx != -1 ) {
+                                    eventNameList.RemoveAt(idx);
+                                }
                             }
 
-                            GUI.enabled = true;
-                        EditorGUILayout.EndHorizontal();
-
-                        // hover
-                        EditorGUILayout.BeginHorizontal();
-                            GUILayout.Space(30);
-                            EditorGUI.BeginChangeCheck();
-                                info.hasHover = EditorGUILayout.Toggle(info.hasHover,GUILayout.Width(15));
-                                GUILayout.Label("Hover");
-                                GUI.enabled = info.hasHover;
-                                info.hover = EditorGUILayout.ColorField("",info.hover,GUILayout.Width(80));
-                            if ( EditorGUI.EndChangeCheck() ) {
+                            int choice = EditorGUILayout.Popup ( 0, eventNameList.ToArray(), GUILayout.Width(100) );
+                            if ( choice != 0 ) {
+                                EffectInfo_Color.PropInfo propInfo = new EffectInfo_Color.PropInfo();
+                                propInfo.type = (EffectEventType)System.Enum.Parse(typeof(EffectEventType), eventNameList[choice]);
+                                propInfo.val = info.normal;
+                                info.propInfos.Add(propInfo); 
                                 EditorUtility.SetDirty(target);
                             }
-
-                            GUI.enabled = true;
                         EditorGUILayout.EndHorizontal();
 
                         //
-                        if ( delete ) {
+                        if ( infoDeleted ) {
                             _infos.RemoveAt(i);
                             --i;
                             EditorUtility.SetDirty(target);
@@ -379,7 +435,7 @@ class exUIEffectInspector : Editor {
 
                     // infos
                     for ( int i = 0; i < _infos.Count; ++i ) {
-                        bool delete = false;
+                        bool infoDeleted = false;
                         EffectInfo_Offset info = _infos[i];
 
                         // target
@@ -396,12 +452,12 @@ class exUIEffectInspector : Editor {
                             if ( info.target != null ) {
                             }
                             else {
-                                delete = true;
+                                infoDeleted = true;
                             }
 
                             // Delete
                             if ( GUILayout.Button( styles.iconToolbarMinus, "InvisibleButton", GUILayout.Width(20f) ) ) {
-                                delete = true;
+                                infoDeleted = true;
                             }
                             GUILayout.Space(3f);
 
@@ -429,68 +485,93 @@ class exUIEffectInspector : Editor {
                         float x = 0.0f;
                         float y = 0.0f;
 
-                        // deactive
+                        // normal
                         EditorGUILayout.BeginHorizontal();
                             GUILayout.Space(30);
-                            EditorGUI.BeginChangeCheck();
-                                info.hasDeactive = EditorGUILayout.Toggle(info.hasDeactive,GUILayout.Width(15));
-                                GUILayout.Label("Deactive");
-                                GUI.enabled = info.hasDeactive;
-
-                                GUILayout.Label("X", GUILayout.Width(10));
-                                x = EditorGUILayout.FloatField("",info.deactive.x,GUILayout.Width(30));
-                                GUILayout.Label("Y", GUILayout.Width(10));
-                                y = EditorGUILayout.FloatField("",info.deactive.y,GUILayout.Width(30));
-                            if ( EditorGUI.EndChangeCheck() ) {
-                                info.deactive = new Vector2( x, y );
+                            if ( GUILayout.Button("Sync", GUILayout.Width(50)) ) {
+                                info.normal = info.target.offset;
                                 EditorUtility.SetDirty(target);
                             }
 
-                            GUI.enabled = true;
+                            EditorGUI.BeginChangeCheck();
+
+                                GUILayout.Label("Normal");
+
+                                GUILayout.Label("X", GUILayout.Width(10));
+                                x = EditorGUILayout.FloatField("",info.normal.x,GUILayout.Width(30));
+                                GUILayout.Label("Y", GUILayout.Width(10));
+                                y = EditorGUILayout.FloatField("",info.normal.y,GUILayout.Width(30));
+                            if ( EditorGUI.EndChangeCheck() ) {
+                                info.normal = new Vector2( x, y );
+                                EditorUtility.SetDirty(target);
+                            }
                         EditorGUILayout.EndHorizontal();
 
-                        // press
-                        EditorGUILayout.BeginHorizontal();
-                            GUILayout.Space(30);
-                            EditorGUI.BeginChangeCheck();
-                                info.hasPress = EditorGUILayout.Toggle(info.hasPress,GUILayout.Width(15));
-                                GUILayout.Label("Press");
-                                GUI.enabled = info.hasPress;
+                        // Properties
+                        for ( int j = 0; j < info.propInfos.Count; ++j ) {
+                            EffectInfo_Offset.PropInfo propInfo = info.propInfos[j];
 
-                                GUILayout.Label("X", GUILayout.Width(10));
-                                x = EditorGUILayout.FloatField("",info.press.x,GUILayout.Width(30));
-                                GUILayout.Label("Y", GUILayout.Width(10));
-                                y = EditorGUILayout.FloatField("",info.press.y,GUILayout.Width(30));
-                            if ( EditorGUI.EndChangeCheck() ) {
-                                info.press = new Vector2( x, y );
-                                EditorUtility.SetDirty(target);
+                            EditorGUILayout.BeginHorizontal();
+                                GUILayout.Space(30);
+                                // propInfoDeleted
+                                bool propInfoDeleted = false;
+                                if ( GUILayout.Button( styles.iconToolbarMinus, 
+                                                       "InvisibleButton", 
+                                                       GUILayout.Width(styles.iconToolbarMinus.width), 
+                                                       GUILayout.Height(styles.iconToolbarMinus.height) ) ) 
+                                {
+                                    propInfoDeleted = true;
+                                }
+
+                                EditorGUI.BeginChangeCheck();
+
+                                    GUILayout.Label(System.Enum.GetName( typeof(EffectEventType), propInfo.type ));
+                                    GUILayout.Label("X", GUILayout.Width(10));
+                                    x = EditorGUILayout.FloatField("",propInfo.val.x,GUILayout.Width(30));
+                                    GUILayout.Label("Y", GUILayout.Width(10));
+                                    y = EditorGUILayout.FloatField("",propInfo.val.y,GUILayout.Width(30));
+
+                                if ( EditorGUI.EndChangeCheck() ) {
+                                    propInfo.val = new Vector2(x,y);
+                                    EditorUtility.SetDirty(target);
+                                }
+
+                                if ( propInfoDeleted ) {
+                                    info.propInfos.RemoveAt(j);
+                                    --j;
+                                    EditorUtility.SetDirty(target);
+                                }
+
+                            EditorGUILayout.EndHorizontal();
+                            EditorGUILayout.Space();
+                        }
+
+                        // Add Property
+                        EditorGUILayout.BeginHorizontal();
+                            GUILayout.FlexibleSpace();
+                            List<string> eventNameList = new List<string>(); 
+                            eventNameList.Add( "Add Property" );
+                            eventNameList.AddRange( System.Enum.GetNames(typeof(EffectEventType)) );
+
+                            foreach ( EffectInfo_Offset.PropInfo propInfo in info.propInfos ) {
+                                int idx = eventNameList.IndexOf( System.Enum.GetName( typeof(EffectEventType), propInfo.type )  );
+                                if ( idx != -1 ) {
+                                    eventNameList.RemoveAt(idx);
+                                }
                             }
 
-                            GUI.enabled = true;
-                        EditorGUILayout.EndHorizontal();
-
-                        // hover
-                        EditorGUILayout.BeginHorizontal();
-                            GUILayout.Space(30);
-                            EditorGUI.BeginChangeCheck();
-                                info.hasHover = EditorGUILayout.Toggle(info.hasHover,GUILayout.Width(15));
-                                GUILayout.Label("Hover");
-                                GUI.enabled = info.hasHover;
-
-                                GUILayout.Label("X", GUILayout.Width(10));
-                                x = EditorGUILayout.FloatField("",info.hover.x,GUILayout.Width(30));
-                                GUILayout.Label("Y", GUILayout.Width(10));
-                                y = EditorGUILayout.FloatField("",info.hover.y,GUILayout.Width(30));
-                            if ( EditorGUI.EndChangeCheck() ) {
-                                info.hover = new Vector2( x, y );
+                            int choice = EditorGUILayout.Popup ( 0, eventNameList.ToArray(), GUILayout.Width(100) );
+                            if ( choice != 0 ) {
+                                EffectInfo_Offset.PropInfo propInfo = new EffectInfo_Offset.PropInfo();
+                                propInfo.type = (EffectEventType)System.Enum.Parse(typeof(EffectEventType), eventNameList[choice]);
+                                propInfo.val = info.normal;
+                                info.propInfos.Add(propInfo); 
                                 EditorUtility.SetDirty(target);
                             }
-
-                            GUI.enabled = true;
                         EditorGUILayout.EndHorizontal();
 
                         //
-                        if ( delete ) {
+                        if ( infoDeleted ) {
                             _infos.RemoveAt(i);
                             --i;
                             EditorUtility.SetDirty(target);

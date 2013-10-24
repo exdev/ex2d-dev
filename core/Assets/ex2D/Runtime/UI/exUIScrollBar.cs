@@ -143,7 +143,6 @@ public class exUIScrollBar : exUIControl {
                 }
             };
             scrollView.onScrollFinished += delegate ( exUIControl _sender ) {
-                //
                 if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
                     cooldownTimer = cooldown;
                     isCoolingDown = true;
@@ -151,65 +150,48 @@ public class exUIScrollBar : exUIControl {
             };
             UpdateScrollBarRatio ();
             UpdateScrollBar ();
-        }
-    }
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
+            // handle scrollbar effect
+            if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
+                // 
+                exUIEffect effect = GetComponent<exUIEffect>();
+                if ( effect == null ) {
+                    effect = gameObject.AddComponent<exUIEffect>();
 
-    void Start () {
-        if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
-            // 
-            exUIEffect effect = GetComponent<exUIEffect>();
-            if ( effect == null ) {
-                effect = gameObject.AddComponent<exUIEffect>();
+                    if ( background != null ) {
+                        effect.AddEffect_Color( background, 
+                                                EffectEventType.Deactive,
+                                                exEase.Type.Linear,
+                                                new Color( background.color.r, background.color.g, background.color.b, 0.0f ),
+                                                0.5f );
+                    }
 
-                if ( background != null ) {
-                    EffectInfo_Color colorInfo = new EffectInfo_Color();
-                    colorInfo.duration = 0.5f;
-                    colorInfo.target = background;
-                    colorInfo.normal = background.color;
-                    colorInfo.hasDeactive = true;
-                    colorInfo.deactive = new Color( background.color.r, background.color.g, background.color.b, 0.0f ) ;
-
-                    EffectState_Color colorState = new EffectState_Color();
-                    colorState.info = colorInfo;
-                    colorState.func = colorInfo.GetCurveFunction();
-                    effect.AddState_Color( this, colorState );
+                    if ( bar != null ) {
+                        effect.AddEffect_Color( bar, 
+                                                EffectEventType.Deactive,
+                                                exEase.Type.Linear,
+                                                new Color( bar.color.r, bar.color.g, bar.color.b, 0.0f ),
+                                                0.5f );
+                    }
                 }
 
-                if ( bar != null ) {
-                    EffectInfo_Color colorInfo = new EffectInfo_Color();
-                    colorInfo.duration = 0.5f;
-                    colorInfo.target = bar;
-                    colorInfo.normal = bar.color;
-                    colorInfo.hasDeactive = true;
-                    colorInfo.deactive = new Color( bar.color.r, bar.color.g, bar.color.b, 0.0f ) ;
-
-                    EffectState_Color colorState = new EffectState_Color();
-                    colorState.info = colorInfo;
-                    colorState.func = colorInfo.GetCurveFunction();
-                    effect.AddState_Color( this, colorState );
+                //
+                if ( background ) {
+                    Color tmpColor = background.color;
+                    tmpColor.a = 0.0f;
+                    background.color = tmpColor;
                 }
-            }
 
-            //
-            if ( background ) {
-                Color tmpColor = background.color;
-                tmpColor.a = 0.0f;
-                background.color = tmpColor;
-            }
+                //
+                if ( bar ) {
+                    Color tmpColor = bar.color;
+                    tmpColor.a = 0.0f;
+                    bar.color = tmpColor;
+                }
 
-            //
-            if ( bar ) {
-                Color tmpColor = bar.color;
-                tmpColor.a = 0.0f;
-                bar.color = tmpColor;
+                //
+                active_ = false;
             }
-
-            //
-            active_ = false;
         }
     }
 

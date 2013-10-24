@@ -14,6 +14,107 @@ using System.Collections;
 using System.Collections.Generic;
 
 ///////////////////////////////////////////////////////////////////////////////
+// 
+///////////////////////////////////////////////////////////////////////////////
+
+public enum EffectEventType {
+    Deactive,
+    Press,
+    Hover,
+    Unchecked,
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// EffectInfo
+///////////////////////////////////////////////////////////////////////////////
+
+[System.Serializable]
+public class EffectInfo_Base {
+    public float duration = 1.0f;
+    public exEase.Type curveType = exEase.Type.Linear;
+    public bool customCurve = false; 
+    public AnimationCurve curve;
+
+    public System.Func<float,float> GetCurveFunction () {
+        if ( customCurve ) {
+            return delegate ( float _t ) {
+                return curve.Evaluate(_t);
+            };
+        }
+        return exEase.GetEaseFunc(curveType);
+    }
+}
+
+// Scale
+[System.Serializable]
+public class EffectInfo_Scale : EffectInfo_Base {
+    [System.Serializable]
+    public class PropInfo {
+        public EffectEventType type;
+        public Vector3 val;
+    }
+
+    public Transform target = null; 
+    public Vector3 normal = Vector3.one;
+    public List<PropInfo> propInfos = new List<PropInfo>();
+
+    public Vector3 GetValue ( EffectEventType _type ) {
+        for ( int i = 0; i < propInfos.Count; ++i ) {
+            PropInfo propInfo = propInfos[i];
+            if ( propInfo.type == _type )
+                return propInfo.val;
+        }
+        return normal;
+    }
+}
+
+// Color
+[System.Serializable]
+public class EffectInfo_Color : EffectInfo_Base {
+    [System.Serializable]
+    public class PropInfo {
+        public EffectEventType type;
+        public Color val;
+    }
+
+    public exSpriteBase target = null; 
+    public Color normal = Color.white;
+    public List<PropInfo> propInfos = new List<PropInfo>();
+
+    public Color GetValue ( EffectEventType _type ) {
+        for ( int i = 0; i < propInfos.Count; ++i ) {
+            PropInfo propInfo = propInfos[i];
+            if ( propInfo.type == _type )
+                return propInfo.val;
+        }
+        return normal;
+    }
+}
+
+// Offset
+[System.Serializable]
+public class EffectInfo_Offset : EffectInfo_Base {
+    [System.Serializable]
+    public class PropInfo {
+        public EffectEventType type;
+        public Vector2 val;
+    }
+
+    public exSpriteBase target = null; 
+    public Vector2 normal = Vector2.one;
+    public List<PropInfo> propInfos = new List<PropInfo>();
+
+    public Vector2 GetValue ( EffectEventType _type ) {
+        for ( int i = 0; i < propInfos.Count; ++i ) {
+            PropInfo propInfo = propInfos[i];
+            if ( propInfo.type == _type )
+                return propInfo.val;
+        }
+        return normal;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // EffectState
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -23,7 +124,7 @@ public class EffectState_Base {
     protected bool start;
 
     public virtual bool Tick ( float _delta ) {
-        return false;
+        return true;
     }
 }
 
@@ -56,7 +157,7 @@ public class EffectState_Scale : EffectState_Base {
             info.target.localScale = result;
         }
 
-        return start;
+        return !start;
     }
 }
 
@@ -89,7 +190,7 @@ public class EffectState_Offset : EffectState_Base {
             info.target.offset = result;
         }
 
-        return start;
+        return !start;
     }
 }
 
@@ -122,80 +223,8 @@ public class EffectState_Color : EffectState_Base {
             info.target.color = result;
         }
 
-        return start;
+        return !start;
     }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// EffectInfo
-///////////////////////////////////////////////////////////////////////////////
-
-[System.Serializable]
-public class EffectInfo_Base {
-    public float duration = 1.0f;
-    public exEase.Type curveType = exEase.Type.Linear;
-    public bool customCurve = false; 
-    public AnimationCurve curve;
-
-    public System.Func<float,float> GetCurveFunction () {
-        if ( customCurve ) {
-            return delegate ( float _t ) {
-                return curve.Evaluate(_t);
-            };
-        }
-        return exEase.GetEaseFunc(curveType);
-    }
-}
-
-// Scale
-[System.Serializable]
-public class EffectInfo_Scale : EffectInfo_Base {
-    public Transform target = null; 
-
-    public bool hasDeactive = false;
-    public Vector3 deactive = Vector3.one;
-
-    public bool hasPress = false;
-    public Vector3 press = Vector3.one;
-
-    public bool hasHover = false;
-    public Vector3 hover = Vector3.one;
-
-    [System.NonSerialized] public Vector3 normal;
-}
-
-// Color
-[System.Serializable]
-public class EffectInfo_Color : EffectInfo_Base {
-    public exSpriteBase target = null; 
-
-    public bool hasDeactive = false;
-    public Color deactive = Color.white;
-
-    public bool hasPress = false;
-    public Color press = Color.white;
-
-    public bool hasHover = false;
-    public Color hover = Color.white;
-
-    [System.NonSerialized] public Color normal;
-}
-
-// Offset
-[System.Serializable]
-public class EffectInfo_Offset : EffectInfo_Base {
-    public exSpriteBase target = null; 
-
-    public bool hasDeactive = false;
-    public Vector2 deactive = Vector2.one;
-
-    public bool hasPress = false;
-    public Vector2 press = Vector2.one;
-
-    public bool hasHover = false;
-    public Vector2 hover = Vector2.one;
-
-    [System.NonSerialized] public Vector2 normal;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -230,7 +259,6 @@ public class exUIEffect : MonoBehaviour {
             if ( scaleInfos != null ) {
                 for ( int j = 0; j < scaleInfos.Count; ++j ) {
                     EffectInfo_Scale info = scaleInfos[j];
-                    info.normal = info.target.localScale;
 
                     EffectState_Scale state = new EffectState_Scale();
                     state.info = info;
@@ -242,7 +270,6 @@ public class exUIEffect : MonoBehaviour {
             if ( offsetInfos != null ) {
                 for ( int j = 0; j < offsetInfos.Count; ++j ) {
                     EffectInfo_Offset info = offsetInfos[j];
-                    info.normal = info.target.offset;
 
                     EffectState_Offset state = new EffectState_Offset();
                     state.info = info;
@@ -254,7 +281,6 @@ public class exUIEffect : MonoBehaviour {
             if ( colorInfos != null ) {
                 for ( int j = 0; j < colorInfos.Count; ++j ) {
                     EffectInfo_Color info = colorInfos[j];
-                    info.normal = info.target.color;
 
                     EffectState_Color state = new EffectState_Color();
                     state.info = info;
@@ -270,11 +296,11 @@ public class exUIEffect : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void Update () {
-        bool allFinished = false;
+        bool allFinished = true;
         for ( int i = 0; i < states.Count; ++i ) {
             bool finished = states[i].Tick( Time.deltaTime );
             if ( finished == false )
-                allFinished = true;
+                allFinished = false;
         }
         if ( allFinished )
             enabled = false;
@@ -284,47 +310,132 @@ public class exUIEffect : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void AddState_Scale ( exUIControl _ctrl, EffectState_Scale _state ) {
-        if ( _state.info.hasDeactive ) {
-            _ctrl.onDeactive += delegate ( exUIControl _sender ) {
-                enabled = true;
-                _state.Begin( _state.info.deactive );
-            };
-            _ctrl.onActive += delegate ( exUIControl _sender ) {
-                enabled = true;
-                _state.Begin( _state.info.normal );
-            };
-        }
-        else {
-            _state.info.deactive = _state.info.normal;
-        }
+    public void AddEffect_Scale ( Transform _target, EffectEventType _type, exEase.Type _curveType, Vector3 _to, float _duration ) {
+        exUIControl ctrl = GetComponent<exUIControl>();
+        if ( ctrl ) {
+            EffectInfo_Scale info = new EffectInfo_Scale();
+            info.duration = _duration;
+            info.target = _target;
+            info.normal = _target.localScale;
+            info.curveType = _curveType;
 
-        if ( _state.info.hasPress ) {
-            _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
-                enabled = true;
-                _state.Begin( _state.info.press );
-            };
-            _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
-                enabled = true;
-                _state.Begin( _state.info.hover );
-            };
-        }
-        else {
-            _state.info.press = _state.info.normal;
-        }
+            EffectInfo_Scale.PropInfo propInfo = new EffectInfo_Scale.PropInfo();
+            propInfo.type = _type;
+            propInfo.val = _to;
+            info.propInfos.Add(propInfo);
 
-        if ( _state.info.hasHover ) {
-            _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
-                enabled = true;
-                _state.Begin( _state.info.hover );
-            };
-            _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
-                enabled = true;
-                _state.Begin( _state.info.normal );
-            };
+            EffectState_Scale state = new EffectState_Scale();
+            state.info = info;
+            state.func = info.GetCurveFunction();
+            AddState_Scale( ctrl, state );
         }
-        else {
-            _state.info.hover = _state.info.normal;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void AddEffect_Color ( exSpriteBase _target, EffectEventType _type, exEase.Type _curveType, Color _to, float _duration ) {
+        exUIControl ctrl = GetComponent<exUIControl>();
+        if ( ctrl ) {
+            EffectInfo_Color info = new EffectInfo_Color();
+            info.duration = _duration;
+            info.target = _target;
+            info.normal = _target.color;
+            info.curveType = _curveType;
+
+            EffectInfo_Color.PropInfo propInfo = new EffectInfo_Color.PropInfo();
+            propInfo.type = _type;
+            propInfo.val = _to;
+            info.propInfos.Add(propInfo);
+
+            EffectState_Color state = new EffectState_Color();
+            state.info = info;
+            state.func = info.GetCurveFunction();
+            AddState_Color( ctrl, state );
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void AddEffect_Offset ( exSpriteBase _target, EffectEventType _type, exEase.Type _curveType, Vector2 _to, float _duration ) {
+        exUIControl ctrl = GetComponent<exUIControl>();
+        if ( ctrl ) {
+            EffectInfo_Offset info = new EffectInfo_Offset();
+            info.duration = _duration;
+            info.target = _target;
+            info.normal = _target.offset;
+            info.curveType = _curveType;
+
+            EffectInfo_Offset.PropInfo propInfo = new EffectInfo_Offset.PropInfo();
+            propInfo.type = _type;
+            propInfo.val = _to;
+            info.propInfos.Add(propInfo);
+
+            EffectState_Offset state = new EffectState_Offset();
+            state.info = info;
+            state.func = info.GetCurveFunction();
+            AddState_Offset( ctrl, state );
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void AddState_Scale ( exUIControl _ctrl, EffectState_Scale _state ) {
+        for ( int i = 0; i < _state.info.propInfos.Count; ++i ) {
+            EffectInfo_Scale.PropInfo propInfo = _state.info.propInfos[i];
+            switch ( propInfo.type ) {
+            case EffectEventType.Deactive:
+                _ctrl.onDeactive += delegate ( exUIControl _sender ) {
+                    enabled = true;
+                    _state.Begin( propInfo.val );
+                };
+                _ctrl.onActive += delegate ( exUIControl _sender ) {
+                    enabled = true;
+                    _state.Begin( _state.info.normal );
+                };
+                break;
+
+            case EffectEventType.Press:
+                _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    enabled = true;
+                    _state.Begin( propInfo.val );
+                };
+                _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    enabled = true;
+                    _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                };
+                break;
+
+            case EffectEventType.Hover:
+                _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    enabled = true;
+                    _state.Begin( propInfo.val );
+                };
+                _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    enabled = true;
+                    _state.Begin( _state.info.normal );
+                };
+                break;
+
+            case EffectEventType.Unchecked:
+                exUIToggle toggle = _ctrl as exUIToggle;
+                if ( toggle != null ) {
+                    toggle.onUnchecked += delegate ( exUIControl _sender ) {
+                        enabled = true;
+                        _state.Begin( propInfo.val );
+                    };
+                    toggle.onChecked += delegate ( exUIControl _sender ) {
+                        enabled = true;
+                        _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                    };
+                }
+                break;
+            }
         }
 
         states.Add(_state);
@@ -334,47 +445,57 @@ public class exUIEffect : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void AddState_Offset ( exUIControl _ctrl, EffectState_Offset _state ) {
-        if ( _state.info.hasDeactive ) {
-            _ctrl.onDeactive += delegate ( exUIControl _sender ) {
-                enabled = true;
-                _state.Begin( _state.info.deactive );
-            };
-            _ctrl.onActive += delegate ( exUIControl _sender ) {
-                enabled = true;
-                _state.Begin( _state.info.normal );
-            };
-        }
-        else {
-            _state.info.deactive = _state.info.normal;
-        }
+    void AddState_Offset ( exUIControl _ctrl, EffectState_Offset _state ) {
+        for ( int i = 0; i < _state.info.propInfos.Count; ++i ) {
+            EffectInfo_Offset.PropInfo propInfo = _state.info.propInfos[i];
+            switch ( propInfo.type ) {
+            case EffectEventType.Deactive:
+                _ctrl.onDeactive += delegate ( exUIControl _sender ) {
+                    enabled = true;
+                    _state.Begin( propInfo.val );
+                };
+                _ctrl.onActive += delegate ( exUIControl _sender ) {
+                    enabled = true;
+                    _state.Begin( _state.info.normal );
+                };
+                break;
 
-        if ( _state.info.hasPress ) {
-            _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
-                enabled = true;
-                _state.Begin( _state.info.press );
-            };
-            _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
-                enabled = true;
-                _state.Begin( _state.info.hover );
-            };
-        }
-        else {
-            _state.info.press = _state.info.normal;
-        }
+            case EffectEventType.Press:
+                _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    enabled = true;
+                    _state.Begin( propInfo.val );
+                };
+                _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    enabled = true;
+                    _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                };
+                break;
 
-        if ( _state.info.hasHover ) {
-            _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
-                enabled = true;
-                _state.Begin( _state.info.hover );
-            };
-            _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
-                enabled = true;
-                _state.Begin( _state.info.normal );
-            };
-        }
-        else {
-            _state.info.hover = _state.info.normal;
+            case EffectEventType.Hover:
+                _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    enabled = true;
+                    _state.Begin( propInfo.val );
+                };
+                _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    enabled = true;
+                    _state.Begin( _state.info.normal );
+                };
+                break;
+
+            case EffectEventType.Unchecked:
+                exUIToggle toggle = _ctrl as exUIToggle;
+                if ( toggle != null ) {
+                    toggle.onUnchecked += delegate ( exUIControl _sender ) {
+                        enabled = true;
+                        _state.Begin( propInfo.val );
+                    };
+                    toggle.onChecked += delegate ( exUIControl _sender ) {
+                        enabled = true;
+                        _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                    };
+                }
+                break;
+            }
         }
 
         states.Add(_state);
@@ -384,47 +505,57 @@ public class exUIEffect : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void AddState_Color ( exUIControl _ctrl, EffectState_Color _state ) {
-        if ( _state.info.hasDeactive ) {
-            _ctrl.onDeactive += delegate ( exUIControl _sender ) {
-                enabled = true;
-                _state.Begin( _state.info.deactive );
-            };
-            _ctrl.onActive += delegate ( exUIControl _sender ) {
-                enabled = true;
-                _state.Begin( _state.info.normal );
-            };
-        }
-        else {
-            _state.info.deactive = _state.info.normal;
-        }
+    void AddState_Color ( exUIControl _ctrl, EffectState_Color _state ) {
+        for ( int i = 0; i < _state.info.propInfos.Count; ++i ) {
+            EffectInfo_Color.PropInfo propInfo = _state.info.propInfos[i];
+            switch ( propInfo.type ) {
+            case EffectEventType.Deactive:
+                _ctrl.onDeactive += delegate ( exUIControl _sender ) {
+                    enabled = true;
+                    _state.Begin( propInfo.val );
+                };
+                _ctrl.onActive += delegate ( exUIControl _sender ) {
+                    enabled = true;
+                    _state.Begin( _state.info.normal );
+                };
+                break;
 
-        if ( _state.info.hasPress ) {
-            _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
-                enabled = true;
-                _state.Begin( _state.info.press );
-            };
-            _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
-                enabled = true;
-                _state.Begin( _state.info.hover );
-            };
-        }
-        else {
-            _state.info.press = _state.info.normal;
-        }
+            case EffectEventType.Press:
+                _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    enabled = true;
+                    _state.Begin( propInfo.val );
+                };
+                _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    enabled = true;
+                    _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                };
+                break;
 
-        if ( _state.info.hasHover ) {
-            _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
-                enabled = true;
-                _state.Begin( _state.info.hover );
-            };
-            _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
-                enabled = true;
-                _state.Begin( _state.info.normal );
-            };
-        }
-        else {
-            _state.info.hover = _state.info.normal;
+            case EffectEventType.Hover:
+                _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    enabled = true;
+                    _state.Begin( propInfo.val );
+                };
+                _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    enabled = true;
+                    _state.Begin( _state.info.normal );
+                };
+                break;
+
+            case EffectEventType.Unchecked:
+                exUIToggle toggle = _ctrl as exUIToggle;
+                if ( toggle != null ) {
+                    toggle.onUnchecked += delegate ( exUIControl _sender ) {
+                        enabled = true;
+                        _state.Begin( propInfo.val );
+                    };
+                    toggle.onChecked += delegate ( exUIControl _sender ) {
+                        enabled = true;
+                        _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                    };
+                }
+                break;
+            }
         }
 
         states.Add(_state);
