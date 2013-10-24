@@ -29,6 +29,7 @@ public class exUIScrollBar : exUIControl {
 
 	public Direction direction = Direction.Vertical;
     public exUIScrollView scrollView = null;
+    public float cooldown = 0.5f;
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -43,6 +44,8 @@ public class exUIScrollBar : exUIControl {
 
     protected bool dragging = false;
     protected int draggingID = -1;
+    protected float cooldownTimer = 0.0f;
+    protected bool isCoolingDown = false;
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -133,9 +136,94 @@ public class exUIScrollBar : exUIControl {
                     scrollOffset = _offset.y * ratio;
                 }
                 UpdateScrollBar ();
+
+                //
+                if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
+                    activeSelf = true;
+                }
+            };
+            scrollView.onScrollFinished += delegate ( exUIControl _sender ) {
+                //
+                if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
+                    cooldownTimer = cooldown;
+                    isCoolingDown = true;
+                }
             };
             UpdateScrollBarRatio ();
             UpdateScrollBar ();
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void Start () {
+        if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
+            // 
+            exUIEffect effect = GetComponent<exUIEffect>();
+            if ( effect == null ) {
+                effect = gameObject.AddComponent<exUIEffect>();
+
+                if ( background != null ) {
+                    EffectInfo_Color colorInfo = new EffectInfo_Color();
+                    colorInfo.duration = 0.5f;
+                    colorInfo.target = background;
+                    colorInfo.normal = background.color;
+                    colorInfo.hasDeactive = true;
+                    colorInfo.deactive = new Color( background.color.r, background.color.g, background.color.b, 0.0f ) ;
+
+                    EffectState_Color colorState = new EffectState_Color();
+                    colorState.info = colorInfo;
+                    colorState.func = colorInfo.GetCurveFunction();
+                    effect.AddState_Color( this, colorState );
+                }
+
+                if ( bar != null ) {
+                    EffectInfo_Color colorInfo = new EffectInfo_Color();
+                    colorInfo.duration = 0.5f;
+                    colorInfo.target = bar;
+                    colorInfo.normal = bar.color;
+                    colorInfo.hasDeactive = true;
+                    colorInfo.deactive = new Color( bar.color.r, bar.color.g, bar.color.b, 0.0f ) ;
+
+                    EffectState_Color colorState = new EffectState_Color();
+                    colorState.info = colorInfo;
+                    colorState.func = colorInfo.GetCurveFunction();
+                    effect.AddState_Color( this, colorState );
+                }
+            }
+
+            //
+            if ( background ) {
+                Color tmpColor = background.color;
+                tmpColor.a = 0.0f;
+                background.color = tmpColor;
+            }
+
+            //
+            if ( bar ) {
+                Color tmpColor = bar.color;
+                tmpColor.a = 0.0f;
+                bar.color = tmpColor;
+            }
+
+            //
+            active_ = false;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void Update () {
+        if ( isCoolingDown ) {
+            cooldownTimer -= Time.deltaTime;
+            if ( cooldownTimer <= 0.0f ) {
+                isCoolingDown = false;
+                activeSelf = false;
+            }
         }
     }
 

@@ -28,11 +28,11 @@ public class exUIScrollView : exUIControl {
 		MomentumAndSpring,
 	}
 
-    // public enum ShowCondition {
-    //     Always,
-    //     OnlyIfNeeded,
-    //     WhenDragging,
-    // }
+    public enum ShowCondition {
+        Always,
+        OnlyIfNeeded,
+        WhenDragging,
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -67,11 +67,13 @@ public class exUIScrollView : exUIControl {
     // event-defs
     public static new EventDef[] eventDefs = new EventDef[] {
         new EventDef ( "onScroll",           new Type[] { typeof(exUIControl), typeof(Vector2) }, typeof(Action<exUIControl,Vector2>) ),
+        new EventDef ( "onScrollFinished",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
         new EventDef ( "onContentResized",   new Type[] { typeof(exUIControl), typeof(Vector2) }, typeof(Action<exUIControl,Vector2>) ),
     };
 
     // events
     public event System.Action<exUIControl,Vector2> onScroll;
+    public event System.Action<exUIControl> onScrollFinished;
     public event System.Action<exUIControl,Vector2> onContentResized;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -93,6 +95,7 @@ public class exUIScrollView : exUIControl {
 
     public bool draggable = true; // can use left-mouse or touch drag to scroll the view
     public DragEffect dragEffect = DragEffect.MomentumAndSpring;
+    public ShowCondition showCondition = ShowCondition.Always;
     public bool allowHorizontalScroll = true;
     public bool allowVerticalScroll = true;
     public Transform contentAnchor = null;
@@ -244,7 +247,7 @@ public class exUIScrollView : exUIControl {
             }
 
             //
-            if ( velocity.sqrMagnitude < 0.001f ) {
+            if ( velocity.sqrMagnitude < 1.0f ) {
                 damping = false;
                 velocity = Vector2.zero;
             }
@@ -271,6 +274,12 @@ public class exUIScrollView : exUIControl {
         //
         if ( doScroll ) {
             Scroll ( deltaScroll );
+
+            bool shouldFinish = (damping || spring); 
+            if ( shouldFinish ) {
+                if ( onScrollFinished != null ) 
+                    onScrollFinished(this);
+            }
         }
     }
 
@@ -299,6 +308,9 @@ public class exUIScrollView : exUIControl {
         else {
             velocity = Vector2.zero;
             damping = false;
+
+            if ( onScrollFinished != null ) 
+                onScrollFinished(this);
         }
     }
 

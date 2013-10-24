@@ -26,6 +26,7 @@ class exUIScrollBarInspector : exUIControlInspector {
 
     protected SerializedProperty directionProp;
     protected SerializedProperty scrollViewProp;
+    protected SerializedProperty cooldownProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -36,6 +37,7 @@ class exUIScrollBarInspector : exUIControlInspector {
 
         directionProp = serializedObject.FindProperty("direction");
         scrollViewProp = serializedObject.FindProperty("scrollView");
+        cooldownProp = serializedObject.FindProperty("cooldown");
     }
 
     // ------------------------------------------------------------------ 
@@ -47,6 +49,7 @@ class exUIScrollBarInspector : exUIControlInspector {
 
         EditorGUILayout.PropertyField ( directionProp );
         EditorGUILayout.PropertyField ( scrollViewProp );
+        EditorGUILayout.PropertyField ( cooldownProp );
 
         //
         if ( serializedObject.isEditingMultipleObjects == false ) {

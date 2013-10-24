@@ -22,7 +22,8 @@ public class EffectState_Base {
     protected float timer;
     protected bool start;
 
-    public virtual void Tick ( float _delta ) {
+    public virtual bool Tick ( float _delta ) {
+        return false;
     }
 }
 
@@ -40,7 +41,7 @@ public class EffectState_Scale : EffectState_Base {
         to = _to;
     }
 
-    public override void Tick ( float _delta ) {
+    public override bool Tick ( float _delta ) {
         if ( start ) {
             timer += _delta;
 
@@ -54,6 +55,8 @@ public class EffectState_Scale : EffectState_Base {
 
             info.target.localScale = result;
         }
+
+        return start;
     }
 }
 
@@ -61,8 +64,8 @@ public class EffectState_Scale : EffectState_Base {
 public class EffectState_Offset : EffectState_Base {
     public EffectInfo_Offset info;
 
-    public Vector2 from;
-    public Vector2 to;
+    Vector2 from;
+    Vector2 to;
 
     public void Begin ( Vector2 _to ) {
         timer = 0.0f;
@@ -71,7 +74,7 @@ public class EffectState_Offset : EffectState_Base {
         to = _to;
     }
 
-    public override void Tick ( float _delta ) {
+    public override bool Tick ( float _delta ) {
         if ( start ) {
             timer += _delta;
 
@@ -85,6 +88,8 @@ public class EffectState_Offset : EffectState_Base {
 
             info.target.offset = result;
         }
+
+        return start;
     }
 }
 
@@ -92,8 +97,8 @@ public class EffectState_Offset : EffectState_Base {
 public class EffectState_Color : EffectState_Base {
     public EffectInfo_Color info;
 
-    public Color from;
-    public Color to;
+    Color from;
+    Color to;
 
     public void Begin ( Color _to ) {
         timer = 0.0f;
@@ -102,7 +107,7 @@ public class EffectState_Color : EffectState_Base {
         to = _to;
     }
 
-    public override void Tick ( float _delta ) {
+    public override bool Tick ( float _delta ) {
         if ( start ) {
             timer += _delta;
 
@@ -116,6 +121,8 @@ public class EffectState_Color : EffectState_Base {
 
             info.target.color = result;
         }
+
+        return start;
     }
 }
 
@@ -263,21 +270,28 @@ public class exUIEffect : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void Update () {
+        bool allFinished = false;
         for ( int i = 0; i < states.Count; ++i ) {
-            states[i].Tick( Time.deltaTime );
+            bool finished = states[i].Tick( Time.deltaTime );
+            if ( finished == false )
+                allFinished = true;
         }
+        if ( allFinished )
+            enabled = false;
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void AddState_Scale ( exUIControl _ctrl, EffectState_Scale _state ) {
+    public void AddState_Scale ( exUIControl _ctrl, EffectState_Scale _state ) {
         if ( _state.info.hasDeactive ) {
             _ctrl.onDeactive += delegate ( exUIControl _sender ) {
+                enabled = true;
                 _state.Begin( _state.info.deactive );
             };
             _ctrl.onActive += delegate ( exUIControl _sender ) {
+                enabled = true;
                 _state.Begin( _state.info.normal );
             };
         }
@@ -287,9 +301,11 @@ public class exUIEffect : MonoBehaviour {
 
         if ( _state.info.hasPress ) {
             _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
+                enabled = true;
                 _state.Begin( _state.info.press );
             };
             _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
+                enabled = true;
                 _state.Begin( _state.info.hover );
             };
         }
@@ -299,9 +315,11 @@ public class exUIEffect : MonoBehaviour {
 
         if ( _state.info.hasHover ) {
             _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
+                enabled = true;
                 _state.Begin( _state.info.hover );
             };
             _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
+                enabled = true;
                 _state.Begin( _state.info.normal );
             };
         }
@@ -316,12 +334,14 @@ public class exUIEffect : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void AddState_Offset ( exUIControl _ctrl, EffectState_Offset _state ) {
+    public void AddState_Offset ( exUIControl _ctrl, EffectState_Offset _state ) {
         if ( _state.info.hasDeactive ) {
             _ctrl.onDeactive += delegate ( exUIControl _sender ) {
+                enabled = true;
                 _state.Begin( _state.info.deactive );
             };
             _ctrl.onActive += delegate ( exUIControl _sender ) {
+                enabled = true;
                 _state.Begin( _state.info.normal );
             };
         }
@@ -331,9 +351,11 @@ public class exUIEffect : MonoBehaviour {
 
         if ( _state.info.hasPress ) {
             _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
+                enabled = true;
                 _state.Begin( _state.info.press );
             };
             _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
+                enabled = true;
                 _state.Begin( _state.info.hover );
             };
         }
@@ -343,9 +365,11 @@ public class exUIEffect : MonoBehaviour {
 
         if ( _state.info.hasHover ) {
             _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
+                enabled = true;
                 _state.Begin( _state.info.hover );
             };
             _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
+                enabled = true;
                 _state.Begin( _state.info.normal );
             };
         }
@@ -360,12 +384,14 @@ public class exUIEffect : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void AddState_Color ( exUIControl _ctrl, EffectState_Color _state ) {
+    public void AddState_Color ( exUIControl _ctrl, EffectState_Color _state ) {
         if ( _state.info.hasDeactive ) {
             _ctrl.onDeactive += delegate ( exUIControl _sender ) {
+                enabled = true;
                 _state.Begin( _state.info.deactive );
             };
             _ctrl.onActive += delegate ( exUIControl _sender ) {
+                enabled = true;
                 _state.Begin( _state.info.normal );
             };
         }
@@ -375,9 +401,11 @@ public class exUIEffect : MonoBehaviour {
 
         if ( _state.info.hasPress ) {
             _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
+                enabled = true;
                 _state.Begin( _state.info.press );
             };
             _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
+                enabled = true;
                 _state.Begin( _state.info.hover );
             };
         }
@@ -387,9 +415,11 @@ public class exUIEffect : MonoBehaviour {
 
         if ( _state.info.hasHover ) {
             _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
+                enabled = true;
                 _state.Begin( _state.info.hover );
             };
             _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
+                enabled = true;
                 _state.Begin( _state.info.normal );
             };
         }

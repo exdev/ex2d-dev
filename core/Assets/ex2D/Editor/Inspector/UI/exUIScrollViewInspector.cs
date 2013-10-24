@@ -26,6 +26,7 @@ class exUIScrollViewInspector : exUIControlInspector {
 
     protected SerializedProperty draggableProp;
     protected SerializedProperty dragEffectProp;
+    protected SerializedProperty showConditionProp;
     protected SerializedProperty contentAnchorProp;
     protected SerializedProperty contentSizeProp;
     protected SerializedProperty allowHorizontalScrollProp;
@@ -41,6 +42,7 @@ class exUIScrollViewInspector : exUIControlInspector {
 
         draggableProp = serializedObject.FindProperty("draggable");
         dragEffectProp = serializedObject.FindProperty("dragEffect");
+        showConditionProp = serializedObject.FindProperty("showCondition");
         contentAnchorProp = serializedObject.FindProperty("contentAnchor");
         contentSizeProp = serializedObject.FindProperty("contentSize_");
         allowHorizontalScrollProp = serializedObject.FindProperty("allowHorizontalScroll");
@@ -57,6 +59,7 @@ class exUIScrollViewInspector : exUIControlInspector {
 
         EditorGUILayout.PropertyField ( draggableProp );
         EditorGUILayout.PropertyField ( dragEffectProp );
+        EditorGUILayout.PropertyField ( showConditionProp );
         EditorGUILayout.PropertyField ( contentAnchorProp );
         EditorGUILayout.PropertyField ( contentSizeProp, new GUIContent("Content Size") );
         EditorGUILayout.PropertyField ( allowHorizontalScrollProp );
