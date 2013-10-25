@@ -25,6 +25,7 @@ using System.Reflection;
 class exUIToggleInspector : exUIControlInspector {
 
     protected SerializedProperty isCheckedProp;
+    protected SerializedProperty isRadioProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -34,6 +35,7 @@ class exUIToggleInspector : exUIControlInspector {
         base.InitProperties();
 
         isCheckedProp = serializedObject.FindProperty("isChecked_");
+        isRadioProp = serializedObject.FindProperty("isRadio");
     }
 
     // ------------------------------------------------------------------ 
@@ -44,6 +46,7 @@ class exUIToggleInspector : exUIControlInspector {
         base.DoInspectorGUI();
 
         EditorGUILayout.PropertyField ( isCheckedProp, new GUIContent("Is Checked") );
+        EditorGUILayout.PropertyField ( isRadioProp );
 
         EditorGUILayout.Space();
     }

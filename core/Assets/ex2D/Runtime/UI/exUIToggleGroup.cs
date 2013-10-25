@@ -110,6 +110,7 @@ public class exUIToggleGroup : exUIToggle {
         // make sure active is correct for those button
         for ( int i = 0; i < toggles.Count; ++i ) {
             exUIToggle toggle = toggles[i];
+            toggle.isRadio = true;
             if ( i == index_ ) {
                 toggle.Internal_SetChecked(true);
             }

@@ -82,6 +82,8 @@ public class exUIToggle : exUIButton {
         }
     }
 
+    public bool isRadio = false;
+
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
@@ -94,7 +96,12 @@ public class exUIToggle : exUIButton {
         base.Awake();
 
         onClick += delegate ( exUIControl _sender ) {
-            isChecked = !isChecked;
+            if ( isRadio ) {
+                isChecked = true;
+            }
+            else {
+                isChecked = !isChecked;
+            }
         };
     }
 
