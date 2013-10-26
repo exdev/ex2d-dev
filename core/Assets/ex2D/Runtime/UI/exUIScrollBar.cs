@@ -63,6 +63,7 @@ public class exUIScrollBar : exUIControl {
         if ( transBar ) {
             bar = transBar.GetComponent<exSprite>();
             if ( bar ) {
+                bar.customSize = true;
                 bar.anchor = Anchor.TopLeft;
             }
 
