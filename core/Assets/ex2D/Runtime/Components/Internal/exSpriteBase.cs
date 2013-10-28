@@ -100,6 +100,12 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
         get {
             return clip_;
         }
+        set {
+            if (clip_ != value) {
+                clip_ = value;
+                UpdateMaterial();
+            }
+        }
     }
     
     [System.NonSerialized] internal Matrix4x4 cachedWorldMatrix;    // 内部使用，只有exLayeredSprite的值才可读
@@ -278,11 +284,9 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
         }
         if (_clip != null) {
             _clip.Add(this);
-            UpdateMaterial();
         }
         else if (clip_ != null) {
             clip_.Remove(this);
-            UpdateMaterial();
         }
     }
 

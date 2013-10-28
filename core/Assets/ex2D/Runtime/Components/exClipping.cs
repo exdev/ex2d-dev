@@ -55,7 +55,7 @@ public class exClipping : exPlane {
         }
         exSpriteBase[] spritesToAdd = _sprite.GetComponentsInChildren<exSpriteBase> (true);
         for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
-            spritesToAdd [spriteIndex].SetClip(this);
+            spritesToAdd [spriteIndex].clip = this;
         }
         if (_sprite.transform.IsChildOf (transform) == false) {
             _sprite.transform.parent = transform;
@@ -69,7 +69,7 @@ public class exClipping : exPlane {
     public void Add (GameObject _gameObject) {
         exSpriteBase[] spritesToAdd = _gameObject.GetComponentsInChildren<exSpriteBase> (true);
         for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
-            spritesToAdd [spriteIndex].SetClip(this);
+            spritesToAdd [spriteIndex].clip = this;
         }
         if (_gameObject.transform.IsChildOf (transform) == false) {
             _gameObject.transform.parent = transform;
@@ -91,10 +91,10 @@ public class exClipping : exPlane {
     public void Remove (GameObject _gameObject) {
         exSpriteBase[] spritesToRemove = _gameObject.GetComponentsInChildren<exSpriteBase> (true);
         for (int i = 0; i < spritesToRemove.Length; ++i) {
-            Remove (spritesToRemove [i]);
+            spritesToRemove[i].clip = null;
         }
     }
-    
+
     // ------------------------------------------------------------------ 
     /// Return shared material matchs given shader and texture for the clipping
     // ------------------------------------------------------------------ 
