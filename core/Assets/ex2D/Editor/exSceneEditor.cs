@@ -682,7 +682,7 @@ class exSceneEditor : EditorWindow {
                     else if ( o is Font ) {
                         newGO = new GameObject(o.name);
                         exSpriteFont spriteFont = newGO.AddComponent<exSpriteFont>();
-                        spriteFont.shader = Shader.Find("ex2D/Alpha Blended (Use Vertex Color) ");
+                        spriteFont.shader = Shader.Find("ex2D/Alpha Blended (Use Vertex Color)");
                         spriteFont.SetFont(o as Font);
                     }
                     else if ( o is exSpriteAnimationClip ) {
