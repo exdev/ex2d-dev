@@ -97,8 +97,8 @@ public static class exBitmapFontUtility {
                     Debug.LogError("Parse Failed: The texture " + filename + " not found.");
                     return false;
                 }
-                if ( exEditorUtility.IsValidForAtlas(texture) == false ) {
-                    exEditorUtility.ImportTextureForAtlas(texture);
+                if ( exEditorUtility.IsValidForBitmapFont(texture) == false ) {
+                    exEditorUtility.ImportTextureForBitmapFont(texture);
                 }
                 textureHeight = texture.height;
 

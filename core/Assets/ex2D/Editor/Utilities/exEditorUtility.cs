@@ -1168,4 +1168,35 @@ public static class exEditorUtility {
         importer.mipmapEnabled = false;
         AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
     }
+
+    // ------------------------------------------------------------------ 
+    /// \param _tex
+    /// \return is valid or not
+    /// check if the texture settings is valid for atlas build
+    // ------------------------------------------------------------------ 
+
+    public static bool IsValidForBitmapFont ( Texture2D _tex ) {
+        string path = AssetDatabase.GetAssetPath(_tex);
+        TextureImporter importer = TextureImporter.GetAtPath(path) as TextureImporter;
+        if ( importer.npotScale != TextureImporterNPOTScale.None ||
+             importer.mipmapEnabled != false )
+        {
+            return false;
+        }
+        return true;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// \param _tex
+    /// change the import texture settings to make it fit for atlas 
+    // ------------------------------------------------------------------ 
+
+    public static void ImportTextureForBitmapFont ( Texture2D _tex ) {
+        string path = AssetDatabase.GetAssetPath(_tex);
+        TextureImporter importer = TextureImporter.GetAtPath(path) as TextureImporter;
+
+        importer.npotScale = TextureImporterNPOTScale.None;
+        importer.mipmapEnabled = false;
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+    }
 }
