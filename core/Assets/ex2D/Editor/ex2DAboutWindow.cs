@@ -1,7 +1,7 @@
 // ======================================================================================
 // File         : ex2DAboutWindow.cs
 // Author       : Wu Jie 
-// Last Change  : 10/17/2013 | 09:50:58 AM | Thursday,October
+// Last Change  : 10/28/2013 | 15:30:28 PM | Monday,October
 // Description  : 
 // ======================================================================================
 
@@ -36,9 +36,9 @@ class ex2DAboutWindow : ScriptableWizard {
         //
         EditorGUILayout.Space ();
         GUILayout.Label("Build:");
-        string version = "v2.0.1 (beta 5)";
-        string date = "10/17/2013";
-        string commit = "44fcef432c158c6adaba88e4408bc4b0586f0ec9";
+        string version = "v2.0.1 (beta 6)";
+        string date = "10/28/2013";
+        string commit = "2b16faec7ceba3b5780363bf76267eab41af474a";
         string text = version 
             + '\n' + date 
             + '\n' + commit;
