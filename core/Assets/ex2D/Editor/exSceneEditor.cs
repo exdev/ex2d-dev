@@ -676,23 +676,20 @@ class exSceneEditor : EditorWindow {
                     else if ( o is exBitmapFont ) {
                         newGO = new GameObject(o.name);
                         exSpriteFont spriteFont = newGO.AddComponent<exSpriteFont>();
-                        if ( spriteFont.shader == null )
-                            spriteFont.shader = Shader.Find("ex2D/Alpha Blended");
+                        spriteFont.shader = Shader.Find("ex2D/Alpha Blended");
                         spriteFont.SetFont(o as exBitmapFont);
                     }
                     else if ( o is Font ) {
                         newGO = new GameObject(o.name);
                         exSpriteFont spriteFont = newGO.AddComponent<exSpriteFont>();
-                        if ( spriteFont.shader == null )
-                            spriteFont.shader = Shader.Find("ex2D/Alpha Blended (Use Vertex Color) ");
+                        spriteFont.shader = Shader.Find("ex2D/Alpha Blended (Use Vertex Color) ");
                         spriteFont.SetFont(o as Font);
                     }
                     else if ( o is exSpriteAnimationClip ) {
                         exSpriteAnimationClip clip = o as exSpriteAnimationClip;
                         newGO = new GameObject(o.name);
                         exSprite sprite = newGO.AddComponent<exSprite>();
-                        if ( sprite.shader == null )
-                            sprite.shader = Shader.Find("ex2D/Alpha Blended");
+                        sprite.shader = Shader.Find("ex2D/Alpha Blended");
                         exSpriteAnimation spriteAnim = newGO.AddComponent<exSpriteAnimation>();
                         spriteAnim.defaultAnimation = clip;
                         spriteAnim.animations.Add(clip);
