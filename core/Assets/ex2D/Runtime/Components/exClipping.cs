@@ -99,7 +99,7 @@ public class exClipping : exPlane {
     /// Return shared material matchs given shader and texture for the clipping
     // ------------------------------------------------------------------ 
 
-    private Material GetClippedMaterial (Shader _shader, Texture _texture) {
+    public Material GetClippedMaterial (Shader _shader, Texture _texture) {
         if (_shader == null) {
             _shader = Shader.Find("ex2D/Alpha Blended" + shaderPostfix);
             if (_shader == null) {

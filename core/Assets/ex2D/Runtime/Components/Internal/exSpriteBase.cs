@@ -190,7 +190,12 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
             if (material_ != null) {
                 return material_;
             }
-            material_ = ex2DRenderer.GetMaterial(shader_, texture);
+            if (clip_ != null) {
+                material_ = clip_.GetClippedMaterial(shader_, texture);
+            }
+            else {
+                material_ = ex2DRenderer.GetMaterial(shader_, texture);
+            }
             return material_;
         }
     }

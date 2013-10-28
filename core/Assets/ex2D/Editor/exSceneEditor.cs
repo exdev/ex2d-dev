@@ -642,6 +642,7 @@ class exSceneEditor : EditorWindow {
                 foreach ( Object o in DragAndDrop.objectReferences ) {
                     if ( o is exTextureInfo ||
                          o is exBitmapFont ||
+                         o is Font ||
                          o is exSpriteAnimationClip ||
                          o is exUILayoutInfo ) 
                     {
