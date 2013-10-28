@@ -83,8 +83,6 @@ public static class exAtlasUtility {
                 charInfo.width = width;
                 charInfo.height = height;
                 charInfo.rotated = rotated;
-
-                // TODO: EditorUtility.SetDirty(el.charInfo.bitmapFont); ????
             }
             else {
                 Debug.LogWarning( "Can't find the raw reference of atlas element " + id );

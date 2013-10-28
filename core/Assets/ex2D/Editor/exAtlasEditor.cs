@@ -1163,6 +1163,11 @@ partial class exAtlasEditor : EditorWindow {
                     info.EndDiceData();
                 }
             }
+
+            //
+            foreach ( exBitmapFont bitmapFont in curEdit.bitmapFonts ) {
+                EditorUtility.SetDirty(bitmapFont);
+            }
         }
         catch ( exAtlasUtility.LayoutException _exception ) {
             EditorUtility.DisplayDialog( "Failed to layout atlas " + curEdit.name, _exception.message, "ok" );
