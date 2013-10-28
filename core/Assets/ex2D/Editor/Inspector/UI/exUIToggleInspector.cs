@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : exAtlasInspector.cs
+// File         : exUIToggleInspector.cs
 // Author       : Wu Jie 
-// Last Change  : 06/18/2013 | 00:17:37 AM | Tuesday,June
+// Last Change  : 10/24/2013 | 14:10:35 PM | Thursday,October
 // Description  : 
 // ======================================================================================
 
@@ -14,31 +14,40 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoardPatternInspector
 ///////////////////////////////////////////////////////////////////////////////
 
 [CanEditMultipleObjects]
-[CustomEditor(typeof(exAtlas))]
-class exAtlasInspector : Editor {
+[CustomEditor(typeof(exUIToggle))]
+class exUIToggleInspector : exUIControlInspector {
+
+    protected SerializedProperty isCheckedProp;
+    protected SerializedProperty isRadioProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	override public void OnInspectorGUI () {
-        DrawDefaultInspector(); 
+    protected override void InitProperties () {
+        base.InitProperties();
+
+        isCheckedProp = serializedObject.FindProperty("isChecked_");
+        isRadioProp = serializedObject.FindProperty("isRadio");
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+	protected override void DoInspectorGUI () {
+        base.DoInspectorGUI();
+
+        EditorGUILayout.PropertyField ( isCheckedProp, new GUIContent("Is Checked") );
+        EditorGUILayout.PropertyField ( isRadioProp );
 
         EditorGUILayout.Space();
-        GUILayout.BeginHorizontal();
-        GUILayout.FlexibleSpace();
-            if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
-                exAtlasEditor editor = EditorWindow.GetWindow<exAtlasEditor>();
-                editor.Edit(target as exAtlas);
-            }
-        GUILayout.Space(5);
-        GUILayout.EndHorizontal();
     }
 }
-

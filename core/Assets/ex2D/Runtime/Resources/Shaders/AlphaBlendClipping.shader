@@ -12,7 +12,7 @@
 Shader "ex2D/Alpha Blended (Clipping)" {
     Properties {
         _MainTex ("Atlas Texture", 2D) = "white" {}
-        _ClipRect ("Rect", Vector) = ( 0, 0, 0, 0 )
+        _ClipRect ("Clip Rect", Vector) = ( 0, 0, 0, 0 )
     }
 
     // ======================================================== 

@@ -30,35 +30,34 @@ class exUIControlInspector : exPlaneInspector {
         public Texture iconToolbarMinus = EditorGUIUtility.FindTexture("Toolbar Minus");
     }
     protected static Styles styles = null;
-
-    SerializedProperty activeProp;
-    SerializedProperty grabMouseOrTouchProp;
-    SerializedProperty useColliderProp;
+    
+    protected SerializedProperty activeProp;
+    protected SerializedProperty grabMouseOrTouchProp;
+    protected SerializedProperty useColliderProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void OnEnable () {
-        InitProperties();
+    protected override void InitProperties () {
+        base.InitProperties();
+
+        activeProp = serializedObject.FindProperty("active_");
+        grabMouseOrTouchProp = serializedObject.FindProperty("grabMouseOrTouch");
+        useColliderProp = serializedObject.FindProperty("useCollider");
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	public override void OnInspectorGUI () {
-        base.OnInspectorGUI();
+	protected override void DoInspectorGUI () {
+        base.DoInspectorGUI();
 
         // if settingsStyles is null
         if ( styles == null ) {
             styles = new Styles();
         }
-
-        // NOTE: DO NOT call serializedObject.ApplyModifiedProperties ();
-        serializedObject.Update ();
-
-        EditorGUILayout.Space();
 
         // active
         EditorGUI.BeginChangeCheck();
@@ -167,7 +166,7 @@ class exUIControlInspector : exPlaneInspector {
             }
         }
 
-        serializedObject.ApplyModifiedProperties();
+        EditorGUILayout.Space();
     }
 
     // ------------------------------------------------------------------ 
@@ -299,29 +298,9 @@ class exUIControlInspector : exPlaneInspector {
                 slot = null;
             }
             GUILayout.Space(3f);
-        GUILayout.EndHorizontal();
+        EditorGUILayout.EndHorizontal();
 
         return slot;
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-	protected override void OnSceneGUI () {
-        base.OnSceneGUI();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected new void InitProperties () {
-        base.InitProperties();
-
-        activeProp = serializedObject.FindProperty("active_");
-        grabMouseOrTouchProp = serializedObject.FindProperty("grabMouseOrTouch");
-        useColliderProp = serializedObject.FindProperty("useCollider");
     }
 }
 

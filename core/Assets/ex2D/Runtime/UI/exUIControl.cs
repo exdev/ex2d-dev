@@ -312,5 +312,13 @@ public class exUIControl : exPlane {
             _ctrl.parent = null;
         }
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void Internal_SetActive ( bool _active ) {
+        active_ = _active;
+    }
 }
 

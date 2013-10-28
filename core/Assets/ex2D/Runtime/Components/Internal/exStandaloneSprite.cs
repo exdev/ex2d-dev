@@ -96,7 +96,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
         mesh.MarkDynamic();
     }
     
-    protected void OnDestroy () {
+    protected new void OnDestroy () {
         vertices = null;
         indices = null;
         uvs = null;
@@ -147,7 +147,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
     /// Update mesh
     // ------------------------------------------------------------------ 
     
-    void LateUpdate () {
+    protected new void LateUpdate () {
         if (visible) {
             exUpdateFlags meshUpdateFlags = UpdateBuffers (vertices, uvs, colors32, indices);
             exMesh.FlushBuffers (mesh, meshUpdateFlags, vertices, indices, uvs, colors32);

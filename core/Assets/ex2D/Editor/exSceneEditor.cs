@@ -642,6 +642,7 @@ class exSceneEditor : EditorWindow {
                 foreach ( Object o in DragAndDrop.objectReferences ) {
                     if ( o is exTextureInfo ||
                          o is exBitmapFont ||
+                         o is Font ||
                          o is exSpriteAnimationClip ||
                          o is exUILayoutInfo ) 
                     {
@@ -675,23 +676,20 @@ class exSceneEditor : EditorWindow {
                     else if ( o is exBitmapFont ) {
                         newGO = new GameObject(o.name);
                         exSpriteFont spriteFont = newGO.AddComponent<exSpriteFont>();
-                        if ( spriteFont.shader == null )
-                            spriteFont.shader = Shader.Find("ex2D/Alpha Blended");
+                        spriteFont.shader = Shader.Find("ex2D/Alpha Blended");
                         spriteFont.SetFont(o as exBitmapFont);
                     }
                     else if ( o is Font ) {
                         newGO = new GameObject(o.name);
                         exSpriteFont spriteFont = newGO.AddComponent<exSpriteFont>();
-                        if ( spriteFont.shader == null )
-                            spriteFont.shader = Shader.Find("ex2D/Alpha Blended (Use Vertex Color) ");
+                        spriteFont.shader = Shader.Find("ex2D/Alpha Blended (Use Vertex Color)");
                         spriteFont.SetFont(o as Font);
                     }
                     else if ( o is exSpriteAnimationClip ) {
                         exSpriteAnimationClip clip = o as exSpriteAnimationClip;
                         newGO = new GameObject(o.name);
                         exSprite sprite = newGO.AddComponent<exSprite>();
-                        if ( sprite.shader == null )
-                            sprite.shader = Shader.Find("ex2D/Alpha Blended");
+                        sprite.shader = Shader.Find("ex2D/Alpha Blended");
                         exSpriteAnimation spriteAnim = newGO.AddComponent<exSpriteAnimation>();
                         spriteAnim.defaultAnimation = clip;
                         spriteAnim.animations.Add(clip);
@@ -824,13 +822,18 @@ class exSceneEditor : EditorWindow {
                     exEditorUtility.GL_DrawWireFrame (layeredSprite, Color.white, true);
                 }
 
+                // draw clipping
+                exClipping clipping = trans.GetComponent<exClipping>();
+                if ( clipping ) {
+                    exEditorUtility.GL_DrawWireFrame (clipping, new Color( 0.0f, 1.0f, 0.5f, 1.0f ), true);
+                }
+
                 // draw ui-control
                 exUIControl[] controls = trans.GetComponents<exUIControl>();
                 for ( int j = 0; j < controls.Length; ++j ) {
                     exUIControl control = controls[j];
                     DrawControlNode (control);
                 }
-
             }
 
             // draw resolution line
@@ -1188,10 +1191,20 @@ class exSceneEditor : EditorWindow {
                                 plane.anchor = sprite.anchor;
                                 plane.offset = sprite.offset;
                             }
+
+                            exClipping clipping = plane as exClipping;
+                            if ( clipping != null ) {
+                                clipping.CheckDirty();
+                            }
                         }
                     }
                     else {
                         exPlaneInspector.ApplyPlaneScale(resizePlane, size, center);
+
+                        exClipping clipping = resizePlane as exClipping;
+                        if ( clipping != null ) {
+                            clipping.CheckDirty();
+                        }
                     }
                 }
             }

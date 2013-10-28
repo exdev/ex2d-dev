@@ -92,8 +92,21 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     
     /// If OnEnable, isOnEnabled_ is true. If OnDisable, isOnEnabled_ is false.
     [System.NonSerialized] protected bool isOnEnabled;
-
+    
     [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
+    
+    [System.NonSerialized] protected exClipping clip_;
+    public exClipping clip {
+        get {
+            return clip_;
+        }
+        set {
+            if (clip_ != value) {
+                clip_ = value;
+                UpdateMaterial();
+            }
+        }
+    }
     
     [System.NonSerialized] internal Matrix4x4 cachedWorldMatrix;    // 内部使用，只有exLayeredSprite的值才可读
 
@@ -183,7 +196,12 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
             if (material_ != null) {
                 return material_;
             }
-            material_ = ex2DRenderer.GetMaterial(shader_, texture);
+            if (clip_ != null) {
+                material_ = clip_.GetClippedMaterial(shader_, texture);
+            }
+            else {
+                material_ = ex2DRenderer.GetMaterial(shader_, texture);
+            }
             return material_;
         }
     }
@@ -213,14 +231,69 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
         Hide();
     }
 
-    void OnDestroy () {
-        exDebug.Assert(visible == false);
+    protected void OnDestroy () {
+        if (clip_ != null) {
+            clip_.Remove(this);
+        }
+    }
+    
+#if UNITY_EDITOR
+
+    // Allows drag & dropping of this sprite to change its clip in the editor
+    protected void LateUpdate () {
+        // 这里的处理方式和exLayeredSprite.LateUpdate一样
+        // 如果exClipping不单单clip子物体，那就会复杂很多
+        if (UnityEditor.EditorApplication.isPlaying == false) {
+            // Run through the parents and see if this sprite attached to a clip
+            Transform parentTransform = transform.parent;
+            while (parentTransform != null) {
+                exClipping parentClip = parentTransform.GetComponent<exClipping>();
+                if (parentClip != null) {
+                    SetClip(parentClip);
+                    return;
+                }
+                else {
+                    exSpriteBase parentSprite = parentTransform.GetComponent<exSpriteBase>();
+                    if (parentSprite != null) {
+                        SetClip(parentSprite.clip_);
+                        return;
+                    }
+                    else {
+                        parentTransform = parentTransform.parent;
+                    }
+                }
+            }
+            // No clip
+            SetClip(null);
+        }
     }
 
+#endif
+    
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
 
+    public virtual void SetClip (exClipping _clip = null) {
+        if (ReferenceEquals(clip_, _clip)) {
+            return;
+        }
+        if (_clip != null) {
+            _clip.Add(this);
+        }
+        else if (clip_ != null) {
+            clip_.Remove(this);
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Interfaces
+    ///////////////////////////////////////////////////////////////////////////////
+    
 #region Functions used to update geometry buffer.
 
     // ------------------------------------------------------------------ 
@@ -233,11 +306,7 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     internal abstract exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices = null);
 
 #endregion
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Interfaces
-    ///////////////////////////////////////////////////////////////////////////////
-
+    
     // ------------------------------------------------------------------ 
     // Get lossy scale
     // ------------------------------------------------------------------ 

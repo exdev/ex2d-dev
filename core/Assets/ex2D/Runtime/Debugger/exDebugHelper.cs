@@ -5,8 +5,6 @@
 // Description  : 
 // ======================================================================================
 
-// #define EX2D
-
 ///////////////////////////////////////////////////////////////////////////////
 // usings
 ///////////////////////////////////////////////////////////////////////////////
@@ -23,9 +21,7 @@ using System.Collections.Generic;
 // Desc: 
 // ------------------------------------------------------------------ 
 
-#if !EX2D
 [ExecuteInEditMode]
-#endif
 public class exDebugHelper : MonoBehaviour {
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -41,11 +37,7 @@ public class exDebugHelper : MonoBehaviour {
 
     public static void ScreenPrint ( string _text ) {
         if ( instance.showScreenPrint_ ) {
-#if EX2D
-            instance.txtPrint.text = instance.txtPrint.text + _text + "\n"; 
-#else
             instance.txtPrint = instance.txtPrint + _text + "\n"; 
-#endif
         }
     }
 
@@ -55,20 +47,8 @@ public class exDebugHelper : MonoBehaviour {
 
     public static void ScreenPrint ( Vector2 _pos, string _text, GUIStyle _style = null ) {
         if ( instance.showScreenDebugText ) {
-#if EX2D
-            exSpriteFont debugText = instance.debugTextPool.Request<exSpriteFont>();
-
-            Vector2 screenPos = debugText.renderCamera.WorldToScreenPoint(_pos);
-            exScreenPosition screenPosition = debugText.GetComponent<exScreenPosition>();
-            screenPosition.x = screenPos.x;
-            screenPosition.y = Screen.height - screenPos.y;
-
-            debugText.text = _text;
-            debugText.enabled = true;
-#else
             TextInfo info = new TextInfo( _pos, _text, _style ); 
             instance.debugTextPool.Add(info);
-#endif
         }
     }
 
@@ -84,16 +64,9 @@ public class exDebugHelper : MonoBehaviour {
     }
 
     public static void ScreenLog ( string _text, LogType _logType = LogType.None, GUIStyle _style = null, bool autoFadeOut = true) {
-#if EX2D
-        instance.logs.Add(_text);
-        if ( instance.logs.Count > instance.logCount ) {
-            instance.logs.RemoveAt(0);
-        }
-        instance.updateLogText = true;
-#else
         LogInfo info = new LogInfo( _text, _style, autoFadeOut ? 5.0f : 0 );
         instance.pendingLogs.Enqueue(info);
-#endif
+
         if ( _logType != LogType.None ) {
             switch ( _logType ) {
             case LogType.Normal: Debug.Log(_text); break;
@@ -108,12 +81,7 @@ public class exDebugHelper : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public static void SetFPSColor ( Color _color ) {
-#if EX2D
-        exSpriteFont.topColor = _color;
-        exSpriteFont.botColor = _color;
-#else
         instance.fpsStyle.normal.textColor = _color;
-#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -128,16 +96,6 @@ public class exDebugHelper : MonoBehaviour {
 
     public Vector2 offset = new Vector2 ( 10.0f, 10.0f );
 
-#if EX2D
-    public exSpriteFont txtPrint;
-    public exSpriteFont txtFPS;
-    public exSpriteFont txtLog;
-    public exSpriteFont txtTimeScale;
-    public exGameObjectPool debugTextPool = new exGameObjectPool();
-
-    protected List<string> logs = new List<string>();
-    protected bool updateLogText = false; 
-#else 
     public GUIStyle printStyle = null;
     public GUIStyle fpsStyle = null;
     public GUIStyle logStyle = null;
@@ -208,7 +166,6 @@ public class exDebugHelper : MonoBehaviour {
     float logFadeOutDuration = 0.3f;
     protected List<LogInfo> logs = new List<LogInfo>();
     protected Queue<LogInfo> pendingLogs = new Queue<LogInfo>();
-#endif
 
     // fps
     [SerializeField] protected bool showFps_ = true;
@@ -217,10 +174,6 @@ public class exDebugHelper : MonoBehaviour {
         set {
             if ( showFps_ != value ) {
                 showFps_ = value;
-#if EX2D
-                if ( txtFPS != null )
-                    txtFPS.enabled = showFps_;
-#endif
             }
         }
     }
@@ -233,10 +186,6 @@ public class exDebugHelper : MonoBehaviour {
         set {
             if ( enableTimeScaleDebug_ != value ) {
                 enableTimeScaleDebug_ = value;
-#if EX2D
-                if ( txtTimeScale != null )
-                    txtTimeScale.enabled = enableTimeScaleDebug_;
-#endif
             }
         }
     }
@@ -248,10 +197,6 @@ public class exDebugHelper : MonoBehaviour {
         set {
             if ( showScreenPrint_ != value ) {
                 showScreenPrint_ = value;
-#if EX2D
-                if ( txtPrint != null )
-                    txtPrint.enabled = showScreenPrint_;
-#endif
             }
         }
     }
@@ -263,10 +208,6 @@ public class exDebugHelper : MonoBehaviour {
         set {
             if ( showScreenLog_ != value ) {
                 showScreenLog_ = value;
-#if EX2D
-                if ( txtLog != null ) 
-                    txtLog.enabled = showScreenLog_;
-#endif
             }
         }
     }
@@ -295,29 +236,6 @@ public class exDebugHelper : MonoBehaviour {
         if ( instance == null )
             instance = this;
 
-#if EX2D
-        txtPrint.text = "";
-        txtPrint.enabled = showScreenPrint_;
-
-        txtFPS.text = "";
-        txtFPS.enabled = showFps_;
-
-        txtLog.text = "";
-        txtLog.enabled = showScreenLog_;
-
-        txtTimeScale.text = "";
-        txtTimeScale.enabled = enableTimeScaleDebug;
-
-        if ( showScreenDebugText ) {
-            debugTextPool.Init();
-            for ( int i = 0; i < debugTextPool.initData.Length; ++i ) {
-                GameObject textGO = debugTextPool.initData[i];
-                textGO.transform.parent = transform;
-                textGO.transform.localPosition = Vector3.zero;
-                textGO.GetComponent<exSpriteFont>().enabled = false;
-            }
-        }
-#else
         // DISABLE { 
         // logTimer = logInterval;
         // } DISABLE end 
@@ -327,7 +245,6 @@ public class exDebugHelper : MonoBehaviour {
         if ( showScreenDebugText ) {
             debugTextPool.Clear();
         }
-#endif
 
         useGUILayout = false;
     }
@@ -362,7 +279,6 @@ public class exDebugHelper : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-#if !EX2D
     void OnGUI () {
         GUIContent content = null;
         Vector2 size = Vector2.zero;
@@ -487,7 +403,6 @@ public class exDebugHelper : MonoBehaviour {
             }
         }
     }
-#endif
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -498,38 +413,7 @@ public class exDebugHelper : MonoBehaviour {
         fps = frames / (timeNow - lastInterval);
         frames = 0;
         lastInterval = timeNow;
-#if EX2D
-        txtFPS.text = "fps: " + fps.ToString("f2");
-#else
         txtFPS = "fps: " + fps.ToString("f2");
-#endif
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public void ResetCamera ( Camera _camera ) {
-#if EX2D
-        txtFPS.renderCamera = _camera;
-        txtFPS.enabled = showFps_;
-
-        txtPrint.renderCamera = _camera;
-        txtPrint.enabled = showScreenPrint_;
-
-        txtLog.renderCamera = _camera;
-        txtLog.enabled = showScreenLog_;
-
-        txtTimeScale.renderCamera = _camera;
-        txtTimeScale.enabled = enableTimeScaleDebug;
-
-        if ( debugTextPool.prefab != null ) {
-            for ( int i = 0; i < debugTextPool.initData.Length; ++i ) {
-                GameObject textGO = debugTextPool.initData[i];
-                textGO.GetComponent<exSpriteFont>().renderCamera = _camera;
-            }
-        }
-#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -551,9 +435,6 @@ public class exDebugHelper : MonoBehaviour {
             else if ( Input.GetKey(KeyCode.Alpha9 ) ) {
                 Time.timeScale = 1.0f;
             }
-#if EX2D
-            txtTimeScale.text = "TimeScale = " + Time.timeScale.ToString("f2");
-#endif
         }
     }
 
@@ -563,23 +444,11 @@ public class exDebugHelper : MonoBehaviour {
 
     IEnumerator CleanDebugText () {
         yield return new WaitForEndOfFrame();
-#if EX2D
-        txtPrint.text = "";
-
-        if ( showScreenDebugText ) {
-            debugTextPool.Reset();
-            for ( int i = 0; i < debugTextPool.initData.Length; ++i ) {
-                GameObject textGO = debugTextPool.initData[i];
-                textGO.GetComponent<exSpriteFont>().enabled = false;
-            }
-        }
-#else
         txtPrint = "";
 
         if ( showScreenDebugText ) {
             debugTextPool.Clear();
         }
-#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -587,16 +456,6 @@ public class exDebugHelper : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void UpdateLog () {
-#if EX2D 
-        if ( updateLogText ) {
-            string text = "";
-            for ( int i = 0; i < logs.Count; ++i ) {
-                text = text + logs[i] + "\n";
-            }
-            txtLog.text = text;
-            updateLogText = false;
-        }
-#else
         for ( int i = logs.Count-1; i >= 0; --i ) {
             LogInfo info = logs[i];
             info.Tick();
@@ -644,8 +503,12 @@ public class exDebugHelper : MonoBehaviour {
                 }
             } while ( count > 0 );
         }
-#endif
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public static void ClearScreen () {
         instance.pendingLogs.Clear ();
         instance.logs.Clear ();

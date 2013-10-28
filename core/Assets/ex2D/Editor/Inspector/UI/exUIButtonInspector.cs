@@ -23,12 +23,4 @@ using System.Reflection;
 [CanEditMultipleObjects]
 [CustomEditor(typeof(exUIButton))]
 class exUIButtonInspector : exUIControlInspector {
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-	public override void OnInspectorGUI () {
-        base.OnInspectorGUI();
-    }
 }

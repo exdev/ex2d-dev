@@ -281,8 +281,10 @@ public class exUIMng : MonoBehaviour {
         //
         if ( Application.platform == RuntimePlatform.Android
           || Application.platform == RuntimePlatform.IPhonePlayer
+#if UNITY_4_2
           || Application.platform == RuntimePlatform.WP8Player
           || Application.platform == RuntimePlatform.BB10Player
+#endif
           )
 		{
 			hasMouse = false;
@@ -526,13 +528,12 @@ public class exUIMng : MonoBehaviour {
                 hotPoint.Reset();
             }
             else {
-                Vector2 lastMousePos = hotPoint.pos;
                 hotPoint.pos = touch.position;
-                hotPoint.delta = hotPoint.pos - lastMousePos;
+                hotPoint.delta = touch.deltaPosition;
 
-                Vector3 lastMouseWorldPos = hotPoint.worldPos;
+                Vector3 lastWorldPos = camera.ScreenToWorldPoint(touch.position - touch.deltaPosition);
                 hotPoint.worldPos = camera.ScreenToWorldPoint(touch.position);
-                hotPoint.worldDelta = hotPoint.worldPos - lastMouseWorldPos;
+                hotPoint.worldDelta = hotPoint.worldPos - lastWorldPos;
 
                 hotPoint.pressDown = (touch.phase == TouchPhase.Began);
                 hotPoint.pressUp = (touch.phase == TouchPhase.Canceled || touch.phase == TouchPhase.Ended);
@@ -677,7 +678,6 @@ public class exUIMng : MonoBehaviour {
         else {
             Vector2 localPos = new Vector2( _worldPos.x - _ctrl.transform.position.x, 
                                             _worldPos.y - _ctrl.transform.position.y );
-            localPos.y = -localPos.y;
 
             Rect boundingRect = _ctrl.GetLocalAABoundingRect();
             checkChildren = boundingRect.Contains(localPos);

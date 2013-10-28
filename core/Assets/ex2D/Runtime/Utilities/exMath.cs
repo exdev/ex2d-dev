@@ -75,4 +75,54 @@ public static class exMath {
         }
         return _value;
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+	public static float SpringLerp ( float _strength, float _deltaTime ) {
+		if ( _deltaTime > 1.0f ) 
+            _deltaTime = 1.0f;
+
+		int ms = Mathf.RoundToInt(_deltaTime * 1000.0f);
+		_deltaTime = 0.001f * _strength;
+
+		float r = 0.0f;
+		for ( int i = 0; i < ms; ++i ) 
+            r = Mathf.Lerp(r, 1.0f, _deltaTime);
+		return r;
+	}
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+	public static float SpringLerp ( float _from, float _to, float _strength, float _deltaTime ) {
+		if ( _deltaTime > 1.0f ) 
+            _deltaTime = 1.0f;
+
+		int ms = Mathf.RoundToInt(_deltaTime * 1000.0f);
+		_deltaTime = 0.001f * _strength;
+
+        float r = _from;
+		for ( int i = 0; i < ms; ++i ) 
+            r = Mathf.Lerp(r, _to, _deltaTime);
+		return r;
+	}
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+	public static Vector2 SpringLerp ( Vector2 _from, Vector2 _to, float _strength, float _deltaTime ) {
+		return Vector2.Lerp ( _from, _to, SpringLerp(_strength, _deltaTime) );
+	}
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+	public static Vector3 SpringLerp ( Vector3 _from, Vector3 _to, float _strength, float _deltaTime ) {
+		return Vector3.Lerp ( _from, _to, SpringLerp(_strength, _deltaTime) );
+	}
 }

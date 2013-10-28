@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : exSpriteFontInspector.cs
+// File         : ex3DSpriteFontInspector.cs
 // Author       : Wu Jie 
-// Last Change  : 08/01/2013 | 15:01:06 PM | Thursday,August
+// Last Change  : 08/31/2013
 // Description  : 
 // ======================================================================================
 
@@ -20,46 +20,55 @@ using System.IO;
 ///////////////////////////////////////////////////////////////////////////////
 
 [CanEditMultipleObjects]
-[CustomEditor(typeof(exSpriteFont))]
-class exSpriteFontInspector : exLayeredSpriteInspector {
+[CustomEditor(typeof(ex3DSpriteFont))]
+class ex3DSpriteFontInspector : exStandaloneSpriteInspector {
 
     //SerializedProperty fontProp;
-    SerializedProperty textProp;
-    SerializedProperty textAlignProp;
-    SerializedProperty useKerningProp;
-    SerializedProperty spacingProp;
-    SerializedProperty topColorProp;
-    SerializedProperty botColorProp;
-    SerializedProperty useOutlineProp;
-    SerializedProperty outlineWidthProp;
-    SerializedProperty outlineColorProp;
-    SerializedProperty useShadowProp;
-    SerializedProperty shadowBiasProp;
-    SerializedProperty shadowColorProp;
+    protected SerializedProperty textProp;
+    protected SerializedProperty textAlignProp;
+    protected SerializedProperty useKerningProp;
+    protected SerializedProperty spacingProp;
+    protected SerializedProperty topColorProp;
+    protected SerializedProperty botColorProp;
+    protected SerializedProperty useOutlineProp;
+    protected SerializedProperty outlineWidthProp;
+    protected SerializedProperty outlineColorProp;
+    protected SerializedProperty useShadowProp;
+    protected SerializedProperty shadowBiasProp;
+    protected SerializedProperty shadowColorProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void OnEnable () {
-        InitProperties();
+    protected override void InitProperties () {
+        base.InitProperties();
+
+        //fontProp = serializedObject.FindProperty("font_");
+        textProp = serializedObject.FindProperty("text_");
+        textAlignProp = serializedObject.FindProperty("textAlign_");
+        useKerningProp = serializedObject.FindProperty("useKerning_");
+        spacingProp = serializedObject.FindProperty("spacing_");
+        topColorProp = serializedObject.FindProperty("topColor_");
+        botColorProp = serializedObject.FindProperty("botColor_");
+        useOutlineProp = serializedObject.FindProperty("useOutline_");
+        outlineWidthProp = serializedObject.FindProperty("outlineWidth_");
+        outlineColorProp = serializedObject.FindProperty("outlineColor_");
+        useShadowProp = serializedObject.FindProperty("useShadow_");
+        shadowBiasProp = serializedObject.FindProperty("shadowBias_");
+        shadowColorProp = serializedObject.FindProperty("shadowColor_");
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	public override void OnInspectorGUI () {
-        base.OnInspectorGUI();
-
-        // NOTE: DO NOT call serializedObject.ApplyModifiedProperties ();
-        serializedObject.Update ();
-
-        EditorGUILayout.Space();
-
+    protected override void DoInspectorGUI () {
+        base.DoInspectorGUI();
+        
         {
             // font
-            exSpriteFont sp = serializedObject.targetObject as exSpriteFont;
+            ex3DSpriteFont sp = serializedObject.targetObject as ex3DSpriteFont;
             if (sp) {
                 EditorGUI.BeginChangeCheck();
                 exFont.TypeForEditor fontType = (exFont.TypeForEditor)EditorGUILayout.EnumPopup("Font Type", sp.fontType);
@@ -73,21 +82,16 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
                 EditorGUI.indentLevel++;
                 EditorGUI.BeginChangeCheck();
                 if (fontType == exFont.TypeForEditor.Bitmap) {
-                    exBitmapFont font = EditorGUILayout.ObjectField ("Font", sp.bitmapFont, typeof(exBitmapFont), false) as exBitmapFont;
-                    if (EditorGUI.EndChangeCheck()) {
-                        sp.SetFont(font);
-                        EditorUtility.SetDirty(sp);
-                    }
+                    sp.SetFont(EditorGUILayout.ObjectField("Font", sp.bitmapFont, typeof(exBitmapFont), false) as exBitmapFont);
                 }
                 else {
-                    Font font = EditorGUILayout.ObjectField ("Font", sp.dynamicFont, typeof(Font), false) as Font;
+                    sp.SetFont(EditorGUILayout.ObjectField("Font", sp.dynamicFont, typeof(Font), false) as Font);
                     sp.fontStyle = (FontStyle)EditorGUILayout.EnumPopup("Font Style", sp.fontStyle);
                     sp.fontSize = EditorGUILayout.IntField("Font Size", sp.fontSize);
                     //sp.lineHeight = EditorGUILayout.IntField("Line Height", sp.lineHeight);
-                    if (EditorGUI.EndChangeCheck()) {
-                        sp.SetFont(font);
-                        EditorUtility.SetDirty(sp);
-                    }
+                }
+                if (EditorGUI.EndChangeCheck()) {
+                    EditorUtility.SetDirty(sp);
                 }
                 EditorGUI.indentLevel--;
             }
@@ -98,7 +102,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( textProp, new GUIContent("Text") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
+                ex3DSpriteFont sp = obj as ex3DSpriteFont;
                 if ( sp ) {
                     sp.text = textProp.stringValue;
                     EditorUtility.SetDirty(sp);
@@ -111,7 +115,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( textAlignProp, new GUIContent("Text Align") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
+                ex3DSpriteFont sp = obj as ex3DSpriteFont;
                 if ( sp ) {
                     sp.textAlign = (TextAlignment)textAlignProp.enumValueIndex;
                     EditorUtility.SetDirty(sp);
@@ -124,7 +128,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( useKerningProp, new GUIContent("Use Kerning") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
+                ex3DSpriteFont sp = obj as ex3DSpriteFont;
                 if ( sp ) {
                     sp.useKerning = useKerningProp.boolValue;
                     EditorUtility.SetDirty(sp);
@@ -137,7 +141,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( spacingProp, new GUIContent("Spacing"), true );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
+                ex3DSpriteFont sp = obj as ex3DSpriteFont;
                 if ( sp ) {
                     sp.spacing = spacingProp.vector2Value;
                     EditorUtility.SetDirty(sp);
@@ -150,7 +154,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( topColorProp, new GUIContent("Top Color"), true );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
+                ex3DSpriteFont sp = obj as ex3DSpriteFont;
                 if ( sp ) {
                     sp.topColor = topColorProp.colorValue;
                     EditorUtility.SetDirty(sp);
@@ -163,7 +167,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( botColorProp, new GUIContent("Bot Color"), true );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
+                ex3DSpriteFont sp = obj as ex3DSpriteFont;
                 if ( sp ) {
                     sp.botColor = botColorProp.colorValue;
                     EditorUtility.SetDirty(sp);
@@ -176,7 +180,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( useOutlineProp, new GUIContent("Use Outline") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
+                ex3DSpriteFont sp = obj as ex3DSpriteFont;
                 if ( sp ) {
                     sp.useOutline = useOutlineProp.boolValue;
                     EditorUtility.SetDirty(sp);
@@ -191,7 +195,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( outlineWidthProp, new GUIContent("Outline Width") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
+                ex3DSpriteFont sp = obj as ex3DSpriteFont;
                 if ( sp ) {
                     sp.outlineWidth = outlineWidthProp.floatValue;
                     EditorUtility.SetDirty(sp);
@@ -204,7 +208,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( outlineColorProp, new GUIContent("Outline Color") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
+                ex3DSpriteFont sp = obj as ex3DSpriteFont;
                 if ( sp ) {
                     sp.outlineColor = outlineColorProp.colorValue;
                     EditorUtility.SetDirty(sp);
@@ -219,7 +223,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( useShadowProp, new GUIContent("Use Shadow") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
+                ex3DSpriteFont sp = obj as ex3DSpriteFont;
                 if ( sp ) {
                     sp.useShadow = useShadowProp.boolValue;
                     EditorUtility.SetDirty(sp);
@@ -235,7 +239,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( shadowBiasProp, new GUIContent("Shadow Bias"), true );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
+                ex3DSpriteFont sp = obj as ex3DSpriteFont;
                 if ( sp ) {
                     sp.shadowBias = shadowBiasProp.vector2Value;
                     EditorUtility.SetDirty(sp);
@@ -248,7 +252,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( shadowColorProp, new GUIContent("Shadow Color") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
+                ex3DSpriteFont sp = obj as ex3DSpriteFont;
                 if ( sp ) {
                     sp.shadowColor = shadowColorProp.colorValue;
                     EditorUtility.SetDirty(sp);
@@ -268,35 +272,8 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
             }
         GUILayout.Space(5);
         GUILayout.EndHorizontal();
-    }
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-	protected override void OnSceneGUI () {
-        base.OnSceneGUI();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected new void InitProperties () {
-        base.InitProperties();
-        //fontProp = serializedObject.FindProperty("font_");
-        textProp = serializedObject.FindProperty("text_");
-        textAlignProp = serializedObject.FindProperty("textAlign_");
-        useKerningProp = serializedObject.FindProperty("useKerning_");
-        spacingProp = serializedObject.FindProperty("spacing_");
-        topColorProp = serializedObject.FindProperty("topColor_");
-        botColorProp = serializedObject.FindProperty("botColor_");
-        useOutlineProp = serializedObject.FindProperty("useOutline_");
-        outlineWidthProp = serializedObject.FindProperty("outlineWidth_");
-        outlineColorProp = serializedObject.FindProperty("outlineColor_");
-        useShadowProp = serializedObject.FindProperty("useShadow_");
-        shadowBiasProp = serializedObject.FindProperty("shadowBias_");
-        shadowColorProp = serializedObject.FindProperty("shadowColor_");
+        EditorGUILayout.Space();
     }
 }
 

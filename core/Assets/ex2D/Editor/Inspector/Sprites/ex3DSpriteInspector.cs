@@ -1,5 +1,5 @@
 // ======================================================================================
-// File         : exSpriteInspector.cs
+// File         : ex3DSpriteInspector.cs
 // Author       : Wu Jie 
 // Last Change  : 07/04/2013 | 15:43:11 PM | Thursday,July
 // Description  : 
@@ -20,39 +20,45 @@ using System.IO;
 ///////////////////////////////////////////////////////////////////////////////
 
 [CanEditMultipleObjects]
-[CustomEditor(typeof(exSprite))]
-class exSpriteInspector : exLayeredSpriteInspector {
+[CustomEditor(typeof(ex3DSprite))]
+class ex3DSpriteInspector : exSpriteBaseInspector {
 
-    SerializedProperty textureInfoProp;
-    SerializedProperty useTextureOffsetProp;
-    SerializedProperty spriteTypeProp;
-    SerializedProperty tiledSpacingProp;
-    SerializedProperty borderOnlyProp;
-    SerializedProperty customBorderSizeProp;
-    SerializedProperty leftProp;
-    SerializedProperty rightProp;
-    SerializedProperty topProp;
-    SerializedProperty bottomProp;
+    protected SerializedProperty textureInfoProp;
+    protected SerializedProperty useTextureOffsetProp;
+    protected SerializedProperty spriteTypeProp;
+    protected SerializedProperty tiledSpacingProp;
+    protected SerializedProperty borderOnlyProp;
+    protected SerializedProperty customBorderSizeProp;
+    protected SerializedProperty leftProp;
+    protected SerializedProperty rightProp;
+    protected SerializedProperty topProp;
+    protected SerializedProperty bottomProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void OnEnable () {
-        InitProperties();
+    protected override void InitProperties () {
+        base.InitProperties();
+
+        textureInfoProp = serializedObject.FindProperty("textureInfo_");
+        useTextureOffsetProp = serializedObject.FindProperty("useTextureOffset_");
+        spriteTypeProp = serializedObject.FindProperty("spriteType_");
+        tiledSpacingProp = serializedObject.FindProperty("tiledSpacing_");
+        borderOnlyProp = serializedObject.FindProperty("borderOnly_");
+        customBorderSizeProp = serializedObject.FindProperty("customBorderSize_");
+        leftProp = serializedObject.FindProperty("leftBorderSize_");
+        rightProp = serializedObject.FindProperty("rightBorderSize_");
+        topProp = serializedObject.FindProperty("topBorderSize_");
+        bottomProp = serializedObject.FindProperty("bottomBorderSize_");
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	public override void OnInspectorGUI () {
-        base.OnInspectorGUI();
-
-        // NOTE: DO NOT call serializedObject.ApplyModifiedProperties ();
-        serializedObject.Update ();
-
-        EditorGUILayout.Space();
+    protected override void DoInspectorGUI () {
+        base.DoInspectorGUI();
 
         // textureInfo
         EditorGUILayout.BeginHorizontal();
@@ -62,7 +68,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( textureInfoProp, new GUIContent("Texture Info") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSprite sp = obj as exSprite;
+                ex3DSprite sp = obj as ex3DSprite;
                 if ( sp ) {
                     sp.textureInfo = textureInfoProp.objectReferenceValue as exTextureInfo;
                     if ( sp.textureInfo != null ) {
@@ -88,7 +94,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
         EditorGUILayout.EndVertical();
         if ( GUILayout.Button("Refresh", GUILayout.Width(57), GUILayout.Height(16) ) ) {
             foreach (Object obj in serializedObject.targetObjects) {
-                exSprite sp = obj as exSprite;
+                ex3DSprite sp = obj as ex3DSprite;
                 if (sp) {
                     sp.textureInfo = sp.textureInfo;
                     EditorUtility.SetDirty(sp);
@@ -150,14 +156,12 @@ class exSpriteInspector : exLayeredSpriteInspector {
             }
         }
 
-        EditorGUILayout.Space();
-
         // useTextureOffset
         EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( useTextureOffsetProp, new GUIContent("Use Texture Offset") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSprite sp = obj as exSprite;
+                ex3DSprite sp = obj as ex3DSprite;
                 if ( sp ) {
                     sp.useTextureOffset = useTextureOffsetProp.boolValue;
                     EditorUtility.SetDirty(sp);
@@ -170,14 +174,14 @@ class exSpriteInspector : exLayeredSpriteInspector {
         EditorGUILayout.PropertyField ( spriteTypeProp, new GUIContent("Sprite Type") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSprite sp = obj as exSprite;
+                ex3DSprite sp = obj as ex3DSprite;
                 if ( sp ) {
                     sp.spriteType = (exSpriteType)spriteTypeProp.intValue;
                     EditorUtility.SetDirty(sp);
                 }
             }
         }
-
+        
         if (spriteTypeProp.enumValueIndex == (int)exSpriteType.Tiled) {
             ++EditorGUI.indentLevel;
             // tiled spacing
@@ -185,7 +189,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
             EditorGUILayout.PropertyField ( tiledSpacingProp, new GUIContent("Tiled Spacing"), true );
             if ( EditorGUI.EndChangeCheck() ) {
                 foreach ( Object obj in serializedObject.targetObjects ) {
-                    exSprite sp = obj as exSprite;
+                    ex3DSprite sp = obj as ex3DSprite;
                     if ( sp ) {
                         sp.tiledSpacing = tiledSpacingProp.vector2Value;
                         if (sp.textureInfo != null) {
@@ -200,7 +204,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
             GUILayout.FlexibleSpace();
             if ( GUILayout.Button("Use Raw Size", GUILayout.Width(88), GUILayout.Height(16) ) ) {
                 foreach (Object obj in serializedObject.targetObjects) {
-                    exSprite sp = obj as exSprite;
+                    ex3DSprite sp = obj as ex3DSprite;
                     if (sp && sp.textureInfo != null) {
                         exTextureInfo ti = sp.textureInfo;
                         sp.tiledSpacing = new Vector2(ti.rawWidth - ti.width, ti.rawHeight - ti.height) / 2;
@@ -213,59 +217,38 @@ class exSpriteInspector : exLayeredSpriteInspector {
         }
         else if (spriteTypeProp.enumValueIndex == (int)exSpriteType.Sliced) {
             ++EditorGUI.indentLevel;
+            
             // border only
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField ( borderOnlyProp, new GUIContent("Border Only"), true );
             if ( EditorGUI.EndChangeCheck() ) {
                 foreach ( Object obj in serializedObject.targetObjects ) {
-                    exSprite sp = obj as exSprite;
+                    ex3DSprite sp = obj as ex3DSprite;
                     if ( sp ) {
                         sp.borderOnly = borderOnlyProp.boolValue;
                         EditorUtility.SetDirty(sp);
                     }
                 }
             }
-            
             // custom border size
+            EditorGUILayout.BeginHorizontal ();
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField ( customBorderSizeProp, new GUIContent("Custom Border Size"), true );
             if ( EditorGUI.EndChangeCheck() ) {
                 foreach ( Object obj in serializedObject.targetObjects ) {
-                    exSprite sp = obj as exSprite;
+                    ex3DSprite sp = obj as ex3DSprite;
                     if ( sp ) {
                         sp.customBorderSize = customBorderSizeProp.boolValue;
                         EditorUtility.SetDirty(sp);
                     }
                 }
             }
-            
-            if (customBorderSizeProp.boolValue) {
-                ++EditorGUI.indentLevel;
-                // left right top bottom
-                EditorGUI.BeginChangeCheck ();
-                EditorGUILayout.PropertyField (leftProp, new GUIContent ("Left"), true);
-                EditorGUILayout.PropertyField (rightProp, new GUIContent ("Right"), true);
-                EditorGUILayout.PropertyField (topProp, new GUIContent ("Top"), true);
-                EditorGUILayout.PropertyField (bottomProp, new GUIContent ("Bottom"), true);
-                if (EditorGUI.EndChangeCheck ()) {
-                    foreach (Object obj in serializedObject.targetObjects) {
-                        exSprite sp = obj as exSprite;
-                        if (sp) {
-                            sp.leftBorderSize = leftProp.floatValue;
-                            sp.rightBorderSize = rightProp.floatValue;
-                            sp.topBorderSize = topProp.floatValue;
-                            sp.bottomBorderSize = bottomProp.floatValue;
-                            EditorUtility.SetDirty (sp);
-                        }
-                    }
-                }
 
+            if (customBorderSizeProp.boolValue) {
                 // reset border size
-                EditorGUILayout.BeginHorizontal ();
-                GUILayout.FlexibleSpace();
                 if ( GUILayout.Button("Reset", GUILayout.Width(57), GUILayout.Height(16) ) ) {
                     foreach (Object obj in serializedObject.targetObjects) {
-                        exSprite sp = obj as exSprite;
+                        ex3DSprite sp = obj as ex3DSprite;
                         if (sp) {
                             sp.leftBorderSize = sp.textureInfo.borderLeft;
                             sp.rightBorderSize = sp.textureInfo.borderRight;
@@ -276,50 +259,36 @@ class exSpriteInspector : exLayeredSpriteInspector {
                     }
                 }
                 EditorGUILayout.EndHorizontal ();
+
+                ++EditorGUI.indentLevel;
+                // left right top bottom
+                EditorGUI.BeginChangeCheck ();
+                EditorGUILayout.PropertyField (leftProp, new GUIContent ("Left"), true);
+                EditorGUILayout.PropertyField (rightProp, new GUIContent ("Right"), true);
+                EditorGUILayout.PropertyField (topProp, new GUIContent ("Top"), true);
+                EditorGUILayout.PropertyField (bottomProp, new GUIContent ("Bottom"), true);
+                if (EditorGUI.EndChangeCheck ()) {
+                    foreach (Object obj in serializedObject.targetObjects) {
+                        ex3DSprite sp = obj as ex3DSprite;
+                        if (sp) {
+                            sp.leftBorderSize = leftProp.floatValue;
+                            sp.rightBorderSize = rightProp.floatValue;
+                            sp.topBorderSize = topProp.floatValue;
+                            sp.bottomBorderSize = bottomProp.floatValue;
+                            EditorUtility.SetDirty (sp);
+                        }
+                    }
+                }
                 --EditorGUI.indentLevel;
+            }
+            else {
+                EditorGUILayout.EndHorizontal ();
             }
             
             --EditorGUI.indentLevel;
         }
 
         EditorGUILayout.Space();
-        
-        // DISABLE { 
-        // EditorGUILayout.Space();
-        // GUILayout.BeginHorizontal();
-        // GUILayout.FlexibleSpace();
-        //     if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
-        //         EditorWindow.GetWindow<exSceneEditor>();
-        //     }
-        // GUILayout.Space(5);
-        // GUILayout.EndHorizontal();
-        // } DISABLE end 
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-	protected override void OnSceneGUI () {
-        base.OnSceneGUI();
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected new void InitProperties () {
-        base.InitProperties();
-        textureInfoProp = serializedObject.FindProperty("textureInfo_");
-        useTextureOffsetProp = serializedObject.FindProperty("useTextureOffset_");
-        spriteTypeProp = serializedObject.FindProperty("spriteType_");
-        tiledSpacingProp = serializedObject.FindProperty("tiledSpacing_");
-        borderOnlyProp = serializedObject.FindProperty("borderOnly_");
-        customBorderSizeProp = serializedObject.FindProperty("customBorderSize_");
-        leftProp = serializedObject.FindProperty("leftBorderSize_");
-        rightProp = serializedObject.FindProperty("rightBorderSize_");
-        topProp = serializedObject.FindProperty("topBorderSize_");
-        bottomProp = serializedObject.FindProperty("bottomBorderSize_");
     }
 }
 
