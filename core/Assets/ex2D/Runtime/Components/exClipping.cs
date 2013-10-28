@@ -24,6 +24,50 @@ using System.Collections.Generic;
 public class exClipping : exPlane {
     
     const string shaderPostfix = " (Clipping)";
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+
+    public override float width {
+        get { return width_; }
+        set { 
+            if ( width_ != value ) {
+                width_ = value; 
+                dirty = true;
+            }
+        }
+    }
+
+    public override float height {
+        get { return height_; }
+        set { 
+            if ( height_ != value ) {
+                height_ = value; 
+                dirty = true;
+            }
+        }
+    }
+
+    public override Anchor anchor {
+        get { return anchor_; }
+        set { 
+            if ( anchor_ != value ) {
+                anchor_ = value;
+                dirty = true;
+            }
+        }
+    }
+    
+    public override Vector2 offset {
+        get { return offset_; }
+        set { 
+            if ( offset_ != value ) {
+                offset_ = value; 
+                dirty = true;
+            }
+        }
+    }
     
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
@@ -31,14 +75,87 @@ public class exClipping : exPlane {
     
     private Dictionary<MaterialTableKey, Material> materialTable = 
         new Dictionary<MaterialTableKey, Material>(MaterialTableKey.Comparer.instance);
+
+    private Vector2 currentPos = Vector2.zero;
+    private bool dirty = false;
     
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable functions
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void Awake () {
+        // TODO: NOTE: without GetClippedMaterial, the material table can't store new material, and UpdateClipMaterials will do nothing { 
+        exSpriteBase[] spritesToAdd = gameObject.GetComponentsInChildren<exSpriteBase> (true);
+        for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
+            exSpriteBase sprite = spritesToAdd [spriteIndex];
+            sprite.clip = this;
+            Material tmp = sprite.material;
+        }
+        // } TODO end 
+
+        currentPos = new Vector2( transform.position.x, transform.position.y ); 
+        dirty = false;
+
+        UpdateClipMaterials ();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnDestroy () {
+        Remove (gameObject);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void LateUpdate () {
+        if ( transform.hasChanged ) {
+            Vector2 newPos = new Vector2( transform.position.x, transform.position.y );
+            if ( newPos != currentPos ) {
+                currentPos = newPos; 
+                dirty = true;
+            }
+        }
+
+        if ( dirty ) {
+            UpdateClipMaterials ();
+            dirty = false;
+        }
+    } 
     
     ///////////////////////////////////////////////////////////////////////////////
     // Other functions
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void CheckDirty () {
+        if ( dirty ) {
+            UpdateClipMaterials ();
+            dirty = false;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void UpdateClipMaterials () {
+        Rect rect = GetWorldAABoundingRect ();
+        Vector4 clipRect = new Vector4( rect.center.x, rect.center.y, rect.width, rect.height ); 
+        foreach ( Material mat in materialTable.Values ) {
+            mat.SetVector ( "_ClipRect", clipRect );
+        }
+    }
     
     // ------------------------------------------------------------------ 
     /// Add a sprite to this clip. 
@@ -60,6 +177,8 @@ public class exClipping : exPlane {
         if (_sprite.transform.IsChildOf (transform) == false) {
             _sprite.transform.parent = transform;
         }
+
+        dirty = true;
     }
 
     // ------------------------------------------------------------------ 
@@ -74,6 +193,8 @@ public class exClipping : exPlane {
         if (_gameObject.transform.IsChildOf (transform) == false) {
             _gameObject.transform.parent = transform;
         }
+
+        dirty = true;
     }
 
     // ------------------------------------------------------------------ 
@@ -93,6 +214,8 @@ public class exClipping : exPlane {
         for (int i = 0; i < spritesToRemove.Length; ++i) {
             spritesToRemove[i].clip = null;
         }
+
+        dirty = true;
     }
 
     // ------------------------------------------------------------------ 

@@ -822,13 +822,18 @@ class exSceneEditor : EditorWindow {
                     exEditorUtility.GL_DrawWireFrame (layeredSprite, Color.white, true);
                 }
 
+                // draw clipping
+                exClipping clipping = trans.GetComponent<exClipping>();
+                if ( clipping ) {
+                    exEditorUtility.GL_DrawWireFrame (clipping, new Color( 0.0f, 1.0f, 0.5f, 1.0f ), true);
+                }
+
                 // draw ui-control
                 exUIControl[] controls = trans.GetComponents<exUIControl>();
                 for ( int j = 0; j < controls.Length; ++j ) {
                     exUIControl control = controls[j];
                     DrawControlNode (control);
                 }
-
             }
 
             // draw resolution line
@@ -1186,10 +1191,20 @@ class exSceneEditor : EditorWindow {
                                 plane.anchor = sprite.anchor;
                                 plane.offset = sprite.offset;
                             }
+
+                            exClipping clipping = plane as exClipping;
+                            if ( clipping != null ) {
+                                clipping.CheckDirty();
+                            }
                         }
                     }
                     else {
                         exPlaneInspector.ApplyPlaneScale(resizePlane, size, center);
+
+                        exClipping clipping = resizePlane as exClipping;
+                        if ( clipping != null ) {
+                            clipping.CheckDirty();
+                        }
                     }
                 }
             }

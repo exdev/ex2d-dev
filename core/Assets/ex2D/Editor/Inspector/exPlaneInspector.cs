@@ -67,7 +67,7 @@ class exPlaneInspector : Editor {
             Vector3 center;
             bool changed = ProcessSceneEditorHandles ( out size, out center );
             if ( changed ) {
-                ApplyPlaneScale ( plane, size, center );
+                exPlaneInspector.ApplyPlaneScale ( plane, size, center );
             }
         }
     }
