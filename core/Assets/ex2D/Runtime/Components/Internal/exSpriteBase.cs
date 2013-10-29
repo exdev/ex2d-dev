@@ -198,6 +198,10 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
             }
             if (clip_ != null) {
                 material_ = clip_.GetClippedMaterial(shader_, texture);
+                // if we don't have the clipping shader
+                if ( material_ == null ) {
+                    material_ = ex2DRenderer.GetMaterial(shader_, texture);
+                }
             }
             else {
                 material_ = ex2DRenderer.GetMaterial(shader_, texture);

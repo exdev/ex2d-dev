@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : AlphaBlendClipping.shader
+// File         : AlphaBlendVertColorClipping.shader
 // Author       : Wu Jie 
-// Last Change  : 06/11/2013 | 17:24:35 PM | Tuesday,June
+// Last Change  : 10/29/2013 | 19:44:51 PM | Tuesday,October
 // Description  : 
 // ======================================================================================
 
@@ -9,7 +9,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-Shader "ex2D/Alpha Blended (Clipping)" {
+Shader "ex2D/Alpha Blended (Use Vertex Color) (Clipping)" {
     Properties {
         _MainTex ("Atlas Texture", 2D) = "white" {}
         _ClipRect ("Clip Rect", Vector) = ( 0, 0, 0, 0 )
@@ -69,7 +69,9 @@ Shader "ex2D/Alpha Blended (Clipping)" {
 			fixed4 frag ( v2f v ) : COLOR {
                 float2 half_wh = _ClipRect.zw * 0.5f;
 				float2 factor = abs ( v.worldPosition - _ClipRect.xy ) / half_wh;
-				fixed4 outColor = tex2D ( _MainTex, v.texcoord ) * v.color;
+				fixed4 outColor = tex2D ( _MainTex, v.texcoord );
+                outColor.rgb = v.color.rgb;
+                outColor.a = outColor.a * v.color.a;
                 if ( 1.0 - max ( factor.x, factor.y ) <= 0.0f )
                     outColor.a = 0.0f;
                 return outColor; 
