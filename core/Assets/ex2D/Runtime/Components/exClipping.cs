@@ -138,6 +138,14 @@ public class exClipping : exPlane {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public void SetDirty () {
+        dirty = true;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public void CheckDirty () {
         if ( dirty ) {
             UpdateClipMaterials ();

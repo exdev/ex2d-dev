@@ -1231,6 +1231,12 @@ class exSceneEditor : EditorWindow {
                 if ( Selection.transforms.Length == 1 ) {
                     trans.position = trans_position;
                     trans.rotation = trans_rotation;
+
+                    exClipping[] clippings = trans.GetComponentsInChildren<exClipping>();
+                    for ( int i = 0; i < clippings.Length; ++i ) {
+                        clippings[i].SetDirty();
+                        clippings[i].CheckDirty();
+                    }
                 }
                 else {
                     Vector3 delta = trans_position - trans.position;
@@ -1244,6 +1250,12 @@ class exSceneEditor : EditorWindow {
                     foreach ( Transform transObj in Selection.transforms ) {
                         transObj.position += delta;
                         transObj.RotateAround( trans_position, axis, deltaAngle );
+
+                        exClipping[] clippings = transObj.GetComponentsInChildren<exClipping>();
+                        for ( int i = 0; i < clippings.Length; ++i ) {
+                            clippings[i].SetDirty();
+                            clippings[i].CheckDirty();
+                        }
                     }
 
                     trans.position = trans_position;
