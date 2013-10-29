@@ -1132,6 +1132,7 @@ partial class exAtlasEditor : EditorWindow {
             foreach ( exTextureInfo info in curEdit.textureInfos ) {
                 info.ClearDiceData();
                 if ( info.shouldDiced ) {
+                    info.GenerateDiceData();
                     info.BeginDiceData();
                 }
             }

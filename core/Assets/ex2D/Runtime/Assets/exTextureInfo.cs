@@ -414,7 +414,7 @@ public partial class exTextureInfo : ScriptableObject {
                 editorDiceDatas[x + y * xCount] = dice;
             }
         }
-        EndDiceData ();
+        //EndDiceData ();
     }
 
     // ------------------------------------------------------------------ 
@@ -424,7 +424,7 @@ public partial class exTextureInfo : ScriptableObject {
     public void BeginDiceData () {
         int editorDiceCount = editorDiceXCount * editorDiceYCount;
         if (editorDiceDatas == null || editorDiceDatas.Length != editorDiceCount) {
-            Debug.LogError("You should GenerateDiceData first");
+            Debug.LogError("You should GenerateDiceData first " + name);
         }
     }
 
@@ -450,7 +450,7 @@ public partial class exTextureInfo : ScriptableObject {
 
     public void EndDiceData () {
         exDebug.Assert(shouldDiced);
-
+        exDebug.Assert(diceData.Count == 0);
         diceData.Add (editorDiceUnitWidth);
         diceData.Add (editorDiceUnitHeight);
 
