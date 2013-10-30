@@ -178,7 +178,14 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
     IEnumerator IEnumerable.GetEnumerator () { return this; }
 
     public static void AddDiceData ( exTextureInfo _textureInfo, List<int> _diceData, exTextureInfo.Dice _dice ) {
+        _diceData.Add( _dice.offset_x );
+        _diceData.Add( _dice.offset_y );
+        _diceData.Add( _dice.rotated ? - _dice.width : _dice.width );
+        _diceData.Add( _dice.height );
+        _diceData.Add( _dice.x );
+        _diceData.Add( _dice.y );
         //Debug.Log("rect " + _rect + " " + _x + " " + _y);
+        /* 屏蔽数据压缩
         if ( _dice.width <= 0 || _dice.height <= 0 ) {
             _diceData.Add( DiceEnumerator.EMPTY );
         }
@@ -196,6 +203,7 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
             _diceData.Add( _dice.x );
             _diceData.Add( _dice.y );
         }
+        */
     }
 
     public exTextureInfo.Dice Current {
@@ -212,7 +220,7 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
                 return d;
             }
             if (diceData[dataIndex] >= 0) {
-                d.sizeType = exTextureInfo.DiceType.Trimmed;
+                //d.sizeType = exTextureInfo.DiceType.Trimmed;  屏蔽数据压缩
                 d.offset_x = diceData[dataIndex];
                 d.offset_y = diceData[dataIndex + 1];
                 d.width = diceData[dataIndex + 2];
@@ -222,6 +230,16 @@ public struct DiceEnumerator : IEnumerator<exTextureInfo.Dice>, IEnumerable<exTe
                 if (d.width < 0) {
                     d.rotated = true;
                     d.width = -d.width;
+                }
+                // 由于屏蔽数据压缩，这里需要判断sizeType
+                if ( d.width == diceUnitWidth && d.height == diceUnitHeight ) {
+                    d.sizeType = exTextureInfo.DiceType.Max;
+                }
+                else if ( d.width == 0 || d.height == 0 ) {
+                    d.sizeType = exTextureInfo.DiceType.Empty;
+                }
+                else {
+                    d.sizeType = exTextureInfo.DiceType.Trimmed;
                 }
             }
             else {
