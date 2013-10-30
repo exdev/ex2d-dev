@@ -388,6 +388,14 @@ public class exSpriteAnimation : MonoBehaviour {
     }
 
     // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void Stop () {
+        Stop (curAnimation);
+    }
+
+    // ------------------------------------------------------------------ 
     /// Stop the playing animation, take the action that setup in the 
     /// exSpriteAnimState.stopAction 
     // ------------------------------------------------------------------ 
