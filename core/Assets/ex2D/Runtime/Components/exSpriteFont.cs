@@ -405,7 +405,8 @@ public class exSpriteFont : exLayeredSprite {
             sfp.useKerning = useKerning_;
             sfp.vertexCount = vertexCount_;
             sfp.indexCount = indexCount_;
-            return SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.World, ref topColor_, ref botColor_, layer_.alpha, 
+            float alpha = transparent_ ? 0.0f : layer_.alpha;
+            return SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.World, ref topColor_, ref botColor_, alpha, 
                                                    _vertices, _uvs, _colors32, _indices, vertexBufferIndex, indexBufferIndex);
         }
     }
