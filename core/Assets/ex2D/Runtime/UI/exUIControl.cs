@@ -154,6 +154,7 @@ public class exUIControl : exPlane {
         }
     }
 
+    public int priority = 0;
     public bool useCollider = false;
     public bool grabMouseOrTouch = false;
     public List<EventTrigger> events = new List<EventTrigger>();
