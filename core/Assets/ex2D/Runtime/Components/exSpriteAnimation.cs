@@ -640,6 +640,7 @@ public class exSpriteAnimation : MonoBehaviour {
     private void Play (exSpriteAnimationState _animState, float _time) {
         curAnimation = _animState;
         if (curAnimation != null) {
+            curIndex = -1;
             curAnimation.time = _time;
             Sample();
             enabled = true;
