@@ -239,8 +239,13 @@ public class exUIControl : exPlane {
                                                                        _parameterTypes,
                                                                        null );
                     if ( mi != null ) {
-                        var delegateForMethod = Delegate.CreateDelegate( _delegateType, monoBehaviour, mi);
-                        eventInfo.AddEventHandler(this, delegateForMethod);
+                        Delegate delegateForMethod = Delegate.CreateDelegate( _delegateType, monoBehaviour, mi);
+                        // NOTE: in iPhone, AddEventHandler will report "Attempting to JIT compile method" error.
+                        //       this can only be fixed by use the following code. founded from
+                        //       http://monotouch.2284126.n4.nabble.com/Attempting-to-JIT-compile-method-what-am-I-doing-wrong-td4492920.html
+                        // eventInfo.AddEventHandler(this, delegateForMethod);
+                        MethodInfo addMI = eventInfo.GetAddMethod();
+                        addMI.Invoke( this, new object[] { delegateForMethod } );
                         foundMethod = true;
                     }
                 }
