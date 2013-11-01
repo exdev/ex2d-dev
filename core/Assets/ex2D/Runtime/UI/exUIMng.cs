@@ -302,6 +302,8 @@ public class exUIMng : MonoBehaviour {
 
     // ------------------------------------------------------------------ 
     // Desc: 
+    // NOTE: FindObjectsOfType() will not find deactived GameObjects, 
+    //       so you need to manually add them to exUIMng 
     // ------------------------------------------------------------------ 
 
     void Init () {
