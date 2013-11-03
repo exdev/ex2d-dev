@@ -62,7 +62,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     [System.NonSerialized] internal int indexBufferIndex = -1;
     
     /// fast show hide
-    [System.NonSerialized] protected bool transparent_ = false;
+    [System.NonSerialized] protected bool transparent_ = true;
     public bool transparent {
         get { return transparent_; }
         set {

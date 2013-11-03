@@ -393,7 +393,18 @@ public class exSpriteFont : exLayeredSprite {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
-        base.UpdateBuffers(_vertices, _uvs, _colors32, _indices);
+        // save dirty flag because SpriteFontBuilder.UpdateBuffers will overwrite it
+        bool transparentDirty = (updateFlags & exUpdateFlags.Transparent) != 0;
+        if (transparentDirty) {
+            updateFlags &= ~exUpdateFlags.Transparent;
+            if (transparent_) {
+                updateFlags &= ~exUpdateFlags.Vertex;
+            }
+            else { 
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+
         SpriteFontParams sfp;
         sfp.text = text_;
         sfp.font = font_;
@@ -402,8 +413,17 @@ public class exSpriteFont : exLayeredSprite {
         sfp.useKerning = useKerning_;
         sfp.vertexCount = vertexCount_;
         sfp.indexCount = indexCount_;
-        return SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.World, ref topColor_, ref botColor_, layer_.alpha, 
+        exUpdateFlags res = SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.World, ref topColor_, ref botColor_, layer_.alpha, 
                                                 _vertices, _uvs, _colors32, _indices, vertexBufferIndex, indexBufferIndex);
+        
+        if (transparentDirty && transparent_) {
+            // 如果有exUpdateFlags.Text一样会被UpdateBuffers显示出来，需要重新设为不可见
+            Vector3 samePoint = _vertices.buffer[0];
+            for (int i = 1; i < vertexCount_; ++i) {
+                _vertices.buffer[vertexBufferIndex + i] = samePoint;
+            }
+        }
+        return res;
     }
 
     #endregion  // Functions used to update geometry buffer
