@@ -368,22 +368,16 @@ public class ex3DSpriteFont : exStandaloneSprite {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
-        if (updateFlags == exUpdateFlags.None) {
-            return exUpdateFlags.None;
-        }
-        else {
-            SpriteFontParams sfp;
-            sfp.text = text_;
-            sfp.font = font_;
-            sfp.spacing = spacing_;
-            sfp.textAlign = textAlign_;
-            sfp.useKerning = useKerning_;
-            sfp.vertexCount = vertexCount_;
-            sfp.indexCount = indexCount_;
-            return SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.Self, ref topColor_, ref botColor_, 1.0f, 
-                                                   _vertices, _uvs, _colors32, _indices, 0, 0);
-
-        }
+        SpriteFontParams sfp;
+        sfp.text = text_;
+        sfp.font = font_;
+        sfp.spacing = spacing_;
+        sfp.textAlign = textAlign_;
+        sfp.useKerning = useKerning_;
+        sfp.vertexCount = vertexCount_;
+        sfp.indexCount = indexCount_;
+        return SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.Self, ref topColor_, ref botColor_, 1.0f, 
+                                                _vertices, _uvs, _colors32, _indices, 0, 0);
     }
 
     #endregion  // Functions used to update geometry buffer

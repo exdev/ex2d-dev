@@ -148,7 +148,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
     // ------------------------------------------------------------------ 
     
     protected new void LateUpdate () {
-        if (visible) {
+        if (updateFlags != exUpdateFlags.None && visible) {
             exUpdateFlags meshUpdateFlags = UpdateBuffers (vertices, uvs, colors32, indices);
             exMesh.FlushBuffers (mesh, meshUpdateFlags, vertices, indices, uvs, colors32);
             if ((meshUpdateFlags & exUpdateFlags.Index) != 0) {

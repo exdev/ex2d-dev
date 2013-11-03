@@ -243,8 +243,10 @@ public class exLayer : MonoBehaviour
                     //if (sprite.transparent == false) {
                         sprite.UpdateTransform();
                     //}
-                    exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
-                    meshUpdateFlags |= spriteUpdateFlags;
+                    if (sprite.updateFlags != exUpdateFlags.None) {
+                        exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
+                        meshUpdateFlags |= spriteUpdateFlags;
+                    }
                 }
             }
             mesh.Apply(meshUpdateFlags);

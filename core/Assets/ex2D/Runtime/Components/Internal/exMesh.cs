@@ -26,9 +26,10 @@ public enum exUpdateFlags {
 	Color	    = 8,  ///< update the vertex color
     Normal      = 16, ///< update the normal, not implemented yet
     Text	    = 32, ///< update the text, only used in sprite font
+    Transparent = 64, ///< hide sprite
 
 	VertexAndIndex = (Index | Vertex),
-	AllExcludeIndex = (Vertex | UV | Color | Normal | Text),
+	AllExcludeIndex = (Vertex | UV | Color | Normal | Text | Transparent),
 	All = (AllExcludeIndex | Index),
 };
 

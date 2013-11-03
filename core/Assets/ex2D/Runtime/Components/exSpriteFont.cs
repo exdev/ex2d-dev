@@ -393,22 +393,17 @@ public class exSpriteFont : exLayeredSprite {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
-        if (updateFlags == exUpdateFlags.None) {
-            return exUpdateFlags.None;
-        }
-        else {
-            SpriteFontParams sfp;
-            sfp.text = text_;
-            sfp.font = font_;
-            sfp.spacing = spacing_;
-            sfp.textAlign = textAlign_;
-            sfp.useKerning = useKerning_;
-            sfp.vertexCount = vertexCount_;
-            sfp.indexCount = indexCount_;
-            float alpha = transparent_ ? 0.0f : layer_.alpha;
-            return SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.World, ref topColor_, ref botColor_, alpha, 
-                                                   _vertices, _uvs, _colors32, _indices, vertexBufferIndex, indexBufferIndex);
-        }
+        base.UpdateBuffers(_vertices, _uvs, _colors32, _indices);
+        SpriteFontParams sfp;
+        sfp.text = text_;
+        sfp.font = font_;
+        sfp.spacing = spacing_;
+        sfp.textAlign = textAlign_;
+        sfp.useKerning = useKerning_;
+        sfp.vertexCount = vertexCount_;
+        sfp.indexCount = indexCount_;
+        return SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.World, ref topColor_, ref botColor_, layer_.alpha, 
+                                                _vertices, _uvs, _colors32, _indices, vertexBufferIndex, indexBufferIndex);
     }
 
     #endregion  // Functions used to update geometry buffer

@@ -68,7 +68,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         set {
             if ( transparent_ != value ) {
                 transparent_ = value;
-                updateFlags |= exUpdateFlags.Color;
+                updateFlags |= exUpdateFlags.Transparent;
             }
         }
     }
@@ -267,6 +267,28 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             }
         }
         base.SetClip (_clip);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices = null) {
+        if ((updateFlags & exUpdateFlags.Transparent) != 0) {
+            updateFlags &= ~exUpdateFlags.Transparent;
+            if (transparent_) {
+                Vector3 samePoint = _vertices.buffer[0];
+                for (int i = 1; i < vertexCount_; ++i) {
+                    _vertices.buffer[vertexBufferIndex + i] = samePoint;
+                }
+                updateFlags &= ~exUpdateFlags.Vertex;
+            }
+            else {
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+            return exUpdateFlags.Transparent;
+        }
+        return exUpdateFlags.None;
     }
     
     #region System.IComparable<exLayeredSprite>
