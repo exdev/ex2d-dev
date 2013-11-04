@@ -539,6 +539,9 @@ public class exUIMng : MonoBehaviour {
                 // send press down event
                 if ( curCtrl != null ) {
                     curCtrl.Send_OnPressUp(hotPoint);
+
+                    if ( hotPoint.isTouch )
+                        curCtrl.Send_OnHoverOut(hotPoint);
                 }
 
                 hotPoint.pressed = null;
@@ -593,7 +596,7 @@ public class exUIMng : MonoBehaviour {
                 exHotPoint hotPoint = touchPoints[i];
 
                 // check if active the hotPoint
-                hotPoint.active = Input.GetMouseButton(i) || Input.GetMouseButtonUp(i);
+                hotPoint.active = Input.GetMouseButtonDown(i) || Input.GetMouseButton(i) || Input.GetMouseButtonUp(i);
 
                 // we need clear all internal state when hotpoint is de-active
                 if ( hotPoint.active == false ) {
@@ -602,7 +605,10 @@ public class exUIMng : MonoBehaviour {
                 else {
                     Vector2 lastMousePos = hotPoint.pos;
                     hotPoint.pos = Input.mousePosition;
-                    hotPoint.delta = hotPoint.pos - lastMousePos;
+                    if ( Input.GetMouseButtonDown(i) )
+                        hotPoint.delta = Vector2.zero;
+                    else
+                        hotPoint.delta = hotPoint.pos - lastMousePos;
 
                     Vector3 lastMouseWorldPos = hotPoint.worldPos;
                     hotPoint.worldPos = camera.ScreenToWorldPoint(Input.mousePosition);
