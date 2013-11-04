@@ -816,6 +816,10 @@ class exSceneEditor : EditorWindow {
             for ( int i = 0; i < selection.Length; ++i ) {
                 Transform trans = selection[i];
 
+                PrefabType prefabType = PrefabUtility.GetPrefabType(trans);
+                if ( prefabType == PrefabType.Prefab )
+                    continue;
+
                 // draw layered sprite first
                 exLayeredSprite layeredSprite = trans.GetComponent<exLayeredSprite>();
                 if ( layeredSprite ) {
