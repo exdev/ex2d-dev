@@ -288,6 +288,9 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             }
             return (exUpdateFlags.Transparent | exUpdateFlags.Vertex);
         }
+        else if (transparent_ && (updateFlags & exUpdateFlags.Vertex) != 0) {
+            updateFlags &= ~exUpdateFlags.Vertex;
+        }
         return exUpdateFlags.None;
     }
     
