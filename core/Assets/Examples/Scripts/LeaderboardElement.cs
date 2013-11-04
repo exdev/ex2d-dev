@@ -62,7 +62,7 @@ public class LeaderboardElement : MonoBehaviour {
         WWW www = new WWW(_url);
         yield return www;
 
-        Texture2D textureIcon = null;
+        Texture2D textureIcon = new Texture2D(80,80);
         www.LoadImageIntoTexture(textureIcon);
 
         Init( textureIcon, _name, _score );
