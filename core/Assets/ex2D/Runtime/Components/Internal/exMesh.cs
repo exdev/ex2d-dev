@@ -207,7 +207,6 @@ public class exMesh : MonoBehaviour
             }
             _mesh.normals = normals;
         }
-        _updateFlags = exUpdateFlags.None;
     }
     
     // ------------------------------------------------------------------ 
@@ -232,6 +231,7 @@ public class exMesh : MonoBehaviour
                 gameObject.SetActive(visible);
             }
         }
+        updateFlags = exUpdateFlags.None;
     }
 
     // ------------------------------------------------------------------ 

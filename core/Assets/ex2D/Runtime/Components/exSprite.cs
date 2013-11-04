@@ -341,20 +341,23 @@ public class exSprite : exLayeredSprite, exISprite {
             return applyedFlags;
         }
         else {
-            if (_indices != null) {
-                _vertices.buffer[vertexBufferIndex] = cachedTransform.position;
-                for (int i = indexBufferIndex; i < indexBufferIndex + indexCount_; ++i) {
-                    _indices.buffer[i] = vertexBufferIndex;
+            if (updateFlags != exUpdateFlags.None) {
+                updateFlags = exUpdateFlags.None;   // 防止每帧刷新
+                if (_indices != null) {
+                    _vertices.buffer[vertexBufferIndex] = cachedTransform.position;
+                    for (int i = indexBufferIndex; i < indexBufferIndex + indexCount_; ++i) {
+                        _indices.buffer[i] = vertexBufferIndex;
+                    }
                 }
-                return exUpdateFlags.All;   // TODO: remove from layer if no material
-            }
-            else {
-                Vector3 pos = cachedTransform.position;
-                for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount_; ++i) {
-                    _vertices.buffer[i] = pos;
+                else {
+                    Vector3 pos = cachedTransform.position;
+                    for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount_; ++i) {
+                        _vertices.buffer[i] = pos;
+                    }
                 }
-                return exUpdateFlags.All;   // TODO: remove from layer if no material
+                return exUpdateFlags.All;
             }
+            return exUpdateFlags.None;
         }
     }
     
