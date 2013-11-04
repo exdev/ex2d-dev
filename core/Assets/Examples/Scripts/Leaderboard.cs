@@ -75,7 +75,7 @@ public class Leaderboard : MonoBehaviour {
 
         scrollView.contentSize = new Vector2 ( 480.0f, curY + size.y + margin ); 
         layer.Add(_el);
-        // clipping.Add(_el);
+        clipping.Add(_el);
 
         ++elementCount;
     }
