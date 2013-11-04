@@ -21,6 +21,30 @@ using ex2D.Detail;
 ///////////////////////////////////////////////////////////////////////////////
 
 public partial class exTextureInfo : ScriptableObject {
+
+    public static exTextureInfo Create ( Texture2D _texture ) {
+        exTextureInfo newTextureInfo = ScriptableObject.CreateInstance<exTextureInfo>();
+        Rect rect = new Rect ( 0, 0, _texture.width, _texture.height );
+
+        newTextureInfo.texture = _texture;
+        newTextureInfo.rotated = false;
+        newTextureInfo.trim = false;
+        newTextureInfo.trim_x = (int)rect.x;
+        newTextureInfo.trim_y = (int)rect.y;
+        newTextureInfo.width = (int)rect.width;
+        newTextureInfo.height = (int)rect.height;
+        newTextureInfo.x = (int)rect.x;
+        newTextureInfo.y = (int)rect.y;
+        newTextureInfo.rawWidth = _texture.width;
+        newTextureInfo.rawHeight = _texture.height;
+
+        return newTextureInfo;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+
     public string rawTextureGUID = "";
     public string rawAtlasGUID = "";
     public Texture2D texture; ///< the atlas or raw texture
