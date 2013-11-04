@@ -422,12 +422,12 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             _indices.Clear();
         }
         if (visible) {
+            UpdateTransform();
             exUpdateFlags originalFlags = updateFlags;
             int originalVertexBufferIndex = vertexBufferIndex;
             int originalIndexBufferIndex = indexBufferIndex;
 
             FillBuffers(_vertices, _uvs, _colors);
-            UpdateTransform();
 
             if (_indices != null) {
                 _indices.AddRange(indexCount);
