@@ -52,6 +52,31 @@ class exPlaneInspector : Editor {
 
         DoInspectorGUI ();
         serializedObject.ApplyModifiedProperties ();
+
+        // if we have sprite
+        exPlane targetPlane = target as exPlane;
+        if ( targetPlane.hasSprite ) {
+            exSpriteBase spriteBase = targetPlane.GetComponent<exSpriteBase>();
+            if ( targetPlane.width != spriteBase.width ) {
+                targetPlane.width = spriteBase.width;
+                EditorUtility.SetDirty(targetPlane);
+            }
+
+            if ( targetPlane.height != spriteBase.height ) {
+                targetPlane.height = spriteBase.height;
+                EditorUtility.SetDirty(targetPlane);
+            }
+
+            if ( targetPlane.anchor != spriteBase.anchor ) {
+                targetPlane.anchor = spriteBase.anchor;
+                EditorUtility.SetDirty(targetPlane);
+            }
+
+            if ( targetPlane.offset != spriteBase.offset ) {
+                targetPlane.offset = spriteBase.offset;
+                EditorUtility.SetDirty(targetPlane);
+            }
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -330,31 +355,6 @@ class exPlaneInspector : Editor {
                     plane.offset = offsetProp.vector2Value;
                     EditorUtility.SetDirty(plane);
                 }
-            }
-        }
-
-        // if we have sprite
-        exPlane targetPlane = target as exPlane;
-        if ( targetPlane.hasSprite ) {
-            exSpriteBase spriteBase = targetPlane.GetComponent<exSpriteBase>();
-            if ( targetPlane.width != spriteBase.width ) {
-                targetPlane.width = spriteBase.width;
-                EditorUtility.SetDirty(targetPlane);
-            }
-
-            if ( targetPlane.height != spriteBase.height ) {
-                targetPlane.height = spriteBase.height;
-                EditorUtility.SetDirty(targetPlane);
-            }
-
-            if ( targetPlane.anchor != spriteBase.anchor ) {
-                targetPlane.anchor = spriteBase.anchor;
-                EditorUtility.SetDirty(targetPlane);
-            }
-
-            if ( targetPlane.offset != spriteBase.offset ) {
-                targetPlane.offset = spriteBase.offset;
-                EditorUtility.SetDirty(targetPlane);
             }
         }
     }

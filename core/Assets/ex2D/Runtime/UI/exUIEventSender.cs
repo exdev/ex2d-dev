@@ -66,7 +66,7 @@ public class exUIEventSender : MonoBehaviour {
                                                                                }, 
                                                                                null );
                             if ( mi != null ) {
-                                var delegateForMethod = Delegate.CreateDelegate( typeof(System.Action<GameObject>), monoBehaviour, mi);
+                                Delegate delegateForMethod = Delegate.CreateDelegate( typeof(System.Action<GameObject>), monoBehaviour, mi);
                                 eventInfo.AddEventHandler(control, delegateForMethod);
                                 foundMethod = true;
                             }

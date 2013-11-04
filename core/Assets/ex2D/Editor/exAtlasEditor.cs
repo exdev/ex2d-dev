@@ -1132,6 +1132,7 @@ partial class exAtlasEditor : EditorWindow {
             foreach ( exTextureInfo info in curEdit.textureInfos ) {
                 info.ClearDiceData();
                 if ( info.shouldDiced ) {
+                    info.GenerateDiceData();
                     info.BeginDiceData();
                 }
             }
@@ -1162,6 +1163,11 @@ partial class exAtlasEditor : EditorWindow {
                 if ( info.shouldDiced ) {
                     info.EndDiceData();
                 }
+            }
+
+            //
+            foreach ( exBitmapFont bitmapFont in curEdit.bitmapFonts ) {
+                EditorUtility.SetDirty(bitmapFont);
             }
         }
         catch ( exAtlasUtility.LayoutException _exception ) {

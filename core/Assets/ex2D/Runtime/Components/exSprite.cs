@@ -310,9 +310,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
-        if (updateFlags == exUpdateFlags.None) {
-            return exUpdateFlags.None;
-        }
+        exUpdateFlags applyedFlags = base.UpdateBuffers(_vertices, _uvs, _colors32, _indices);
         if (textureInfo_ != null) {
             switch (spriteType_) {
             case exSpriteType.Simple:
@@ -333,43 +331,33 @@ public class exSprite : exLayeredSprite, exISprite {
                 break;
             }
             if ((updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null) {
-                exDebug.Assert (layer_ != null);
-                Color32 color32;
-                if (transparent_ == false) {
-                    color32 = new Color (color_.r, color_.g, color_.b, color_.a * layer_.alpha);
-                } else {
-                    color32 = new Color32 ();
-                }
+                Color32 color32 = new Color (color_.r, color_.g, color_.b, color_.a * layer_.alpha);
                 for (int i = 0; i < vertexCount_; ++i) {
                     _colors32.buffer [vertexBufferIndex + i] = color32;
                 }
             }
-            //if (transparent_ == false) {
-            exUpdateFlags applyedFlags = updateFlags;
+            applyedFlags |= updateFlags;
             updateFlags = exUpdateFlags.None;
             return applyedFlags;
-            //}
-            //else {
-            //    exUpdateFlags applyedFlags = (updateFlags & exUpdateFlags.Color);
-            //    updateFlags &= ~exUpdateFlags.Color;
-            //    return applyedFlags;
-            //}
         }
         else {
-            if (_indices != null) {
-                _vertices.buffer[vertexBufferIndex] = cachedTransform.position;
-                for (int i = indexBufferIndex; i < indexBufferIndex + indexCount_; ++i) {
-                    _indices.buffer[i] = vertexBufferIndex;
+            if (updateFlags != exUpdateFlags.None) {
+                updateFlags = exUpdateFlags.None;   // 防止每帧刷新
+                if (_indices != null) {
+                    _vertices.buffer[vertexBufferIndex] = cachedTransform.position;
+                    for (int i = indexBufferIndex; i < indexBufferIndex + indexCount_; ++i) {
+                        _indices.buffer[i] = vertexBufferIndex;
+                    }
                 }
-                return exUpdateFlags.All;   // TODO: remove from layer if no material
-            }
-            else {
-                Vector3 pos = cachedTransform.position;
-                for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount_; ++i) {
-                    _vertices.buffer[i] = pos;
+                else {
+                    Vector3 pos = cachedTransform.position;
+                    for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount_; ++i) {
+                        _vertices.buffer[i] = pos;
+                    }
                 }
-                return exUpdateFlags.All;   // TODO: remove from layer if no material
+                return exUpdateFlags.All;
             }
+            return exUpdateFlags.None;
         }
     }
     

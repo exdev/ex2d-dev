@@ -31,7 +31,7 @@ Shader "ex2D/Alpha Blended (Clipping)" {
         Fog { Mode Off }
         Blend SrcAlpha OneMinusSrcAlpha
 
-        Pass {
+        pass {
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
@@ -39,7 +39,7 @@ Shader "ex2D/Alpha Blended (Clipping)" {
 
 			#include "UnityCG.cginc"
 
-			sampler2D _MainTex;
+			uniform sampler2D _MainTex;
 			float4 _ClipRect = float4(0.0, 0.0, 1.0, 1.0);
 			float4x4 _ClipMatrix;
 

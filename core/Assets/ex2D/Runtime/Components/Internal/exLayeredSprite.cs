@@ -62,13 +62,13 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     [System.NonSerialized] internal int indexBufferIndex = -1;
     
     /// fast show hide
-    [System.NonSerialized] protected bool transparent_ = false;
+    [System.NonSerialized] protected bool transparent_ = true;
     public bool transparent {
         get { return transparent_; }
         set {
             if ( transparent_ != value ) {
                 transparent_ = value;
-                updateFlags |= exUpdateFlags.Color;
+                updateFlags |= exUpdateFlags.Transparent;
             }
         }
     }
@@ -260,13 +260,38 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
 
     public override void SetClip (exClipping _clip = null) {
-        if (_clip != null) {
+        if (_clip != null && layer_ != null) {
             if (_clip.transform.IsChildOf (layer_.transform) == false) {
                 Debug.LogError ("Can not add to clip which not in current layer!");
                 return;
             }
         }
         base.SetClip (_clip);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices = null) {
+        if ((updateFlags & exUpdateFlags.Transparent) != 0) {
+            updateFlags &= ~exUpdateFlags.Transparent;
+            if (transparent_) {
+                Vector3 samePoint = _vertices.buffer[0];
+                for (int i = 1; i < vertexCount_; ++i) {
+                    _vertices.buffer[vertexBufferIndex + i] = samePoint;
+                }
+                updateFlags &= ~exUpdateFlags.Vertex;
+            }
+            else {
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+            return (exUpdateFlags.Transparent | exUpdateFlags.Vertex);
+        }
+        else if (transparent_ && (updateFlags & exUpdateFlags.Vertex) != 0) {
+            updateFlags &= ~exUpdateFlags.Vertex;
+        }
+        return exUpdateFlags.None;
     }
     
     #region System.IComparable<exLayeredSprite>
@@ -397,12 +422,12 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             _indices.Clear();
         }
         if (visible) {
+            UpdateTransform();
             exUpdateFlags originalFlags = updateFlags;
             int originalVertexBufferIndex = vertexBufferIndex;
             int originalIndexBufferIndex = indexBufferIndex;
 
             FillBuffers(_vertices, _uvs, _colors);
-            UpdateTransform();
 
             if (_indices != null) {
                 _indices.AddRange(indexCount);

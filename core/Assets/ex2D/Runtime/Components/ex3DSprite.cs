@@ -293,9 +293,6 @@ public class ex3DSprite : exStandaloneSprite, exISprite {
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
         exDebug.Assert(textureInfo_ != null, "textureInfo_ == null");
-        if (updateFlags == exUpdateFlags.None) {
-            return exUpdateFlags.None;
-        }
         
         switch (spriteType_) {
         case exSpriteType.Simple:

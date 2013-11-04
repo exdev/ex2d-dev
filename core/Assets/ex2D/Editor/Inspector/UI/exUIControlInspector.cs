@@ -31,6 +31,7 @@ class exUIControlInspector : exPlaneInspector {
     }
     protected static Styles styles = null;
     
+    protected SerializedProperty priorityProp;
     protected SerializedProperty activeProp;
     protected SerializedProperty grabMouseOrTouchProp;
     protected SerializedProperty useColliderProp;
@@ -42,6 +43,7 @@ class exUIControlInspector : exPlaneInspector {
     protected override void InitProperties () {
         base.InitProperties();
 
+        priorityProp = serializedObject.FindProperty("priority");
         activeProp = serializedObject.FindProperty("active_");
         grabMouseOrTouchProp = serializedObject.FindProperty("grabMouseOrTouch");
         useColliderProp = serializedObject.FindProperty("useCollider");
@@ -58,6 +60,8 @@ class exUIControlInspector : exPlaneInspector {
         if ( styles == null ) {
             styles = new Styles();
         }
+
+        EditorGUILayout.PropertyField ( priorityProp );
 
         // active
         EditorGUI.BeginChangeCheck();

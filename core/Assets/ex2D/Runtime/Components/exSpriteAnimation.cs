@@ -373,18 +373,37 @@ public class exSpriteAnimation : MonoBehaviour {
     }
 
     // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void Play (string _name, float _time) {
+        exSpriteAnimationState anim = GetAnimation(_name);
+        if (anim != null) {
+            Play(anim, _time);
+        }
+    }
+
+    // ------------------------------------------------------------------ 
     /// \param _name the name of the animation to play
     /// \param _frame the frame count
     /// Play the animation by _name, start from the _frame
     // ------------------------------------------------------------------ 
 
-    public void Play (string _name, int _frame) {
+    public void PlayByFrame (string _name, int _frame) {
         exSpriteAnimationState anim = GetAnimation(_name);
         if (anim != null) {
             float unitSeconds = 1.0f / anim.clip.frameRate;
             float time = _frame * unitSeconds;
             Play(anim, time);
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void Stop () {
+        Stop (curAnimation);
     }
 
     // ------------------------------------------------------------------ 
@@ -632,6 +651,7 @@ public class exSpriteAnimation : MonoBehaviour {
     private void Play (exSpriteAnimationState _animState, float _time) {
         curAnimation = _animState;
         if (curAnimation != null) {
+            curIndex = -1;
             curAnimation.time = _time;
             Sample();
             enabled = true;

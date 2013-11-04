@@ -78,8 +78,8 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
                     EditorUtility.SetDirty(sp);
                 }
                 EditorGUI.indentLevel++;
-                EditorGUI.BeginChangeCheck();
                 if (fontType == exFont.TypeForEditor.Bitmap) {
+                    EditorGUI.BeginChangeCheck();
                     exBitmapFont font = EditorGUILayout.ObjectField ("Font", sp.bitmapFont, typeof(exBitmapFont), false) as exBitmapFont;
                     if (EditorGUI.EndChangeCheck()) {
                         sp.SetFont(font);
@@ -87,6 +87,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
                     }
                 }
                 else {
+                    EditorGUI.BeginChangeCheck();
                     Font font = EditorGUILayout.ObjectField ("Font", sp.dynamicFont, typeof(Font), false) as Font;
                     sp.fontStyle = (FontStyle)EditorGUILayout.EnumPopup("Font Style", sp.fontStyle);
                     sp.fontSize = EditorGUILayout.IntField("Font Size", sp.fontSize);

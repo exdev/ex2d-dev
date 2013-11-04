@@ -194,6 +194,23 @@ public class ex2DRenderer : MonoBehaviour {
             _layer.gameObject.Destroy();
         }
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void InsertLayer ( int _idx, exLayer _layer ) {
+        if ( _idx < 0 )
+            _idx = 0;
+        if ( _idx >= layerList.Count )
+            _idx = layerList.Count;
+
+        layerList.Insert( _idx, _layer );
+        ResortLayerDepth();
+
+        //
+        _layer.GenerateMeshes();
+    }
     
     // ------------------------------------------------------------------ 
     /// Find the layer by name, if not existed, return null

@@ -393,21 +393,42 @@ public class exSpriteFont : exLayeredSprite {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
-        if (updateFlags == exUpdateFlags.None) {
-            return exUpdateFlags.None;
+        // save dirty flag because SpriteFontBuilder.UpdateBuffers will overwrite it
+        exUpdateFlags applyedFlags = exUpdateFlags.None;
+        bool transparentDirty = (updateFlags & exUpdateFlags.Transparent) != 0;
+        if (transparentDirty) {
+            updateFlags &= ~exUpdateFlags.Transparent;
+            if (transparent_) {
+                updateFlags &= ~exUpdateFlags.Vertex;
+            }
+            else { 
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+            applyedFlags |= (exUpdateFlags.Transparent | exUpdateFlags.Vertex);
         }
-        else {
-            SpriteFontParams sfp;
-            sfp.text = text_;
-            sfp.font = font_;
-            sfp.spacing = spacing_;
-            sfp.textAlign = textAlign_;
-            sfp.useKerning = useKerning_;
-            sfp.vertexCount = vertexCount_;
-            sfp.indexCount = indexCount_;
-            return SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.World, ref topColor_, ref botColor_, layer_.alpha, 
-                                                   _vertices, _uvs, _colors32, _indices, vertexBufferIndex, indexBufferIndex);
+        else if (transparent_ && (updateFlags & exUpdateFlags.Vertex) != 0) {
+            updateFlags &= ~exUpdateFlags.Vertex;
         }
+
+        SpriteFontParams sfp;
+        sfp.text = text_;
+        sfp.font = font_;
+        sfp.spacing = spacing_;
+        sfp.textAlign = textAlign_;
+        sfp.useKerning = useKerning_;
+        sfp.vertexCount = vertexCount_;
+        sfp.indexCount = indexCount_;
+        applyedFlags |= SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.World, ref topColor_, ref botColor_, layer_.alpha, 
+                                                _vertices, _uvs, _colors32, _indices, vertexBufferIndex, indexBufferIndex);
+        
+        if (transparentDirty && transparent_) {
+            // 如果有exUpdateFlags.Text一样会被UpdateBuffers显示出来，需要重新设为不可见
+            Vector3 samePoint = _vertices.buffer[0];
+            for (int i = 1; i < vertexCount_; ++i) {
+                _vertices.buffer[vertexBufferIndex + i] = samePoint;
+            }
+        }
+        return applyedFlags;
     }
 
     #endregion  // Functions used to update geometry buffer

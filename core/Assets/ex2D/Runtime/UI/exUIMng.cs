@@ -37,7 +37,7 @@ public class RaycastSorter : IComparer {
 // Desc: 
 // ------------------------------------------------------------------ 
 
-public class ControlSorter: IComparer<exUIControl> {
+public class ControlSorterByLevel: IComparer<exUIControl> {
     public int Compare( exUIControl _a, exUIControl _b ) {
         exUIControl parent = null;
         int level_a = 0;
@@ -58,6 +58,44 @@ public class ControlSorter: IComparer<exUIControl> {
         }
 
         return level_a - level_b;
+    }
+}
+
+// ------------------------------------------------------------------ 
+// Desc: 
+// ------------------------------------------------------------------ 
+
+public class ControlSorterByPriority: IComparer<exUIControl> {
+    public int Compare( exUIControl _a, exUIControl _b ) {
+        return _b.priority - _a.priority;
+    }
+}
+
+// ------------------------------------------------------------------ 
+// Desc: 
+// ------------------------------------------------------------------ 
+
+public class ControlSorterByPriority2: IComparer<exUIControl> {
+    public int Compare( exUIControl _a, exUIControl _b ) {
+        exUIControl parent = null;
+        int priority_a = _a.priority;
+        int priority_b = _b.priority;
+
+        // a level
+        parent = _a.parent;
+        while ( parent ) {
+            priority_a += parent.priority; 
+            parent = parent.parent;
+        }
+
+        // b level
+        parent = _b.parent;
+        while ( parent ) {
+            priority_b += parent.priority; 
+            parent = parent.parent;
+        }
+
+        return priority_b - priority_a;
     }
 }
 
@@ -126,9 +164,8 @@ public class exUIMng : MonoBehaviour {
         }
     }
 
-    // static  RaycastSorter raycastSorter = new RaycastSorter();
-    static ControlSorter controlSorter = new ControlSorter();
-    static ControlSorterByZ controlSorterByZ = new ControlSorterByZ();
+    static ControlSorterByPriority controlSorterByPrioirty = new ControlSorterByPriority();
+    static ControlSorterByLevel controlSorterByLevel = new ControlSorterByLevel();
 
     ///////////////////////////////////////////////////////////////////////////////
     // serializable 
@@ -154,7 +191,6 @@ public class exUIMng : MonoBehaviour {
     exHotPoint[] mousePoints = new exHotPoint[3];
     exHotPoint[] touchPoints = new exHotPoint[10];
     exUIControl focus = null; // the Input focus ( usually, the keyboard focus )
-
 
     ///////////////////////////////////////////////////////////////////////////////
     // static functions
@@ -266,6 +302,8 @@ public class exUIMng : MonoBehaviour {
 
     // ------------------------------------------------------------------ 
     // Desc: 
+    // NOTE: FindObjectsOfType() will not find deactived GameObjects, 
+    //       so you need to manually add them to exUIMng 
     // ------------------------------------------------------------------ 
 
     void Init () {
@@ -501,6 +539,9 @@ public class exUIMng : MonoBehaviour {
                 // send press down event
                 if ( curCtrl != null ) {
                     curCtrl.Send_OnPressUp(hotPoint);
+
+                    if ( hotPoint.isTouch )
+                        curCtrl.Send_OnHoverOut(hotPoint);
                 }
 
                 hotPoint.pressed = null;
@@ -555,7 +596,7 @@ public class exUIMng : MonoBehaviour {
                 exHotPoint hotPoint = touchPoints[i];
 
                 // check if active the hotPoint
-                hotPoint.active = Input.GetMouseButton(i) || Input.GetMouseButtonUp(i);
+                hotPoint.active = Input.GetMouseButtonDown(i) || Input.GetMouseButton(i) || Input.GetMouseButtonUp(i);
 
                 // we need clear all internal state when hotpoint is de-active
                 if ( hotPoint.active == false ) {
@@ -564,7 +605,10 @@ public class exUIMng : MonoBehaviour {
                 else {
                     Vector2 lastMousePos = hotPoint.pos;
                     hotPoint.pos = Input.mousePosition;
-                    hotPoint.delta = hotPoint.pos - lastMousePos;
+                    if ( Input.GetMouseButtonDown(i) )
+                        hotPoint.delta = Vector2.zero;
+                    else
+                        hotPoint.delta = hotPoint.pos - lastMousePos;
 
                     Vector3 lastMouseWorldPos = hotPoint.worldPos;
                     hotPoint.worldPos = camera.ScreenToWorldPoint(Input.mousePosition);
@@ -617,7 +661,7 @@ public class exUIMng : MonoBehaviour {
     exUIControl PickControl ( Vector2 _screenPos ) {
         // pick 2D controls
         Vector3 worldPointerPos = camera.ScreenToWorldPoint ( _screenPos );
-        controls.Sort(controlSorterByZ);
+        controls.Sort(controlSorterByPrioirty);
         for ( int i = 0; i < controls.Count; ++i ) {
             exUIControl ctrl = controls[i];
             exUIControl resultCtrl = RecursivelyGetUIControl ( ctrl, worldPointerPos );
@@ -630,21 +674,6 @@ public class exUIMng : MonoBehaviour {
         ray.origin = new Vector3 ( ray.origin.x, ray.origin.y, camera.transform.position.z );
         RaycastHit[] hits = Physics.RaycastAll(ray);
 
-        // DISABLE { 
-        // System.Array.Sort(hits, raycastSorter);
-        // if ( hits.Length > 0 ) {
-        //     for ( int i = 0; i < hits.Length; ++i ) {
-        //         RaycastHit hit = hits[i];
-        //         GameObject go = hit.collider.gameObject;
-        //         exUIControl ctrl = go.GetComponent<exUIControl>();
-        //         if ( ctrl && ctrl.activeSelf ) {
-        //             return ctrl;
-        //         }
-        //     }
-        // }
-        // return null;
-        // } DISABLE end 
-
         List<exUIControl> hitControls = new List<exUIControl>();
         for ( int i = 0; i < hits.Length; ++i ) {
             RaycastHit hit = hits[i];
@@ -655,7 +684,7 @@ public class exUIMng : MonoBehaviour {
             }
         }
         if ( hitControls.Count > 0 ) {
-            hitControls.Sort(controlSorter);
+            hitControls.Sort(controlSorterByLevel);
             return hitControls[hitControls.Count-1]; 
         }
 
