@@ -195,16 +195,10 @@ public class exMesh : MonoBehaviour
             _mesh.colors32 = _colors32.FastToArray();
         }
         if ((_updateFlags & exUpdateFlags.Index) != 0) {
-            _mesh.triangles = _indices.FastToArray();      // During runtime, assigning triangles will automatically Recalculate the bounding volume.
-#if UNITY_EDITOR
-            if (UnityEditor.EditorApplication.isPlaying == false) {
-                _mesh.RecalculateBounds();
-            }
-#endif
+            _mesh.triangles = _indices.FastToArray();
         }
-        else if((_updateFlags & exUpdateFlags.Vertex) != 0) { 
-            // 如果没有更新triangles并且更新了vertex位置，则需要手动更新bbox
-            _mesh.RecalculateBounds();
+        if ((_updateFlags & exUpdateFlags.Index) != 0 || (_updateFlags & exUpdateFlags.Vertex) != 0) {
+            _mesh.RecalculateBounds();  // Sometimes Unity will not automatically recalculate the bounding volume.
         }
         if ((_updateFlags & exUpdateFlags.Normal) != 0) {
             Vector3[] normals = new Vector3[_vertices.Count];
@@ -290,6 +284,13 @@ public class exMesh : MonoBehaviour
             }
             mesh1 = null;
         }
+    }
+
+    [ContextMenu("Recalculate Bounds")]
+    [System.Diagnostics.Conditional("EX_DEBUG")]
+    public void RecalculateBounds () {
+        Mesh mesh = GetMeshBuffer();
+        mesh.RecalculateBounds();
     }
 
     // ------------------------------------------------------------------ 

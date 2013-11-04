@@ -310,7 +310,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
-        base.UpdateBuffers(_vertices, _uvs, _colors32, _indices);
+        exUpdateFlags applyedFlags = base.UpdateBuffers(_vertices, _uvs, _colors32, _indices);
         if (textureInfo_ != null) {
             switch (spriteType_) {
             case exSpriteType.Simple:
@@ -336,7 +336,7 @@ public class exSprite : exLayeredSprite, exISprite {
                     _colors32.buffer [vertexBufferIndex + i] = color32;
                 }
             }
-            exUpdateFlags applyedFlags = updateFlags;
+            applyedFlags |= updateFlags;
             updateFlags = exUpdateFlags.None;
             return applyedFlags;
         }
