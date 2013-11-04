@@ -68,7 +68,7 @@ public class Leaderboard : MonoBehaviour {
     void AddElement ( GameObject _el ) {
         Vector2 size = new Vector2( 480.0f, 110.0f );
         float margin = 10.0f;
-        float curY = elementCount * size.y + (elementCount == 0 ? 0 : (elementCount-1) * margin);
+        float curY = elementCount * size.y + (elementCount == 0 ? 0 : elementCount * margin);
 
         _el.transform.parent = scrollView.contentAnchor.transform;
         _el.transform.localPosition = new Vector3( 0.0f, -curY, _el.transform.position.z ); 
