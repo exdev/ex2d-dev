@@ -251,6 +251,11 @@ public class exClipping : exPlane {
             mat = new Material(_shader);
             mat.hideFlags = HideFlags.DontSave;
             mat.mainTexture = _texture;
+
+            // also update clip rect
+            Rect rect = GetWorldAABoundingRect ();
+            Vector4 clipRect = new Vector4( rect.center.x, rect.center.y, rect.width, rect.height ); 
+            mat.SetVector ( "_ClipRect", clipRect );
             materialTable[key] = mat;
         }
         return mat;
