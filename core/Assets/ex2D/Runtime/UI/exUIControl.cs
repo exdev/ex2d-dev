@@ -224,6 +224,8 @@ public class exUIControl : exPlane {
             foreach ( SlotInfo slot in _slots ) {
 
                 bool foundMethod = false;
+                if ( slot.receiver == null )
+                    continue;
 
                 MonoBehaviour[] allMonoBehaviours = slot.receiver.GetComponents<MonoBehaviour>();
                 for ( int i = 0; i < allMonoBehaviours.Length; ++i ) {
