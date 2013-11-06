@@ -42,6 +42,8 @@ public class Leaderboard : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void Awake () {
+        Application.targetFrameRate = 60;
+
         scrollView = GetComponentInChildren<exUIScrollView>();
         clipping = GetComponentInChildren<exClipping>();
 

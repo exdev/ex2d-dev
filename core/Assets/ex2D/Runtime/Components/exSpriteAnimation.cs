@@ -411,7 +411,7 @@ public class exSpriteAnimation : MonoBehaviour {
     /// exSpriteAnimState.stopAction 
     // ------------------------------------------------------------------ 
 
-    public void Stop (exSpriteAnimationState _animState) {
+    public void Stop ( exSpriteAnimationState _animState ) {
         if ( _animState != null ) {
             exSpriteAnimationClip.StopAction stopAction = _animState.stopAction;
 
@@ -679,12 +679,26 @@ public class exSpriteAnimation : MonoBehaviour {
                 curAnimation.wrapMode == WrapMode.ClampForever)
             {
                 if (curAnimation.speed > 0.0f && curAnimation.frame >= curAnimation.totalFrames) {
-                    stop = true;
-                    curAnimation.frame = curAnimation.totalFrames;
+                    if ( curAnimation.wrapMode == WrapMode.ClampForever ) {
+                        stop = false;
+                        curAnimation.frame = curAnimation.totalFrames;
+                        curAnimation.time = (float)curAnimation.frame/curAnimation.clip.frameRate;
+                    }
+                    else {
+                        stop = true;
+                        curAnimation.frame = curAnimation.totalFrames;
+                    }
                 }
                 else if (curAnimation.speed < 0.0f && curAnimation.frame < 0) {
-                    stop = true;
-                    curAnimation.frame = 0;
+                    if ( curAnimation.wrapMode == WrapMode.ClampForever ) {
+                        stop = false;
+                        curAnimation.time = 0;
+                        curAnimation.frame = 0;
+                    }
+                    else {
+                        stop = true;
+                        curAnimation.frame = 0;
+                    }
                 }
             }
 
