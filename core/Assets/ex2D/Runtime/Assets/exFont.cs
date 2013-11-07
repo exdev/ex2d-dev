@@ -197,7 +197,7 @@ using System.Collections.Generic;
             if (bitmapFont_ != null) {
                 return bitmapFont_.texture;
             }
-            else if (dynamicFont_ != null) {
+            else if (dynamicFont_ != null && dynamicFont_.material != null) {
                 return dynamicFont_.material.mainTexture as Texture2D;
             }
             return null;
