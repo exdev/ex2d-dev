@@ -60,8 +60,16 @@ public class ex2DRenderer : MonoBehaviour {
             return instance_;
         }
     }
-    
-    private Camera cachedCamera;
+
+    [System.NonSerialized] private static Camera cachedCamera_;
+    public Camera cachedCamera {
+        get {
+            if (cachedCamera_ == null) {
+                cachedCamera_ = camera;
+            }
+            return cachedCamera_;
+        }
+    }
     
     private static Dictionary<MaterialTableKey, Material> materialTable = new Dictionary<MaterialTableKey, Material>(MaterialTableKey.Comparer.instance);
 
@@ -81,7 +89,6 @@ public class ex2DRenderer : MonoBehaviour {
         if (instance_ == null) {
             instance_ = this;
         }
-        cachedCamera = camera;
     }
     
     // ------------------------------------------------------------------ 
@@ -94,7 +101,6 @@ public class ex2DRenderer : MonoBehaviour {
             if (instance_ == null) {
                 instance_ = this;
             }
-            cachedCamera = camera;
         }
 #endif
         for ( int i = 0; i < layerList.Count; ++i ) {
@@ -128,7 +134,7 @@ public class ex2DRenderer : MonoBehaviour {
         if (ReferenceEquals(this, instance_)) {
             instance_ = null;
         }
-        cachedCamera = null;
+        cachedCamera_ = null;
     }
 
     // ------------------------------------------------------------------ 

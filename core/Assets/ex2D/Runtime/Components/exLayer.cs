@@ -453,14 +453,15 @@ public class exLayer : MonoBehaviour
     }
         
     // ------------------------------------------------------------------ 
-    /// Desc:
+    /// 如果Hierarchy中有未加入到layer中的sprite，初始化他们。
     // ------------------------------------------------------------------ 
         
     public void GenerateMeshes () {
-        nextSpriteUniqueId = 0;
         exLayeredSprite[] spriteList = GetComponentsInChildren<exLayeredSprite>(true);
         foreach (exLayeredSprite sprite in spriteList) {
-            DoAddSprite(sprite, false);
+            if (ReferenceEquals(sprite.layer, this) == false) {
+                DoAddSprite(sprite, false);
+            }
         }
     }
 
@@ -492,6 +493,7 @@ public class exLayer : MonoBehaviour
             }
         }
         meshList.Clear();
+        nextSpriteUniqueId = 0;
     }
 
     // ------------------------------------------------------------------ 
