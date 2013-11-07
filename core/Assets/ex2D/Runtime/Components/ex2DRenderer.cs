@@ -61,7 +61,7 @@ public class ex2DRenderer : MonoBehaviour {
         }
     }
 
-    [System.NonSerialized] private static Camera cachedCamera_;
+    [System.NonSerialized] private Camera cachedCamera_ = null;
     public Camera cachedCamera {
         get {
             if (cachedCamera_ == null) {
@@ -212,10 +212,10 @@ public class ex2DRenderer : MonoBehaviour {
             _idx = layerList.Count;
 
         layerList.Insert( _idx, _layer );
-        ResortLayerDepth();
 
         //
         _layer.GenerateMeshes();
+        ResortLayerDepth();
     }
     
     // ------------------------------------------------------------------ 

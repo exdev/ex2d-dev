@@ -146,9 +146,7 @@ public static class exSpriteUtility {
                 _sprite.updateFlags |= exUpdateFlags.Vertex;
             }
             else {
-                if (_sprite.customSize == false && (_newTi.width != _sprite.width || _newTi.height != _sprite.height)) {
-                    _sprite.width = _newTi.width;
-                    _sprite.height = _newTi.height;
+                if (_sprite.customSize == false && (old == null || (_newTi.width != old.width || _newTi.height != old.height))) {
                     _sprite.updateFlags |= exUpdateFlags.Vertex;
                 }
             }
