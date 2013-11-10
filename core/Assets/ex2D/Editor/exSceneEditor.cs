@@ -91,6 +91,7 @@ class exSceneEditor : EditorWindow {
 
     int firstResolutionIdx = 0;
     int secondResolutionIdx = 0;
+    bool doDrag = false;
 
     ///////////////////////////////////////////////////////////////////////////////
     // builtin function override
@@ -127,6 +128,7 @@ class exSceneEditor : EditorWindow {
         rectSelection = new exRectSelection<Object>( PickObject,
                                                      PickRectObjects,
                                                      ConfirmRectSelection );
+        doDrag = false;
     }
     
     // ------------------------------------------------------------------ 
@@ -143,11 +145,19 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void OnSelectionChange () {
+        Repaint();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void OnInspectorUpdate () {
         // TODO: this make selection can not select exMeshes, confirm with Jare { 
         // ex2DRenderer.instance.ForceRenderScene();
         // } TODO end 
-        Repaint();
+        // Repaint();
     }
 
     // ------------------------------------------------------------------ 
@@ -647,6 +657,7 @@ class exSceneEditor : EditorWindow {
                          o is exUILayoutInfo ) 
                     {
                         DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                        doDrag = true;
                         break;
                     }
                 }
@@ -663,6 +674,7 @@ class exSceneEditor : EditorWindow {
         case EventType.DragPerform:
             if ( _rect.Contains(e.mousePosition) ) {
                 DragAndDrop.AcceptDrag();
+                doDrag = false;
 
                 foreach ( Object o in DragAndDrop.objectReferences ) {
                     GameObject newGO = null; 
@@ -845,7 +857,7 @@ class exSceneEditor : EditorWindow {
             DrawResolutionRect ( firstResolutionIdx, Color.yellow );
 
             // Show a copy icon on the drag
-            if ( DragAndDrop.visualMode == DragAndDropVisualMode.Copy ) {
+            if ( doDrag ) {
                 foreach ( Object o in draggingObjects ) {
                     if ( o is exTextureInfo ) {
                         exEditorUtility.GL_DrawTextureInfo ( o as exTextureInfo, 

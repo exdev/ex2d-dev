@@ -147,7 +147,7 @@ public class EffectState_Scale : EffectState_Base {
             timer += _delta;
 
             float ratio = func ( timer/info.duration );
-            Vector3 result = Vector3.Lerp( from, to, ratio );
+            Vector3 result = exMath.Lerp( from, to, ratio );
             if ( timer >= info.duration ) {
                 timer = 0.0f;
                 start = false;
@@ -180,7 +180,7 @@ public class EffectState_Offset : EffectState_Base {
             timer += _delta;
 
             float ratio = func ( timer/info.duration );
-            Vector2 result = Vector2.Lerp( from, to, ratio );
+            Vector2 result = exMath.Lerp( from, to, ratio );
             if ( timer >= info.duration ) {
                 timer = 0.0f;
                 start = false;
@@ -213,7 +213,7 @@ public class EffectState_Color : EffectState_Base {
             timer += _delta;
 
             float ratio = func ( timer/info.duration );
-            Color result = Color.Lerp( from, to, ratio );
+            Color result = exMath.Lerp( from, to, ratio );
             if ( timer >= info.duration ) {
                 timer = 0.0f;
                 start = false;
@@ -408,6 +408,12 @@ public class exUIEffect : MonoBehaviour {
                 _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
                     enabled = true;
                     _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                };
+                _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
+                    if ( _ctrl.grabMouseOrTouch == false ) {
+                        enabled = true;
+                        _state.Begin( _state.info.normal );
+                    }
                 };
                 break;
 

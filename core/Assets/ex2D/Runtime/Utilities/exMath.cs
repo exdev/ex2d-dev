@@ -92,11 +92,6 @@ public static class exMath {
             r = Mathf.Lerp(r, 1.0f, _deltaTime);
 		return r;
 	}
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
 	public static float SpringLerp ( float _from, float _to, float _strength, float _deltaTime ) {
 		if ( _deltaTime > 1.0f ) 
             _deltaTime = 1.0f;
@@ -109,20 +104,35 @@ public static class exMath {
             r = Mathf.Lerp(r, _to, _deltaTime);
 		return r;
 	}
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
 	public static Vector2 SpringLerp ( Vector2 _from, Vector2 _to, float _strength, float _deltaTime ) {
 		return Vector2.Lerp ( _from, _to, SpringLerp(_strength, _deltaTime) );
 	}
+	public static Vector3 SpringLerp ( Vector3 _from, Vector3 _to, float _strength, float _deltaTime ) {
+		return Vector3.Lerp ( _from, _to, SpringLerp(_strength, _deltaTime) );
+	}
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-	public static Vector3 SpringLerp ( Vector3 _from, Vector3 _to, float _strength, float _deltaTime ) {
-		return Vector3.Lerp ( _from, _to, SpringLerp(_strength, _deltaTime) );
-	}
+    public static float Lerp ( float _from, float _to, float _v ) {
+        return _from * ( 1.0f - _v ) + _to * _v;
+    }
+    public static Vector2 Lerp ( Vector2 _from, Vector2 _to, float _v ) {
+        return _from * ( 1.0f - _v ) + _to * _v;
+    }
+    public static Vector3 Lerp ( Vector3 _from, Vector3 _to, float _v ) {
+        return _from * ( 1.0f - _v ) + _to * _v;
+    }
+    public static Color Lerp ( Color _from, Color _to, float _v ) {
+        return _from * ( 1.0f - _v ) + _to * _v;
+    }
+    public static Rect Lerp ( Rect _from, Rect _to, float _v ) {
+        Rect rect = new Rect();
+        rect.x = _from.x * (1.0f - _v) + _to.x * _v;
+        rect.y = _from.y * (1.0f - _v) + _to.y * _v;
+        rect.width = _from.width * (1.0f - _v) + _to.width * _v;
+        rect.height = _from.height * (1.0f - _v) + _to.height * _v;
+        return rect;
+    }
 }
