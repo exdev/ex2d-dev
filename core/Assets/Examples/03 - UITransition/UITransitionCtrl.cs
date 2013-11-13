@@ -45,9 +45,6 @@ public class UITransitionCtrl : FSMBase {
         exUIMng.inst.AddControl ( panelB );
         exUIMng.inst.AddControl ( panelC );
 
-        panelA.gameObject.SetActive(true);
-        panelB.gameObject.SetActive(false);
-        panelC.gameObject.SetActive(false);
 
         //
         InitStateMachine ();
@@ -59,6 +56,10 @@ public class UITransitionCtrl : FSMBase {
     // ------------------------------------------------------------------ 
 
     void Start () {
+        panelA.gameObject.SetActive(true);
+        panelB.gameObject.SetActive(false);
+        panelC.gameObject.SetActive(false);
+
         StartFSM();
     }
 
