@@ -31,11 +31,13 @@ namespace fsm {
             : base ()
         {
             onStart += delegate () {
+                exUIMng.inst.enabled = false;
                 from.StartFadeOut();
                 to.StartFadeIn();
             };
 
             onEnd += delegate () {
+                exUIMng.inst.enabled = true;
                 from.FinishFadeOut();
                 to.FinishFadeIn();
             };
