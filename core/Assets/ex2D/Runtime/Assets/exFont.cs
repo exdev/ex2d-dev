@@ -197,7 +197,7 @@ using System.Collections.Generic;
             if (bitmapFont_ != null) {
                 return bitmapFont_.texture;
             }
-            else if (dynamicFont_ != null) {
+            else if (dynamicFont_ != null && dynamicFont_.material != null) {
                 return dynamicFont_.material.mainTexture as Texture2D;
             }
             return null;
@@ -259,41 +259,42 @@ using System.Collections.Generic;
     public bool GetCharInfo ( char _symbol, out CharacterInfo _charInfo ) {
         if (bitmapFont_ != null) {
             exBitmapFont.CharInfo bitmapCharInfo = bitmapFont_.GetCharInfo(_symbol);
-            _charInfo.flipped = bitmapCharInfo.rotated;
-            _charInfo.index = bitmapCharInfo.id;
-            _charInfo.size = 0;
-            _charInfo.style = FontStyle.Normal;
-            if (bitmapFont_.texture != null) {
-                Vector2 texelSize = bitmapFont_.texture.texelSize;
-                if (bitmapCharInfo.rotated) {
-                    _charInfo.uv = new Rect ((bitmapCharInfo.x + bitmapCharInfo.rotatedWidth) * texelSize.x,
-                                             bitmapCharInfo.y * texelSize.y,
-                                             - bitmapCharInfo.rotatedWidth * texelSize.x,
-                                             bitmapCharInfo.rotatedHeight * texelSize.y);
+            if (bitmapCharInfo != null) {
+                _charInfo.flipped = bitmapCharInfo.rotated;
+                _charInfo.index = bitmapCharInfo.id;
+                _charInfo.size = 0;
+                _charInfo.style = FontStyle.Normal;
+                if (bitmapFont_.texture != null) {
+                    Vector2 texelSize = bitmapFont_.texture.texelSize;
+                    if (bitmapCharInfo.rotated) {
+                        _charInfo.uv = new Rect ((bitmapCharInfo.x + bitmapCharInfo.rotatedWidth) * texelSize.x,
+                                                 bitmapCharInfo.y * texelSize.y,
+                                                 - bitmapCharInfo.rotatedWidth * texelSize.x,
+                                                 bitmapCharInfo.rotatedHeight * texelSize.y);
+                    }
+                    else {
+                        _charInfo.uv = new Rect (bitmapCharInfo.x * texelSize.x,
+                                                 bitmapCharInfo.y * texelSize.y,
+                                                 bitmapCharInfo.rotatedWidth * texelSize.x,
+                                                 bitmapCharInfo.rotatedHeight * texelSize.y);
+                    }
                 }
                 else {
-                    _charInfo.uv = new Rect (bitmapCharInfo.x * texelSize.x,
-                                             bitmapCharInfo.y * texelSize.y,
-                                             bitmapCharInfo.rotatedWidth * texelSize.x,
-                                             bitmapCharInfo.rotatedHeight * texelSize.y);
+                    _charInfo.uv = new Rect();
                 }
+                _charInfo.vert = new Rect(bitmapCharInfo.xoffset, - bitmapCharInfo.yoffset, bitmapCharInfo.width, - bitmapCharInfo.height);
+                _charInfo.width = bitmapCharInfo.xadvance;
+                return true;
             }
-            else {
-                _charInfo.uv = new Rect();
-            }
-            _charInfo.vert = new Rect(bitmapCharInfo.xoffset, - bitmapCharInfo.yoffset, bitmapCharInfo.width, - bitmapCharInfo.height);
-            _charInfo.width = bitmapCharInfo.xadvance;
-            return true;
         }
         else if (dynamicFont_ != null) {
-            dynamicFont_.GetCharacterInfo(_symbol, out _charInfo, dynamicFontSize_, dynamicFontStyle_);
-            _charInfo.vert.y -= jOffsetY;
-            return true;
+            if (dynamicFont_.GetCharacterInfo(_symbol, out _charInfo, dynamicFontSize_, dynamicFontStyle_)) {
+                _charInfo.vert.y -= jOffsetY;
+                return true;
+            }
         }
-        else {
-            _charInfo = new CharacterInfo();
-            return false;
-        }
+        _charInfo = new CharacterInfo();
+        return false;
     }
 
     public int GetKerning ( char _first, char _second ) {

@@ -231,6 +231,24 @@ public class exMesh : MonoBehaviour
                 gameObject.SetActive(visible);
             }
         }
+        else if ((updateFlags & exUpdateFlags.Vertex) != 0) {
+            // 当fast hide sprite时，判断是否可以隐藏整个mesh，减少draw call
+            bool visible = false;
+            if (spriteList.Count > 10) {
+                visible = true; // 如果有大量sprite，不遍历整个列表，强制可见
+            }
+            else {
+                for (int i = 0, count = spriteList.Count; i < count; ++i) {
+                    if (spriteList[i].visible) {
+                        visible = true;
+                        break;
+                    }
+                }
+            }
+            if (gameObject.activeSelf != visible) {
+                gameObject.SetActive(visible);
+            }
+        }
         updateFlags = exUpdateFlags.None;
     }
 

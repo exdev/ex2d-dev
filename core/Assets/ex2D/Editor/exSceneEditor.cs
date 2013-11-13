@@ -143,11 +143,19 @@ class exSceneEditor : EditorWindow {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void OnSelectionChange () {
+        Repaint();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void OnInspectorUpdate () {
         // TODO: this make selection can not select exMeshes, confirm with Jare { 
         // ex2DRenderer.instance.ForceRenderScene();
         // } TODO end 
-        Repaint();
+        // Repaint();
     }
 
     // ------------------------------------------------------------------ 
@@ -1230,7 +1238,7 @@ class exSceneEditor : EditorWindow {
                 trans_rotation = Handles.Disc ( trans_rotation, trans_position, Vector3.forward, handleSize * 0.5f, true, 1 );
 
             if ( EditorGUI.EndChangeCheck() ) {
-                UnityEditor.Undo.RegisterUndo(Selection.transforms, "Change Transform");
+                UnityEditor.Undo.RecordObjects(Selection.transforms, "Change Transform");
 
                 if ( Selection.transforms.Length == 1 ) {
                     trans.position = trans_position;
