@@ -443,7 +443,8 @@ public class exSpriteAnimation : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void SetDefaultSprite () {
-        sprite_.textureInfo = defaultTextureInfo;
+        if ( sprite_ != null )
+            sprite_.textureInfo = defaultTextureInfo;
     }
 
     // ------------------------------------------------------------------ 
