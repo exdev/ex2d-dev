@@ -85,24 +85,10 @@ public class ex2DRenderer : MonoBehaviour {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    void Awake () {
+    void OnEnable () {
         if (instance_ == null) {
             instance_ = this;
         }
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
-    void OnEnable () {
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            if (instance_ == null) {
-                instance_ = this;
-            }
-        }
-#endif
         for ( int i = 0; i < layerList.Count; ++i ) {
             exLayer layer = layerList[i];
             if ( layer != null ) {
@@ -117,13 +103,9 @@ public class ex2DRenderer : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void OnDisable () {
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            if (ReferenceEquals(this, instance_)) {
-                instance_ = null;
-            }
+        if (ReferenceEquals(this, instance_)) {
+            instance_ = null;
         }
-#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -131,9 +113,6 @@ public class ex2DRenderer : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void OnDestroy () {
-        if (ReferenceEquals(this, instance_)) {
-            instance_ = null;
-        }
         cachedCamera_ = null;
     }
 
