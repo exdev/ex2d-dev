@@ -225,13 +225,7 @@ public class exMesh : MonoBehaviour
 
         FlushBuffers (mesh, updateFlags, vertices, indices, uvs, colors32);
 
-        if ((updateFlags & exUpdateFlags.Index) != 0) {
-            bool visible = (indices.Count > 0);
-            if (gameObject.activeSelf != visible) {
-                gameObject.SetActive(visible);
-            }
-        }
-        else if ((updateFlags & exUpdateFlags.Vertex) != 0) {
+        if ((updateFlags & exUpdateFlags.Vertex) != 0) {
             // 当fast hide sprite时，判断是否可以隐藏整个mesh，减少draw call
             bool visible = false;
             if (spriteList.Count > 10) {
@@ -249,6 +243,14 @@ public class exMesh : MonoBehaviour
                 gameObject.SetActive(visible);
             }
         }
+        else if ((updateFlags & exUpdateFlags.Index) != 0) {
+            // 如果index改变了则也有可能改变显隐，这种情况不多只是基本简单检查下索引数量就够
+            bool visible = (indices.Count > 0);
+            if (gameObject.activeSelf != visible) {
+                gameObject.SetActive(visible);
+            }
+        }
+        
         updateFlags = exUpdateFlags.None;
     }
 
