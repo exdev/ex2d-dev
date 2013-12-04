@@ -548,23 +548,32 @@ public class exSpriteAnimation : MonoBehaviour {
 
     public exSpriteAnimationState AddAnimation (string _name, exSpriteAnimationClip _animClip) {
         Init();
-        exSpriteAnimationState state = null;
 
-        // if we already have the animation, just return the animation state
-        if (animations.IndexOf(_animClip) != -1) {
-            state = nameToState[_name];
-            if (state.clip != _animClip) {
-                state = new exSpriteAnimationState(_name, _animClip);
-                nameToState[_name] = state;
+        exSpriteAnimationState oldState = null;
+        if (nameToState.TryGetValue(_name, out oldState)) {
+            if (ReferenceEquals(oldState.clip, _animClip)) {
+                // if we already have the same name, just return the state
+                return oldState;
             }
-            return state;
+            else {
+                // override the old clip
+                animations[animations.IndexOf(oldState.clip)] = _animClip;
+            }
         }
-
-        //
-        animations.Add(_animClip);
-        state = new exSpriteAnimationState(_name, _animClip);
-        nameToState[_name] = state;
-        return state;
+        else if (animations.IndexOf(_animClip) != -1) {
+            // we already have the animation
+            oldState = nameToState[_name];
+            if (ReferenceEquals(oldState.clip, _animClip)) {
+                return oldState;
+            }
+        }
+        else {
+            animations.Add(_animClip);
+        }
+        
+        exSpriteAnimationState newState = new exSpriteAnimationState(_name, _animClip);
+        nameToState[_name] = newState;
+        return newState;
     }
 
     // ------------------------------------------------------------------ 
