@@ -518,7 +518,7 @@ public class exLayer : MonoBehaviour
             // TODO: remove DoSetDepth
             (_sprite as IFriendOfLayer).DoSetDepth(oldDepth);
             int oldSortedSpriteIndex = mesh.sortedSpriteList.BinarySearch(_sprite);
-            exDebug.Assert(oldSortedSpriteIndex >= 0);
+            exDebug.Assert(oldSortedSpriteIndex >= 0);  // 用原来的depth进行搜索，如果搜索不到，说明sortedSpriteList的排序是错的，这一般会是因为值被animtion误改了。
             (_sprite as IFriendOfLayer).DoSetDepth(_newDepth);
             //
             if (IsRenderOrderChangedInMesh(_sprite, oldMeshIndex, oldSortedSpriteIndex, addDepth)) {

@@ -83,7 +83,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         get {
             return layer_;
         }
-        internal set {
+        internal set {  // TODO: 这个接口做成私有
             if (value != null) {
                 exDebug.Assert(layer_ == null, "Sprite should remove from last layer before add to new one");
                 if (layer_ == null) {
