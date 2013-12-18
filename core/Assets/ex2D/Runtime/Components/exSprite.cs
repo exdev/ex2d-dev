@@ -159,7 +159,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
 
     public float leftBorderSize {
-        get { return leftBorderSize_; }
+        get { return customBorderSize ? leftBorderSize_ : textureInfo_.borderLeft; }
         set {
             if ( leftBorderSize_ != value ) {
                 leftBorderSize_ = value;
@@ -176,7 +176,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
 
     public float rightBorderSize {
-        get { return rightBorderSize_; }
+        get { return customBorderSize ? rightBorderSize_ : textureInfo_.borderRight; }
         set {
             if ( rightBorderSize_ != value ) {
                 rightBorderSize_ = value;
@@ -193,7 +193,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
 
     public float topBorderSize {
-        get { return topBorderSize_; }
+        get { return customBorderSize ? topBorderSize_ : textureInfo_.borderTop; }
         set {
             if ( topBorderSize_ != value ) {
                 topBorderSize_ = value;
@@ -210,7 +210,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
 
     public float bottomBorderSize {
-        get { return bottomBorderSize_; }
+        get { return customBorderSize ? bottomBorderSize_ : textureInfo_.borderBottom; }
         set {
             if ( bottomBorderSize_ != value ) {
                 bottomBorderSize_ = value;
