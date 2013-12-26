@@ -1033,6 +1033,14 @@ public static class exAtlasUtility {
             importSettings.mipmapEnabled = false;
             importSettings.textureType = TextureImporterType.Advanced;
             importSettings.npotScale = TextureImporterNPOTScale.None;
+            importSettings.textureType = TextureImporterType.Advanced;
+            importSettings.spriteImportMode = SpriteImportMode.None;
+            importSettings.textureFormat = TextureImporterFormat.ARGB32;
+            importSettings.ClearPlatformTextureSettings("Web");
+            importSettings.ClearPlatformTextureSettings("Standalone");
+            importSettings.ClearPlatformTextureSettings("iPhone");
+            importSettings.ClearPlatformTextureSettings("Android");
+            importSettings.ClearPlatformTextureSettings("FlashPlayer");
             AssetDatabase.ImportAsset( atlasTexturePath, ImportAssetOptions.ForceSynchronousImport );
 
             atlasTexture = (Texture2D)AssetDatabase.LoadAssetAtPath( atlasTexturePath, typeof(Texture2D) );
@@ -1040,11 +1048,17 @@ public static class exAtlasUtility {
 
         // clean the atlas
         _progress( 0.3f, "Cleaning atlas texture" );
+        bool needReimport = false;
         importSettings = TextureImporter.GetAtPath(atlasTexturePath) as TextureImporter;
         if ( importSettings.isReadable == false ) {
             importSettings.isReadable = true;
+            needReimport = true;
+        }
+
+        if ( needReimport ) {
             AssetDatabase.ImportAsset( atlasTexturePath, ImportAssetOptions.ForceSynchronousImport );
         }
+
         Color buildColor = new Color(0.0f, 0.0f, 0.0f, 0.0f);
         if ( _atlas.customBuildColor ) {
             buildColor = _atlas.buildColor;
