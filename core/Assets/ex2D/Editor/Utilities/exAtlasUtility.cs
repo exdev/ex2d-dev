@@ -1034,7 +1034,9 @@ public static class exAtlasUtility {
             importSettings.textureType = TextureImporterType.Advanced;
             importSettings.npotScale = TextureImporterNPOTScale.None;
             importSettings.textureType = TextureImporterType.Advanced;
+#if UNITY_4_3
             importSettings.spriteImportMode = SpriteImportMode.None;
+#endif
             importSettings.textureFormat = TextureImporterFormat.ARGB32;
             importSettings.ClearPlatformTextureSettings("Web");
             importSettings.ClearPlatformTextureSettings("Standalone");
