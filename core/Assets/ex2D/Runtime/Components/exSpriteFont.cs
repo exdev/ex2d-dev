@@ -14,15 +14,15 @@ using System.Collections;
 using System.Collections.Generic;
 using ex2D.Detail;
 
-// ------------------------------------------------------------------ 
-/// The type of font effect
-// ------------------------------------------------------------------ 
+//// ------------------------------------------------------------------ 
+///// The type of font effect
+//// ------------------------------------------------------------------ 
 
-public enum exOutlineType {
-    Outline4 = 1,   ///< up down left right
-    Outline4X,      ///< top-left top-right bottom-left bottom-right
-    Outline8,       ///< 
-};
+//public enum exOutlineType {
+//    Outline4 = 1,   ///< up down left right
+//    Outline4X,      ///< top-left top-right bottom-left bottom-right
+//    Outline8,       ///< 
+//};
 
 ///////////////////////////////////////////////////////////////////////////////
 /// 
@@ -204,108 +204,6 @@ public class exSpriteFont : exLayeredSprite {
             if (botColor_ != value) {
                 botColor_ = value;
                 updateFlags |= exUpdateFlags.Color;
-            }
-        }
-    }
-
-    // outline option
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected bool useOutline_ = false;
-    /// If useOutline is true, the component will render the text with outline
-    // ------------------------------------------------------------------ 
-
-    public bool useOutline {
-        get { return useOutline_; }
-        set {
-            if (useOutline_ != value) {
-                useOutline_ = value;
-                updateFlags |= exUpdateFlags.Text;
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected float outlineWidth_ = 1.0f;
-    /// The width of the outline text
-    // ------------------------------------------------------------------ 
-
-    public float outlineWidth {
-        get { return outlineWidth_; }
-        set {
-            if (outlineWidth_ != value) {
-                outlineWidth_ = value;
-                if (useOutline_) {
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Color outlineColor_ = Color.black;
-    /// The color of the outline text
-    // ------------------------------------------------------------------ 
-
-    public Color outlineColor {
-        get { return outlineColor_; }
-        set {
-            if (outlineColor_ != value) {
-                outlineColor_ = value;
-                if (useOutline_) {
-                    updateFlags |= exUpdateFlags.Color;
-                }
-            }
-        }
-    }
-
-    // shadow option
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected bool useShadow_ = false;
-    /// If useShadow is true, the component will render the text with shadow
-    // ------------------------------------------------------------------ 
-
-    public bool useShadow {
-        get { return useShadow_; }
-        set {
-            if (useShadow_ != value) {
-                useShadow_ = value;
-                updateFlags |= exUpdateFlags.Text;
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 shadowBias_ = new Vector2(1.0f, -1.0f);
-    /// The bias of the shadow text 
-    // ------------------------------------------------------------------ 
-
-    public Vector2 shadowBias {
-        get { return shadowBias_; }
-        set {
-            if (shadowBias_ != value) {
-                shadowBias_ = value;
-                if (useShadow_) {
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Color shadowColor_ = Color.black;
-    /// The color of the shadow text 
-    // ------------------------------------------------------------------ 
-
-    public Color shadowColor {
-        get { return shadowColor_; }
-        set {
-            if (shadowColor_ != value) {
-                shadowColor_ = value;
-                if (useShadow_) {
-                    updateFlags |= exUpdateFlags.Color;
-                }
             }
         }
     }
