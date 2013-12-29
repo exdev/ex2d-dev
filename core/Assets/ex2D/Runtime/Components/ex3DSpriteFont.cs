@@ -21,7 +21,7 @@ using ex2D.Detail;
 ///////////////////////////////////////////////////////////////////////////////
 
 [AddComponentMenu("ex2D/3D Sprite Font")]
-public class ex3DSpriteFont : exStandaloneSprite {
+public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
 
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -30,6 +30,10 @@ public class ex3DSpriteFont : exStandaloneSprite {
     /// 每个exSpriteFont都有单独的一个exFont实例
     [SerializeField] protected exFont font_ = new exFont();
     
+    exFont exISpriteFont.font {
+        get { return font_; }
+    }
+
     public exBitmapFont bitmapFont {
         get {
             return font_.bitmapFont;
@@ -99,20 +103,19 @@ public class ex3DSpriteFont : exStandaloneSprite {
         }
     }
 
-    //// ------------------------------------------------------------------ 
-    //[SerializeField] protected bool useMultiline_ = false;
-    ///// If useMultiline is true, the exSpriteFont.text accept multiline string. 
-    //// ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected exTextUtility.WrapMode wrapMode_ = exTextUtility.WrapMode.Pre;
+    // ------------------------------------------------------------------ 
 
-    //public bool useMultiline {
-    //    get { return useMultiline_; }
-    //    set {
-    //        if ( useMultiline_ != value ) {
-    //            useMultiline_ = value;
-    //            updateFlags |= exUpdateFlags.Text;  // TODO: only need to update vertex ?
-    //        }
-    //    }
-    //}
+    public exTextUtility.WrapMode wrapMode {
+        get { return wrapMode_; }
+        set {
+            if (wrapMode_ != value) {
+                wrapMode_ = value;
+                updateFlags |= exUpdateFlags.Text;
+	        }
+        }
+    }
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected TextAlignment textAlign_ = TextAlignment.Left;
@@ -144,18 +147,47 @@ public class ex3DSpriteFont : exStandaloneSprite {
             }
         }
     }
-
+    
     // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 spacing_;
-    /// spacing_.x : the fixed width applied between two characters in the text. 
-    /// spacing_.y : the fixed line space applied between two lines.
+    [SerializeField] protected int lineHeight_ = 0;
+    /// the fixed line space applied between two lines.
     // ------------------------------------------------------------------ 
 
-    public Vector2 spacing {
-        get { return spacing_; }
+    public int lineHeight {
+        get { return lineHeight_; }
         set {
-            if (spacing_ != value) {
-                spacing_ = value;
+            if (lineHeight_ != value) {
+                lineHeight_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected int letterSpacing_ = 0;
+    /// the fixed width applied between two characters in the text. 
+    // ------------------------------------------------------------------ 
+
+    public int letterSpacing {
+        get { return letterSpacing_; }
+        set {
+            if (letterSpacing_ != value) {
+                letterSpacing_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected int wordSpacing_ = 0;
+    /// the fixed width applied between two words in the text. 
+    // ------------------------------------------------------------------ 
+
+    public int wordSpacing {
+        get { return wordSpacing_; }
+        set {
+            if (wordSpacing_ != value) {
+                wordSpacing_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
             }
         }
@@ -368,16 +400,7 @@ public class ex3DSpriteFont : exStandaloneSprite {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
-        SpriteFontParams sfp;
-        sfp.text = text_;
-        sfp.font = font_;
-        sfp.spacing = spacing_;
-        sfp.textAlign = textAlign_;
-        sfp.useKerning = useKerning_;
-        sfp.vertexCount = vertexCount_;
-        sfp.indexCount = indexCount_;
-        return SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.Self, ref topColor_, ref botColor_, 1.0f, 
-                                                _vertices, _uvs, _colors32, _indices, 0, 0);
+        return SpriteFontBuilder.UpdateBuffers (this, Space.Self, 1.0f, _vertices, _uvs, _colors32, _indices, 0, 0);
     }
 
     #endregion  // Functions used to update geometry buffer
@@ -392,16 +415,7 @@ public class ex3DSpriteFont : exStandaloneSprite {
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
         vertices.AddRange(visibleVertexCount);
 
-        SpriteFontParams sfp;
-        sfp.text = text_;
-        sfp.font = font_;
-        sfp.spacing = spacing_;
-        sfp.textAlign = textAlign_;
-        sfp.useKerning = useKerning_;
-        sfp.vertexCount = vertexCount_;
-        sfp.indexCount = indexCount_;
-
-        SpriteFontBuilder.BuildText(this, ref sfp, _space, vertices, 0, null);
+        SpriteFontBuilder.BuildText(this, _space, vertices, 0, null);
         return vertices.ToArray();
     }
     

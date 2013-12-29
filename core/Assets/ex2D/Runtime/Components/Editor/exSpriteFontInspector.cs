@@ -26,7 +26,10 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
     protected SerializedProperty textProp;
     protected SerializedProperty textAlignProp;
     protected SerializedProperty useKerningProp;
-    protected SerializedProperty spacingProp;
+    protected SerializedProperty wrapModeProp;
+    protected SerializedProperty lineHeightProp;
+    protected SerializedProperty letterSpacingProp;
+    protected SerializedProperty wordSpacingProp;
     protected SerializedProperty topColorProp;
     protected SerializedProperty botColorProp;
 
@@ -40,7 +43,10 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         textProp = serializedObject.FindProperty("text_");
         textAlignProp = serializedObject.FindProperty("textAlign_");
         useKerningProp = serializedObject.FindProperty("useKerning_");
-        spacingProp = serializedObject.FindProperty("spacing_");
+        wrapModeProp = serializedObject.FindProperty("wrapMode_");
+        lineHeightProp = serializedObject.FindProperty("lineHeight_");
+        letterSpacingProp = serializedObject.FindProperty("letterSpacing_");
+        wordSpacingProp = serializedObject.FindProperty("wordSpacing_");
         topColorProp = serializedObject.FindProperty("topColor_");
         botColorProp = serializedObject.FindProperty("botColor_");
     }
@@ -128,15 +134,54 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
             }
         }
 
-        // spacing
+        // wrap mode
         EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( spacingProp, new GUIContent("Spacing"), true );
+        EditorGUILayout.PropertyField ( wrapModeProp, new GUIContent("Wrap Mode"), true );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
-                if ( sp ) {
-                    sp.spacing = spacingProp.vector2Value;
-                    EditorUtility.SetDirty(sp);
+                exISpriteFont sp = obj as exISpriteFont;
+                if ( sp != null ) {
+                    sp.wrapMode = (exTextUtility.WrapMode)wrapModeProp.enumValueIndex;
+                    EditorUtility.SetDirty(obj);
+                }
+            }
+        }
+
+        // line height
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( lineHeightProp, new GUIContent("Line Height"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exISpriteFont sp = obj as exISpriteFont;
+                if ( sp != null ) {
+                    sp.lineHeight = lineHeightProp.intValue;
+                    EditorUtility.SetDirty(obj);
+                }
+            }
+        }
+
+        // letter spacing
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( letterSpacingProp, new GUIContent("Letter Spacing"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exISpriteFont sp = obj as exISpriteFont;
+                if ( sp != null ) {
+                    sp.letterSpacing = letterSpacingProp.intValue;
+                    EditorUtility.SetDirty(obj);
+                }
+            }
+        }
+
+        // word spacing
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( wordSpacingProp, new GUIContent("Word Spacing"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exISpriteFont sp = obj as exISpriteFont;
+                if ( sp != null ) {
+                    sp.wordSpacing = wordSpacingProp.intValue;
+                    EditorUtility.SetDirty(obj);
                 }
             }
         }

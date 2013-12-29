@@ -33,12 +33,29 @@ public interface exISpriteBase : IMonoBehaviour {
     Vector2 shear { get; set; }
     Shader shader { get; set; }
     
+    exUpdateFlags updateFlags { get; set; }
     int vertexCount { get; }
     int indexCount { get; }
     Material material { get; }
     bool visible { get; }
+
+    /// internal member
+    Matrix4x4 cachedWorldMatrix { get; }
+
+    /// internal method
+    void UpdateMaterial ();
     
-    void UpdateMaterial ();     ///< internal use
+    // ------------------------------------------------------------------ 
+    /// Get lossy scale, internal method
+    // ------------------------------------------------------------------ 
+    
+    float GetScaleX (Space _space);
+    
+    // ------------------------------------------------------------------ 
+    /// Get lossy scale, internal method
+    // ------------------------------------------------------------------ 
+
+    float GetScaleY (Space _space);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

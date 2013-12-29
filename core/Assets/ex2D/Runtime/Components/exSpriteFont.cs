@@ -31,7 +31,7 @@ using ex2D.Detail;
 ///////////////////////////////////////////////////////////////////////////////
 
 [AddComponentMenu("ex2D/2D Sprite Font")]
-public class exSpriteFont : exLayeredSprite {
+public class exSpriteFont : exLayeredSprite, exISpriteFont {
 
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -39,7 +39,11 @@ public class exSpriteFont : exLayeredSprite {
 
     /// 每个exSpriteFont都有单独的一个exFont实例
     [SerializeField] protected exFont font_ = new exFont();
-    
+
+    exFont exISpriteFont.font {
+        get { return font_; }
+    }
+
     public exBitmapFont bitmapFont {
         get {
             return font_.bitmapFont;
@@ -113,20 +117,19 @@ public class exSpriteFont : exLayeredSprite {
         }
     }
 
-    //// ------------------------------------------------------------------ 
-    //[SerializeField] protected bool useMultiline_ = false;
-    ///// If useMultiline is true, the exSpriteFont.text accept multiline string. 
-    //// ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected exTextUtility.WrapMode wrapMode_ = exTextUtility.WrapMode.Pre;
+    // ------------------------------------------------------------------ 
 
-    //public bool useMultiline {
-    //    get { return useMultiline_; }
-    //    set {
-    //        if ( useMultiline_ != value ) {
-    //            useMultiline_ = value;
-    //            updateFlags |= exUpdateFlags.Text;  // TODO: only need to update vertex ?
-    //        }
-    //    }
-    //}
+    public exTextUtility.WrapMode wrapMode {
+        get { return wrapMode_; }
+        set {
+            if (wrapMode_ != value) {
+                wrapMode_ = value;
+                updateFlags |= exUpdateFlags.Text;
+	        }
+        }
+    }
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected TextAlignment textAlign_ = TextAlignment.Left;
@@ -158,18 +161,47 @@ public class exSpriteFont : exLayeredSprite {
             }
         }
     }
-
+    
     // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 spacing_;
-    /// spacing_.x : the fixed width applied between two characters in the text. 
-    /// spacing_.y : the fixed line space applied between two lines.
+    [SerializeField] protected int lineHeight_ = 0;
+    /// the fixed line space applied between two lines.
     // ------------------------------------------------------------------ 
 
-    public Vector2 spacing {
-        get { return spacing_; }
+    public int lineHeight {
+        get { return lineHeight_; }
         set {
-            if (spacing_ != value) {
-                spacing_ = value;
+            if (lineHeight_ != value) {
+                lineHeight_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected int letterSpacing_ = 0;
+    /// the fixed width applied between two characters in the text. 
+    // ------------------------------------------------------------------ 
+
+    public int letterSpacing {
+        get { return letterSpacing_; }
+        set {
+            if (letterSpacing_ != value) {
+                letterSpacing_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected int wordSpacing_ = 0;
+    /// the fixed width applied between two words in the text. 
+    // ------------------------------------------------------------------ 
+
+    public int wordSpacing {
+        get { return wordSpacing_; }
+        set {
+            if (wordSpacing_ != value) {
+                wordSpacing_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
             }
         }
@@ -308,15 +340,7 @@ public class exSpriteFont : exLayeredSprite {
             updateFlags &= ~exUpdateFlags.Vertex;
         }
 
-        SpriteFontParams sfp;
-        sfp.text = text_;
-        sfp.font = font_;
-        sfp.spacing = spacing_;
-        sfp.textAlign = textAlign_;
-        sfp.useKerning = useKerning_;
-        sfp.vertexCount = vertexCount_;
-        sfp.indexCount = indexCount_;
-        applyedFlags |= SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.World, ref topColor_, ref botColor_, layer_.alpha, 
+        applyedFlags |= SpriteFontBuilder.UpdateBuffers (this, Space.World, layer_.alpha, 
                                                 _vertices, _uvs, _colors32, _indices, vertexBufferIndex, indexBufferIndex);
         
         if (transparentDirty && transparent_) {
@@ -341,16 +365,7 @@ public class exSpriteFont : exLayeredSprite {
         vertices.AddRange(vertexCount_);
         exDebug.Assert(vertexCount_ >= text_.Length * 4);
         
-        SpriteFontParams sfp;
-        sfp.text = text_;
-        sfp.font = font_;
-        sfp.spacing = spacing_;
-        sfp.textAlign = textAlign_;
-        sfp.useKerning = useKerning_;
-        sfp.vertexCount = vertexCount_;
-        sfp.indexCount = indexCount_;
-        
-        SpriteFontBuilder.BuildText(this, ref sfp, _space, vertices, 0, null);
+        SpriteFontBuilder.BuildText(this, _space, vertices, 0, null);
         return vertices.ToArray();
     }
 
@@ -392,212 +407,6 @@ public class exSpriteFont : exLayeredSprite {
         font_.Set(_dynamicFont);
         UpdateTexture();
     }
-
-    //            // update outline
-    //            if ( useOutline_ ) {
-    //                UpdateOutline ( outlineVertexStartAt, 
-    //                                -1, 
-    //                                vertexStartAt,
-    //                                vertices, 
-    //                                null, 
-    //                                null );
-    //            }
-
-    //            // update shadow
-    //            if ( useShadow_ ) {
-    //                UpdateShadow ( shadowVertexStartAt, 
-    //                               -1, 
-    //                               vertexStartAt, 
-    //                               vertices, 
-    //                               null, 
-    //                               null );
-    //            }
-
-    //            _mesh.vertices = vertices;
-    //            _mesh.bounds = GetMeshBounds ( offsetX, offsetY, halfWidthScaled * 2.0f, halfHeightScaled * 2.0f );
-
-    //            // update collider if we have
-    //            UpdateBoundRect ( offsetX, offsetY, halfWidthScaled * 2.0f, halfHeightScaled * 2.0f );
-    //            if ( collisionHelper ) 
-    //                collisionHelper.UpdateCollider();
-
-    //// #if UNITY_EDITOR
-    ////             _mesh.RecalculateBounds();
-    //// #endif
-    //        }
-
-    //        // ======================================================== 
-    //        // Update Color
-    //        // ======================================================== 
-
-    //        if ( (updateFlags & UpdateFlags.Color) != 0 ||
-    //             (updateFlags & UpdateFlags.Text) != 0 ) {
-    //            Color[] colors = new Color[vertexCount];
-    //            for ( int i = 0; i < text_.Length; ++i ) {
-    //                int vert_id = vertexStartAt + 4 * i;
-    //                colors[vert_id+0] = colors[vert_id+1] = topColor_;
-    //                colors[vert_id+2] = colors[vert_id+3] = botColor_;
-
-
-    //                if ( outlineVertexStartAt != -1 ) {
-    //                    vert_id = 4 * i;
-    //                    int[] vi = new int[] {
-    //                        outlineVertexStartAt + vert_id + 0 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 1 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 2 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 3 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 4 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 5 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 6 * numVerts,
-    //                        outlineVertexStartAt + vert_id + 7 * numVerts
-    //                    };
-    //                    for ( int k = 0; k < vi.Length; ++k ) {
-    //                        colors[vi[k]+0] = 
-    //                        colors[vi[k]+1] = 
-    //                        colors[vi[k]+2] = 
-    //                        colors[vi[k]+3] = outlineColor_;
-    //                    }
-    //                }
-    //                if ( shadowVertexStartAt != -1 ) {
-    //                    vert_id = shadowVertexStartAt + 4 * i;
-    //                    colors[vert_id+0] = 
-    //                    colors[vert_id+1] = 
-    //                    colors[vert_id+2] = 
-    //                    colors[vert_id+3] = shadowColor_;
-    //                }
-    //            }
-    //            _mesh.colors = colors;
-    //        }
-
-    //        // NOTE: though we set updateFlags to None at exPlane::LateUpdate, 
-    //        //       the Editor still need this or it will caused editor keep dirty
-    //        updateFlags = UpdateFlags.None;
-    //    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Internal Functions
-    ///////////////////////////////////////////////////////////////////////////////
-
-    //    // ------------------------------------------------------------------ 
-    //    // Desc: 
-    //    // ------------------------------------------------------------------ 
-
-    //    void UpdateOutline ( int _vertexStartAt, 
-    //                         int _indexStartAt, 
-    //                         int _srcVertexStartAt,
-    //                         Vector3[] _vertices, 
-    //                         Vector2[] _uvs, 
-    //                         int[] _indices ) {
-
-    //        int numVerts = text_.Length * 4;
-    //        int numIndices = text_.Length * 6;
-    //        float length = Mathf.Sqrt(outlineWidth_*outlineWidth_*0.5f);
-
-    //        for ( int i = 0; i < text_.Length; ++i ) {
-    //            int vert_id = 4 * i;
-    //            int idx_id = 6 * i;
-
-    //            int[] vi = new int[] {
-    //                _vertexStartAt + vert_id + 0 * numVerts,
-    //                _vertexStartAt + vert_id + 1 * numVerts,
-    //                _vertexStartAt + vert_id + 2 * numVerts,
-    //                _vertexStartAt + vert_id + 3 * numVerts,
-    //                _vertexStartAt + vert_id + 4 * numVerts,
-    //                _vertexStartAt + vert_id + 5 * numVerts,
-    //                _vertexStartAt + vert_id + 6 * numVerts,
-    //                _vertexStartAt + vert_id + 7 * numVerts
-    //            };
-    //            int[] ii = new int[] {
-    //                _indexStartAt + idx_id + 0 * numIndices,
-    //                _indexStartAt + idx_id + 1 * numIndices,
-    //                _indexStartAt + idx_id + 2 * numIndices,
-    //                _indexStartAt + idx_id + 3 * numIndices,
-    //                _indexStartAt + idx_id + 4 * numIndices,
-    //                _indexStartAt + idx_id + 5 * numIndices,
-    //                _indexStartAt + idx_id + 6 * numIndices,
-    //                _indexStartAt + idx_id + 7 * numIndices
-    //            };
-
-    //            //
-    //            for ( int j = 0; j < 4; ++j ) {
-    //                int srcVertexID = _srcVertexStartAt + vert_id + j;
-
-    //                //
-    //                _vertices[vi[0] + j] = _vertices[srcVertexID] + new Vector3( -outlineWidth_, 0.0f, 0.0f );
-    //                _vertices[vi[1] + j] = _vertices[srcVertexID] + new Vector3(  outlineWidth_, 0.0f, 0.0f );
-    //                _vertices[vi[2] + j] = _vertices[srcVertexID] + new Vector3( 0.0f, -outlineWidth_, 0.0f );
-    //                _vertices[vi[3] + j] = _vertices[srcVertexID] + new Vector3( 0.0f,  outlineWidth_, 0.0f );
-
-    //                //
-    //                _vertices[vi[4] + j] = _vertices[srcVertexID] + new Vector3( -length, -length, 0.0f );
-    //                _vertices[vi[5] + j] = _vertices[srcVertexID] + new Vector3( -length,  length, 0.0f );
-    //                _vertices[vi[6] + j] = _vertices[srcVertexID] + new Vector3(  length,  length, 0.0f );
-    //                _vertices[vi[7] + j] = _vertices[srcVertexID] + new Vector3(  length, -length, 0.0f );
-
-    //                // build uv
-    //                if ( _uvs != null ) {
-    //                    for ( int k = 0; k < vi.Length; ++k ) {
-    //                        _uvs[vi[k] + j] = _uvs[srcVertexID];
-    //                    }
-    //                }
-    //            }
-
-    //            // build indices
-    //            if ( _indices != null ) {
-    //                for ( int k = 0; k < ii.Length; ++k ) {
-    //                    _indices[ii[k] + 0] = vi[k] + 0;
-    //                    _indices[ii[k] + 1] = vi[k] + 1;
-    //                    _indices[ii[k] + 2] = vi[k] + 2;
-    //                    _indices[ii[k] + 3] = vi[k] + 2;
-    //                    _indices[ii[k] + 4] = vi[k] + 1;
-    //                    _indices[ii[k] + 5] = vi[k] + 3;
-    //                }
-    //            }
-    //        }
-    //    }
-
-    //    // ------------------------------------------------------------------ 
-    //    // Desc: 
-    //    // ------------------------------------------------------------------ 
-
-    //    void UpdateShadow ( int _vertexStartAt, 
-    //                        int _indexStartAt, 
-    //                        int _srcVertexStartAt,
-    //                        Vector3[] _vertices, 
-    //                        Vector2[] _uvs, 
-    //                        int[] _indices ) {
-
-    //        for ( int i = 0; i < text_.Length; ++i ) {
-    //            int vert_id = 4 * i;
-    //            int idx_id = 6 * i;
-
-    //            int vi = _vertexStartAt + vert_id;
-    //            int ii = _indexStartAt + idx_id;
-
-    //            //
-    //            for ( int j = 0; j < 4; ++j ) {
-    //                int srcVertexID = _srcVertexStartAt + vert_id + j;
-
-    //                //
-    //                _vertices[vi + j] = _vertices[srcVertexID] + new Vector3( shadowBias_.x, shadowBias_.y, 0.0f );
-
-    //                // build uv
-    //                if ( _uvs != null ) {
-    //                    _uvs[vi + j] = _uvs[srcVertexID];
-    //                }
-    //            }
-
-    //            // build indices
-    //            if ( _indices != null ) {
-    //                _indices[ii + 0] = vi + 0;
-    //                _indices[ii + 1] = vi + 1;
-    //                _indices[ii + 2] = vi + 2;
-    //                _indices[ii + 3] = vi + 2;
-    //                _indices[ii + 4] = vi + 1;
-    //                _indices[ii + 5] = vi + 3;
-    //            }
-    //        }
-    //    }
     
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -698,24 +507,6 @@ namespace ex2D.Detail {
 
     ///////////////////////////////////////////////////////////////////////////////
     //
-    /// 储存sprite font的相关属性以便于参数传递
-    /// 由于C#不能实现多重继承，这里使用面向过程的方式实现代码重用。因为需要传递大量参数，使用SpriteFontParams来优化。
-    /// 不使用来接口实现多重继承主要是出于性能考虑。
-    //
-    ///////////////////////////////////////////////////////////////////////////////
-
-    internal struct SpriteFontParams {
-        public string text;
-        public exFont font;
-        public Vector2 spacing;
-        public TextAlignment textAlign;
-        public bool useKerning;
-        public int vertexCount;
-        public int indexCount;
-    }
-    
-    ///////////////////////////////////////////////////////////////////////////////
-    //
     /// The sprite font geometry helper
     //
     ///////////////////////////////////////////////////////////////////////////////
@@ -736,27 +527,27 @@ namespace ex2D.Detail {
         // Desc: 
         // ------------------------------------------------------------------ 
 
-        public static exUpdateFlags UpdateBuffers (exSpriteBase _sprite, ref SpriteFontParams sfp, Space _space, ref Color _topColor, ref Color _botColor, float _alpha, 
+        public static exUpdateFlags UpdateBuffers (exISpriteFont _sprite, Space _space, float _alpha, 
                                                    exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices, int _vbIndex, int _ibIndex) {
 #if UNITY_EDITOR
-            if (sfp.text == null || sfp.vertexCount < sfp.text.Length * exMesh.QUAD_VERTEX_COUNT) {
-                Debug.LogError("顶点缓冲长度不够，是否绕开属性直接修改了text_?: " + sfp.vertexCount, _sprite);
+            if (_sprite.text == null || _sprite.vertexCount < _sprite.text.Length * exMesh.QUAD_VERTEX_COUNT) {
+                Debug.LogError("顶点缓冲长度不够，是否绕开属性直接修改了text_?: " + _sprite.vertexCount, _sprite as Object);
                 return _sprite.updateFlags;
             }
 #endif
             //Debug.Log(string.Format("[UpdateBuffers|SpriteFontBuilder] _vbIndex: {0} _ibIndex: {1}", _vbIndex, _ibIndex));
             if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
                 //exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
-                BuildText(_sprite, ref sfp, _space, _vertices, _vbIndex, _uvs);
+                BuildText(_sprite, _space, _vertices, _vbIndex, _uvs);
                 _sprite.updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV | exUpdateFlags.Color);
             }
             else if ((_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
                 //exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
-                BuildText(_sprite, ref sfp, _space, _vertices, _vbIndex, null);
+                BuildText(_sprite, _space, _vertices, _vbIndex, null);
             }
             if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
                 // update index buffer
-                int indexBufferEnd = _ibIndex + sfp.indexCount - 5;
+                int indexBufferEnd = _ibIndex + _sprite.indexCount - 5;
                 for (int i = _ibIndex, v = _vbIndex; i < indexBufferEnd; i += 6, v += 4) {
                     _indices.buffer[i] = v;
                     _indices.buffer[i + 1] = v + 1;
@@ -769,16 +560,16 @@ namespace ex2D.Detail {
             if ((_sprite.updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null) {
                 Color32 top, bot;
                 if (_alpha > 0.0f) {
-                    top = new Color (_topColor.r, _topColor.g, _topColor.b, _topColor.a * _alpha);
-                    top *= _sprite.color;
-                    bot = new Color (_botColor.r, _botColor.g, _botColor.b, _botColor.a * _alpha);
-                    bot *= _sprite.color;
+                    var color = _sprite.topColor * _sprite.color;
+                    top = new Color(color.r, color.g, color.b, color.a * _alpha);
+                    color = _sprite.botColor * _sprite.color;
+                    bot = new Color(color.r, color.g, color.b, color.a * _alpha);
                 }
                 else {
                     top = new Color32 ();
                     bot = new Color32 ();
                 }
-                int vertexBufferEnd = _vbIndex + sfp.text.Length * 4;
+                int vertexBufferEnd = _vbIndex + _sprite.text.Length * 4;
                 for (int i = _vbIndex; i < vertexBufferEnd; i += 4) {
                     _colors32.buffer[i + 0] = bot;
                     _colors32.buffer[i + 1] = top;
@@ -795,19 +586,19 @@ namespace ex2D.Detail {
         // Desc:
         // ------------------------------------------------------------------ 
 
-        public static void BuildText (exSpriteBase _sprite, ref SpriteFontParams sfp, Space _space, exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs = null) {
+        public static void BuildText (exISpriteFont _sprite, Space _space, exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs = null) {
 
             // It is advisable to always call RequestCharactersInTexture for any text on the screen you wish to render using custom font rendering functions, 
             // even if the characters are currently present in the texture, to make sure they don't get purged during texture rebuild.
-            sfp.font.RequestCharactersInTexture (sfp.text);
+            _sprite.font.RequestCharactersInTexture (_sprite.text);
             
             _sprite.width = 0.0f;    // 和SpriteBase一致，用于表示实际宽度
             _sprite.height = 0.0f;   // 和SpriteBase一致，用于表示实际高度
             int invisibleVertexStart = -1;
             int visibleVertexCount;
-            if (sfp.font.isValid) {
-                BuildTextInLocalSpace(_sprite, ref sfp, _vertices, _vbIndex, _uvs);
-                visibleVertexCount = sfp.text.Length * 4;
+            if (_sprite.font.isValid) {
+                BuildTextInLocalSpace(_sprite, _vertices, _vbIndex, _uvs);
+                visibleVertexCount = _sprite.text.Length * 4;
             }
             else {
                 //System.Array.Clear(_vertices.buffer, _vbIndex, visibleVertexCount);
@@ -823,7 +614,7 @@ namespace ex2D.Detail {
             // calculate anchor and offset
             Vector2 anchorOffset = new Vector2();
             // convert to top left
-            switch (sfp.textAlign) {
+            switch (_sprite.textAlign) {
             case TextAlignment.Left:
                 break;
             case TextAlignment.Center:
@@ -917,19 +708,19 @@ namespace ex2D.Detail {
         // Desc: 
         // ------------------------------------------------------------------ 
 
-        public static void BuildTextInLocalSpace (exSpriteBase _sprite, ref SpriteFontParams sfp, exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs) {
+        public static void BuildTextInLocalSpace (exISpriteFont _sprite, exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs) {
             Vector2 texelSize = new Vector2();
-            if (_uvs != null && sfp.font.texture != null) {
-                texelSize = sfp.font.texture.texelSize;
+            if (_uvs != null && _sprite.font.texture != null) {
+                texelSize = _sprite.font.texture.texelSize;
             }
 
             int parsedVBIndex = _vbIndex;
-            for (int charIndex = 0; charIndex < sfp.text.Length; ) {
+            for (int charIndex = 0; charIndex < _sprite.text.Length; ) {
                 int lineStart = parsedVBIndex;
                 // build line
-                float lineWidth = BuildLine(ref sfp, _vertices, _uvs, ref charIndex, ref parsedVBIndex, texelSize, - _sprite.height);
+                float lineWidth = BuildLine(_sprite, _vertices, _uvs, ref charIndex, ref parsedVBIndex, texelSize, - _sprite.height);
                 // text alignment
-                switch (sfp.textAlign) {
+                switch (_sprite.textAlign) {
                     case TextAlignment.Left:
                     // convert to top left
                     break;
@@ -951,9 +742,9 @@ namespace ex2D.Detail {
                 if (lineWidth > _sprite.width) {
                     _sprite.width = lineWidth;
                 }
-                _sprite.height += sfp.font.fontSize;
-                if (charIndex < sfp.text.Length) {
-                    _sprite.height += sfp.spacing.y;
+                _sprite.height += _sprite.font.fontSize;
+                if (charIndex < _sprite.text.Length) {
+                    _sprite.height += _sprite.lineHeight;
                 }
             }
         }
@@ -962,14 +753,19 @@ namespace ex2D.Detail {
         // Desc: 
         // ------------------------------------------------------------------ 
         
-        public static float BuildLine (ref SpriteFontParams sfp, exList<Vector3> _vertices, exList<Vector2> _uvs, ref int _charIndex, ref int _vbIndex, Vector2 _texelSize, float _top) {
-            // TODO: cache vertices, only transform them if text not changed.
+        public static float BuildLine (exISpriteFont _sprite, exList<Vector3> _vertices, exList<Vector2> _uvs, ref int _charIndex, ref int _vbIndex, Vector2 _texelSize, float _top) {
+            // cache property
+            string text = _sprite.text;
+            var letterSpacing = _sprite.letterSpacing;
+            bool useKerning = _sprite.useKerning;
+            exFont font = _sprite.font;
+            //
             int firstChar = _charIndex;
             float curX = 0.0f;
             float lastAdvance = 0.0f;
             float lastWidth = 0.0f;
-            for (; _charIndex < sfp.text.Length; ++_charIndex, _vbIndex += 4, curX += sfp.spacing.x) {
-                char c = sfp.text[_charIndex];
+            for (; _charIndex < text.Length; ++_charIndex, _vbIndex += 4, curX += letterSpacing) {
+                char c = text[_charIndex];
                 
                 // if new line
                 if (c == '\n') {
@@ -985,13 +781,13 @@ namespace ex2D.Detail {
                 if (_charIndex > firstChar) {   // if has previous character
                     curX += lastAdvance;
                     // kerning
-                    if (sfp.useKerning) {
-                        curX += sfp.font.GetKerning(sfp.text[_charIndex - 1], c);
+                    if (useKerning) {
+                        curX += font.GetKerning(text[_charIndex - 1], c);
                     }
                 }
 
                 CharacterInfo ci;
-                if (sfp.font.GetCharInfo(c, out ci) == false) {
+                if (font.GetCharInfo(c, out ci) == false) {
                     // character is not present, it will not display
                     // Debug.Log("character is not present: " + c, this);
                     _vertices.buffer[_vbIndex + 0] = new Vector3();

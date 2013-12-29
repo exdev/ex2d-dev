@@ -95,6 +95,11 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     
     [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
     
+    exUpdateFlags exISpriteBase.updateFlags {
+        get { return updateFlags; }
+        set { updateFlags = value; }
+    }
+
     [System.NonSerialized] protected exClipping clip_;
     public exClipping clip {
         get {
@@ -109,6 +114,10 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     }
     
     [System.NonSerialized] internal Matrix4x4 cachedWorldMatrix;    // 内部使用，只有exLayeredSprite的值才可读
+
+    Matrix4x4 exISpriteBase.cachedWorldMatrix {
+        get { return cachedWorldMatrix; }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
@@ -315,13 +324,13 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     // Get lossy scale
     // ------------------------------------------------------------------ 
 
-    internal abstract float GetScaleX (Space _space);
+    public abstract float GetScaleX (Space _space);
     
     // ------------------------------------------------------------------ 
     // Get lossy scale
     // ------------------------------------------------------------------ 
 
-    internal abstract float GetScaleY (Space _space);
+    public abstract float GetScaleY (Space _space);
 
     // ------------------------------------------------------------------ 
     // Desc: 

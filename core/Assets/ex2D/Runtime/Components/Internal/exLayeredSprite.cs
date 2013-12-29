@@ -208,7 +208,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // Desc:
     // ------------------------------------------------------------------ 
 
-    internal override float GetScaleX (Space _space) {
+    public override float GetScaleX (Space _space) {
         if (_space == Space.World) {
             // 在已知matrix的情况下，这个方法比lossyScale快了6倍，但返回的scale不完全精确，因为不计入rotation的影响。
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
@@ -223,7 +223,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // Desc:
     // ------------------------------------------------------------------ 
 
-    internal override float GetScaleY (Space _space) {
+    public override float GetScaleY (Space _space) {
         if (_space == Space.World) {
             // 在已知matrix的情况下，这个方法比lossyScale快了6倍，但返回的scale不完全精确，因为不计入rotation的影响。
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
