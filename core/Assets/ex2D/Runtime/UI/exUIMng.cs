@@ -67,7 +67,20 @@ public class ControlSorterByLevel: IComparer<exUIControl> {
 
 public class ControlSorterByPriority: IComparer<exUIControl> {
     public int Compare( exUIControl _a, exUIControl _b ) {
-        return _b.priority - _a.priority;
+        int priority_a = _a.priority;
+        int priority_b = _b.priority;
+
+        if ( _a.gameObject.activeInHierarchy == false || _a.activeInHierarchy == false )
+            priority_a = -999;
+
+        if ( _b.gameObject.activeInHierarchy == false || _b.activeInHierarchy == false )
+            priority_b = -999;
+
+        if ( priority_b == priority_a ) {
+            return -1;
+        }
+
+        return priority_b - priority_a;
     }
 }
 
@@ -95,7 +108,7 @@ public class ControlSorterByPriority2: IComparer<exUIControl> {
             parent = parent.parent;
         }
 
-        return priority_b - priority_a;
+        return priority_a - priority_b;
     }
 }
 
@@ -387,12 +400,14 @@ public class exUIMng : MonoBehaviour {
             hotPoint.active = false;
             hotPoint.pressDown = false;
             hotPoint.pressUp = false;
+            touchPoints[i] = hotPoint;
         }
         for ( int i = 0; i < mousePoints.Length; ++i ) {
             exHotPoint hotPoint = mousePoints[i];
             hotPoint.active = false;
             hotPoint.pressDown = false;
             hotPoint.pressUp = false;
+            mousePoints[i] = hotPoint;
         }
 
         //
