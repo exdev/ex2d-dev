@@ -76,10 +76,6 @@ public class ControlSorterByPriority: IComparer<exUIControl> {
         if ( _b.gameObject.activeInHierarchy == false || _b.activeInHierarchy == false )
             priority_b = -999;
 
-        if ( priority_b == priority_a ) {
-            return -1;
-        }
-
         return priority_b - priority_a;
     }
 }
