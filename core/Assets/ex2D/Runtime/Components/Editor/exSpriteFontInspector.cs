@@ -57,7 +57,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
 
 	protected override void DoInspectorGUI () {
         base.DoInspectorGUI();
-
+        customSizeProp.boolValue = true;
         {
             // font
             exSpriteFont sp = serializedObject.targetObject as exSpriteFont;

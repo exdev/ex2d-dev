@@ -66,18 +66,6 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
             }
         }
     }
-    
-/*    public int lineHeight {
-        get {
-            return font_.lineHeight;
-        }
-        set {
-            if (font_.lineHeight != value) {
-                font_.lineHeight = value;
-                updateFlags |= exUpdateFlags.Vertex;
-            }
-        }
-    }*/
 
     public int fontSize {
         get {
@@ -173,7 +161,13 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
         set {
             if (letterSpacing_ != value) {
                 letterSpacing_ = value;
-                updateFlags |= exUpdateFlags.Vertex;
+                bool autoWrap = wrapMode_ == exTextUtility.WrapMode.Word || wrapMode_ == exTextUtility.WrapMode.PreWrap;
+                if (autoWrap) {
+                    updateFlags |= exUpdateFlags.Text;
+                }
+                else {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
             }
         }
     }
@@ -188,7 +182,13 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
         set {
             if (wordSpacing_ != value) {
                 wordSpacing_ = value;
-                updateFlags |= exUpdateFlags.Vertex;
+                bool autoWrap = wrapMode_ == exTextUtility.WrapMode.Word || wrapMode_ == exTextUtility.WrapMode.PreWrap;
+                if (autoWrap) {
+                    updateFlags |= exUpdateFlags.Text;
+                }
+                else {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
             }
         }
     }
@@ -363,12 +363,22 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
 
     public override float width {
         get { return width_; }
-        set { width_ = value; }
+        set {
+            width_ = value;
+            if (wrapMode_ == exTextUtility.WrapMode.Word || wrapMode_ == exTextUtility.WrapMode.PreWrap) {
+                updateFlags |= exUpdateFlags.Text;
+            }
+        }
     }
 
     public override float height {
         get { return height_; }
         set { height_ = value; }
+    }
+
+    public override bool customSize {
+        get { return true; }
+        set { customSize_ = true; }
     }
     
     ///////////////////////////////////////////////////////////////////////////////

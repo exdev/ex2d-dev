@@ -20,7 +20,7 @@ using System.Text;
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-public static class exTextUtility {
+public static partial class exTextUtility {
 
     public static GUIStyle fontHelper = new GUIStyle();
 
@@ -35,9 +35,9 @@ public static class exTextUtility {
     // Desc: This only calculate result in one line
     // ------------------------------------------------------------------ 
 
-    public static bool CalcTextLine ( ref int _end_x, 
-                                      ref int _end_index,
-                                      ref StringBuilder _builder,
+    public static bool CalcTextLine ( out int _end_x, 
+                                      out int _end_index,
+                                      StringBuilder _builder,
                                       string _text, 
                                       int _start_index, 
                                       int _width,
@@ -158,9 +158,9 @@ public static class exTextUtility {
     // Desc: This only calculate result in one line
     // ------------------------------------------------------------------ 
 
-    public static bool CalcTextLine ( ref int _end_x, 
-                                      ref int _end_index,
-                                      ref StringBuilder _builder,
+    public static bool CalcTextLine ( out int _end_x, 
+                                      out int _end_index,
+                                      StringBuilder _builder,
                                       string _text, 
                                       int _start_index, 
                                       int _width,

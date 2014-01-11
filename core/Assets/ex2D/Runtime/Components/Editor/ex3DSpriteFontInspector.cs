@@ -71,7 +71,8 @@ class ex3DSpriteFontInspector : exStandaloneSpriteInspector {
 
     protected override void DoInspectorGUI () {
         base.DoInspectorGUI();
-        
+        customSizeProp.boolValue = true;
+
         {
             // font
             ex3DSpriteFont sp = serializedObject.targetObject as ex3DSpriteFont;
@@ -307,18 +308,6 @@ class ex3DSpriteFontInspector : exStandaloneSpriteInspector {
 
         //EditorGUI.indentLevel--;
         //GUI.enabled = true;
-        
-        //
-        EditorGUILayout.Space();
-        GUILayout.BeginHorizontal();
-        GUILayout.FlexibleSpace();
-            if ( GUILayout.Button("Edit...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
-                EditorWindow.GetWindow<exSceneEditor>();
-            }
-        GUILayout.Space(5);
-        GUILayout.EndHorizontal();
-
-        EditorGUILayout.Space();
     }
 }
 

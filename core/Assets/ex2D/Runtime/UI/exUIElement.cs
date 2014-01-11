@@ -1180,9 +1180,9 @@ public class exUIElement {
                 int last_index = cur_index;
 
                 //
-                finished = exTextUtility.CalcTextLine ( ref line_width, 
-                                                        ref cur_index,
-                                                        ref builder,
+                finished = exTextUtility.CalcTextLine ( out line_width, 
+                                                        out cur_index,
+                                                        builder,
                                                         _text,
                                                         cur_index,
                                                         cur_width,
@@ -1273,9 +1273,9 @@ public class exUIElement {
                 int last_index = cur_index;
 
                 //
-                finished = exTextUtility.CalcTextLine ( ref line_width, 
-                                                        ref cur_index,
-                                                        ref builder,
+                finished = exTextUtility.CalcTextLine ( out line_width, 
+                                                        out cur_index,
+                                                        builder,
                                                         _text,
                                                         cur_index,
                                                         cur_width,
