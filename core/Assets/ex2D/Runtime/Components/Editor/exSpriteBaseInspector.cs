@@ -24,10 +24,10 @@ using ex2D.Detail;
 [CustomEditor(typeof(exSpriteBase))]
 class exSpriteBaseInspector : exPlaneInspector {
 
-    protected SerializedProperty customSizeProp;
-    protected SerializedProperty shearProp;
-    protected SerializedProperty colorProp;
-    protected SerializedProperty shaderProp;
+    public SerializedProperty customSizeProp;
+    public SerializedProperty shearProp;
+    public SerializedProperty colorProp;
+    public SerializedProperty shaderProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 

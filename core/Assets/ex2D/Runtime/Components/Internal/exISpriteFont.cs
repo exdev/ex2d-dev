@@ -20,7 +20,11 @@ using System.Collections;
 
 public interface exISpriteFont : exISpriteBase {
     string text { get; set; }
+    int fontSize { get; set; }
+    FontStyle fontStyle { get; set; }
     exFont font { get; }
+    exBitmapFont bitmapFont { get; }
+    Font dynamicFont { get; }
     exTextUtility.WrapMode wrapMode { get; set; }
     int lineHeight { get; set; }
     int letterSpacing { get; set; }
@@ -29,4 +33,10 @@ public interface exISpriteFont : exISpriteBase {
     bool useKerning { get; set; }
     Color topColor { get; set; }
     Color botColor { get; set; }
+#if UNITY_EDITOR
+    exFont.TypeForEditor fontType { get; set; }
+#endif
+
+    void SetFont (exBitmapFont _bitmapFont);
+    void SetFont (Font _dynamicFont);
 }
