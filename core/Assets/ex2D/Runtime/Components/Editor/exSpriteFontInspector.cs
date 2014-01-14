@@ -1,4 +1,4 @@
-// ======================================================================================
+﻿// ======================================================================================
 // File         : exSpriteFontInspector.cs
 // Author       : Wu Jie 
 // Last Change  : 08/01/2013 | 15:01:06 PM | Thursday,August
@@ -111,7 +111,7 @@ static class exSpriteFontInspectorHelper {
                         sp.fontSize = oldFontSize;
                     }
                     EditorUtility.SetDirty(sp as Object);
-                    sp.lineHeight = sp.fontSize;
+                    sp.lineHeight = sp.fontSize;        // 自动重设行高
                 }
                 EditorGUI.indentLevel++;
                 if (fontType == exFont.TypeForEditor.Bitmap) {
@@ -120,7 +120,7 @@ static class exSpriteFontInspectorHelper {
                     if (EditorGUI.EndChangeCheck()) {
                         sp.SetFont(font);
                         EditorUtility.SetDirty(sp as Object);
-                        sp.lineHeight = sp.fontSize;
+                        sp.lineHeight = sp.fontSize;    // 自动重设行高
                     }
                 }
                 else {
@@ -129,7 +129,7 @@ static class exSpriteFontInspectorHelper {
                     if (EditorGUI.EndChangeCheck()) {
                         sp.SetFont(font);
                         EditorUtility.SetDirty(sp as Object);
-                        sp.lineHeight = sp.fontSize;
+                        sp.lineHeight = sp.fontSize;    // 自动重设行高
                     }
                     EditorGUI.BeginChangeCheck();
                     var fontStyle = (FontStyle)EditorGUILayout.EnumPopup("Font Style", sp.fontStyle);

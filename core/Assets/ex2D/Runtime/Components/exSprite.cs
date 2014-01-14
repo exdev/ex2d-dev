@@ -46,7 +46,7 @@ public class exSprite : exLayeredSprite, exISprite {
     public exTextureInfo textureInfo {
         get { return textureInfo_; }
         set {
-            // 如果用户在运行时改变了textureInfo，则需要重新设置textureInfo
+            // 如果用户在运行时改变了exTextureInfo，则需要重新set
             if (value != null) {
                 if (isOnEnabled) {
                     Show ();
@@ -55,7 +55,6 @@ public class exSprite : exLayeredSprite, exISprite {
             else if (isOnEnabled && textureInfo_ != null) {
                 Hide ();
             }
-            // 如果用户在运行时改变了textureInfo，则需要重新设置textureInfo
             exSpriteUtility.SetTextureInfo (this, ref textureInfo_, value, useTextureOffset_, spriteType_);
         }
     }
@@ -336,9 +335,6 @@ public class exSprite : exLayeredSprite, exISprite {
                     _colors32.buffer [vertexBufferIndex + i] = color32;
                 }
             }
-            applyedFlags |= updateFlags;
-            updateFlags = exUpdateFlags.None;
-            return applyedFlags;
         }
         else {
             if (updateFlags != exUpdateFlags.None) {
@@ -348,17 +344,20 @@ public class exSprite : exLayeredSprite, exISprite {
                     for (int i = indexBufferIndex; i < indexBufferIndex + indexCount_; ++i) {
                         _indices.buffer[i] = vertexBufferIndex;
                     }
+                    applyedFlags |= exUpdateFlags.VertexAndIndex;
                 }
                 else {
                     Vector3 pos = cachedTransform.position;
                     for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount_; ++i) {
                         _vertices.buffer[i] = pos;
                     }
+                    applyedFlags |= exUpdateFlags.Vertex;
                 }
-                return exUpdateFlags.All;
             }
-            return exUpdateFlags.None;
         }
+        applyedFlags |= updateFlags;
+        updateFlags = exUpdateFlags.None;
+        return applyedFlags;
     }
     
 #endregion // Functions used to update geometry buffer
