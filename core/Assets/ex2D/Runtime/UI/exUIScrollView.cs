@@ -164,6 +164,7 @@ public class exUIScrollView : exUIControl {
                 exHotPoint point = _points[i];
                 if ( draggable && ( point.isTouch || point.GetMouseButton(0) ) && point.id == draggingID  ) {
                     Vector2 delta = point.worldDelta; 
+                    delta.x = -delta.x;
                     Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
                                                                                      new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
                     if ( Mathf.Abs(constrainOffset.x) > 0.001f ) delta.x *= 0.5f;
@@ -332,7 +333,7 @@ public class exUIScrollView : exUIControl {
         }
 
         if ( contentAnchor != null ) {
-            contentAnchor.localPosition = new Vector3 ( originalAnchorPos.x + scrollOffset.x,
+            contentAnchor.localPosition = new Vector3 ( originalAnchorPos.x - scrollOffset.x,
                                                         originalAnchorPos.y + scrollOffset.y,
                                                         originalAnchorPos.z );
         }
