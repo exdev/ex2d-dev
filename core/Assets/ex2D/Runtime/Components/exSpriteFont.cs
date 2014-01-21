@@ -167,6 +167,21 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
     }
 
     // ------------------------------------------------------------------ 
+    [SerializeField] protected bool customLineHeight_ = false;
+    ///
+    // ------------------------------------------------------------------ 
+
+    public bool customLineHeight {
+        get { return customLineHeight_; }
+        set {
+            if (customLineHeight_ != value) {
+                customLineHeight_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
     [SerializeField] protected int letterSpacing_ = 0;
     /// the fixed width applied between two characters in the text. 
     // ------------------------------------------------------------------ 
@@ -606,10 +621,12 @@ namespace ex2D.Detail {
             // even if the characters are currently present in the texture, to make sure they don't get purged during texture rebuild.
             _sprite.font.RequestCharactersInTexture (_sprite.text);
             
-            _sprite.height = 0.0f;   // 和SpriteBase一致，用于表示实际高度
             int visibleVertexCount = 0;
             if (_sprite.font.isValid) {
                 visibleVertexCount = BuildTextInLocalSpace(_sprite, _vertices, _vbIndex, _uvs);
+            }
+            else {
+                _sprite.height = 0.0f;   // 表示实际高度
             }
             if (visibleVertexCount == 0 && _sprite.vertexCount >= 4) {
                 visibleVertexCount = 4;
@@ -738,6 +755,14 @@ namespace ex2D.Detail {
                 texelSize = _sprite.font.texture.texelSize;
             }
 
+            float customLineHeightMargin = (_sprite.lineHeight - _sprite.fontSize) * 0.5f;
+            if (_sprite.customLineHeight) {
+                _sprite.height = customLineHeightMargin;
+            }
+            else {
+                _sprite.height = 0;
+            }
+
             // NOTE: 这里不用考虑预分配的空间用不完的情况，因为大部分情况下只需输出单行文本。
             //       而且一个mesh其实也显示不了太多字。
             StringBuilder strBuilder = new StringBuilder(_sprite.text.Length);
@@ -780,12 +805,12 @@ namespace ex2D.Detail {
                     }
                     break;
                 }
-                //_sprite.height += _sprite.font.fontSize;
-                //if (finished == false) {
-                //    _sprite.height += _sprite.lineHeight;
-                //}
-                _sprite.height += _sprite.lineHeight;
-
+                if (_sprite.customLineHeight) {
+                    _sprite.height += (finished ? (_sprite.fontSize + customLineHeightMargin) : _sprite.lineHeight);
+                }
+                else {
+                    _sprite.height += _sprite.fontSize;
+                }
                 ++cur_index;
             }
 

@@ -29,6 +29,7 @@ class ex3DSpriteFontInspector : exStandaloneSpriteInspector {
     protected SerializedProperty useKerningProp;
     protected SerializedProperty wrapModeProp;
     protected SerializedProperty lineHeightProp;
+    protected SerializedProperty customLineHeightProp;
     protected SerializedProperty letterSpacingProp;
     protected SerializedProperty wordSpacingProp;
     protected SerializedProperty topColorProp;
@@ -53,6 +54,7 @@ class ex3DSpriteFontInspector : exStandaloneSpriteInspector {
         useKerningProp = serializedObject.FindProperty("useKerning_");
         wrapModeProp = serializedObject.FindProperty("wrapMode_");
         lineHeightProp = serializedObject.FindProperty("lineHeight_");
+        customLineHeightProp = serializedObject.FindProperty("customLineHeight_");
         letterSpacingProp = serializedObject.FindProperty("letterSpacing_");
         wordSpacingProp = serializedObject.FindProperty("wordSpacing_");
         topColorProp = serializedObject.FindProperty("topColor_");
@@ -78,6 +80,7 @@ class ex3DSpriteFontInspector : exStandaloneSpriteInspector {
                                                     useKerningProp,
                                                     wrapModeProp,
                                                     lineHeightProp,
+                                                    customLineHeightProp,
                                                     letterSpacingProp,
                                                     wordSpacingProp,
                                                     topColorProp,

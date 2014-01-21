@@ -28,6 +28,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
     protected SerializedProperty useKerningProp;
     protected SerializedProperty wrapModeProp;
     protected SerializedProperty lineHeightProp;
+    protected SerializedProperty customLineHeightProp;
     protected SerializedProperty letterSpacingProp;
     protected SerializedProperty wordSpacingProp;
     protected SerializedProperty topColorProp;
@@ -45,6 +46,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         useKerningProp = serializedObject.FindProperty("useKerning_");
         wrapModeProp = serializedObject.FindProperty("wrapMode_");
         lineHeightProp = serializedObject.FindProperty("lineHeight_");
+        customLineHeightProp = serializedObject.FindProperty("customLineHeight_");
         letterSpacingProp = serializedObject.FindProperty("letterSpacing_");
         wordSpacingProp = serializedObject.FindProperty("wordSpacing_");
         topColorProp = serializedObject.FindProperty("topColor_");
@@ -64,6 +66,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
                                                     useKerningProp,
                                                     wrapModeProp,
                                                     lineHeightProp,
+                                                    customLineHeightProp,
                                                     letterSpacingProp,
                                                     wordSpacingProp,
                                                     topColorProp,
@@ -89,6 +92,7 @@ static class exSpriteFontInspectorHelper {
                                         SerializedProperty _useKerningProp,
                                         SerializedProperty _wrapModeProp,
                                         SerializedProperty _lineHeightProp,
+                                        SerializedProperty _customLineHeightProp,
                                         SerializedProperty _letterSpacingProp,
                                         SerializedProperty _wordSpacingProp,
                                         SerializedProperty _topColorProp,
@@ -197,17 +201,36 @@ static class exSpriteFontInspectorHelper {
             }
         }
 
-        // line height
+        // custom line height
         EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( _lineHeightProp, new GUIContent("Line Height"), true );
+        EditorGUILayout.PropertyField ( _customLineHeightProp, new GUIContent("Custom Line Height"), true );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in _inspector.serializedObject.targetObjects ) {
                 exISpriteFont sp = obj as exISpriteFont;
                 if ( sp != null ) {
-                    sp.lineHeight = _lineHeightProp.intValue;
+                    sp.customLineHeight = _customLineHeightProp.boolValue;
                     EditorUtility.SetDirty(obj);
                 }
             }
+        }
+
+        if (_customLineHeightProp.boolValue) {
+            EditorGUI.indentLevel++;
+
+            // line height
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField ( _lineHeightProp, new GUIContent("Line Height"), true );
+            if ( EditorGUI.EndChangeCheck() ) {
+                foreach ( Object obj in _inspector.serializedObject.targetObjects ) {
+                    exISpriteFont sp = obj as exISpriteFont;
+                    if ( sp != null ) {
+                        sp.lineHeight = _lineHeightProp.intValue;
+                        EditorUtility.SetDirty(obj);
+                    }
+                }
+            }
+
+            EditorGUI.indentLevel--;
         }
 
         // letter spacing

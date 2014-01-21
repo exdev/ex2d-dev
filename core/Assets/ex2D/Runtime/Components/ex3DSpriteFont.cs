@@ -152,6 +152,21 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
     }
 
     // ------------------------------------------------------------------ 
+    [SerializeField] protected bool customLineHeight_ = false;
+    ///
+    // ------------------------------------------------------------------ 
+
+    public bool customLineHeight {
+        get { return customLineHeight_; }
+        set {
+            if (customLineHeight_ != value) {
+                customLineHeight_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
     [SerializeField] protected int letterSpacing_ = 0;
     /// the fixed width applied between two characters in the text. 
     // ------------------------------------------------------------------ 
