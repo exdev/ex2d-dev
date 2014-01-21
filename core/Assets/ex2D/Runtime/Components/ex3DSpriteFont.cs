@@ -142,11 +142,12 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
     // ------------------------------------------------------------------ 
 
     public int lineHeight {
-        get { return lineHeight_; }
+        get { return customLineHeight_ ? lineHeight_ : font_.fontSize; }
         set {
             if (lineHeight_ != value) {
                 lineHeight_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
+                customLineHeight_ = true;
             }
         }
     }
@@ -162,6 +163,9 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
             if (customLineHeight_ != value) {
                 customLineHeight_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
+                if (customLineHeight_ == false) {
+                    lineHeight_ = font_.fontSize;
+                }
             }
         }
     }

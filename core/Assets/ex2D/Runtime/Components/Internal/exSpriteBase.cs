@@ -130,14 +130,10 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     public override float width {
         get { return width_; }
         set {
-            if (customSize_) {
-                if (width_ != value) {
-                    width_ = value;
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-            }
-            else {
-                Debug.LogWarning("Can not set sprite's width when sprite is not using customSize!");
+            if (width_ != value) {
+                width_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+                customSize = true;
             }
         }
     }
@@ -149,14 +145,10 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     public override float height {
         get { return height_; }
         set {
-            if (customSize_) {
-                if (height_ != value) {
-                    height_ = value;
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-            }
-            else {
-                Debug.LogWarning("Can not set sprite's height when sprite is not using customSize!");
+            if (height_ != value) {
+                height_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+                customSize = true;
             }
         }
     }

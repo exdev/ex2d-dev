@@ -73,9 +73,8 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
                     text_ = text_.Substring(0, exMesh.MAX_QUAD_COUNT);
                     Debug.LogError("Too many character on one sprite: " + value.Length, this);
                 }
-                // TODO: check multiline
                 if (oldText.Length != text_.Length) {
-                    UpdateCapacity();   // TODO: 如果在一帧内反复修改文本，会造成多余的layer改动，考虑留到update时再处理
+                    UpdateCapacity();
                 }
                 updateFlags |= exUpdateFlags.Text;
             }
@@ -147,6 +146,7 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
             if (useKerning_ != value) {
                 useKerning_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
+                customLineHeight_ = true;
             }
         }
     }
@@ -157,11 +157,14 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
     // ------------------------------------------------------------------ 
 
     public int lineHeight {
-        get { return lineHeight_; }
+        get { return customLineHeight_ ? lineHeight_ : font_.fontSize; }
         set {
             if (lineHeight_ != value) {
                 lineHeight_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
+                if (customLineHeight_ == false) {
+                    lineHeight_ = font_.fontSize;
+                }
             }
         }
     }
@@ -460,7 +463,6 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
         if (text_ == null) {
             return 0;
         }
-        // TODO: check multiline
         int textLength = text_.Length;
         //            if (useShadow_) {
         //                textLength += text_.Length;
@@ -547,7 +549,7 @@ namespace ex2D.Detail {
         // ------------------------------------------------------------------ 
         
         public static void GetVertexAndIndexCount (string _text, out int _vertexCount, out int _indexCount) {
-            int textLength = _text.Length;  // todo: multiline
+            int textLength = _text.Length;
             _vertexCount = textLength * exMesh.QUAD_VERTEX_COUNT;
             _indexCount = textLength * exMesh.QUAD_INDEX_COUNT;
         }
@@ -621,12 +623,11 @@ namespace ex2D.Detail {
             // even if the characters are currently present in the texture, to make sure they don't get purged during texture rebuild.
             _sprite.font.RequestCharactersInTexture (_sprite.text);
             
+            _sprite.height = 0.0f;
+            float displayWidth = 0; // 实际渲染的宽度不等于sprite.width(换行宽度)
             int visibleVertexCount = 0;
             if (_sprite.font.isValid) {
-                visibleVertexCount = BuildTextInLocalSpace(_sprite, _vertices, _vbIndex, _uvs);
-            }
-            else {
-                _sprite.height = 0.0f;   // 表示实际高度
+                visibleVertexCount = BuildTextInLocalSpace(_sprite, _vertices, _vbIndex, _uvs, out displayWidth);
             }
             if (visibleVertexCount == 0 && _sprite.vertexCount >= 4) {
                 visibleVertexCount = 4;
@@ -645,24 +646,24 @@ namespace ex2D.Detail {
             case TextAlignment.Left:
                 break;
             case TextAlignment.Center:
-                anchorOffset.x = _sprite.width * 0.5f;
+                anchorOffset.x = displayWidth * 0.5f;
                 break;
             case TextAlignment.Right:
-                anchorOffset.x = _sprite.width;
+                anchorOffset.x = displayWidth;
                 break;
             }
             // convert anchor from top center to user defined
             switch ( _sprite.anchor ) {
             case Anchor.TopLeft   :                                         anchorOffset.y = 0.0f;                  break;
-            case Anchor.TopCenter : anchorOffset.x -= _sprite.width * 0.5f; anchorOffset.y = 0.0f;                  break;
-            case Anchor.TopRight  : anchorOffset.x -= _sprite.width;        anchorOffset.y = 0.0f;                  break;
+            case Anchor.TopCenter : anchorOffset.x -= displayWidth * 0.5f; anchorOffset.y = 0.0f;                  break;
+            case Anchor.TopRight  : anchorOffset.x -= displayWidth;        anchorOffset.y = 0.0f;                  break;
             case Anchor.MidLeft   :                                         anchorOffset.y = _sprite.height * 0.5f; break;
-            case Anchor.MidCenter : anchorOffset.x -= _sprite.width * 0.5f; anchorOffset.y = _sprite.height * 0.5f; break;
-            case Anchor.MidRight  : anchorOffset.x -= _sprite.width;        anchorOffset.y = _sprite.height * 0.5f; break;
+            case Anchor.MidCenter : anchorOffset.x -= displayWidth * 0.5f; anchorOffset.y = _sprite.height * 0.5f; break;
+            case Anchor.MidRight  : anchorOffset.x -= displayWidth;        anchorOffset.y = _sprite.height * 0.5f; break;
             case Anchor.BotLeft   :                                         anchorOffset.y = _sprite.height;        break;
-            case Anchor.BotCenter : anchorOffset.x -= _sprite.width * 0.5f; anchorOffset.y = _sprite.height;        break;
-            case Anchor.BotRight  : anchorOffset.x -= _sprite.width;        anchorOffset.y = _sprite.height;        break;
-            default               : anchorOffset.x -= _sprite.width * 0.5f; anchorOffset.y = _sprite.height * 0.5f; break;
+            case Anchor.BotCenter : anchorOffset.x -= displayWidth * 0.5f; anchorOffset.y = _sprite.height;        break;
+            case Anchor.BotRight  : anchorOffset.x -= displayWidth;        anchorOffset.y = _sprite.height;        break;
+            default               : anchorOffset.x -= displayWidth * 0.5f; anchorOffset.y = _sprite.height * 0.5f; break;
             }
             // offset
             Vector3 offset = anchorOffset + _sprite.offset;
@@ -740,7 +741,7 @@ namespace ex2D.Detail {
         /// Return used vertex count
         // ------------------------------------------------------------------ 
         
-        public static int BuildTextInLocalSpace (exISpriteFont _sprite, exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs) {
+        public static int BuildTextInLocalSpace (exISpriteFont _sprite, exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs, out float maxWidth) {
             // cache property
             //string text = _sprite.text;
             //bool useKerning = _sprite.useKerning;
@@ -755,13 +756,9 @@ namespace ex2D.Detail {
                 texelSize = _sprite.font.texture.texelSize;
             }
 
-            float customLineHeightMargin = (_sprite.lineHeight - _sprite.fontSize) * 0.5f;
-            if (_sprite.customLineHeight) {
-                _sprite.height = customLineHeightMargin;
-            }
-            else {
-                _sprite.height = 0;
-            }
+            float halfLineHeightMargin = (_sprite.lineHeight - _sprite.fontSize) * 0.5f;
+            _sprite.height = halfLineHeightMargin;
+            maxWidth = 0;
 
             // NOTE: 这里不用考虑预分配的空间用不完的情况，因为大部分情况下只需输出单行文本。
             //       而且一个mesh其实也显示不了太多字。
@@ -785,7 +782,10 @@ namespace ex2D.Detail {
                                                         _sprite.letterSpacing );
                 int lineStart = parsedVBIndex;
                 float lineWidth = BuildLine(strBuilder.ToString(), _sprite, _vertices, _uvs, ref parsedVBIndex, - _sprite.height, texelSize);
-                
+                if (lineWidth > maxWidth) {
+                    maxWidth = lineWidth;
+                }
+
                 // text alignment
                 switch (_sprite.textAlign) {
                 case TextAlignment.Left:
@@ -805,11 +805,9 @@ namespace ex2D.Detail {
                     }
                     break;
                 }
-                if (_sprite.customLineHeight) {
-                    _sprite.height += (finished ? (_sprite.fontSize + customLineHeightMargin) : _sprite.lineHeight);
-                }
-                else {
-                    _sprite.height += _sprite.fontSize;
+                _sprite.height += _sprite.lineHeight;
+                if (finished) {
+                    _sprite.height += halfLineHeightMargin;
                 }
                 ++cur_index;
             }
