@@ -60,7 +60,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
 	protected override void DoInspectorGUI () {
         base.DoInspectorGUI();
 
-        exSpriteFontInspectorHelper.DoInspectorGUI(this, 
+        exISpriteFontInspector.DoInspectorGUI(this, 
                                                     textProp,
                                                     textAlignProp,
                                                     useKerningProp,
@@ -85,7 +85,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
     }
 }
 
-static class exSpriteFontInspectorHelper {
+static class exISpriteFontInspector {
     public static void DoInspectorGUI (exSpriteBaseInspector _inspector, 
                                         SerializedProperty _textProp,
                                         SerializedProperty _textAlignProp,
@@ -154,8 +154,8 @@ static class exSpriteFontInspectorHelper {
         EditorGUILayout.PropertyField ( _textProp, new GUIContent("Text") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in _inspector.serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
-                if ( sp ) {
+                exISpriteFont sp = obj as exISpriteFont;
+                if ( sp != null ) {
                     sp.text = _textProp.stringValue;
                     EditorUtility.SetDirty(sp as Object);
                 }
@@ -167,8 +167,8 @@ static class exSpriteFontInspectorHelper {
         EditorGUILayout.PropertyField ( _textAlignProp, new GUIContent("Text Align") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in _inspector.serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
-                if ( sp ) {
+                exISpriteFont sp = obj as exISpriteFont;
+                if ( sp != null ) {
                     sp.textAlign = (TextAlignment)_textAlignProp.enumValueIndex;
                     EditorUtility.SetDirty(sp as Object);
                 }
@@ -180,8 +180,8 @@ static class exSpriteFontInspectorHelper {
         EditorGUILayout.PropertyField ( _useKerningProp, new GUIContent("Use Kerning") );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in _inspector.serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
-                if ( sp ) {
+                exISpriteFont sp = obj as exISpriteFont;
+                if ( sp != null ) {
                     sp.useKerning = _useKerningProp.boolValue;
                     EditorUtility.SetDirty(sp as Object);
                 }
@@ -264,8 +264,8 @@ static class exSpriteFontInspectorHelper {
         EditorGUILayout.PropertyField ( _topColorProp, new GUIContent("Top Color"), true );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in _inspector.serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
-                if ( sp ) {
+                exISpriteFont sp = obj as exISpriteFont;
+                if ( sp != null ) {
                     sp.topColor = _topColorProp.colorValue;
                     EditorUtility.SetDirty(sp as Object);
                 }
@@ -277,8 +277,8 @@ static class exSpriteFontInspectorHelper {
         EditorGUILayout.PropertyField ( _botColorProp, new GUIContent("Bot Color"), true );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in _inspector.serializedObject.targetObjects ) {
-                exSpriteFont sp = obj as exSpriteFont;
-                if ( sp ) {
+                exISpriteFont sp = obj as exISpriteFont;
+                if ( sp != null ) {
                     sp.botColor = _botColorProp.colorValue;
                     EditorUtility.SetDirty(sp as Object);
                 }

@@ -74,7 +74,7 @@ class ex3DSpriteFontInspector : exStandaloneSpriteInspector {
     protected override void DoInspectorGUI () {
         base.DoInspectorGUI();
 
-        exSpriteFontInspectorHelper.DoInspectorGUI(this, 
+        exISpriteFontInspector.DoInspectorGUI(this, 
                                                     textProp,
                                                     textAlignProp,
                                                     useKerningProp,
