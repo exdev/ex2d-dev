@@ -192,8 +192,8 @@ class exSpriteBaseInspector : exPlaneInspector {
                     for ( int i = 0; i < planes.Length; ++i ) {
                         exPlane plane = planes[i];
                         if ( plane != this ) {
-                            plane.width = sprite.width;
-                            plane.height = sprite.height;
+                            // plane.width = sprite.width;
+                            // plane.height = sprite.height;
                             plane.anchor = sprite.anchor;
                             plane.offset = sprite.offset;
                         }

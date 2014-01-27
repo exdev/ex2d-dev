@@ -57,15 +57,15 @@ class exPlaneInspector : Editor {
         exPlane targetPlane = target as exPlane;
         if ( targetPlane.hasSprite ) {
             exSpriteBase spriteBase = targetPlane.GetComponent<exSpriteBase>();
-            if ( targetPlane.width != spriteBase.width ) {
-                targetPlane.width = spriteBase.width;
-                EditorUtility.SetDirty(targetPlane);
-            }
+            // if ( targetPlane.width != spriteBase.width ) {
+            //     targetPlane.width = spriteBase.width;
+            //     EditorUtility.SetDirty(targetPlane);
+            // }
 
-            if ( targetPlane.height != spriteBase.height ) {
-                targetPlane.height = spriteBase.height;
-                EditorUtility.SetDirty(targetPlane);
-            }
+            // if ( targetPlane.height != spriteBase.height ) {
+            //     targetPlane.height = spriteBase.height;
+            //     EditorUtility.SetDirty(targetPlane);
+            // }
 
             if ( targetPlane.anchor != spriteBase.anchor ) {
                 targetPlane.anchor = spriteBase.anchor;
@@ -307,30 +307,30 @@ class exPlaneInspector : Editor {
 
     protected virtual void DoInspectorGUI () {
         // width
-        EditorGUI.BeginChangeCheck();
+        // EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( widthProp, new GUIContent("Width") );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exPlane plane = obj as exPlane;
-                if ( plane ) {
-                    plane.width = Mathf.Max(widthProp.floatValue, 0f);
-                    EditorUtility.SetDirty(plane);
-                }
-            }
-        }
+        // if ( EditorGUI.EndChangeCheck() ) {
+        //     foreach ( Object obj in serializedObject.targetObjects ) {
+        //         exPlane plane = obj as exPlane;
+        //         if ( plane ) {
+        //             plane.width = Mathf.Max(widthProp.floatValue, 0f);
+        //             EditorUtility.SetDirty(plane);
+        //         }
+        //     }
+        // }
 
         // height
-        EditorGUI.BeginChangeCheck();
+        // EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField ( heightProp, new GUIContent("Height") );
-        if ( EditorGUI.EndChangeCheck() ) {
-            foreach ( Object obj in serializedObject.targetObjects ) {
-                exPlane plane = obj as exPlane;
-                if ( plane ) {
-                    plane.height = Mathf.Max(heightProp.floatValue, 0f);
-                    EditorUtility.SetDirty(plane);
-                }
-            }
-        }
+        // if ( EditorGUI.EndChangeCheck() ) {
+        //     foreach ( Object obj in serializedObject.targetObjects ) {
+        //         exPlane plane = obj as exPlane;
+        //         if ( plane ) {
+        //             plane.height = Mathf.Max(heightProp.floatValue, 0f);
+        //             EditorUtility.SetDirty(plane);
+        //         }
+        //     }
+        // }
 
         // anchor
         EditorGUI.BeginChangeCheck();
