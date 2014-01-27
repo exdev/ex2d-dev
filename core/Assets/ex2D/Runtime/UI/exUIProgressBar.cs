@@ -81,6 +81,18 @@ public class exUIProgressBar : exUIControl {
         }
     }
 
+    //
+    [SerializeField] protected float barSize_ = 0.0f;
+    public float barSize {
+        get { return barSize_; }
+        set {
+            if ( barSize_ != value ) {
+                barSize_ = value;
+                UpdateBar ();
+            }
+        }
+    }
+
 	public Direction direction = Direction.Horizontal;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -94,20 +106,13 @@ public class exUIProgressBar : exUIControl {
     ///////////////////////////////////////////////////////////////////////////////
 
     public static void SetBarSize ( exSprite _bar, 
-                                    exUIControl _ctrl, 
+                                    float _barSize, 
                                     float _progress, 
                                     Direction _direction ) 
     {
         if ( _bar != null ) {
-            exSprite background = _ctrl.GetComponent<exSprite>();
-
             if ( _direction == Direction.Horizontal ) {
-                float progressWidth = _progress * _ctrl.width;
-                if ( background != null && background.spriteType == exSpriteType.Sliced ) {
-                    progressWidth = _progress * (_ctrl.width - background.leftBorderSize - background.rightBorderSize);
-                }
-
-
+                float progressWidth = _progress * _barSize;
                 if ( _bar.spriteType == exSpriteType.Sliced ) {
                     _bar.width = progressWidth + _bar.leftBorderSize + _bar.rightBorderSize;
                 }
@@ -116,13 +121,7 @@ public class exUIProgressBar : exUIControl {
                 }
             }
             else {
-                float progressHeight = _progress * _ctrl.height;
-
-                if ( background != null && background.spriteType == exSpriteType.Sliced ) {
-                    progressHeight = _progress * (_ctrl.height - background.topBorderSize - background.bottomBorderSize);
-                }
-
-
+                float progressHeight = _progress * _barSize;
                 if ( _bar.spriteType == exSpriteType.Sliced ) {
                     _bar.height = progressHeight + _bar.topBorderSize + _bar.bottomBorderSize;
                 }
@@ -148,10 +147,6 @@ public class exUIProgressBar : exUIControl {
         Transform transBar = transform.Find("__bar");
         if ( transBar ) {
             bar = transBar.GetComponent<exSprite>();
-            if ( bar ) {
-                bar.customSize = true;
-                bar.anchor = Anchor.TopLeft;
-            }
         }
 
         UpdateBar ();
@@ -162,6 +157,6 @@ public class exUIProgressBar : exUIControl {
     // ------------------------------------------------------------------ 
 
     void UpdateBar () {
-        SetBarSize ( bar, this, progress_, direction );
+        SetBarSize ( bar, barSize_, progress_, direction );
     }
 }

@@ -25,6 +25,7 @@ using System.Reflection;
 class exUIProgressBarInspector : exUIControlInspector {
 
     protected SerializedProperty progressProp;
+    protected SerializedProperty barSizeProp;
     protected SerializedProperty directionProp;
 
     // ------------------------------------------------------------------ 
@@ -35,6 +36,7 @@ class exUIProgressBarInspector : exUIControlInspector {
         base.InitProperties();
 
         progressProp = serializedObject.FindProperty("progress_");
+        barSizeProp = serializedObject.FindProperty("barSize_");
         directionProp = serializedObject.FindProperty("direction");
     }
 
@@ -45,7 +47,9 @@ class exUIProgressBarInspector : exUIControlInspector {
 	protected override void DoInspectorGUI () {
         base.DoInspectorGUI();
 
-        bool progressChanged = false;
+        bool barChanged = false;
+
+        //
         EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField ( progressProp, new GUIContent("Progress") );
         if ( EditorGUI.EndChangeCheck() ) {
@@ -56,8 +60,17 @@ class exUIProgressBarInspector : exUIControlInspector {
                 }
                 progressProp.floatValue = Mathf.Clamp( progressProp.floatValue, 0.0f, 1.0f );
             }
-            progressChanged = true;
+            barChanged = true;
         }
+
+        //
+        EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField ( barSizeProp, new GUIContent("Bar Size") );
+        if ( EditorGUI.EndChangeCheck() ) {
+            barChanged = true;
+        }
+
+        //
         EditorGUILayout.PropertyField ( directionProp );
 
         //
@@ -79,8 +92,8 @@ class exUIProgressBarInspector : exUIControlInspector {
                         bar.anchor = Anchor.TopLeft;
                         EditorUtility.SetDirty(bar);
                     }
-                    if ( progressChanged ) {
-                        exUIProgressBar.SetBarSize ( bar, progressBar, progressProp.floatValue, progressBar.direction );
+                    if ( barChanged ) {
+                        exUIProgressBar.SetBarSize ( bar, barSizeProp.floatValue, progressProp.floatValue, progressBar.direction );
                         EditorUtility.SetDirty(bar);
                     }
                 }
