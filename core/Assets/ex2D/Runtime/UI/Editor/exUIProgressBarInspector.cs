@@ -88,10 +88,6 @@ class exUIProgressBarInspector : exUIControlInspector {
                         bar.customSize = true;
                         EditorUtility.SetDirty(bar);
                     }
-                    if ( bar.anchor != Anchor.TopLeft ) {
-                        bar.anchor = Anchor.TopLeft;
-                        EditorUtility.SetDirty(bar);
-                    }
                     if ( barChanged ) {
                         exUIProgressBar.SetBarSize ( bar, barSizeProp.floatValue, progressProp.floatValue, progressBar.direction );
                         EditorUtility.SetDirty(bar);
