@@ -112,22 +112,10 @@ public class exUIProgressBar : exUIControl {
     {
         if ( _bar != null ) {
             if ( _direction == Direction.Horizontal ) {
-                float progressWidth = _progress * _barSize;
-                if ( _bar.spriteType == exSpriteType.Sliced ) {
-                    _bar.width = progressWidth + _bar.leftBorderSize + _bar.rightBorderSize;
-                }
-                else {
-                    _bar.width = progressWidth;
-                }
+                _bar.width = _progress * _barSize;
             }
             else {
-                float progressHeight = _progress * _barSize;
-                if ( _bar.spriteType == exSpriteType.Sliced ) {
-                    _bar.height = progressHeight + _bar.topBorderSize + _bar.bottomBorderSize;
-                }
-                else {
-                    _bar.height = progressHeight;
-                }
+                _bar.height = _progress * _barSize;
             }
         }
     }
