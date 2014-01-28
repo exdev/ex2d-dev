@@ -26,23 +26,16 @@ public class exUIPanel : exUIControl {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    public override EventDef GetEventDef ( string _name ) {
-        EventDef eventDef = exUIControl.FindEventDef ( eventDefs, _name );
-        if ( eventDef == null )
-            eventDef = base.GetEventDef(_name);
-        return eventDef;
-    }
-
-    public override string[] GetEventDefNames () {
-        string[] baseNames = base.GetEventDefNames();
-        string[] names = new string[baseNames.Length + eventDefs.Length];
+    public override string[] GetEventNames () {
+        string[] baseNames = base.GetEventNames();
+        string[] names = new string[baseNames.Length + eventNames.Length];
 
         for ( int i = 0; i < baseNames.Length; ++i ) {
             names[i] = baseNames[i];
         }
 
-        for ( int i = 0; i < eventDefs.Length; ++i ) {
-            names[i+baseNames.Length] = eventDefs[i].name;
+        for ( int i = 0; i < eventNames.Length; ++i ) {
+            names[i+baseNames.Length] = eventNames[i];
         }
 
         return names;
@@ -53,17 +46,17 @@ public class exUIPanel : exUIControl {
     ///////////////////////////////////////////////////////////////////////////////
 
     // event-defs
-    public static new EventDef[] eventDefs = new EventDef[] {
-        new EventDef ( "onEnter",         new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onExit",          new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+    public static new string[] eventNames = new string[] {
+        "onEnter",
+        "onExit",
 
-        new EventDef ( "onStartFadeIn",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onFinishFadeIn",  new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onFadeIn",        new Type[] { typeof(exUIControl), typeof(float) }, typeof(Action<exUIControl,float>) ),
+        "onStartFadeIn",
+        "onFinishFadeIn",
+        "onFadeIn",
 
-        new EventDef ( "onStartFadeOut",  new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onFinishFadeOut", new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onFadeOut",       new Type[] { typeof(exUIControl), typeof(float) }, typeof(Action<exUIControl,float>) ),
+        "onStartFadeOut",
+        "onFinishFadeOut",
+        "onFadeOut",
     };
 
     // events

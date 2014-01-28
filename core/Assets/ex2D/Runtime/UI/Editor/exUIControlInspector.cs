@@ -169,7 +169,7 @@ class exUIControlInspector : exPlaneInspector {
             // event adding selector
             List<string> eventDefNameList = new List<string>(); 
             eventDefNameList.Add( "Event List" );
-            eventDefNameList.AddRange( uiControl.GetEventDefNames() );
+            eventDefNameList.AddRange( uiControl.GetEventNames() );
 
             foreach ( exUIControl.EventTrigger eventTrigger in uiControl.events ) {
                 int idx = eventDefNameList.IndexOf(eventTrigger.name);
@@ -180,8 +180,7 @@ class exUIControlInspector : exPlaneInspector {
 
             int choice = EditorGUILayout.Popup ( "Add Event", 0, eventDefNameList.ToArray() );
             if ( choice != 0 ) {
-                exUIControl.EventDef eventDef = uiControl.GetEventDef( eventDefNameList[choice] );
-                exUIControl.EventTrigger newTrigger = new exUIControl.EventTrigger ( eventDef.name );
+                exUIControl.EventTrigger newTrigger = new exUIControl.EventTrigger ( eventDefNameList[choice] );
                 uiControl.events.Add(newTrigger);
                 EditorUtility.SetDirty(target);
             }
@@ -191,8 +190,7 @@ class exUIControlInspector : exPlaneInspector {
                 EditorGUILayout.Space();
 
                 exUIControl.EventTrigger eventTrigger = uiControl.events[i];
-                exUIControl.EventDef eventDef = uiControl.GetEventDef( eventTrigger.name );
-                if ( EventField ( eventTrigger, eventDef ) ) {
+                if ( EventField ( eventTrigger ) ) {
                     uiControl.events.RemoveAt(i);
                     --i;
                     EditorUtility.SetDirty(target);
@@ -209,7 +207,7 @@ class exUIControlInspector : exPlaneInspector {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    protected bool EventField ( exUIControl.EventTrigger _eventTrigger, exUIControl.EventDef _def ) {
+    protected bool EventField ( exUIControl.EventTrigger _eventTrigger ) {
         bool deleted = false;
 
 		GUILayout.BeginHorizontal();
@@ -218,7 +216,7 @@ class exUIControlInspector : exPlaneInspector {
             GUILayout.BeginVertical();
                 EditorGUILayout.BeginHorizontal();
                     // name
-                    GUILayout.Toggle( true, _def.name, "dragtab");
+                    GUILayout.Toggle( true, _eventTrigger.name, "dragtab");
 
                     // delete
                     if ( GUILayout.Button( styles.iconToolbarMinus, 
@@ -235,7 +233,7 @@ class exUIControlInspector : exPlaneInspector {
 
                     // slots
                     for ( int i = 0; i < _eventTrigger.slots.Count; ++i ) {
-                        exUIControl.SlotInfo slotInfo = SlotField ( _eventTrigger.slots[i], _def );
+                        exUIControl.SlotInfo slotInfo = SlotField ( _eventTrigger.slots[i] );
                         if ( slotInfo == null ) {
                             _eventTrigger.slots.RemoveAt(i);
                             --i;
@@ -271,8 +269,9 @@ class exUIControlInspector : exPlaneInspector {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    protected exUIControl.SlotInfo SlotField ( exUIControl.SlotInfo _slot, exUIControl.EventDef _eventDef ) {
+    protected exUIControl.SlotInfo SlotField ( exUIControl.SlotInfo _slot ) {
         exUIControl.SlotInfo slot = _slot;
+        System.Type[] parameterTypes = new System.Type[] { typeof(exUIEvent) }; 
 
         EditorGUILayout.BeginHorizontal();
             // receiver
@@ -300,11 +299,11 @@ class exUIControlInspector : exPlaneInspector {
                         MethodInfo mi = methods[m];
                         ParameterInfo[] miParameterTypes = mi.GetParameters();
                         if ( mi.ReturnType == typeof(void) && 
-                             miParameterTypes.Length == _eventDef.parameterTypes.Length ) 
+                             miParameterTypes.Length == parameterTypes.Length ) 
                         {
                             bool notMatch = false;
                             for ( int p = 0; p < miParameterTypes.Length; ++p ) {
-                                if ( miParameterTypes[p].ParameterType != _eventDef.parameterTypes[p] ) {
+                                if ( miParameterTypes[p].ParameterType != parameterTypes[p] ) {
                                     notMatch = true;
                                     break;
                                 }

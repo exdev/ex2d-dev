@@ -26,23 +26,16 @@ public class exUIToggleGroup : exUIToggle {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    public override EventDef GetEventDef ( string _name ) {
-        EventDef eventDef = exUIControl.FindEventDef ( eventDefs, _name );
-        if ( eventDef == null )
-            eventDef = base.GetEventDef(_name);
-        return eventDef;
-    }
-
-    public override string[] GetEventDefNames () {
-        string[] baseNames = base.GetEventDefNames();
-        string[] names = new string[baseNames.Length + eventDefs.Length];
+    public override string[] GetEventNames () {
+        string[] baseNames = base.GetEventNames();
+        string[] names = new string[baseNames.Length + eventNames.Length];
 
         for ( int i = 0; i < baseNames.Length; ++i ) {
             names[i] = baseNames[i];
         }
 
-        for ( int i = 0; i < eventDefs.Length; ++i ) {
-            names[i+baseNames.Length] = eventDefs[i].name;
+        for ( int i = 0; i < eventNames.Length; ++i ) {
+            names[i+baseNames.Length] = eventNames[i];
         }
 
         return names;
@@ -53,8 +46,8 @@ public class exUIToggleGroup : exUIToggle {
     ///////////////////////////////////////////////////////////////////////////////
 
     // event-defs
-    public static new EventDef[] eventDefs = new EventDef[] {
-        new EventDef ( "onCheckChanged", new Type[] { typeof(exUIControl), typeof(int) }, typeof(Action<exUIControl,int>) ),
+    public static new string[] eventNames = new string[] {
+        "onCheckChanged",
     };
 
     // events

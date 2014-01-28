@@ -311,6 +311,24 @@ public class exUIMng : MonoBehaviour {
 
     // ------------------------------------------------------------------ 
     // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void DispatchEvent ( List<exUIEventListener> _eventListeners, exUIEvent _event ) {
+        for ( int i = 0; i < _eventListeners.Count; ++i ) {
+            exUIEventListener listener = _eventListeners[i];
+
+            if ( listener.capturePhase ) {
+                // TODO:
+            }
+            else {
+                // TODO:
+                // listener.func ( _event );
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
     // NOTE: FindObjectsOfType() will not find deactived GameObjects, 
     //       so you need to manually add them to exUIMng 
     // ------------------------------------------------------------------ 
