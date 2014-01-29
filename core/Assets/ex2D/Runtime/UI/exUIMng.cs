@@ -351,14 +351,14 @@ public class exUIMng : MonoBehaviour {
         if ( _eventListeners.Count <= 0 )
             return;
 
-        List<exUIControl> routine = GetRoutine( _sender );
-        _event.target = _sender; 
+        if ( _event.bubbles ) {
+            List<exUIControl> routine = GetRoutine( _sender );
+            _event.target = _sender; 
 
-        for ( int i = 0; i < _eventListeners.Count; ++i ) {
-            exUIEventListener listener = _eventListeners[i];
+            for ( int i = 0; i < _eventListeners.Count; ++i ) {
+                exUIEventListener listener = _eventListeners[i];
 
-            // capture phase
-            if ( _event.bubbles ) {
+                // capture phase
                 if ( listener.capturePhase ) {
                     _event.eventPhase = exUIEventPhase.Capture;
 
@@ -369,17 +369,15 @@ public class exUIMng : MonoBehaviour {
                             continue;
                     }
                 }
-            }
 
-            // target phase
-            _event.eventPhase = exUIEventPhase.Target;
-            _event.currentTarget = _sender;
-            listener.func ( _event );
-            if ( _event.isPropagationStopped )
-                continue;
+                // target phase
+                _event.eventPhase = exUIEventPhase.Target;
+                _event.currentTarget = _sender;
+                listener.func ( _event );
+                if ( _event.isPropagationStopped )
+                    continue;
 
-            // bubble phase
-            if ( _event.bubbles ) {
+                // bubble phase
                 _event.eventPhase = exUIEventPhase.Bubble;
                 for ( int j = 0; j < routine.Count; ++j ) {
                     _event.currentTarget = routine[j];
@@ -387,6 +385,18 @@ public class exUIMng : MonoBehaviour {
                     if ( _event.isPropagationStopped )
                         continue;
                 }
+            }
+        }
+        else {
+            _event.target = _sender; 
+
+            for ( int i = 0; i < _eventListeners.Count; ++i ) {
+                exUIEventListener listener = _eventListeners[i];
+
+                // target phase
+                _event.eventPhase = exUIEventPhase.Target;
+                _event.currentTarget = _sender;
+                listener.func ( _event );
             }
         }
     }

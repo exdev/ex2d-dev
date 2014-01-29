@@ -51,25 +51,31 @@ public class exPanelFadeEffect : MonoBehaviour {
         colorCtrl = GetComponent<exSpriteColorController>();
 
         if ( panel ) {
-            panel.onStartFadeIn += delegate ( exUIControl _sender ) {
-                panel.gameObject.SetActive(true);
-                if ( colorCtrl ) {
-                    colorCtrl.color = new Color( 1.0f, 1.0f, 1.0f, 0.0f );
-                }
-            };
-            panel.onFinishFadeOut += delegate ( exUIControl _sender ) {
-                panel.gameObject.SetActive(false);
-            };
-            panel.onFadeIn += delegate ( exUIControl _sender, float _ratio ) {
-                if ( colorCtrl ) {
-                    colorCtrl.color = new Color( 1.0f, 1.0f, 1.0f, _ratio );
-                }
-            };
-            panel.onFadeOut += delegate ( exUIControl _sender, float _ratio ) {
-                if ( colorCtrl ) {
-                    colorCtrl.color = new Color( 1.0f, 1.0f, 1.0f, 1.0f-_ratio );
-                }
-            };
+            panel.AddEventListener( "onStartFadeIn",
+                                    delegate ( exUIEvent _event ) {
+                                        panel.gameObject.SetActive(true);
+                                        if ( colorCtrl ) {
+                                            colorCtrl.color = new Color( 1.0f, 1.0f, 1.0f, 0.0f );
+                                        }
+                                    } );
+            panel.AddEventListener( "onFinishFadeOut",
+                                    delegate ( exUIEvent _event ) {
+                                        panel.gameObject.SetActive(false);
+                                    } );
+            panel.AddEventListener( "onFadeIn",
+                                    delegate ( exUIEvent _event ) {
+                                        exUIRatioEvent ratioEvent = _event as exUIRatioEvent;
+                                        if ( colorCtrl ) {
+                                            colorCtrl.color = new Color( 1.0f, 1.0f, 1.0f, ratioEvent.ratio );
+                                        }
+                                    } );
+            panel.AddEventListener( "onFadeOut",
+                                    delegate ( exUIEvent _event ) {
+                                        exUIRatioEvent ratioEvent = _event as exUIRatioEvent;
+                                        if ( colorCtrl ) {
+                                            colorCtrl.color = new Color( 1.0f, 1.0f, 1.0f, 1.0f-ratioEvent.ratio );
+                                        }
+                                    } );
         }
 
         inited = true;

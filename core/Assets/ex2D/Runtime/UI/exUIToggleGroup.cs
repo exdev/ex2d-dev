@@ -26,6 +26,22 @@ public class exUIToggleGroup : exUIToggle {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
+    // event-defs
+    public static new string[] eventNames = new string[] {
+        "onCheckChanged",
+    };
+
+    // events
+    List<exUIEventListener> onCheckChanged;
+
+    public void OnCheckChanged   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onCheckChanged, _event ); }
+    
+    public override void CacheEventListeners () {
+        base.CacheEventListeners();
+
+        onCheckChanged = eventListenerTable["onCheckChanged"];
+    }
+
     public override string[] GetEventNames () {
         string[] baseNames = base.GetEventNames();
         string[] names = new string[baseNames.Length + eventNames.Length];
@@ -44,14 +60,6 @@ public class exUIToggleGroup : exUIToggle {
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
-
-    // event-defs
-    public static new string[] eventNames = new string[] {
-        "onCheckChanged",
-    };
-
-    // events
-    public event System.Action<exUIControl,int> onCheckChanged;
 
     //
     [SerializeField] protected int index_ = 0;
@@ -75,9 +83,9 @@ public class exUIToggleGroup : exUIToggle {
                     }
                 }
 
-                if ( onCheckChanged != null ) {
-                    onCheckChanged (this,index_);
-                } 
+                exUIEvent uiEvent = new exUIEvent();
+                uiEvent.bubbles = false;
+                OnCheckChanged (uiEvent);
             }
         }
     }
@@ -127,8 +135,9 @@ public class exUIToggleGroup : exUIToggle {
     // ------------------------------------------------------------------ 
 
     void RegisterEvent ( exUIToggle _toggle ) {
-        _toggle.onChecked += delegate ( exUIControl _sender ) {
-            index = toggles.IndexOf(_toggle);
-        };
+        _toggle.AddEventListener( "onChecked",
+                                  delegate ( exUIEvent _event ) {
+                                      index = toggles.IndexOf(_toggle);
+                                  } ); 
     }
 }

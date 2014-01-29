@@ -38,6 +38,30 @@ public class exUIScrollView : exUIControl {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
+    // event-defs
+    public static new string[] eventNames = new string[] {
+        "onScroll",
+        "onScrollFinished",
+        "onContentResized",
+    };
+
+    // events
+    List<exUIEventListener> onScroll;
+    List<exUIEventListener> onScrollFinished;
+    List<exUIEventListener> onContentResized;
+
+    public void OnScroll         ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onScroll, _event ); }
+    public void OnScrollFinished ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onScrollFinished,  _event ); }
+    public void OnContentResized ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onContentResized,  _event ); }
+
+    public override void CacheEventListeners () {
+        base.CacheEventListeners();
+
+        onScroll = eventListenerTable["onScroll"];
+        onScrollFinished = eventListenerTable["onScrollFinished"];
+        onContentResized = eventListenerTable["onContentResized"];
+    }
+
     public override string[] GetEventNames () {
         string[] baseNames = base.GetEventNames();
         string[] names = new string[baseNames.Length + eventNames.Length];
@@ -57,22 +81,6 @@ public class exUIScrollView : exUIControl {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    // event-defs
-    public static new string[] eventNames = new string[] {
-        "onScroll",
-        "onScrollFinished",
-        "onContentResized",
-    };
-
-    // events
-    public event System.Action<exUIControl,Vector2> onScroll;
-    public event System.Action<exUIControl> onScrollFinished;
-    public event System.Action<exUIControl,Vector2> onContentResized;
-
-    ///////////////////////////////////////////////////////////////////////////////
-    //
-    ///////////////////////////////////////////////////////////////////////////////
-
     //
     [SerializeField] protected Vector2 contentSize_ = Vector2.zero;
     public Vector2 contentSize {
@@ -80,8 +88,10 @@ public class exUIScrollView : exUIControl {
         set {
             if ( contentSize_ != value ) {
                 contentSize_ = value;
-                if ( onContentResized != null ) 
-                    onContentResized ( this, contentSize_ );
+
+                exUIEvent uiEvent = new exUIEvent();
+                uiEvent.bubbles = false;
+                OnContentResized (uiEvent);
             }
         }
     }
@@ -95,6 +105,9 @@ public class exUIScrollView : exUIControl {
 
     public float scrollSpeed = 0.5f;
 
+    Vector2 scrollOffset_ = Vector2.zero;
+    public Vector2 scrollOffset { get { return scrollOffset_; } }
+
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
@@ -103,7 +116,6 @@ public class exUIScrollView : exUIControl {
     bool dragging = false;
     int draggingID = -1;
     Vector3 originalAnchorPos = Vector3.zero;
-    Vector2 scrollOffset = Vector2.zero;
 
     bool damping = false;
     Vector2 velocity = Vector2.zero;
@@ -164,7 +176,7 @@ public class exUIScrollView : exUIControl {
                                    if ( draggable && ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) && point.id == draggingID  ) {
                                        Vector2 delta = point.worldDelta; 
                                        delta.x = -delta.x;
-                                       Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
+                                       Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset_.x, scrollOffset_.y, width, height ), 
                                                                                                         new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
                                        if ( Mathf.Abs(constrainOffset.x) > 0.001f ) delta.x *= 0.5f;
                                        if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
@@ -189,7 +201,7 @@ public class exUIScrollView : exUIControl {
 
                                exUIWheelEvent wheelEvent = _event as exUIWheelEvent;
                                Vector2 delta = new Vector2( 0.0f, -wheelEvent.delta * 100.0f );
-                               Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
+                               Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset_.x, scrollOffset_.y, width, height ), 
                                                                                                 new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
                                if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
 
@@ -214,7 +226,7 @@ public class exUIScrollView : exUIControl {
         bool doScroll = (damping || spring);
 
         if ( damping || spring  )
-            constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
+            constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset_.x, scrollOffset_.y, width, height ), 
                                                                      new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
 
         // deceleration
@@ -279,8 +291,9 @@ public class exUIScrollView : exUIControl {
 
             bool shouldFinish = (damping || spring); 
             if ( shouldFinish ) {
-                if ( onScrollFinished != null ) 
-                    onScrollFinished(this);
+                exUIEvent uiEvent = new exUIEvent();
+                uiEvent.bubbles = false;
+                OnScrollFinished(uiEvent);
             }
         }
     }
@@ -293,7 +306,7 @@ public class exUIScrollView : exUIControl {
         if ( dragEffect != DragEffect.None ) {
             damping = true;
 
-            Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
+            Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset_.x, scrollOffset_.y, width, height ), 
                                                                              new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
             if ( Mathf.Abs(constrainOffset.x) > 0.001f ) {
                 if ( dragEffect == DragEffect.MomentumAndSpring ) {
@@ -311,8 +324,9 @@ public class exUIScrollView : exUIControl {
             velocity = Vector2.zero;
             damping = false;
 
-            if ( onScrollFinished != null ) 
-                onScrollFinished(this);
+            exUIEvent uiEvent = new exUIEvent();
+            uiEvent.bubbles = false;
+            OnScrollFinished(uiEvent);
         }
     }
 
@@ -326,29 +340,21 @@ public class exUIScrollView : exUIControl {
         if ( allowVerticalScroll == false )
             _delta.y = 0.0f;
 
-        scrollOffset += _delta;
+        scrollOffset_ += _delta;
 
         if ( dragEffect != DragEffect.MomentumAndSpring ) {
-            scrollOffset.x = Mathf.Clamp( scrollOffset.x, 0.0f, contentSize_.x - width );
-            scrollOffset.y = Mathf.Clamp( scrollOffset.y, 0.0f, contentSize_.y - height );
+            scrollOffset_.x = Mathf.Clamp( scrollOffset_.x, 0.0f, contentSize_.x - width );
+            scrollOffset_.y = Mathf.Clamp( scrollOffset_.y, 0.0f, contentSize_.y - height );
         }
 
         if ( contentAnchor != null ) {
-            contentAnchor.localPosition = new Vector3 ( originalAnchorPos.x - scrollOffset.x,
-                                                        originalAnchorPos.y + scrollOffset.y,
+            contentAnchor.localPosition = new Vector3 ( originalAnchorPos.x - scrollOffset_.x,
+                                                        originalAnchorPos.y + scrollOffset_.y,
                                                         originalAnchorPos.z );
         }
 
-        if ( onScroll != null ) {
-            onScroll ( this, scrollOffset );
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public Vector2 GetScrollOffset () {
-        return scrollOffset;
+        exUIEvent uiEvent = new exUIEvent();
+        uiEvent.bubbles = false;
+        OnScroll(uiEvent);
     }
 }

@@ -112,3 +112,11 @@ public class exUIPointEvent : exUIEvent {
 public class exUIWheelEvent : exUIEvent {
     public float delta = 0.0f;
 }
+
+// ------------------------------------------------------------------ 
+// Desc: 
+// ------------------------------------------------------------------ 
+
+public class exUIRatioEvent : exUIEvent {
+    public float ratio = 0.0f;
+}

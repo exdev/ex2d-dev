@@ -131,30 +131,33 @@ public class exUIScrollBar : exUIControl {
 
         // handle scroll view
         if ( scrollView ) {
-            scrollView.onContentResized += delegate ( exUIControl _sender, Vector2 _size ) {
-                UpdateScrollBarRatio ();
-                UpdateScrollBar ();
-            };
-            scrollView.onScroll += delegate ( exUIControl _sender, Vector2 _offset ) {
-                if ( direction == Direction.Horizontal ) {
-                    scrollOffset = _offset.x * ratio;
-                }
-                else {
-                    scrollOffset = _offset.y * ratio;
-                }
-                UpdateScrollBar ();
+            scrollView.AddEventListener ( "onContentResized",
+                                          delegate ( exUIEvent _event ) {
+                                              UpdateScrollBarRatio ();
+                                              UpdateScrollBar ();
+                                          } );
+            scrollView.AddEventListener ( "onScroll",
+                                          delegate ( exUIEvent _event ) {
+                                              if ( direction == Direction.Horizontal ) {
+                                                  scrollOffset = scrollView.scrollOffset.x * ratio;
+                                              }
+                                              else {
+                                                  scrollOffset = scrollView.scrollOffset.y * ratio;
+                                              }
+                                              UpdateScrollBar ();
 
-                //
-                if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
-                    activeSelf = true;
-                }
-            };
-            scrollView.onScrollFinished += delegate ( exUIControl _sender ) {
-                if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
-                    cooldownTimer = cooldown;
-                    isCoolingDown = true;
-                }
-            };
+                                              //
+                                              if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
+                                                  activeSelf = true;
+                                              }
+                                          } );
+            scrollView.AddEventListener ( "onScrollFinished",
+                                          delegate ( exUIEvent _event ) {
+                                              if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
+                                                  cooldownTimer = cooldown;
+                                                  isCoolingDown = true;
+                                              }
+                                          } );
             UpdateScrollBarRatio ();
             UpdateScrollBar ();
 

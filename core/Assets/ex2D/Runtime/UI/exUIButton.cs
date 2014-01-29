@@ -26,6 +26,30 @@ public class exUIButton : exUIControl {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
+    // event-defs
+    public static new string[] eventNames = new string[] {
+        "onClick",
+        "onButtonDown",
+        "onButtonUp",
+    };
+
+    // events
+    List<exUIEventListener> onClick;
+    List<exUIEventListener> onButtonDown;
+    List<exUIEventListener> onButtonUp;
+
+    public void OnClick      ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onClick,      _event ); }
+    public void OnButtonDown ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onButtonDown, _event ); }
+    public void OnButtonUp   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onButtonUp,   _event ); }
+    
+    public override void CacheEventListeners () {
+        base.CacheEventListeners();
+
+        onClick = eventListenerTable["onClick"];
+        onButtonDown = eventListenerTable["onButtonDown"];
+        onButtonUp = eventListenerTable["onButtonUp"];
+    }
+
     public override string[] GetEventNames () {
         string[] baseNames = base.GetEventNames();
         string[] names = new string[baseNames.Length + eventNames.Length];
@@ -44,22 +68,6 @@ public class exUIButton : exUIControl {
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
-
-    // event-defs
-    public static new string[] eventNames = new string[] {
-        "onClick",
-        "onButtonDown",
-        "onButtonUp",
-    };
-
-    // events
-    List<exUIEventListener> onClick;
-    List<exUIEventListener> onButtonDown;
-    List<exUIEventListener> onButtonUp;
-
-    public void OnClick      ( exUIEvent _event )  { if ( onClick      != null ) exUIMng.inst.DispatchEvent( this, onClick,      _event ); }
-    public void OnButtonDown ( exUIEvent _event )  { if ( onButtonDown != null ) exUIMng.inst.DispatchEvent( this, onButtonDown,    _event ); }
-    public void OnButtonUp   ( exUIEvent _event )  { if ( onButtonUp   != null ) exUIMng.inst.DispatchEvent( this, onButtonUp,     _event ); }
 
     //
     bool pressing = false;
@@ -88,7 +96,10 @@ public class exUIButton : exUIControl {
                                   // pressDownAt = _point.pos;
 
                                   exUIMng.inst.SetFocus(this);
-                                  OnButtonDown( new exUIEvent() );
+
+                                  exUIEvent evtButtonDown = new exUIEvent();
+                                  evtButtonDown.bubbles = false;
+                                  OnButtonDown(evtButtonDown);
 
                                   _event.StopPropagation();
                               }
@@ -98,11 +109,16 @@ public class exUIButton : exUIControl {
                           delegate ( exUIEvent _event ) {
                               exUIPointEvent pointEvent = _event as exUIPointEvent;
                               if ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) {
-                                  OnButtonUp( new exUIEvent() );
+                                  exUIEvent evtButtonUp = new exUIEvent();
+                                  evtButtonUp.bubbles = false;
+                                  OnButtonUp(evtButtonUp);
 
                                   if ( pressing ) {
                                       pressing = false;
-                                      OnClick ( new exUIEvent() );
+
+                                      exUIEvent evtClick = new exUIEvent();
+                                      evtClick.bubbles = false;
+                                      OnClick (evtClick);
 
                                       _event.StopPropagation();
                                   }

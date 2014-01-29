@@ -31,6 +31,22 @@ public class exUIProgressBar : exUIControl {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
+    // event-defs
+    public static new string[] eventNames = new string[] {
+        "onProgressChanged",
+    };
+
+    // events
+    List<exUIEventListener> onProgressChanged;
+
+    public void OnProgressChanged ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onProgressChanged, _event ); }
+
+    public override void CacheEventListeners () {
+        base.CacheEventListeners();
+
+        onProgressChanged = eventListenerTable["onProgressChanged"];
+    }
+
     public override string[] GetEventNames () {
         string[] baseNames = base.GetEventNames();
         string[] names = new string[baseNames.Length + eventNames.Length];
@@ -50,14 +66,6 @@ public class exUIProgressBar : exUIControl {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    // event-defs
-    public static new string[] eventNames = new string[] {
-        "onProgressChanged",
-    };
-
-    // events
-    public event System.Action<exUIControl,float> onProgressChanged;
-
     //
     [SerializeField] protected float progress_ = 0.0f;
     public float progress {
@@ -68,8 +76,10 @@ public class exUIProgressBar : exUIControl {
 
                 UpdateBar ();
 
-                if ( onProgressChanged != null )
-                    onProgressChanged ( this, progress_ );
+                exUIRatioEvent ratioEvent = new exUIRatioEvent();
+                ratioEvent.bubbles = false;
+                ratioEvent.ratio = progress_;
+                OnProgressChanged (ratioEvent);
             }
         }
     }
