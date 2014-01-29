@@ -88,14 +88,15 @@ public class exUIToggle : exUIButton {
     protected new void Awake () {
         base.Awake();
 
-        onClick += delegate ( exUIControl _sender ) {
-            if ( isRadio ) {
-                isChecked = true;
-            }
-            else {
-                isChecked = !isChecked;
-            }
-        };
+        AddEventListener( "onClick",
+                          delegate ( exUIEvent _event ) {
+                              if ( isRadio ) {
+                                  isChecked = true;
+                              }
+                              else {
+                                  isChecked = !isChecked;
+                              }
+                          } );
     }
 
     // ------------------------------------------------------------------ 

@@ -209,6 +209,35 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public static List<exUIControl> GetRoutine ( exUIControl _ctrl ) {
+        List<exUIControl> routine = new List<exUIControl>();
+
+        exUIControl parentCtrl = _ctrl.parent;
+        while ( parentCtrl != null ) {
+            routine.Add(parentCtrl);
+            parentCtrl = parentCtrl.parent;
+        }
+        return routine;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static exUIControl FindRoot ( exUIControl _ctrl ) {
+        exUIControl root = null;
+        exUIControl parentCtrl = _ctrl;
+        while ( parentCtrl != null ) {
+            root = parentCtrl;
+            parentCtrl = parentCtrl.parent;
+        }
+        return root;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public static exUIControl FindParent ( exUIControl _ctrl ) {
         Transform tranParent = _ctrl.transform.parent;
         while ( tranParent != null ) {
@@ -297,14 +326,19 @@ public class exUIMng : MonoBehaviour {
 
     public void SetFocus ( exUIControl _ctrl ) {
         if ( focus != _ctrl ) {
+            exUIControl unfocus = focus;
             if ( focus != null ) {
-                focus.Send_OnUnfocus();
+                exUIFocusEvent focusEvent = new exUIFocusEvent();
+                focusEvent.relatedTarget = focus;
+                focus.OnUnfocus(focusEvent);
             }
 
             focus = _ctrl;
 
             if ( focus != null ) {
-                focus.Send_OnFocus();
+                exUIFocusEvent focusEvent = new exUIFocusEvent();
+                focusEvent.relatedTarget = unfocus;
+                focus.OnFocus(focusEvent);
             }
         }
     }
@@ -313,16 +347,46 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void DispatchEvent ( List<exUIEventListener> _eventListeners, exUIEvent _event ) {
+    public void DispatchEvent ( exUIControl _sender, List<exUIEventListener> _eventListeners, exUIEvent _event ) {
+        if ( _eventListeners.Count <= 0 )
+            return;
+
+        List<exUIControl> routine = GetRoutine( _sender );
+        _event.target = _sender; 
+
         for ( int i = 0; i < _eventListeners.Count; ++i ) {
             exUIEventListener listener = _eventListeners[i];
 
-            if ( listener.capturePhase ) {
-                // TODO:
+            // capture phase
+            if ( _event.bubbles ) {
+                if ( listener.capturePhase ) {
+                    _event.eventPhase = exUIEventPhase.Capture;
+
+                    for ( int j = routine.Count-1; j >= 0; --j ) {
+                        _event.currentTarget = routine[j];
+                        listener.func ( _event );
+                        if ( _event.isPropagationStopped )
+                            continue;
+                    }
+                }
             }
-            else {
-                // TODO:
-                // listener.func ( _event );
+
+            // target phase
+            _event.eventPhase = exUIEventPhase.Target;
+            _event.currentTarget = _sender;
+            listener.func ( _event );
+            if ( _event.isPropagationStopped )
+                continue;
+
+            // bubble phase
+            if ( _event.bubbles ) {
+                _event.eventPhase = exUIEventPhase.Bubble;
+                for ( int j = 0; j < routine.Count; ++j ) {
+                    _event.currentTarget = routine[j];
+                    listener.func ( _event );
+                    if ( _event.isPropagationStopped )
+                        continue;
+                }
             }
         }
     }
@@ -436,7 +500,7 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DispatchHotPoints ( exHotPoint[] _hotPoints, bool _isMouse ) {
+    void HandleHotPoints ( exHotPoint[] _hotPoints, bool _isMouse ) {
 
         // ======================================================== 
         // handle hover event
@@ -455,14 +519,28 @@ public class exUIMng : MonoBehaviour {
             hotPoint.hover = curCtrl;
 
             if ( lastCtrl != curCtrl ) {
+                exUIPointInfo pointInfo = new exUIPointInfo();
+                pointInfo.id = hotPoint.id;
+                pointInfo.pos = hotPoint.pos;
+                pointInfo.delta = hotPoint.delta;
+                pointInfo.worldPos = hotPoint.worldPos;
+                pointInfo.worldDelta = hotPoint.worldDelta;
+
+                exUIPointEvent pointEvent = new exUIPointEvent();
+                pointEvent.isMouse = hotPoint.isMouse;
+                pointEvent.pointInfos = new exUIPointInfo [] {
+                    pointInfo
+                };
+
                 // on hover out
                 if ( lastCtrl != null ) {
-                    lastCtrl.Send_OnHoverOut(hotPoint);
+                    lastCtrl.OnHoverOut(pointEvent);
                 }
 
                 // on hover in
                 if ( curCtrl != null ) {
-                    curCtrl.Send_OnHoverIn(hotPoint);
+                    pointEvent.Reset();
+                    curCtrl.OnHoverIn(pointEvent);
                 }
             }
 
@@ -480,7 +558,9 @@ public class exUIMng : MonoBehaviour {
 
             float scroll = Input.GetAxis("Mouse ScrollWheel");
             if ( scroll != 0.0f && _hotPoints[0].hover != null ) {
-                _hotPoints[0].hover.Send_OnMouseWheel(scroll);
+                exUIWheelEvent wheelEvent = new exUIWheelEvent();
+                wheelEvent.delta = scroll;
+                _hotPoints[0].hover.OnMouseWheel(wheelEvent);
             }
         }
 
@@ -502,7 +582,20 @@ public class exUIMng : MonoBehaviour {
 
                 // send press down event
                 if ( curCtrl != null ) {
-                    curCtrl.Send_OnPressDown(hotPoint);
+                    exUIPointInfo pointInfo = new exUIPointInfo();
+                    pointInfo.id = hotPoint.id;
+                    pointInfo.pos = hotPoint.pos;
+                    pointInfo.delta = hotPoint.delta;
+                    pointInfo.worldPos = hotPoint.worldPos;
+                    pointInfo.worldDelta = hotPoint.worldDelta;
+
+                    exUIPointEvent pointEvent = new exUIPointEvent();
+                    pointEvent.isMouse = hotPoint.isMouse;
+                    pointEvent.pointInfos = new exUIPointInfo [] {
+                        pointInfo
+                    };
+
+                    curCtrl.OnPressDown(pointEvent);
                 }
                 hotPoint.pressed = curCtrl;
 
@@ -545,7 +638,25 @@ public class exUIMng : MonoBehaviour {
 
         // send hot-point move event
         foreach (KeyValuePair<exUIControl, List<exHotPoint>> iter in moveEvents ) {
-            iter.Key.Send_OnHoverMove ( iter.Value );
+
+            exUIPointEvent pointEvent = new exUIPointEvent();
+            pointEvent.pointInfos = new exUIPointInfo [iter.Value.Count];
+
+            for ( int i = 0; i < iter.Value.Count; ++i ) {
+                exHotPoint hotPoint = iter.Value[i];
+
+                exUIPointInfo pointInfo = new exUIPointInfo();
+                pointInfo.id = hotPoint.id;
+                pointInfo.pos = hotPoint.pos;
+                pointInfo.delta = hotPoint.delta;
+                pointInfo.worldPos = hotPoint.worldPos;
+                pointInfo.worldDelta = hotPoint.worldDelta;
+
+                pointEvent.pointInfos[i] = pointInfo;
+                pointEvent.isMouse = hotPoint.isMouse;
+            }
+
+            iter.Key.OnHoverMove (pointEvent);
         }
 
         // ======================================================== 
@@ -560,6 +671,19 @@ public class exUIMng : MonoBehaviour {
 
             // 
             if ( hotPoint.pressUp ) {
+                exUIPointInfo pointInfo = new exUIPointInfo();
+                pointInfo.id = hotPoint.id;
+                pointInfo.pos = hotPoint.pos;
+                pointInfo.delta = hotPoint.delta;
+                pointInfo.worldPos = hotPoint.worldPos;
+                pointInfo.worldDelta = hotPoint.worldDelta;
+
+                exUIPointEvent pointEvent = new exUIPointEvent();
+                pointEvent.isMouse = hotPoint.isMouse;
+                pointEvent.pointInfos = new exUIPointInfo [] {
+                    pointInfo
+                };
+
                 exUIControl curCtrl = hotPoint.hover;
                 if ( hotPoint.pressed != null && hotPoint.pressed.grabMouseOrTouch ) {
                     curCtrl = hotPoint.pressed;
@@ -567,10 +691,10 @@ public class exUIMng : MonoBehaviour {
 
                 // send press down event
                 if ( curCtrl != null ) {
-                    curCtrl.Send_OnPressUp(hotPoint);
+                    curCtrl.OnPressUp(pointEvent);
 
                     if ( hotPoint.isTouch )
-                        curCtrl.Send_OnHoverOut(hotPoint);
+                        curCtrl.OnHoverOut(pointEvent);
                 }
 
                 hotPoint.pressed = null;
@@ -612,7 +736,7 @@ public class exUIMng : MonoBehaviour {
             touchPoints[touch.fingerId] = hotPoint;
         }
 
-        DispatchHotPoints ( touchPoints, false );
+        HandleHotPoints ( touchPoints, false );
     }
 
     // ------------------------------------------------------------------ 
@@ -650,7 +774,7 @@ public class exUIMng : MonoBehaviour {
                 touchPoints[i] = hotPoint;
             }
 
-            DispatchHotPoints ( touchPoints, false );
+            HandleHotPoints ( touchPoints, false );
         }
         else {
             for ( int i = 0; i < 3; ++i ) {
@@ -679,7 +803,7 @@ public class exUIMng : MonoBehaviour {
                 mousePoints[i] = hotPoint;
             }
 
-            DispatchHotPoints ( mousePoints, true );
+            HandleHotPoints ( mousePoints, true );
         }
     }
 

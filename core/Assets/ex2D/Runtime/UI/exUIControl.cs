@@ -60,41 +60,44 @@ public class exUIControl : exPlane {
     };
 
     // events
-    public event Action<exUIControl> onFocus;
-    public event Action<exUIControl> onUnfocus;
-    public event Action<exUIControl> onActive;
-    public event Action<exUIControl> onDeactive;
-    public event Action<exUIControl,exHotPoint> onHoverIn;
-    public event Action<exUIControl,exHotPoint> onHoverOut;
-    public event Action<exUIControl,List<exHotPoint>> onHoverMove;
-    public event Action<exUIControl,exHotPoint> onPressDown;
-    public event Action<exUIControl,exHotPoint> onPressUp;
-    public event Action<exUIControl,float> onMouseWheel;
+    List<exUIEventListener> onFocus;
+    List<exUIEventListener> onUnfocus;
+    List<exUIEventListener> onActive;
+    List<exUIEventListener> onDeactive;
+    List<exUIEventListener> onHoverIn;
+    List<exUIEventListener> onHoverOut;
+    List<exUIEventListener> onHoverMove;
+    List<exUIEventListener> onPressDown;
+    List<exUIEventListener> onPressUp;
+    List<exUIEventListener> onMouseWheel;
 
     // event easy function
-    public void Send_OnFocus () { if ( onFocus != null ) onFocus (this); }
-    public void Send_OnUnfocus () { if ( onUnfocus != null ) onUnfocus (this); }
-    public void Send_OnActive () { if ( onActive != null ) onActive (this); }
-    public void Send_OnDeactive () { if ( onDeactive != null ) onDeactive (this); }
-    public void Send_OnHoverIn ( exHotPoint _hotPoint ) { if ( onHoverIn != null ) onHoverIn (this,_hotPoint); }
-    public void Send_OnHoverOut ( exHotPoint _hotPoint ) { if ( onHoverOut != null ) onHoverOut (this,_hotPoint); }
-    public void Send_OnHoverMove ( List<exHotPoint> _hotPoints ) { if ( onHoverMove != null ) onHoverMove (this,_hotPoints); }
-    public void Send_OnPressDown ( exHotPoint _hotPoint ) { if ( onPressDown != null ) onPressDown (this,_hotPoint); }
-    public void Send_OnPressUp ( exHotPoint _hotPoint ) { if ( onPressUp != null ) onPressUp (this,_hotPoint); }
-    public void Send_OnMouseWheel ( float _delta ) { if ( onMouseWheel != null ) onMouseWheel (this,_delta); }
+    public void OnFocus      ( exUIEvent _event )  { if ( onFocus      != null ) exUIMng.inst.DispatchEvent( this, onFocus,      _event ); }
+    public void OnUnfocus    ( exUIEvent _event )  { if ( onUnfocus    != null ) exUIMng.inst.DispatchEvent( this, onUnfocus,    _event ); }
+    public void OnActive     ( exUIEvent _event )  { if ( onActive     != null ) exUIMng.inst.DispatchEvent( this, onActive,     _event ); }
+    public void OnDeactive   ( exUIEvent _event )  { if ( onDeactive   != null ) exUIMng.inst.DispatchEvent( this, onDeactive,   _event ); }
+    // TODO { 
+    // public void OnHoverEnter    ( exUIEvent _event )  { if ( onHoverIn    != null ) exUIMng.inst.DispatchEvent( this, onHoverIn,    _event ); }
+    // public void OnHoverLeave   ( exUIEvent _event )  { if ( onHoverOut   != null ) exUIMng.inst.DispatchEvent( this, onHoverOut,   _event ); }
+    // } TODO end 
+    public void OnHoverIn    ( exUIEvent _event )  { if ( onHoverIn    != null ) exUIMng.inst.DispatchEvent( this, onHoverIn,    _event ); }
+    public void OnHoverOut   ( exUIEvent _event )  { if ( onHoverOut   != null ) exUIMng.inst.DispatchEvent( this, onHoverOut,   _event ); }
+    public void OnHoverMove  ( exUIEvent _event )  { if ( onHoverMove  != null ) exUIMng.inst.DispatchEvent( this, onHoverMove,  _event ); }
+    public void OnPressDown  ( exUIEvent _event )  { if ( onPressDown  != null ) exUIMng.inst.DispatchEvent( this, onPressDown,  _event ); }
+    public void OnPressUp    ( exUIEvent _event )  { if ( onPressUp    != null ) exUIMng.inst.DispatchEvent( this, onPressUp,    _event ); }
+    public void OnMouseWheel ( exUIEvent _event )  { if ( onMouseWheel != null ) exUIMng.inst.DispatchEvent( this, onMouseWheel, _event ); }
     
     public virtual void CacheEventListeners () {
-        // TODO:
-        // onFocus = eventListenerTable["onFocus"];
-        // onUnfocus = eventListenerTable["onUnfocus"];
-        // onActive = eventListenerTable["onActive"];
-        // onDeactive = eventListenerTable["onDeactive"];
-        // onHoverIn = eventListenerTable["onHoverIn"];
-        // onHoverOut = eventListenerTable["onHoverOut"];
-        // onHoverMove = eventListenerTable["onHoverMove"];
-        // onPressDown = eventListenerTable["onPressDown"];
-        // onPressUp = eventListenerTable["onPressUp"];
-        // onMouseWheel = eventListenerTable["onMouseWheel"];
+        onFocus = eventListenerTable["onFocus"];
+        onUnfocus = eventListenerTable["onUnfocus"];
+        onActive = eventListenerTable["onActive"];
+        onDeactive = eventListenerTable["onDeactive"];
+        onHoverIn = eventListenerTable["onHoverIn"];
+        onHoverOut = eventListenerTable["onHoverOut"];
+        onHoverMove = eventListenerTable["onHoverMove"];
+        onPressDown = eventListenerTable["onPressDown"];
+        onPressUp = eventListenerTable["onPressUp"];
+        onMouseWheel = eventListenerTable["onMouseWheel"];
     }
 
     public virtual string[] GetEventNames () {
@@ -166,10 +169,13 @@ public class exUIControl : exPlane {
         set {
             if ( active_ != value ) {
                 active_ = value;
+
+                exUIEvent uiEvent = new exUIEvent();
+                uiEvent.bubbles = false;
                 if ( active_ )
-                    Send_OnActive();
+                    OnActive( uiEvent );
                 else 
-                    Send_OnDeactive();
+                    OnDeactive( uiEvent );
 
                 for ( int i = 0; i < children.Count; ++i ) {
                     children[i].activeInHierarchy = value;
@@ -184,10 +190,13 @@ public class exUIControl : exPlane {
         set { 
             if ( active_ != value ) {
                 active_ = value;
+
+                exUIEvent uiEvent = new exUIEvent();
+                uiEvent.bubbles = false;
                 if ( active_ )
-                    Send_OnActive();
+                    OnActive( uiEvent );
                 else 
-                    Send_OnDeactive();
+                    OnDeactive( uiEvent );
             }
         }
     }
@@ -199,6 +208,7 @@ public class exUIControl : exPlane {
 
     // event listener
     protected Dictionary<string,List<exUIEventListener>> eventListenerTable = new Dictionary<string,List<exUIEventListener>>();
+    protected List<exUIEventListener>[] cachedEventListenerTable;
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -281,7 +291,7 @@ public class exUIControl : exPlane {
     public void DispatchEvent ( string _name, exUIEvent _event ) {
         if ( eventListenerTable.ContainsKey(_name) ) {
             List<exUIEventListener> eventListeners = eventListenerTable[_name];
-            exUIMng.inst.DispatchEvent ( eventListeners, _event );
+            exUIMng.inst.DispatchEvent ( this, eventListeners, _event );
         }
     }
 

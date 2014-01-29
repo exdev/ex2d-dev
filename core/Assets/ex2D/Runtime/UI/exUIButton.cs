@@ -53,9 +53,13 @@ public class exUIButton : exUIControl {
     };
 
     // events
-    public event System.Action<exUIControl> onClick;
-    public event System.Action<exUIControl> onButtonDown;
-    public event System.Action<exUIControl> onButtonUp;
+    List<exUIEventListener> onClick;
+    List<exUIEventListener> onButtonDown;
+    List<exUIEventListener> onButtonUp;
+
+    public void OnClick      ( exUIEvent _event )  { if ( onClick      != null ) exUIMng.inst.DispatchEvent( this, onClick,      _event ); }
+    public void OnButtonDown ( exUIEvent _event )  { if ( onButtonDown != null ) exUIMng.inst.DispatchEvent( this, onButtonDown,    _event ); }
+    public void OnButtonUp   ( exUIEvent _event )  { if ( onButtonUp   != null ) exUIMng.inst.DispatchEvent( this, onButtonUp,     _event ); }
 
     //
     bool pressing = false;
@@ -72,32 +76,45 @@ public class exUIButton : exUIControl {
     protected new void Awake () {
         base.Awake();
 
-        onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
-            if ( pressing )
-                return;
+        AddEventListener( "onPressDown", 
+                          delegate ( exUIEvent _event ) {
+                              if ( pressing )
+                                  return;
 
-            if ( _point.isTouch || _point.GetMouseButton(0) ) {
-                pressing = true;
-                // pressDownAt = _point.pos;
+                              exUIPointEvent pointEvent = _event as exUIPointEvent;
 
-                exUIMng.inst.SetFocus(this);
-                if ( onButtonDown != null ) onButtonDown (this);
-            }
-        };
+                              if ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) {
+                                  pressing = true;
+                                  // pressDownAt = _point.pos;
 
-        onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
-            if ( _point.isTouch || _point.GetMouseButton(0) ) {
-                if ( onButtonUp != null ) onButtonUp (this);
+                                  exUIMng.inst.SetFocus(this);
+                                  OnButtonDown( new exUIEvent() );
 
-                if ( pressing ) {
-                    pressing = false;
-                    if ( onClick != null ) onClick (this);
-                }
-            }
-        };
+                                  _event.StopPropagation();
+                              }
+                          } );
 
-        onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
-            pressing = false;
-        };
+        AddEventListener( "onPressUp", 
+                          delegate ( exUIEvent _event ) {
+                              exUIPointEvent pointEvent = _event as exUIPointEvent;
+                              if ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) {
+                                  OnButtonUp( new exUIEvent() );
+
+                                  if ( pressing ) {
+                                      pressing = false;
+                                      OnClick ( new exUIEvent() );
+
+                                      _event.StopPropagation();
+                                  }
+                              }
+                          } );
+
+        AddEventListener( "onHoverOut", 
+                          delegate ( exUIEvent _event ) {
+                              if ( pressing ) {
+                                  pressing = false;
+                                  _event.StopPropagation();
+                              }
+                          } );
     }
 }

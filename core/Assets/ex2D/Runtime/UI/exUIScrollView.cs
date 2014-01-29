@@ -125,75 +125,83 @@ public class exUIScrollView : exUIControl {
         if ( contentAnchor != null )
             originalAnchorPos = contentAnchor.localPosition;
 
-        onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
-            if ( dragging )
-                return;
+        AddEventListener ( "onPressDown", 
+                           delegate ( exUIEvent _event ) {
+                               if ( dragging )
+                                   return;
 
-            if ( draggable && ( _point.isTouch || _point.GetMouseButton(0) ) ) {
-                dragging = true;
-                draggingID = _point.id;
+                               exUIPointEvent pointEvent = _event as exUIPointEvent;
+                               if ( draggable && ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) ) {
+                                   dragging = true;
+                                   draggingID = pointEvent.pointInfos[0].id;
 
-                damping = false;
-                spring = false;
-                velocity = Vector2.zero;
+                                   damping = false;
+                                   spring = false;
+                                   velocity = Vector2.zero;
 
-                exUIMng.inst.SetFocus(this);
-            }
-        };
+                                   exUIMng.inst.SetFocus(this);
+                               }
+                           } );
 
-        onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
-            if ( draggable && ( _point.isTouch || _point.GetMouseButton(0) ) && _point.id == draggingID ) {
-                if ( dragging ) {
-                    dragging = false;
-                    draggingID = -1;
+        AddEventListener ( "onPressUp", 
+                           delegate ( exUIEvent _event ) {
+                               exUIPointEvent pointEvent = _event as exUIPointEvent;
+                               if ( draggable && ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) && pointEvent.pointInfos[0].id == draggingID ) {
+                                   if ( dragging ) {
+                                       dragging = false;
+                                       draggingID = -1;
 
-                    StartScroll ();
-                }
-            }
-        };
+                                       StartScroll ();
+                                   }
+                               }
+                           } );
 
-        onHoverMove += delegate ( exUIControl _sender, List<exHotPoint> _points ) {
-            for ( int i = 0; i < _points.Count; ++i ) {
-                exHotPoint point = _points[i];
-                if ( draggable && ( point.isTouch || point.GetMouseButton(0) ) && point.id == draggingID  ) {
-                    Vector2 delta = point.worldDelta; 
-                    delta.x = -delta.x;
-                    Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
-                                                                                     new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
-                    if ( Mathf.Abs(constrainOffset.x) > 0.001f ) delta.x *= 0.5f;
-                    if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
+        AddEventListener ( "onHoverMove", 
+                           delegate ( exUIEvent _event ) {
+                               exUIPointEvent pointEvent = _event as exUIPointEvent;
+                               for ( int i = 0; i < pointEvent.pointInfos.Length; ++i ) {
+                                   exUIPointInfo point = pointEvent.pointInfos[i];
+                                   if ( draggable && ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) && point.id == draggingID  ) {
+                                       Vector2 delta = point.worldDelta; 
+                                       delta.x = -delta.x;
+                                       Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
+                                                                                                        new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
+                                       if ( Mathf.Abs(constrainOffset.x) > 0.001f ) delta.x *= 0.5f;
+                                       if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
 
-                    //
-                    velocity = Vector2.Lerp ( velocity, velocity + (delta / Time.deltaTime) * scrollSpeed, 0.67f );
-                    if ( Mathf.Sign(velocity.x) != Mathf.Sign(delta.x) )
-                        velocity.x = 0.0f;
-                    if ( Mathf.Sign(velocity.y) != Mathf.Sign(delta.y) )
-                        velocity.y = 0.0f;
+                                       //
+                                       velocity = Vector2.Lerp ( velocity, velocity + (delta / Time.deltaTime) * scrollSpeed, 0.67f );
+                                       if ( Mathf.Sign(velocity.x) != Mathf.Sign(delta.x) )
+                                           velocity.x = 0.0f;
+                                       if ( Mathf.Sign(velocity.y) != Mathf.Sign(delta.y) )
+                                           velocity.y = 0.0f;
 
-                    Scroll (delta);
+                                       Scroll (delta);
 
-                    break;
-                }
-            }
-        };
+                                       break;
+                                   }
+                               }
+                           } );
 
-        onMouseWheel += delegate ( exUIControl _sender, float _delta ) {
-            // TODO: if ( mouseWheelByHorizontal )
+        AddEventListener ( "onMouseWheel", 
+                           delegate ( exUIEvent _event ) {
+                               // TODO: if ( mouseWheelByHorizontal )
 
-            Vector2 delta = new Vector2( 0.0f, -_delta * 100.0f );
-            Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
-                                                                             new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
-            if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
+                               exUIWheelEvent wheelEvent = _event as exUIWheelEvent;
+                               Vector2 delta = new Vector2( 0.0f, -wheelEvent.delta * 100.0f );
+                               Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset.x, scrollOffset.y, width, height ), 
+                                                                                                new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
+                               if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
 
-            velocity = Vector2.Lerp ( velocity, velocity + (delta / Time.deltaTime) * scrollSpeed, 0.67f );
-            if ( Mathf.Sign(velocity.x) != Mathf.Sign(delta.x) )
-                velocity.x = 0.0f;
-            if ( Mathf.Sign(velocity.y) != Mathf.Sign(delta.y) )
-                velocity.y = 0.0f;
+                               velocity = Vector2.Lerp ( velocity, velocity + (delta / Time.deltaTime) * scrollSpeed, 0.67f );
+                               if ( Mathf.Sign(velocity.x) != Mathf.Sign(delta.x) )
+                                   velocity.x = 0.0f;
+                               if ( Mathf.Sign(velocity.y) != Mathf.Sign(delta.y) )
+                                   velocity.y = 0.0f;
 
-            Scroll (delta);
-            StartScroll ();
-        };
+                               Scroll (delta);
+                               StartScroll ();
+                           } );
     }
 
     // ------------------------------------------------------------------ 

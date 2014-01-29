@@ -20,23 +20,28 @@ using System.Collections;
 // Desc: 
 // ------------------------------------------------------------------ 
 
-public enum exUIEventPhase {
-    Capture,
-    Target,
-    Bubble,
+public class exUIEventListener {
+    public bool capturePhase = false;
+    public System.Action<exUIEvent> func = null;
 }
 
 // ------------------------------------------------------------------ 
 // Desc: 
 // ------------------------------------------------------------------ 
 
-public class exUIEvent {
-    // public bool bubbles; 
-    // public bool cancelable; 
+public enum exUIEventPhase {
+    Capture,
+    Target,
+    Bubble,
+}
 
-    public exUIControl target; // the target trigger this event
-    public exUIControl currentTarget; // current target during event phase
-    public exUIEventPhase eventPhase;
+public class exUIEvent {
+    public bool bubbles = true; 
+    public bool cancelable = true; 
+
+    public exUIControl target = null; // the target trigger this event
+    public exUIControl currentTarget = null; // current target during event phase
+    public exUIEventPhase eventPhase = exUIEventPhase.Target;
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -52,6 +57,19 @@ public class exUIEvent {
     ///////////////////////////////////////////////////////////////////////////////
 
     public void StopPropagation () { isPropagationStopped_ = true; }
+    public void Reset () { 
+        isPropagationStopped_ = false; 
+        target = null;
+        currentTarget = null;
+    }
+}
+
+// ------------------------------------------------------------------ 
+// Desc: 
+// ------------------------------------------------------------------ 
+
+public class exUIFocusEvent : exUIEvent {
+    public exUIControl relatedTarget = null;
 }
 
 // ------------------------------------------------------------------ 
@@ -68,10 +86,10 @@ public struct exUIPointInfo {
 
 public class exUIPointEvent : exUIEvent {
 
-    public bool altKey;
-    public bool ctrlKey;
-    public bool metaKey;
-    public bool isMouse;
+    public bool altKey = false;
+    public bool ctrlKey = false;
+    public bool metaKey = false;
+    public bool isMouse = false;
     public bool isTouch { get { return isMouse == false; } }  
     public exUIPointInfo[] pointInfos;
 
@@ -91,7 +109,6 @@ public class exUIPointEvent : exUIEvent {
 // Desc: 
 // ------------------------------------------------------------------ 
 
-public class exUIEventListener {
-    public bool capturePhase = false;
-    public System.Action<exUIEvent> func = null;
+public class exUIWheelEvent : exUIEvent {
+    public float delta = 0.0f;
 }
