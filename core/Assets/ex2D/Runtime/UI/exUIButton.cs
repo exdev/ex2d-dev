@@ -157,7 +157,7 @@ public class exUIButton : exUIControl {
 
                                               pointEvent2.Reset();
                                               if ( parent != null )
-                                                  parent.OnPressDown(pointEvent2);
+                                                  exUIMng.inst.PressDown( pressingID, parent, pointEvent2 );
                                           }
                                           else {
                                               _event.StopPropagation();

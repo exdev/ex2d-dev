@@ -70,11 +70,17 @@ public class ControlSorterByPriority: IComparer<exUIControl> {
         int priority_a = _a.priority;
         int priority_b = _b.priority;
 
+        if ( _a == _b )
+            return 0;
+
         if ( _a.gameObject.activeInHierarchy == false || _a.activeInHierarchy == false )
             priority_a = -999;
 
         if ( _b.gameObject.activeInHierarchy == false || _b.activeInHierarchy == false )
             priority_b = -999;
+
+        if ( priority_a == priority_b )
+            return -1;
 
         return priority_b - priority_a;
     }
@@ -481,6 +487,33 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public void PressDown ( int _id, exUIControl _ctrl, exUIEvent _event ) {
+        exHotPoint[] hotPoints = null;
+
+        if ( hasTouch || simulateMouseAsTouch ) {
+            hotPoints = touchPoints;
+        }
+        else {
+            hotPoints = mousePoints;
+        }
+
+        //
+        for ( int i = 0; i < hotPoints.Length; ++i ) {
+            exHotPoint hotPoint = hotPoints[i];
+
+            if ( hotPoint.id != _id )
+                continue;
+
+            hotPoint.pressed = _ctrl;
+            _ctrl.OnPressDown(_event);
+            hotPoints[i] = hotPoint;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void HandleEvents () {
         // make sure all hotpoints de-active at first
         for ( int i = 0; i < touchPoints.Length; ++i ) {
@@ -521,6 +554,9 @@ public class exUIMng : MonoBehaviour {
             exHotPoint hotPoint = _hotPoints[i];
 
             if ( hotPoint.active == false )
+                continue;
+
+            if ( hotPoint.pressed != null && hotPoint.pressed.grabMouseOrTouch )
                 continue;
 
             // get hot control
