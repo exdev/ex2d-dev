@@ -209,6 +209,19 @@ public class exLayer : MonoBehaviour
             return;
         }
 
+        // Remove null sprites
+        // 有可能是子sprite被父sprite一起加入了layer中，但从未被激活过，导致OnDestroy没有调用到，所以必须先判断是否为空
+        for (int m = meshList.Count - 1; m >= 0; --m) {
+            exMesh mesh = meshList[m];
+            for (int i = 0; i < mesh.spriteList.Count; ++i) {
+                exLayeredSprite sprite = mesh.spriteList[i];
+                if (sprite == null) {
+                    exDebug.Assert(ReferenceEquals(sprite, null) == false);
+                    RemoveFromMesh (sprite, mesh);
+                }
+            }
+        }
+
         // compact mesh
         for (int m = 0; m < meshList.Count; ) {
             exMesh mesh = meshList[m];
