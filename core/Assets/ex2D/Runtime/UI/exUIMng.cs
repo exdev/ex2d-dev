@@ -131,20 +131,20 @@ public class ControlSorterByZ: IComparer<exUIControl> {
 // Desc: 
 // ------------------------------------------------------------------ 
 
-public struct exHotPoint {
-    public int id;
-    public bool active;
-    public bool pressDown;
-    public bool pressUp;
-    public Vector2 pos;
-    public Vector2 delta;
-    public Vector3 worldPos;
-    public Vector3 worldDelta;
+public class exHotPoint {
+    public int id = -1;
+    public bool active = false;
+    public bool pressDown = false;
+    public bool pressUp = false;
+    public Vector2 pos = Vector2.zero;
+    public Vector2 delta = Vector2.zero;
+    public Vector3 worldPos = Vector3.zero;
+    public Vector3 worldDelta = Vector3.zero;
 
-    public exUIControl hover;
-    public exUIControl pressed;
+    public exUIControl hover = null;
+    public exUIControl pressed = null;
 
-    public bool isMouse;
+    public bool isMouse = false;
     public bool isTouch { get { return isMouse == false; } }  
 
     // 0: left, 1: right, 2: middle
@@ -506,7 +506,6 @@ public class exUIMng : MonoBehaviour {
 
             hotPoint.pressed = _ctrl;
             _ctrl.OnPressDown(_event);
-            hotPoints[i] = hotPoint;
         }
     }
 
@@ -521,14 +520,12 @@ public class exUIMng : MonoBehaviour {
             hotPoint.active = false;
             hotPoint.pressDown = false;
             hotPoint.pressUp = false;
-            touchPoints[i] = hotPoint;
         }
         for ( int i = 0; i < mousePoints.Length; ++i ) {
             exHotPoint hotPoint = mousePoints[i];
             hotPoint.active = false;
             hotPoint.pressDown = false;
             hotPoint.pressUp = false;
-            mousePoints[i] = hotPoint;
         }
 
         //
@@ -589,8 +586,6 @@ public class exUIMng : MonoBehaviour {
                     curCtrl.OnHoverIn(pointEvent);
                 }
             }
-
-            _hotPoints[i] = hotPoint;
         }
 
         if ( _isMouse ) {
@@ -644,8 +639,6 @@ public class exUIMng : MonoBehaviour {
                     curCtrl.OnPressDown(pointEvent);
                 }
                 hotPoint.pressed = curCtrl;
-
-                _hotPoints[i] = hotPoint;
             }
         }
 
@@ -744,7 +737,6 @@ public class exUIMng : MonoBehaviour {
                 }
 
                 hotPoint.pressed = null;
-                _hotPoints[i] = hotPoint;
             }
         }
     }
@@ -778,8 +770,6 @@ public class exUIMng : MonoBehaviour {
                 hotPoint.pressDown = (touch.phase == TouchPhase.Began);
                 hotPoint.pressUp = (touch.phase == TouchPhase.Canceled || touch.phase == TouchPhase.Ended);
             }
-
-            touchPoints[touch.fingerId] = hotPoint;
         }
 
         HandleHotPoints ( touchPoints, false );
@@ -793,6 +783,7 @@ public class exUIMng : MonoBehaviour {
         if ( simulateMouseAsTouch ) {
             for ( int i = 0; i < 3; ++i ) {
                 exHotPoint hotPoint = touchPoints[i];
+                hotPoint.id = i;
 
                 // check if active the hotPoint
                 hotPoint.active = Input.GetMouseButtonDown(i) || Input.GetMouseButton(i) || Input.GetMouseButtonUp(i);
@@ -816,8 +807,6 @@ public class exUIMng : MonoBehaviour {
                     hotPoint.pressDown = Input.GetMouseButtonDown(i);
                     hotPoint.pressUp = Input.GetMouseButtonUp(i);
                 }
-
-                touchPoints[i] = hotPoint;
             }
 
             HandleHotPoints ( touchPoints, false );
@@ -845,8 +834,6 @@ public class exUIMng : MonoBehaviour {
                     hotPoint.pressDown = Input.GetMouseButtonDown(i);
                     hotPoint.pressUp = Input.GetMouseButtonUp(i);
                 }
-
-                mousePoints[i] = hotPoint;
             }
 
             HandleHotPoints ( mousePoints, true );
