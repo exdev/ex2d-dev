@@ -145,7 +145,7 @@ public class exUIScrollView : exUIControl {
                                exUIPointEvent pointEvent = _event as exUIPointEvent;
                                if ( draggable && ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) ) {
                                    dragging = true;
-                                   draggingID = pointEvent.pointInfos[0].id;
+                                   draggingID = pointEvent.mainPoint.id;
 
                                    damping = false;
                                    spring = false;

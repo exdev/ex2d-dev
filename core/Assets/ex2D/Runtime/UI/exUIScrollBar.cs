@@ -80,7 +80,7 @@ public class exUIScrollBar : exUIControl {
                                               exUIPointEvent pointEvent = _event as exUIPointEvent;
                                               if ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) {
                                                   dragging = true;
-                                                  draggingID = pointEvent.pointInfos[0].id;
+                                                  draggingID = pointEvent.mainPoint.id;
 
                                                   exUIMng.inst.SetFocus(this);
                                               }

@@ -93,6 +93,8 @@ public class exUIPointEvent : exUIEvent {
     public bool isTouch { get { return isMouse == false; } }  
     public exUIPointInfo[] pointInfos;
 
+    public exUIPointInfo mainPoint { get { return pointInfos[0]; } }
+
     // 0: left, 1: right, 2: middle
     public bool GetMouseButton ( int _id ) { 
         if ( isMouse ) {

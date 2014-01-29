@@ -71,7 +71,8 @@ public class exUIButton : exUIControl {
 
     //
     bool pressing = false;
-    // Vector2 pressDownAt = Vector2.zero; 
+    int pressingID = -1;
+    Vector2 pressDownAt = Vector2.zero; 
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -93,7 +94,8 @@ public class exUIButton : exUIControl {
 
                               if ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) {
                                   pressing = true;
-                                  // pressDownAt = _point.pos;
+                                  pressDownAt = pointEvent.mainPoint.pos;
+                                  pressingID = pointEvent.mainPoint.id;
 
                                   exUIMng.inst.SetFocus(this);
 
@@ -132,5 +134,38 @@ public class exUIButton : exUIControl {
                                   _event.StopPropagation();
                               }
                           } );
+
+        AddEventListener( "onHoverMove", 
+                          delegate ( exUIEvent _event ) {
+                              if ( pressing ) {
+                                  exUIPointEvent pointEvent = _event as exUIPointEvent;
+
+                                   for ( int i = 0; i < pointEvent.pointInfos.Length; ++i ) {
+                                       exUIPointInfo point = pointEvent.pointInfos[i];
+                                       if ( point.id == pressingID ) {
+                                          Vector2 delta = pointEvent.mainPoint.pos - pressDownAt; 
+                                          if ( delta.sqrMagnitude >= 5.0f * 5.0f ) {
+                                              pressing = false;
+
+
+                                              exUIPointEvent pointEvent2 = new exUIPointEvent();
+                                              pointEvent2.isMouse = pointEvent.isMouse;
+                                              pointEvent2.pointInfos = new exUIPointInfo[] {
+                                                point
+                                              };
+                                              OnHoverOut (pointEvent2);
+
+                                              pointEvent2.Reset();
+                                              if ( parent != null )
+                                                  parent.OnPressDown(pointEvent2);
+                                          }
+                                          else {
+                                              _event.StopPropagation();
+                                          }
+                                       }
+                                  }
+                              }
+                          } );
+
     }
 }
