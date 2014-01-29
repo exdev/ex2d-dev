@@ -152,6 +152,8 @@ public class exUIScrollView : exUIControl {
                                    velocity = Vector2.zero;
 
                                    exUIMng.inst.SetFocus(this);
+
+                                   _event.StopPropagation();
                                }
                            } );
 
@@ -165,6 +167,7 @@ public class exUIScrollView : exUIControl {
 
                                        StartScroll ();
                                    }
+                                   _event.StopPropagation();
                                }
                            } );
 
@@ -174,7 +177,7 @@ public class exUIScrollView : exUIControl {
                                for ( int i = 0; i < pointEvent.pointInfos.Length; ++i ) {
                                    exUIPointInfo point = pointEvent.pointInfos[i];
                                    if ( draggable && ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) && point.id == draggingID  ) {
-                                       Vector2 delta = point.worldDelta; 
+                                       Vector2 delta = point.delta; 
                                        delta.x = -delta.x;
                                        Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset_.x, scrollOffset_.y, width, height ), 
                                                                                                         new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
@@ -187,6 +190,8 @@ public class exUIScrollView : exUIControl {
                                            velocity.x = 0.0f;
                                        if ( Mathf.Sign(velocity.y) != Mathf.Sign(delta.y) )
                                            velocity.y = 0.0f;
+
+                                       _event.StopPropagation();
 
                                        Scroll (delta);
 
@@ -210,6 +215,8 @@ public class exUIScrollView : exUIControl {
                                    velocity.x = 0.0f;
                                if ( Mathf.Sign(velocity.y) != Mathf.Sign(delta.y) )
                                    velocity.y = 0.0f;
+
+                               _event.StopPropagation();
 
                                Scroll (delta);
                                StartScroll ();

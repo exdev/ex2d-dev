@@ -69,6 +69,9 @@ public class exUIButton : exUIControl {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
+    public bool allowDrag = true;
+    public float dragThreshold = 40.0f;
+
     //
     bool pressing = false;
     int pressingID = -1;
@@ -144,7 +147,9 @@ public class exUIButton : exUIControl {
                                        exUIPointInfo point = pointEvent.pointInfos[i];
                                        if ( point.id == pressingID ) {
                                           Vector2 delta = pointEvent.mainPoint.pos - pressDownAt; 
-                                          if ( delta.sqrMagnitude >= 5.0f * 5.0f ) {
+                                          if ( allowDrag == false &&
+                                               delta.sqrMagnitude >= dragThreshold * dragThreshold )
+                                          {
                                               pressing = false;
 
 
