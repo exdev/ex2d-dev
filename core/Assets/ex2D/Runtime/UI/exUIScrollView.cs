@@ -139,22 +139,12 @@ public class exUIScrollView : exUIControl {
 
         AddEventListener ( "onPressDown", 
                            delegate ( exUIEvent _event ) {
-                               if ( dragging )
-                                   return;
-
-                               exUIPointEvent pointEvent = _event as exUIPointEvent;
-                               if ( draggable && ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) ) {
-                                   dragging = true;
-                                   draggingID = pointEvent.mainPoint.id;
-
-                                   damping = false;
-                                   spring = false;
-                                   velocity = Vector2.zero;
-
-                                   exUIMng.inst.SetFocus(this);
-
+                               if ( dragging ) {
                                    _event.StopPropagation();
+                                   return;
                                }
+
+                               StartDrag(_event);
                            } );
 
         AddEventListener ( "onPressUp", 
@@ -171,8 +161,23 @@ public class exUIScrollView : exUIControl {
                                }
                            } );
 
+        AddEventListener ( "onHoverIn", 
+                           delegate ( exUIEvent _event ) {
+                               if ( dragging ) {
+                                   _event.StopPropagation();
+                                   return;
+                               }
+
+                               StartDrag(_event);
+                           } );
+
         AddEventListener ( "onHoverMove", 
                            delegate ( exUIEvent _event ) {
+                               if ( dragging == false ) {
+                                    StartDrag(_event);
+                                    return;
+                               }
+
                                exUIPointEvent pointEvent = _event as exUIPointEvent;
                                for ( int i = 0; i < pointEvent.pointInfos.Length; ++i ) {
                                    exUIPointInfo point = pointEvent.pointInfos[i];
@@ -302,6 +307,26 @@ public class exUIScrollView : exUIControl {
                 uiEvent.bubbles = false;
                 OnScrollFinished(uiEvent);
             }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void StartDrag ( exUIEvent _event ) {
+        exUIPointEvent pointEvent = _event as exUIPointEvent;
+        if ( draggable && ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) ) {
+            dragging = true;
+            draggingID = pointEvent.mainPoint.id;
+
+            damping = false;
+            spring = false;
+            velocity = Vector2.zero;
+
+            exUIMng.inst.SetFocus(this);
+
+            _event.StopPropagation();
         }
     }
 

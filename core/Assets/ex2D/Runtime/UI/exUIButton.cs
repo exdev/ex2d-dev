@@ -133,16 +133,6 @@ public class exUIButton : exUIControl {
         AddEventListener( "onHoverOut", 
                           delegate ( exUIEvent _event ) {
                               if ( pressing ) {
-                                  //
-                                  exUIPointEvent pointEvent = _event as exUIPointEvent;
-                                  exUIPointEvent pointEvent2 = new exUIPointEvent();
-                                  pointEvent2.isMouse = pointEvent.isMouse;
-                                  pointEvent2.pointInfos = new exUIPointInfo[] {
-                                      pointEvent.mainPoint
-                                  };
-                                  if ( parent != null )
-                                      exUIMng.inst.PressDown( pressingID, parent, pointEvent2 );
-
                                   pressing = false;
                                   pressingID = -1;
                                   _event.StopPropagation();
@@ -161,12 +151,7 @@ public class exUIButton : exUIControl {
                                           if ( allowDrag == false &&
                                                delta.sqrMagnitude >= dragThreshold * dragThreshold )
                                           {
-                                              exUIPointEvent pointEvent2 = new exUIPointEvent();
-                                              pointEvent2.isMouse = pointEvent.isMouse;
-                                              pointEvent2.pointInfos = new exUIPointInfo[] {
-                                                point
-                                              };
-                                              OnHoverOut (pointEvent2);
+                                              exUIMng.inst.HoverOut ( this, point.id);
                                           }
                                           else {
                                               _event.StopPropagation();

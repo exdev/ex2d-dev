@@ -487,7 +487,7 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void PressDown ( int _id, exUIControl _ctrl, exUIEvent _event ) {
+    public void HoverOut ( exUIControl _ctrl, int _id ) {
         exHotPoint[] hotPoints = null;
 
         if ( hasTouch || simulateMouseAsTouch ) {
@@ -501,11 +501,45 @@ public class exUIMng : MonoBehaviour {
         for ( int i = 0; i < hotPoints.Length; ++i ) {
             exHotPoint hotPoint = hotPoints[i];
 
+            if ( hotPoint.active == false )
+                continue;
+
             if ( hotPoint.id != _id )
                 continue;
 
-            hotPoint.pressed = _ctrl;
-            _ctrl.OnPressDown(_event);
+            exUIPointInfo pointInfo = new exUIPointInfo();
+            pointInfo.id = hotPoint.id;
+            pointInfo.pos = hotPoint.pos;
+            pointInfo.delta = hotPoint.delta;
+            pointInfo.worldPos = hotPoint.worldPos;
+            pointInfo.worldDelta = hotPoint.worldDelta;
+
+            exUIPointEvent pointEvent = new exUIPointEvent();
+            pointEvent.isMouse = hotPoint.isMouse;
+            pointEvent.pointInfos = new exUIPointInfo [] {
+                pointInfo
+            };
+
+            // on hover out
+            if ( _ctrl != null ) {
+                _ctrl.OnHoverOut(pointEvent);
+            }
+
+            hotPoint.hover = null;
+
+            // on hover in
+            if ( _ctrl.parent != null ) {
+                pointEvent.Reset();
+                hotPoint.hover = _ctrl.parent;
+                _ctrl.parent.OnHoverIn(pointEvent);
+
+
+                if ( hotPoint.isTouch ) {
+                    pointEvent.Reset();
+                    hotPoint.pressed = _ctrl.parent;
+                    _ctrl.parent.OnPressDown(pointEvent);
+                }
+            }
         }
     }
 
@@ -584,6 +618,10 @@ public class exUIMng : MonoBehaviour {
                 if ( curCtrl != null ) {
                     pointEvent.Reset();
                     curCtrl.OnHoverIn(pointEvent);
+
+                    if ( hotPoint.isTouch ) {
+                        hotPoint.pressDown = true;
+                    }
                 }
             }
         }
