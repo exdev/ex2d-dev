@@ -19,17 +19,18 @@ using System.Collections.Generic;
 
 [System.FlagsAttribute]
 public enum exUpdateFlags {
-	None		= 0,  ///< none
-	Index	    = 1,  ///< update the indices
-	Vertex		= 2,  ///< update the vertices
-	UV	        = 4,  ///< update the uv coordination
-	Color	    = 8,  ///< update the vertex color
-    Normal      = 16, ///< update the normal, not implemented yet
-    Text	    = 32, ///< update the text, only used in sprite font
-    Transparent = 64, ///< hide sprite
+	None		= 0,   ///< none
+	Index	    = 1,   ///< update the indices
+	Vertex		= 2,   ///< update the vertices
+	UV	        = 4,   ///< update the uv coordination
+	Color	    = 8,   ///< update the vertex color
+    Normal      = 16,  ///< update the normal, not implemented yet
+    Text	    = 32,  ///< update the text, only used in sprite font
+    Transparent = 64,  ///< hide sprite
+    Depth       = 128, ///< update sprite's depth, only used in layered sprite
 
 	VertexAndIndex = (Index | Vertex),
-	AllExcludeIndex = (Vertex | UV | Color | Normal | Text | Transparent),
+	AllExcludeIndex = (Vertex | UV | Color | Normal | Text | Transparent/* | Depth*/),
 	All = (AllExcludeIndex | Index),
 };
 

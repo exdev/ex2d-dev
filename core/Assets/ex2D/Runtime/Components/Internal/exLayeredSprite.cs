@@ -37,6 +37,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         set {
             if ( depth_ != value ) {
                 if (layer_ != null && isInIndexBuffer) {
+                    SetDepthDirty();
                     layer_.SetSpriteDepth(this, value);
                 }
                 else {
@@ -112,6 +113,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     [System.NonSerialized] protected Transform cachedTransform_ = null;    
     public Transform cachedTransform {
         get {
+            // 这里确保transform不会先于gameObject销毁，如果返回值为空，很可能是因为exLayeredSprite被销毁了
             if (ReferenceEquals(cachedTransform_, null)) {
                 cachedTransform_ = transform;
                 cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
@@ -387,6 +389,14 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         else if (layer_ != null) {
             layer_.Remove(this);
         }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // 如果在运行时改变了hierarchy，需要手动调用这个接口以请求重新计算depth
+    // ------------------------------------------------------------------ 
+    
+    public void SetDepthDirty (exLayer _layer = null) {
+        updateFlags |= exUpdateFlags.Depth;
     }
     
     // ------------------------------------------------------------------ 
