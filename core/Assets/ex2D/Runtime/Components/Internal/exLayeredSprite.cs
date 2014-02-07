@@ -19,7 +19,7 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayeredSprite>, exLayer.IFriendOfLayer {
+public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayeredSprite>/*, exLayer.IFriendOfLayer*/ {
 
     public static bool enableFastShowHide = true;
 
@@ -29,28 +29,31 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected float depth_ = 0;
-    /// The sorting depth of this sprite in its layer. Sprite with lower depth are rendered before sprites with higher depth.
+    /// The sorting depth of this sprite relative to its parent sprite. Sprite with lower depth are rendered before sprites with higher depth.
     // ------------------------------------------------------------------ 
 
     public float depth {
-        get { return depth_; }
+        get {
+            return depth_;
+            //if (float.IsNaN(depthNotApplyedToMesh)) {
+            //    return depth_;
+            //}
+            //else {
+            //    return depthNotApplyedToMesh;
+            //}
+        }
         set {
             if ( depth_ != value ) {
-                if (layer_ != null && isInIndexBuffer) {
-                    SetDepthDirty();
-                    layer_.SetSpriteDepth(this, value);
-                }
-                else {
-                    depth_ = value;
-                }
+                depth_ = value;
+                SetDepthDirty();
             }
         }
     }
 
-    /// 用于相同depth的sprite之间的排序
 #if !EX_DEBUG
     [HideInInspector]
 #endif
+    /// 用于相同depth的sprite之间的排序
     public int spriteIdInLayer = -1;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -73,6 +76,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             }
         }
     }
+
+    //[System.NonSerialized] internal float depthNotApplyedToMesh = float.NaN;
     
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
@@ -337,6 +342,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public int CompareTo(exLayeredSprite _other) {
+        // TODO: 直接返回减法结果
         if (depth_ < _other.depth_)
         {
             return -1;
@@ -358,9 +364,9 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     
     #endregion
 
-    void exLayer.IFriendOfLayer.DoSetDepth (float _depth) {
-        depth_ = _depth;
-    }
+    //void exLayer.IFriendOfLayer.DoSetDepth (float _depth) {
+    //    depth_ = _depth;
+    //}
 
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
@@ -392,11 +398,17 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     }
     
     // ------------------------------------------------------------------ 
-    // 如果在运行时改变了hierarchy，需要手动调用这个接口以请求重新计算depth
+    /// 如果在运行时改变了sprite的parent，需要手动调用这个方法以请求重新计算该Sprite和所有子Sprite的depth，不论它的parent之前是否已经调用过这个方法。
+    /// 只需要对改变了parent的sprite调用即可，不需要对它的子sprite调用。
     // ------------------------------------------------------------------ 
     
-    public void SetDepthDirty (exLayer _layer = null) {
-        updateFlags |= exUpdateFlags.Depth;
+    public void SetDepthDirty () {
+        if (layer_ != null && isInIndexBuffer) {
+            //if (float.IsNaN(depthNotApplyedToMesh)) {
+            //    depthNotApplyedToMesh = depth_;
+            //}
+            layer_.SetSpriteDepthDirty(this);
+        }
     }
     
     // ------------------------------------------------------------------ 
