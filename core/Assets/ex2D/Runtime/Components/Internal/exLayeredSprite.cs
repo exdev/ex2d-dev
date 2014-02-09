@@ -19,7 +19,7 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayeredSprite>/*, exLayer.IFriendOfLayer*/ {
+public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayeredSprite>, exLayer.IFriendOfLayer {
 
     public static bool enableFastShowHide = true;
 
@@ -83,8 +83,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
     
-    [System.NonSerialized]
-    protected exLayer layer_ = null;
+    [System.NonSerialized] protected exLayer layer_ = null;
     public exLayer layer {
         get {
             return layer_;
@@ -100,6 +99,14 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         }
     }
     
+    // 保存计算好的绝对depth值，只有在调用IComparable接口时才用到。(如果要检查在哪里用到，可以注释掉IComparable的实现)
+    // 当父节点的depth改变时，应该先更新父节点的globalDepth并应用到mesh上，再更新子节点。
+    [System.NonSerialized] private float globalDepth_ = 0;
+    float exLayer.IFriendOfLayer.globalDepth {
+        get { return globalDepth_; }
+        set { globalDepth_ = value; }
+    }
+
     ///如果从layer中隐藏，isInIndexBuffer必须设为false
     public bool isInIndexBuffer {
         get {
@@ -308,7 +315,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public static bool operator > (exLayeredSprite _lhs, exLayeredSprite _rhs) {
-        return _lhs.depth_ > _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer > _rhs.spriteIdInLayer);
+        return _lhs.globalDepth_ > _rhs.globalDepth_ || (_lhs.globalDepth_ == _rhs.globalDepth_ && _lhs.spriteIdInLayer > _rhs.spriteIdInLayer);
     }
     
     // ------------------------------------------------------------------ 
@@ -317,7 +324,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public static bool operator >= (exLayeredSprite _lhs, exLayeredSprite _rhs) {
-        return _lhs.depth_ > _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer >= _rhs.spriteIdInLayer);
+        return _lhs.globalDepth_ > _rhs.globalDepth_ || (_lhs.globalDepth_ == _rhs.globalDepth_ && _lhs.spriteIdInLayer >= _rhs.spriteIdInLayer);
     }
     
     // ------------------------------------------------------------------ 
@@ -325,7 +332,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public static bool operator < (exLayeredSprite _lhs, exLayeredSprite _rhs) {
-        return _lhs.depth_ < _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer < _rhs.spriteIdInLayer);
+        return _lhs.globalDepth_ < _rhs.globalDepth_ || (_lhs.globalDepth_ == _rhs.globalDepth_ && _lhs.spriteIdInLayer < _rhs.spriteIdInLayer);
     }
     
     // ------------------------------------------------------------------ 
@@ -334,7 +341,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public static bool operator <= (exLayeredSprite _lhs, exLayeredSprite _rhs) {
-        return _lhs.depth_ < _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer <= _rhs.spriteIdInLayer);
+        return _lhs.globalDepth_ < _rhs.globalDepth_ || (_lhs.globalDepth_ == _rhs.globalDepth_ && _lhs.spriteIdInLayer <= _rhs.spriteIdInLayer);
     }
     
     // ------------------------------------------------------------------ 
@@ -343,11 +350,11 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     
     public int CompareTo(exLayeredSprite _other) {
         // TODO: 直接返回减法结果
-        if (depth_ < _other.depth_)
+        if (globalDepth_ < _other.globalDepth_)
         {
             return -1;
         }
-        if (depth_ > _other.depth_)
+        if (globalDepth_ > _other.globalDepth_)
         {
             return 1;
         }

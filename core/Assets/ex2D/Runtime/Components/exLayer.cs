@@ -41,13 +41,14 @@ public class exLayer : MonoBehaviour
 {
     public static int maxDynamicMeshVertex = 90000;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
 
-    //// ------------------------------------------------------------------ 
-    ///// 实现此接口用于绕开sprite的setter直接给字段赋值
-    //// ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    /// 用于限制对exLayeredSprite私有方法的访问
+    // ------------------------------------------------------------------ 
 
-    //public interface IFriendOfLayer {
-    //    void DoSetDepth (float _depth);
-    //}
+    public interface IFriendOfLayer {
+        //void DoSetDepth (float _depth);   // 实现此接口用于绕开sprite的setter直接给字段赋值
+        float globalDepth { get; set; }
+    }
     
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -183,6 +184,7 @@ public class exLayer : MonoBehaviour
     [System.NonSerialized] private bool alphaHasChanged = false;
 
     /// 缓存需要更改depth的sprite，在渲染前统一重新计算它们及所有子sprite的depth。
+    /// 不立刻更新的原因主要是为了能够批量一次性刷新，以节约遍历hierarchy及多次设置depth的开销。
     [System.NonSerialized] private List<exLayeredSprite> depthDirtySpriteList = new List<exLayeredSprite>();
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -520,7 +522,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     
     internal void SetSpriteDepthDirty (exLayeredSprite _sprite) {
-        SetSpriteDepthSelfDirty(_sprite, true);
+        SetSpriteSelfDepthDirty(_sprite, true);
 
         // 确保list里所有的sprite及子树不相互包含，避免重复计算depth
         for (int i = depthDirtySpriteList.Count - 1; i >= 0; --i) {
@@ -546,7 +548,7 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private void SetSpriteDepthSelfDirty (exLayeredSprite _sprite, bool _dirty) {
+    private void SetSpriteSelfDepthDirty (exLayeredSprite _sprite, bool _dirty) {
         if (_dirty) {
             _sprite.updateFlags |= exUpdateFlags.SelfDepth;
         }
@@ -584,7 +586,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     /// 用于更新sprite的depth、material、vertex count等数据
     // ------------------------------------------------------------------ 
-
+    
     internal void OnPreSpriteChange (exLayeredSprite _sprite) {
         int meshIndex = IndexOfMesh(_sprite);
         if (meshIndex != -1) {
@@ -598,7 +600,23 @@ public class exLayer : MonoBehaviour
 
     internal void OnAfterSpriteChange (exLayeredSprite _sprite) {
         AddToMesh(_sprite, GetMeshToAdd(_sprite));
-        SetSpriteDepthSelfDirty(_sprite, false);    // 小优化，不需要再更新depth，因为这里已经同时把depth更新过了
+        SetSpriteSelfDepthDirty(_sprite, false);    // 小优化，不需要再更新depth，因为这里已经同时把depth更新过了
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    internal void SetSpriteBufferSize (exLayeredSprite _sprite, ) {
+        //在接口中先更新所有depth值
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    internal void UpdateSpriteMaterial (exLayeredSprite _sprite) {
+        //在接口中先更新所有depth值
     }
 
     // ------------------------------------------------------------------ 
@@ -714,7 +732,7 @@ public class exLayer : MonoBehaviour
         exDebug.Assert (_sprite.vertexCount == oldVertexCount);
 #endif
         AddToMesh(_sprite, _dst);
-        SetSpriteDepthSelfDirty(_sprite, false);    // 小优化，不需要再更新depth，因为这里已经同时把depth更新过了
+        SetSpriteSelfDepthDirty(_sprite, false);    // 小优化，不需要再更新depth，因为这里已经同时把depth更新过了
 #if EX_DEBUG
         exDebug.Assert (_sprite.vertexCount == oldVertexCount);
 #endif
@@ -1172,9 +1190,13 @@ public class exLayer : MonoBehaviour
 
     // ------------------------------------------------------------------ 
     /// 最终更新sprite的depth，只有当sprite在depthDirtySpriteList并且有exUpdateFlags.SelfDepth标记时，或者当sprite的任一父物体在depthDirtySpriteList时，depth才会重新计算
+    /// 调用这个方法后exLayeredSprite.globalDepth才会更新
     // ------------------------------------------------------------------ 
 
     private void UpdateAllSpritesDepth () {
-        
+        for (int i = 0; i < depthDirtySpriteList.Count; ++i) {
+            exLayeredSprite sprite = depthDirtySpriteList[i];
+            
+        }
     }
 }
