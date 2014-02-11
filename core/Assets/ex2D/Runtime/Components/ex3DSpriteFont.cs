@@ -514,6 +514,10 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
 
     void OnFontTextureRebuilt () {
         updateFlags |= exUpdateFlags.Text;      // TODO: only need to update UV
+
+        // 立刻刷新mesh，因为有可能在同一帧内，自己刷新过了，
+        // 其它sprite font刷新时又请求重建了font texture，如果此时自己只更改标记将导致在本帧出现一次闪烁。
+        LateUpdate();
     }
 }
 //#endif

@@ -182,6 +182,9 @@ public class exLayer : MonoBehaviour
     [System.NonSerialized] private int nextSpriteUniqueId = 0;
     [System.NonSerialized] private bool alphaHasChanged = false;
 
+    /// <summary> 任一mesh的font texture更新了，则统一刷新所有mesh </summary>
+    [System.NonSerialized] private bool anyFontTextureRefreshed = false;
+    
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -243,15 +246,15 @@ public class exLayer : MonoBehaviour
             }
         }
 
-        // update
+        // main update
+        exUpdateFlags layerAlphaChangeMask = (alphaHasChanged ? exUpdateFlags.Color : exUpdateFlags.None);
+        alphaHasChanged = false;
         for (int m = meshList.Count - 1; m >= 0 ; --m) {
             exMesh mesh = meshList[m];
             exUpdateFlags meshUpdateFlags = exUpdateFlags.None;
             for (int i = 0; i < mesh.spriteList.Count; ++i) {
                 exLayeredSprite sprite = mesh.spriteList[i];
-                if (alphaHasChanged) {
-                    sprite.updateFlags |= exUpdateFlags.Color;
-                }
+                sprite.updateFlags |= layerAlphaChangeMask;
                 if (sprite.isInIndexBuffer) {
                     //if (sprite.transparent == false) {
                         sprite.UpdateTransform();
@@ -264,7 +267,26 @@ public class exLayer : MonoBehaviour
             }
             mesh.Apply(meshUpdateFlags);
         }
-        alphaHasChanged = false;
+        
+        // Re-update sprites which updateFlags dirtyed again. This may caused by unity refreshing dynamic font texture during last loop
+        if (anyFontTextureRefreshed) {
+            // 可能有多个mesh公用同一个material的情况，所以后一个mesh的font texture刷新时，前一个mesh中的sprite，如果因此标记为脏，则要再刷新一次。
+            // 为了保持设计的简洁，这里暂时不做优化，乖乖多遍历一次。
+            anyFontTextureRefreshed = false;
+
+            for (int m = meshList.Count - 1; m >= 0 ; --m) {
+                exMesh mesh = meshList[m];
+                exUpdateFlags meshUpdateFlags = exUpdateFlags.None;
+                for (int i = 0; i < mesh.spriteList.Count; ++i) {
+                    exLayeredSprite sprite = mesh.spriteList[i];
+                    if (sprite.isInIndexBuffer && sprite.updateFlags != exUpdateFlags.None) {
+                        exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
+                        meshUpdateFlags |= spriteUpdateFlags;
+    }
+                }
+                mesh.Apply(meshUpdateFlags);
+            }
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -512,6 +534,15 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     /// Desc:
     // ------------------------------------------------------------------ 
+
+    internal void OnFontTextureRebuilt () {
+        anyFontTextureRefreshed = true;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    
 
     internal void SetSpriteDepth (exLayeredSprite _sprite, float _newDepth) {
         int oldMeshIndex = IndexOfMesh (_sprite);

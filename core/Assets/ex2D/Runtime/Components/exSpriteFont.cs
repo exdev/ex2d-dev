@@ -531,6 +531,10 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
 
     void OnFontTextureRebuilt () {
         updateFlags |= exUpdateFlags.Text;  // TODO: only need to update UV
+        
+        if (layer_ != null) {
+            layer_.OnFontTextureRebuilt();
+        }
     }
 }
 
@@ -567,14 +571,12 @@ namespace ex2D.Detail {
             }
 #endif
             //Debug.Log(string.Format("[UpdateBuffers|SpriteFontBuilder] _vbIndex: {0} _ibIndex: {1}", _vbIndex, _ibIndex));
-            if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
+            if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.Vertex)) != 0) {
                 //exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
                 BuildText(_sprite, _space, _vertices, _vbIndex, _uvs);
-                _sprite.updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV | exUpdateFlags.Color);
-            }
-            else if ((_sprite.updateFlags & exUpdateFlags.Vertex) != 0) {
-                //exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
-                BuildText(_sprite, _space, _vertices, _vbIndex, null);
+                if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
+                    _sprite.updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV | exUpdateFlags.Color);
+                }
             }
             if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
                 // update index buffer
@@ -618,11 +620,13 @@ namespace ex2D.Detail {
         // ------------------------------------------------------------------ 
 
         public static void BuildText (exISpriteFont _sprite, Space _space, exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs = null) {
-
-            // It is advisable to always call RequestCharactersInTexture for any text on the screen you wish to render using custom font rendering functions, 
-            // even if the characters are currently present in the texture, to make sure they don't get purged during texture rebuild.
+            // request font texture, this may called OnFontTextureRebuilt to set _sprite.updateFlags
             _sprite.font.RequestCharactersInTexture (_sprite.text);
             
+            if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.UV)) == 0) {
+                _uvs = null;    // no need to update uv
+            }
+
             _sprite.height = 0.0f;
             float displayWidth = 0; // 实际渲染的宽度不等于sprite.width(换行宽度)
             int visibleVertexCount = 0;
@@ -654,13 +658,13 @@ namespace ex2D.Detail {
             }
             // convert anchor from top center to user defined
             switch ( _sprite.anchor ) {
-            case Anchor.TopLeft   :                                         anchorOffset.y = 0.0f;                  break;
+            case Anchor.TopLeft   :                                        anchorOffset.y = 0.0f;                  break;
             case Anchor.TopCenter : anchorOffset.x -= displayWidth * 0.5f; anchorOffset.y = 0.0f;                  break;
             case Anchor.TopRight  : anchorOffset.x -= displayWidth;        anchorOffset.y = 0.0f;                  break;
-            case Anchor.MidLeft   :                                         anchorOffset.y = _sprite.height * 0.5f; break;
+            case Anchor.MidLeft   :                                        anchorOffset.y = _sprite.height * 0.5f; break;
             case Anchor.MidCenter : anchorOffset.x -= displayWidth * 0.5f; anchorOffset.y = _sprite.height * 0.5f; break;
             case Anchor.MidRight  : anchorOffset.x -= displayWidth;        anchorOffset.y = _sprite.height * 0.5f; break;
-            case Anchor.BotLeft   :                                         anchorOffset.y = _sprite.height;        break;
+            case Anchor.BotLeft   :                                        anchorOffset.y = _sprite.height;        break;
             case Anchor.BotCenter : anchorOffset.x -= displayWidth * 0.5f; anchorOffset.y = _sprite.height;        break;
             case Anchor.BotRight  : anchorOffset.x -= displayWidth;        anchorOffset.y = _sprite.height;        break;
             default               : anchorOffset.x -= displayWidth * 0.5f; anchorOffset.y = _sprite.height * 0.5f; break;
