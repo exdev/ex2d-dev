@@ -121,6 +121,7 @@ public class exUIScrollView : exUIControl {
     Vector2 velocity = Vector2.zero;
 
     bool spring = false;
+    Vector3 scrollDest = Vector3.zero;
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -134,8 +135,10 @@ public class exUIScrollView : exUIControl {
         base.Awake();
         grabMouseOrTouch = true;
 
-        if ( contentAnchor != null )
+        if ( contentAnchor != null ) {
             originalAnchorPos = contentAnchor.localPosition;
+            scrollDest = originalAnchorPos;
+        }
 
         AddEventListener ( "onPressDown", 
                            delegate ( exUIEvent _event ) {
@@ -182,7 +185,7 @@ public class exUIScrollView : exUIControl {
                                for ( int i = 0; i < pointEvent.pointInfos.Length; ++i ) {
                                    exUIPointInfo point = pointEvent.pointInfos[i];
                                    if ( draggable && ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) && point.id == draggingID  ) {
-                                       Vector2 delta = point.delta; 
+                                       Vector2 delta = point.worldDelta; 
                                        delta.x = -delta.x;
                                        Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset_.x, scrollOffset_.y, width, height ), 
                                                                                                         new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
@@ -300,6 +303,7 @@ public class exUIScrollView : exUIControl {
         //
         if ( doScroll ) {
             Scroll ( deltaScroll );
+            contentAnchor.localPosition = scrollDest;
 
             bool shouldFinish = (damping || spring); 
             if ( shouldFinish ) {
@@ -307,6 +311,9 @@ public class exUIScrollView : exUIControl {
                 uiEvent.bubbles = false;
                 OnScrollFinished(uiEvent);
             }
+        }
+        else {
+            contentAnchor.localPosition = Vector3.Lerp( contentAnchor.localPosition, scrollDest, 0.6f );
         }
     }
 
@@ -380,9 +387,10 @@ public class exUIScrollView : exUIControl {
         }
 
         if ( contentAnchor != null ) {
-            contentAnchor.localPosition = new Vector3 ( originalAnchorPos.x - scrollOffset_.x,
-                                                        originalAnchorPos.y + scrollOffset_.y,
-                                                        originalAnchorPos.z );
+            scrollDest = new Vector3 ( originalAnchorPos.x - scrollOffset_.x,
+                                 originalAnchorPos.y + scrollOffset_.y,
+                                 originalAnchorPos.z );
+            // contentAnchor.localPosition = scrollDest;
         }
 
         exUIEvent uiEvent = new exUIEvent();
