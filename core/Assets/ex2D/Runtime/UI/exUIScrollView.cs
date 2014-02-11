@@ -135,8 +135,10 @@ public class exUIScrollView : exUIControl {
         base.Awake();
         grabMouseOrTouch = true;
 
-        if ( contentAnchor != null )
+        if ( contentAnchor != null ) {
             originalAnchorPos = contentAnchor.localPosition;
+            scrollDest = originalAnchorPos;
+        }
 
         AddEventListener ( "onPressDown", 
                            delegate ( exUIEvent _event ) {
