@@ -242,7 +242,7 @@ public class exUIScrollBar : exUIControl {
             }
         }
 
-        ratio = bgSize/contentSize;
+        ratio = Mathf.Min(bgSize/contentSize,1.0f);
     }
 
     // ------------------------------------------------------------------ 
@@ -283,7 +283,7 @@ public class exUIScrollBar : exUIControl {
             bar.width -= trimSize;
 
             //
-            bar.transform.localPosition = new Vector3( scrollStart.x + scrollOffset - slicedOffset,
+            bar.transform.localPosition = new Vector3( scrollStart.x + finalOffset - slicedOffset,
                                                       -scrollStart.y,
                                                        scrollStart.z );
         }

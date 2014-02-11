@@ -135,10 +135,8 @@ public class exUIScrollView : exUIControl {
         base.Awake();
         grabMouseOrTouch = true;
 
-        if ( contentAnchor != null ) {
+        if ( contentAnchor != null )
             originalAnchorPos = contentAnchor.localPosition;
-            scrollDest = originalAnchorPos;
-        }
 
         AddEventListener ( "onPressDown", 
                            delegate ( exUIEvent _event ) {
@@ -187,8 +185,9 @@ public class exUIScrollView : exUIControl {
                                    if ( draggable && ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) && point.id == draggingID  ) {
                                        Vector2 delta = point.worldDelta; 
                                        delta.x = -delta.x;
-                                       Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset_.x, scrollOffset_.y, width, height ), 
-                                                                                                        new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
+                                       Rect scrollRect = new Rect( scrollOffset_.x, scrollOffset_.y, width, height );
+                                       Rect contentRect = new Rect( 0.0f, 0.0f, Mathf.Max( contentSize_.x, width ), Mathf.Max( contentSize_.y, height ) );
+                                       Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( scrollRect, contentRect );
                                        if ( Mathf.Abs(constrainOffset.x) > 0.001f ) delta.x *= 0.5f;
                                        if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
 
@@ -240,9 +239,11 @@ public class exUIScrollView : exUIControl {
         Vector2 deltaScroll = Vector2.zero;
         bool doScroll = (damping || spring);
 
+        Rect scrollRect = new Rect( scrollOffset_.x, scrollOffset_.y, width, height );
+        Rect contentRect = new Rect( 0.0f, 0.0f, Mathf.Max( contentSize_.x, width ), Mathf.Max( contentSize_.y, height ) );
+
         if ( damping || spring  )
-            constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset_.x, scrollOffset_.y, width, height ), 
-                                                                     new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
+            constrainOffset = exGeometryUtility.GetConstrainOffset ( scrollRect, contentRect );
 
         // deceleration
         velocity.x *= 0.9f;
