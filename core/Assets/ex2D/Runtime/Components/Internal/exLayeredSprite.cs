@@ -208,10 +208,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     
     protected override void UpdateMaterial () {
         if (layer_ != null) {
-            layer_.OnPreSpriteChange(this);
-            material_ = null;   // set dirty, make material update.
-            exDebug.Assert(material != null);
-            layer_.OnAfterSpriteChange(this);
+            layer_.RefreshSpriteMaterial(this);
         }
         else {
             material_ = null;   // set dirty, make material update.
@@ -374,6 +371,23 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     //void exLayer.IFriendOfLayer.DoSetDepth (float _depth) {
     //    depth_ = _depth;
     //}
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    
+    void exLayer.IFriendOfLayer.DoSetBufferSize (int _vertexCount, int _indexCount) {
+        vertexCount_ = _vertexCount;
+        indexCount_ = _indexCount;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    
+    void exLayer.IFriendOfLayer.SetMaterialDirty () {
+        material_ = null;
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions

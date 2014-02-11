@@ -42,12 +42,14 @@ public class exLayer : MonoBehaviour
     public static int maxDynamicMeshVertex = 90000;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
 
     // ------------------------------------------------------------------ 
-    /// 用于限制对exLayeredSprite私有方法的访问
+    /// 该接口只能显式实现，用于限制对exLayeredSprite私有方法的访问
     // ------------------------------------------------------------------ 
 
     public interface IFriendOfLayer {
-        //void DoSetDepth (float _depth);   // 实现此接口用于绕开sprite的setter直接给字段赋值
         float globalDepth { get; set; }
+        //void DoSetDepth (float _depth);
+        void DoSetBufferSize (int _vertexCount, int _indexCount);
+        void SetMaterialDirty ();
     }
     
     ///////////////////////////////////////////////////////////////////////////////
@@ -582,7 +584,7 @@ public class exLayer : MonoBehaviour
             }
         }
     }
-    
+    /*
     // ------------------------------------------------------------------ 
     /// 用于更新sprite的depth、material、vertex count等数据
     // ------------------------------------------------------------------ 
@@ -602,21 +604,24 @@ public class exLayer : MonoBehaviour
         AddToMesh(_sprite, GetMeshToAdd(_sprite));
         SetSpriteSelfDepthDirty(_sprite, false);    // 小优化，不需要再更新depth，因为这里已经同时把depth更新过了
     }
-
+    */
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
 
-    internal void SetSpriteBufferSize (exLayeredSprite _sprite, ) {
+    internal void SetSpriteBufferSize (exLayeredSprite _sprite, int _vertexCount, int _indexCount) {
         //在接口中先更新所有depth值
+        (_sprite as IFriendOfLayer).DoSetBufferSize(_vertexCount, _indexCount);
     }
 
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
 
-    internal void UpdateSpriteMaterial (exLayeredSprite _sprite) {
+    internal void RefreshSpriteMaterial (exLayeredSprite _sprite) {
         //在接口中先更新所有depth值
+        (_sprite as IFriendOfLayer).SetMaterialDirty();
+         exDebug.Assert(_sprite.material != null);
     }
 
     // ------------------------------------------------------------------ 

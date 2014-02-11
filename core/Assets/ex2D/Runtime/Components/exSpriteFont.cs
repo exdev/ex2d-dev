@@ -513,10 +513,9 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
         
         if (textCapacity != oldTextCapacity) {
             if (layer_ != null) {
-                layer_.OnPreSpriteChange(this);
-                vertexCount_ = textCapacity * exMesh.QUAD_VERTEX_COUNT;
-                indexCount_ = textCapacity * exMesh.QUAD_INDEX_COUNT;
-                layer_.OnAfterSpriteChange(this);
+                layer_.SetSpriteBufferSize (this, 
+                                            textCapacity * exMesh.QUAD_VERTEX_COUNT, 
+                                            textCapacity * exMesh.QUAD_INDEX_COUNT);
             }
             else {
                 vertexCount_ = textCapacity * exMesh.QUAD_VERTEX_COUNT;
