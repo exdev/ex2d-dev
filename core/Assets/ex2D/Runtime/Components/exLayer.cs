@@ -584,6 +584,28 @@ public class exLayer : MonoBehaviour
             }
         }
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private void UpdateSpriteDepthRecursively (exLayeredSprite _sprite) {
+        // TODO: 考虑跳过未显示的sprite
+        UpdateSpriteDepth(_sprite);
+            Transform transform = _sprite.transform;
+            if (transform != null) {
+                int childCount = transform.childCount;
+                for (int i = 0; i < childCount; ++i) {
+                    Transform child = transform.GetChild(i);
+                    T componentInChildren = child.gameObject.GetComponentInChildrenFast<T>();
+                    if (componentInChildren != null) {
+                        return componentInChildren;
+                    }
+                }
+            }
+            return null;
+        }
+    }
     /*
     // ------------------------------------------------------------------ 
     /// 用于更新sprite的depth、material、vertex count等数据
@@ -610,7 +632,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     internal void SetSpriteBufferSize (exLayeredSprite _sprite, int _vertexCount, int _indexCount) {
-        //在接口中先更新所有depth值
+        //在接口中先更新所有depth值，如果遍历到_sprite，则更新的同时重设buffer size
         (_sprite as IFriendOfLayer).DoSetBufferSize(_vertexCount, _indexCount);
     }
 
@@ -619,7 +641,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     internal void RefreshSpriteMaterial (exLayeredSprite _sprite) {
-        //在接口中先更新所有depth值
+        //在接口中先更新所有depth值，如果遍历到_sprite，则更新的同时SetMaterialDirty
         (_sprite as IFriendOfLayer).SetMaterialDirty();
          exDebug.Assert(_sprite.material != null);
     }
@@ -1201,7 +1223,8 @@ public class exLayer : MonoBehaviour
     private void UpdateAllSpritesDepth () {
         for (int i = 0; i < depthDirtySpriteList.Count; ++i) {
             exLayeredSprite sprite = depthDirtySpriteList[i];
-            
+            UpdateSpriteDepthRecursively(sprite);
         }
+        depthDirtySpriteList.Clear();
     }
 }
