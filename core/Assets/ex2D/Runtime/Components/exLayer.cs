@@ -187,7 +187,13 @@ public class exLayer : MonoBehaviour
 
     /// 缓存需要更改depth的sprite，在渲染前统一重新计算它们及所有子sprite的depth。
     /// 不立刻更新的原因主要是为了能够批量一次性刷新，以节约遍历hierarchy及多次设置depth的开销。
+    /// 如果SetDirty用的go包含sprite，则放在这个list
     [System.NonSerialized] private List<exLayeredSprite> depthDirtySpriteList = new List<exLayeredSprite>();
+
+    /// 缓存包含需要更改depth的sprite的go，在渲染前统一重新计算它们及所有子sprite的depth。
+    /// 不立刻更新的原因主要是为了能够批量一次性刷新，以节约遍历hierarchy及多次设置depth的开销。
+    /// 如果SetDirty用的go不包含sprite，则放在这个list
+    [System.NonSerialized] private List<GameObject> depthDirtyGoList = new List<GameObject>();
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
@@ -520,17 +526,61 @@ public class exLayer : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    // Desc:
+    /// 如果在运行时改变了GameObject的parent，而这个GameObject又包含Sprite的话，则需要手动调用这个方法以请求重新计算该GameObject的所有子Sprite的depth，不论这个Gameobject的parent之前是否已经调用过这个方法。
+    /// 只需要对改变了parent的GameObject调用即可，不需要对它的子sprite调用。
     // ------------------------------------------------------------------ 
     
-    internal void SetSpriteDepthDirty (exLayeredSprite _sprite) {
-        SetSpriteSelfDepthDirty(_sprite, true);
+    public void SetDepthDirty (GameObject _go) {
+        exLayeredSprite sprite = _go.GetComponent(typeof(exLayeredSprite)) as exLayeredSprite;
+        if (sprite != null) {
+            // 直接存sprite更快
+            SetDepthDirty(sprite);
+        }
+        else {
+            // 确保list里所有的go及子树不相互包含，避免重复计算depth
+            Transform myTransform = _go.transform;
+            for (int i = depthDirtyGoList.Count - 1; i >= 0; --i) {
+                GameObject other = depthDirtyGoList[i];
+                if (ReferenceEquals(other, _go)) {
+                    return;
+                }
+                if (other == null) {
+                    depthDirtyGoList.RemoveAt(i);
+                    continue;
+                }
+                Transform otherTransform = other.transform;
+                bool alreadyBeContainedInOthersHierarchy = myTransform.IsChildOf(otherTransform);
+                if (alreadyBeContainedInOthersHierarchy) {
+                    return;
+                }
+                bool otherIsChild = otherTransform.IsChildOf(myTransform);
+                if (otherIsChild) {
+                    depthDirtyGoList.RemoveAt(i);
+                }
+            }
+            // 集中缓存到一个list里，待渲染前再统一重新计算
+            depthDirtyGoList.Add(_go);
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// 如果在运行时改变了sprite的parent，需要手动调用这个方法以请求重新计算该Sprite和所有子Sprite的depth，不论它的parent之前是否已经调用过这个方法。
+    /// 只需要对改变了parent的sprite调用即可，不需要对它的子sprite调用。
+    // ------------------------------------------------------------------ 
+    
+    public void SetDepthDirty (exLayeredSprite _sprite) {
+        SetDepthDirtyFlag(_sprite, true);
 
         // 确保list里所有的sprite及子树不相互包含，避免重复计算depth
+        Transform myTransform = _sprite.cachedTransform;
         for (int i = depthDirtySpriteList.Count - 1; i >= 0; --i) {
             exLayeredSprite other = depthDirtySpriteList[i];
             if (ReferenceEquals(other, _sprite)) {
                 return;
+            }
+            if (other == null) {
+                depthDirtySpriteList.RemoveAt(i);
+                continue;
             }
             bool alreadyBeContainedInOthersHierarchy = _sprite.cachedTransform.IsChildOf(other.cachedTransform);
             if (alreadyBeContainedInOthersHierarchy) {
@@ -550,7 +600,7 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private void SetSpriteSelfDepthDirty (exLayeredSprite _sprite, bool _dirty) {
+    private void SetDepthDirtyFlag (exLayeredSprite _sprite, bool _dirty) {
         if (_dirty) {
             _sprite.updateFlags |= exUpdateFlags.SelfDepth;
         }
@@ -562,7 +612,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
-
+    计算globalDepth
     private void UpdateSpriteDepth (exLayeredSprite _sprite) {
         int oldMeshIndex = IndexOfMesh (_sprite);
         exDebug.Assert(oldMeshIndex != -1);
@@ -586,24 +636,19 @@ public class exLayer : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    // Desc:
+    // 遍历_go及所有子sprite，按深度优先更新它们的globalDepth并且刷新mesh
     // ------------------------------------------------------------------ 
 
-    private void UpdateSpriteDepthRecursively (exLayeredSprite _sprite) {
+    private void UpdateSpriteDepthRecursively (GameObject _go, float _parentGlobalDepth) {
         // TODO: 考虑跳过未显示的sprite
-        UpdateSpriteDepth(_sprite);
-            Transform transform = _sprite.transform;
-            if (transform != null) {
-                int childCount = transform.childCount;
-                for (int i = 0; i < childCount; ++i) {
-                    Transform child = transform.GetChild(i);
-                    T componentInChildren = child.gameObject.GetComponentInChildrenFast<T>();
-                    if (componentInChildren != null) {
-                        return componentInChildren;
-                    }
-                }
-            }
-            return null;
+        exLayeredSprite sprite = _go.GetComponent(typeof(exLayeredSprite)) as exLayeredSprite;
+        if (sprite != null) {
+            UpdateSpriteDepth(sprite);
+        }
+        Transform trans = _go.transform;
+        int childCount = trans.childCount;
+        for (int i = 0; i < childCount; ++i) {
+            UpdateSpriteDepthRecursively(trans.GetChild(i).gameObject);
         }
     }
     /*
@@ -759,7 +804,7 @@ public class exLayer : MonoBehaviour
         exDebug.Assert (_sprite.vertexCount == oldVertexCount);
 #endif
         AddToMesh(_sprite, _dst);
-        SetSpriteSelfDepthDirty(_sprite, false);    // 小优化，不需要再更新depth，因为这里已经同时把depth更新过了
+        SetDepthDirtyFlag(_sprite, false);    // 小优化，不需要再更新depth，因为这里已经同时把depth更新过了
 #if EX_DEBUG
         exDebug.Assert (_sprite.vertexCount == oldVertexCount);
 #endif
@@ -1223,8 +1268,18 @@ public class exLayer : MonoBehaviour
     private void UpdateAllSpritesDepth () {
         for (int i = 0; i < depthDirtySpriteList.Count; ++i) {
             exLayeredSprite sprite = depthDirtySpriteList[i];
-            UpdateSpriteDepthRecursively(sprite);
+            if (sprite != null) {
+                UpdateSpriteDepthRecursively(sprite.gameObject);
+            }
         }
         depthDirtySpriteList.Clear();
+
+        for (int i = 0; i < depthDirtyGoList.Count; ++i) {
+            GameObject go = depthDirtyGoList[i];
+            if (go != null) {
+                UpdateSpriteDepthRecursively(go);
+            }
+        }
+        depthDirtyGoList.Clear();
     }
 }

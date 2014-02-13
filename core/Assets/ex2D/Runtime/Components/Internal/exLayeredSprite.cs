@@ -423,12 +423,13 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     /// 只需要对改变了parent的sprite调用即可，不需要对它的子sprite调用。
     // ------------------------------------------------------------------ 
     
+    [ContextMenu("SetDepthDirty")]
     public void SetDepthDirty () {
-        if (layer_ != null && isInIndexBuffer) {
+        if (layer_ != null) {
             //if (float.IsNaN(depthNotApplyedToMesh)) {
             //    depthNotApplyedToMesh = depth_;
             //}
-            layer_.SetSpriteDepthDirty(this);
+            layer_.SetDepthDirty(this);
         }
     }
     
