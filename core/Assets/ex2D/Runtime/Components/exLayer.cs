@@ -612,8 +612,13 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
-    计算globalDepth
-    private void UpdateSpriteDepth (exLayeredSprite _sprite) {
+    
+    private void UpdateSpriteDepth (exLayeredSprite _sprite, float _parentGlobalDepth) {
+        float newGlobalDepth = _parentGlobalDepth + _sprite.depth;
+        if ((_sprite as IFriendOfLayer).globalDepth == newGlobalDepth) {
+            return;
+        }
+        (_sprite as IFriendOfLayer).globalDepth = newGlobalDepth;
         int oldMeshIndex = IndexOfMesh (_sprite);
         exDebug.Assert(oldMeshIndex != -1);
         exMesh mesh = meshList[oldMeshIndex];
@@ -643,12 +648,13 @@ public class exLayer : MonoBehaviour
         // TODO: 考虑跳过未显示的sprite
         exLayeredSprite sprite = _go.GetComponent(typeof(exLayeredSprite)) as exLayeredSprite;
         if (sprite != null) {
-            UpdateSpriteDepth(sprite);
+            UpdateSpriteDepth(sprite, _parentGlobalDepth);
         }
+        float globalDepth = sprite != null ? (sprite as IFriendOfLayer).globalDepth : _parentGlobalDepth;
         Transform trans = _go.transform;
         int childCount = trans.childCount;
         for (int i = 0; i < childCount; ++i) {
-            UpdateSpriteDepthRecursively(trans.GetChild(i).gameObject);
+            UpdateSpriteDepthRecursively(trans.GetChild(i).gameObject, globalDepth);
         }
     }
     /*
