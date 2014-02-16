@@ -93,7 +93,7 @@ public class exSprite : exLayeredSprite, exISprite {
                 }
                 spriteType_ = value;
                 if (layer_ != null) {
-                    UpdateBufferSize ();
+                    (this as exISprite).UpdateBufferSize ();
                     updateFlags |= exUpdateFlags.All;
                 }
             }
@@ -110,7 +110,7 @@ public class exSprite : exLayeredSprite, exISprite {
             if ( tiledSpacing_ != value ) {
                 tiledSpacing_ = value;
                 if (layer_ != null) {
-                    UpdateBufferSize();
+                    (this as exISprite).UpdateBufferSize();
                     updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV);
                 }
             }
@@ -128,7 +128,7 @@ public class exSprite : exLayeredSprite, exISprite {
             if ( borderOnly_ != value ) {
                 borderOnly_ = value;
                 if (spriteType_ == exSpriteType.Sliced && layer_ != null) {
-                    UpdateBufferSize();
+                    (this as exISprite).UpdateBufferSize();
                     updateFlags |= exUpdateFlags.All;
                 }
             }
@@ -266,7 +266,7 @@ public class exSprite : exLayeredSprite, exISprite {
         set {
             base.width = value;
             if (spriteType_ == exSpriteType.Tiled && layer_ != null) {
-                UpdateBufferSize ();
+                (this as exISprite).UpdateBufferSize ();
                 updateFlags |= exUpdateFlags.UV;
             }
         }
@@ -284,7 +284,7 @@ public class exSprite : exLayeredSprite, exISprite {
         set {
             base.height = value;
             if (spriteType_ == exSpriteType.Tiled && layer_ != null) {
-                UpdateBufferSize ();
+                (this as exISprite).UpdateBufferSize ();
                 updateFlags |= exUpdateFlags.UV;
             }
         }
@@ -372,7 +372,7 @@ public class exSprite : exLayeredSprite, exISprite {
         }
 
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
-        UpdateBufferSize();
+        (this as exISprite).UpdateBufferSize();
         vertices.AddRange(vertexCount_);
         switch (spriteType_) {
         case exSpriteType.Simple:
@@ -402,15 +402,11 @@ public class exSprite : exLayeredSprite, exISprite {
         this.GetVertexAndIndexCount(out vertexCount_, out indexCount_);
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Other functions
-    ///////////////////////////////////////////////////////////////////////////////
-    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void UpdateBufferSize () {
+    void exISprite.UpdateBufferSize () {
         int newVertexCount, newIndexCount;
         this.GetVertexAndIndexCount (out newVertexCount, out newIndexCount);
         if (vertexCount_ != newVertexCount || indexCount_ != newIndexCount) {
@@ -422,14 +418,6 @@ public class exSprite : exLayeredSprite, exISprite {
                 indexCount_ = newIndexCount;
             }
         }
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void exISprite.UpdateBufferSize () {
-        UpdateBufferSize ();
     }
 }
 

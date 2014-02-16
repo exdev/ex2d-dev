@@ -185,6 +185,8 @@ class exSpriteInspector : exLayeredSpriteInspector {
         }
 
         if (spriteTypeProp.enumValueIndex == (int)exSpriteType.Tiled) {
+            customSizeProp.boolValue = true;
+            
             ++EditorGUI.indentLevel;
             // tiled spacing
             EditorGUI.BeginChangeCheck();

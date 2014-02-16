@@ -133,7 +133,7 @@ public static class exSpriteUtility {
                 Debug.LogWarning("invalid textureInfo");
             }
             if (_spriteType == exSpriteType.Tiled) {
-                if (old == null || ReferenceEquals(old, _newTi) || _newTi.rawWidth != old.rawWidth || _newTi.rawHeight != old.rawHeight) {
+                if (old == null || ReferenceEquals(old, _newTi) || _newTi.width != old.width || _newTi.height != old.height) {
                     (_sprite as exISprite).UpdateBufferSize ();
                     _sprite.updateFlags |= exUpdateFlags.Vertex;    // tile数量可能不变，但是间距可能会改变
                 }

@@ -181,8 +181,10 @@ class ex3DSpriteInspector : exSpriteBaseInspector {
                 }
             }
         }
-        
+
         if (spriteTypeProp.enumValueIndex == (int)exSpriteType.Tiled) {
+            customSizeProp.boolValue = true;
+
             ++EditorGUI.indentLevel;
             // tiled spacing
             EditorGUI.BeginChangeCheck();
