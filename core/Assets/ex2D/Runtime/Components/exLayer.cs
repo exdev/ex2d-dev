@@ -101,9 +101,11 @@ public class exLayer : MonoBehaviour
         // Desc:
         // ------------------------------------------------------------------ 
 
-        public static void Clear () {
+        public static bool Clear () {
+            bool processed = (spriteNeedsToSetBufferSize == null && spriteNeedsToSetMaterialDirty == null);
             spriteNeedsToSetBufferSize = null;
             spriteNeedsToSetMaterialDirty = null;
+            return processed;
         }
     }
     
@@ -723,19 +725,16 @@ public class exLayer : MonoBehaviour
 
     internal void SetSpriteBufferSize (exLayeredSprite _sprite, int _vertexCount, int _indexCount) {
         // 先更新所有depth值，如果遍历到_sprite，则更新的同时重设buffer size
-
         UpdateSpriteWhileRecreating.RegisterNewBufferSize(_sprite, _vertexCount, _indexCount);
         UpdateAllSpritesDepth();
-        UpdateSpriteWhileRecreating.Clear();
-        
-        // 假如更新depth时没遍历到_sprite，则手动更新
-        
-        int meshIndex = IndexOfMesh(_sprite);
-        if (meshIndex != -1) {
-            RemoveFromMesh (_sprite, meshList[meshIndex]);
+        if (UpdateSpriteWhileRecreating.Clear() == false) { // 假如更新depth时没遍历到_sprite，则手动更新
+            int meshIndex = IndexOfMesh(_sprite);
+            if (meshIndex != -1) {
+                RemoveFromMesh (_sprite, meshList[meshIndex]);
+            }
+            (_sprite as IFriendOfLayer).DoSetBufferSize(_vertexCount, _indexCount);
+            AddToMesh(_sprite, GetMeshToAdd(_sprite));
         }
-        (_sprite as IFriendOfLayer).DoSetBufferSize(_vertexCount, _indexCount);
-        AddToMesh(_sprite, GetMeshToAdd(_sprite));
     }
 
     // ------------------------------------------------------------------ 
@@ -744,19 +743,16 @@ public class exLayer : MonoBehaviour
 
     internal void RefreshSpriteMaterial (exLayeredSprite _sprite) {
         // 先更新所有depth值，如果遍历到_sprite，则更新的同时SetMaterialDirty
-        
         UpdateSpriteWhileRecreating.RegisterMaterialDirty(_sprite);
         UpdateAllSpritesDepth();
-        UpdateSpriteWhileRecreating.Clear();
-
-        // 假如更新depth时没遍历到_sprite，则手动更新
-        
-        int meshIndex = IndexOfMesh(_sprite);
-        if (meshIndex != -1) {
-            RemoveFromMesh (_sprite, meshList[meshIndex]);
+        if (UpdateSpriteWhileRecreating.Clear() == false) { // 假如更新depth时没遍历到_sprite，则手动更新
+            int meshIndex = IndexOfMesh(_sprite);
+            if (meshIndex != -1) {
+                RemoveFromMesh(_sprite, meshList[meshIndex]);
+            }
+            (_sprite as IFriendOfLayer).SetMaterialDirty();
+            AddToMesh(_sprite, GetMeshToAdd(_sprite));
         }
-        (_sprite as IFriendOfLayer).SetMaterialDirty();
-        AddToMesh(_sprite, GetMeshToAdd(_sprite));
     }
 
     // ------------------------------------------------------------------ 
