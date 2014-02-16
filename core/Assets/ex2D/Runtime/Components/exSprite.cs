@@ -243,12 +243,12 @@ public class exSprite : exLayeredSprite, exISprite {
             }
             else if (customSize_ != value) {
                 customSize_ = value;
-                if (customSize_ == false && textureInfo_ != null) {
-                    if (textureInfo_.width != width_ || textureInfo_.height != height_) {
+                if (textureInfo_ != null && textureInfo_.width != width_ || textureInfo_.height != height_) {
+                    if (customSize_ == false) {
                         width_ = textureInfo_.width;
                         height_ = textureInfo_.height;
-                        updateFlags |= exUpdateFlags.Vertex;
                     }
+                    updateFlags |= exUpdateFlags.Vertex;
                 }
             }
         }
