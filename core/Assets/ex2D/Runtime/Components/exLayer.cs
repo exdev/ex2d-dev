@@ -672,6 +672,7 @@ public class exLayer : MonoBehaviour
         // caculate global depth
         float newGlobalDepth = _parentGlobalDepth + _sprite.depth;
         if ((_sprite as IFriendOfLayer).globalDepth == newGlobalDepth) {
+            //Debug.Log("[UpdateSpriteDepth|exLayer] return");
             return;
         }
         (_sprite as IFriendOfLayer).globalDepth = newGlobalDepth;
@@ -680,6 +681,7 @@ public class exLayer : MonoBehaviour
         exDebug.Assert(oldMeshIndex != -1);
         exMesh mesh = meshList[oldMeshIndex];
         if (IsRenderOrderChangedAmongMeshes(_sprite, oldMeshIndex)) {
+            //Debug.Log(string.Format("[UpdateSpriteDepth|exLayer] mesh: {0}", mesh));
             RemoveFromMesh(_sprite, mesh); // 这里需要保证depth改变后也能正常remove
             UpdateSpriteWhileRecreating.TryUpdate(_sprite);
             AddToMesh(_sprite, GetMeshToAdd(_sprite));
@@ -692,10 +694,14 @@ public class exLayer : MonoBehaviour
             exDebug.Assert(oldSortedSpriteIndex >= 0);
             //
             if (IsRenderOrderChangedInMesh(_sprite, oldMeshIndex, oldSortedSpriteIndex)) {
+                //Debug.Log("[UpdateSpriteDepth|exLayer] changed");
                 RemoveFromMesh(_sprite, mesh); // 这里需要保证depth改变后也能正常remove
                 UpdateSpriteWhileRecreating.TryUpdate(_sprite);
                 AddToMesh(_sprite, mesh);
             }
+            //else {
+            //    Debug.Log("[UpdateSpriteDepth|exLayer] not changed");
+            //}
         }
     }
     
@@ -703,10 +709,9 @@ public class exLayer : MonoBehaviour
     // 遍历_go及所有子sprite，按深度优先更新它们的globalDepth并且刷新mesh
     // ------------------------------------------------------------------ 
 
-    private void UpdateSpriteDepthRecursively (GameObject _go) {
+    private float GetParentGlobalDepth (GameObject _go) {
         exLayeredSprite parent = _go.GetComponentUpwards<exLayeredSprite>();
-        float parentGlobalDepth = parent != null ? (parent as IFriendOfLayer).globalDepth : 0.0f;
-        UpdateSpriteDepthRecursively(_go, parentGlobalDepth);
+        return parent != null ? (parent as IFriendOfLayer).globalDepth : 0.0f;
     }
 
     // ------------------------------------------------------------------ 
@@ -721,8 +726,7 @@ public class exLayer : MonoBehaviour
         }
         float globalDepth = sprite != null ? (sprite as IFriendOfLayer).globalDepth : _parentGlobalDepth;
         Transform trans = _go.transform;
-        int childCount = trans.childCount;
-        for (int i = 0; i < childCount; ++i) {
+        for (int i = 0, childCount = trans.childCount; i < childCount; ++i) {
             UpdateSpriteDepthRecursively(trans.GetChild(i).gameObject, globalDepth);
         }
     }
@@ -1123,8 +1127,10 @@ public class exLayer : MonoBehaviour
             nextSpriteUniqueId = Mathf.Max(_sprite.spriteIdInLayer + 1, nextSpriteUniqueId);
         }
 
+        // caculate depth
+        (_sprite as IFriendOfLayer).globalDepth = GetParentGlobalDepth(_sprite.gameObject) + _sprite.depth;
+
         // find available mesh
-        更新深度
         exMesh mesh = GetMeshToAdd(_sprite);
         exDebug.Assert(mesh.vertices.Count + _sprite.vertexCount <= (layerType_ == exLayerType.Dynamic ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT),
             string.Format("Invalid mesh vertex count : {0}", (mesh.vertices.Count + _sprite.vertexCount)));
@@ -1348,7 +1354,7 @@ public class exLayer : MonoBehaviour
         for (int i = 0; i < depthDirtySpriteList.Count; ++i) {
             exLayeredSprite sprite = depthDirtySpriteList[i];
             if (sprite != null) {
-                UpdateSpriteDepthRecursively(sprite.gameObject);
+                UpdateSpriteDepthRecursively(sprite.gameObject, GetParentGlobalDepth(sprite.gameObject));
             }
         }
         depthDirtySpriteList.Clear();
@@ -1356,7 +1362,7 @@ public class exLayer : MonoBehaviour
         for (int i = 0; i < depthDirtyGoList.Count; ++i) {
             GameObject go = depthDirtyGoList[i];
             if (go != null) {
-                UpdateSpriteDepthRecursively(go);
+                UpdateSpriteDepthRecursively(go, GetParentGlobalDepth(go));
             }
         }
         depthDirtyGoList.Clear();

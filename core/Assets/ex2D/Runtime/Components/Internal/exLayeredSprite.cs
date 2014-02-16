@@ -182,12 +182,20 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
                 if (parentLayer != null) {
                     // Checks to ensure that the sprite is still parented to the right layer
                     SetLayer(parentLayer);
+                    bool parentGlobalDepthChanged = 0.0f + depth_ != globalDepth_;
+                    if (parentGlobalDepthChanged) {
+                        SetDepthDirty();
+                    }
                     return;
                 }
                 else {
                     exLayeredSprite parentSprite = parentTransform.GetComponent<exLayeredSprite>();
                     if (parentSprite != null) {
                         SetLayer(parentSprite.layer_);
+                        bool parentGlobalDepthChanged = parentSprite.globalDepth_ + depth_ != globalDepth_;
+                        if (parentGlobalDepthChanged) {
+                            SetDepthDirty();
+                        }
                         return;
                     }
                     else {
@@ -387,6 +395,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     
     void exLayer.IFriendOfLayer.SetMaterialDirty () {
         material_ = null;
+        exDebug.Assert(material != null);
     }
 
     ///////////////////////////////////////////////////////////////////////////////
