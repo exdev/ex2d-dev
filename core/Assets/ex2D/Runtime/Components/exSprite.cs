@@ -415,10 +415,7 @@ public class exSprite : exLayeredSprite, exISprite {
         this.GetVertexAndIndexCount (out newVertexCount, out newIndexCount);
         if (vertexCount_ != newVertexCount || indexCount_ != newIndexCount) {
             if (layer_ != null) {
-                layer_.OnPreSpriteChange(this);
-                vertexCount_ = newVertexCount;
-                indexCount_ = newIndexCount;
-                layer_.OnAfterSpriteChange(this);
+                layer_.SetSpriteBufferSize(this, newVertexCount, newIndexCount);
             }
             else {
                 vertexCount_ = newVertexCount;

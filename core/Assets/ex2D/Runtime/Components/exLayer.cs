@@ -42,11 +42,69 @@ public class exLayer : MonoBehaviour
     public static int maxDynamicMeshVertex = 90000;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
 
     // ------------------------------------------------------------------ 
-    /// 实现此接口用于绕开sprite的setter直接给字段赋值
+    /// 该接口只能显式实现，用于限制对exLayeredSprite私有方法的访问
     // ------------------------------------------------------------------ 
 
     public interface IFriendOfLayer {
-        void DoSetDepth (float _depth);
+        float globalDepth { get; set; }
+        //void DoSetDepth (float _depth);
+        void DoSetBufferSize (int _vertexCount, int _indexCount);
+        void SetMaterialDirty ();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    
+    struct UpdateSpriteWhileRecreating {
+
+        private static exLayeredSprite spriteNeedsToSetBufferSize = null;
+        private static int newVertexCount;
+        private static int newIndexCount;
+
+        private static exLayeredSprite spriteNeedsToSetMaterialDirty = null;
+
+        // ------------------------------------------------------------------ 
+        // Desc:
+        // ------------------------------------------------------------------ 
+
+        public static void RegisterNewBufferSize (exLayeredSprite _sprite, int _vertexCount, int _indexCount) {
+            spriteNeedsToSetBufferSize = _sprite;
+            newVertexCount = _vertexCount;
+            newIndexCount = _indexCount;
+        }
+
+        // ------------------------------------------------------------------ 
+        // Desc:
+        // ------------------------------------------------------------------ 
+
+        public static void RegisterMaterialDirty (exLayeredSprite _sprite) {
+            spriteNeedsToSetMaterialDirty = _sprite;
+        }
+
+        // ------------------------------------------------------------------ 
+        // Desc:
+        // ------------------------------------------------------------------ 
+
+        public static void TryUpdate (exLayeredSprite _sprite) {
+            if (ReferenceEquals(_sprite, spriteNeedsToSetBufferSize)) {
+                (spriteNeedsToSetBufferSize as IFriendOfLayer).DoSetBufferSize(newVertexCount, newIndexCount);
+                spriteNeedsToSetBufferSize = null;
+            }
+            if (ReferenceEquals(_sprite, spriteNeedsToSetMaterialDirty)) {
+                (spriteNeedsToSetMaterialDirty as IFriendOfLayer).SetMaterialDirty();
+                spriteNeedsToSetMaterialDirty = null;
+            }
+        }
+
+        // ------------------------------------------------------------------ 
+        // Desc:
+        // ------------------------------------------------------------------ 
+
+        public static void Clear () {
+            spriteNeedsToSetBufferSize = null;
+            spriteNeedsToSetMaterialDirty = null;
+        }
     }
     
     ///////////////////////////////////////////////////////////////////////////////
@@ -185,6 +243,16 @@ public class exLayer : MonoBehaviour
     /// <summary> 任一mesh的font texture更新了，则统一刷新所有mesh </summary>
     [System.NonSerialized] private bool anyFontTextureRefreshed = false;
     
+    /// 缓存需要更改depth的sprite，在渲染前统一重新计算它们及所有子sprite的depth。
+    /// 不立刻更新的原因主要是为了能够批量一次性刷新，以节约遍历hierarchy及多次设置depth的开销。
+    /// 如果SetDirty用的go包含sprite，则放在这个list
+    [System.NonSerialized] private List<exLayeredSprite> depthDirtySpriteList = new List<exLayeredSprite>();
+
+    /// 缓存包含需要更改depth的sprite的go，在渲染前统一重新计算它们及所有子sprite的depth。
+    /// 不立刻更新的原因主要是为了能够批量一次性刷新，以节约遍历hierarchy及多次设置depth的开销。
+    /// 如果SetDirty用的go不包含sprite，则放在这个list
+    [System.NonSerialized] private List<GameObject> depthDirtyGoList = new List<GameObject>();
+
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -245,6 +313,9 @@ public class exLayer : MonoBehaviour
                 ++m;
             }
         }
+
+        // update depth
+        UpdateAllSpritesDepth();
 
         // main update
         exUpdateFlags layerAlphaChangeMask = (alphaHasChanged ? exUpdateFlags.Color : exUpdateFlags.None);
@@ -532,7 +603,8 @@ public class exLayer : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    /// Desc:
+    /// 如果在运行时改变了GameObject的parent，而这个GameObject又包含Sprite的话，则需要手动调用这个方法以请求重新计算该GameObject的所有子Sprite的depth，不论这个Gameobject的parent之前是否已经调用过这个方法。
+    /// 只需要对改变了parent的GameObject调用即可，不需要对它的子sprite调用。
     // ------------------------------------------------------------------ 
 
     internal void OnFontTextureRebuilt () {
@@ -543,51 +615,192 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
     
+    
+    public void SetDepthDirty (GameObject _go) {
+        exLayeredSprite sprite = _go.GetComponent(typeof(exLayeredSprite)) as exLayeredSprite;
+        if (sprite != null) {
+            // 直接存sprite更快
+            SetDepthDirty(sprite);
+        }
+        else {
+            // 确保list里所有的go及子树不相互包含，避免重复计算depth
+            Transform myTransform = _go.transform;
+            for (int i = depthDirtyGoList.Count - 1; i >= 0; --i) {
+                GameObject other = depthDirtyGoList[i];
+                if (ReferenceEquals(other, _go)) {
+                    return;
+                }
+                if (other == null) {
+                    depthDirtyGoList.RemoveAt(i);
+                    continue;
+                }
+                Transform otherTransform = other.transform;
+                bool alreadyBeContainedInOthersHierarchy = myTransform.IsChildOf(otherTransform);
+                if (alreadyBeContainedInOthersHierarchy) {
+                    return;
+                }
+                bool otherIsChild = otherTransform.IsChildOf(myTransform);
+                if (otherIsChild) {
+                    depthDirtyGoList.RemoveAt(i);
+                }
+            }
+            // 集中缓存到一个list里，待渲染前再统一重新计算
+            depthDirtyGoList.Add(_go);
+        }
+    }
 
-    internal void SetSpriteDepth (exLayeredSprite _sprite, float _newDepth) {
+    // ------------------------------------------------------------------ 
+    /// 如果在运行时改变了sprite的parent，需要手动调用这个方法以请求重新计算该Sprite和所有子Sprite的depth，不论它的parent之前是否已经调用过这个方法。
+    /// 只需要对改变了parent的sprite调用即可，不需要对它的子sprite调用。
+    // ------------------------------------------------------------------ 
+    
+    public void SetDepthDirty (exLayeredSprite _sprite) {
+        SetDepthDirtyFlag(_sprite, true);
+
+        // 确保list里所有的sprite及子树不相互包含，避免重复计算depth
+        Transform spriteTransform = _sprite.cachedTransform;
+        for (int i = depthDirtySpriteList.Count - 1; i >= 0; --i) {
+            exLayeredSprite other = depthDirtySpriteList[i];
+            if (ReferenceEquals(other, _sprite)) {
+                return;
+            }
+            if (other == null) {
+                depthDirtySpriteList.RemoveAt(i);
+                continue;
+            }
+            bool alreadyBeContainedInOthersHierarchy = spriteTransform.IsChildOf(other.cachedTransform);
+            if (alreadyBeContainedInOthersHierarchy) {
+                return;
+            }
+            bool otherIsChild = other.cachedTransform.IsChildOf(spriteTransform);
+            if (otherIsChild) {
+                depthDirtySpriteList.RemoveAt(i);
+                other.updateFlags &= ~exUpdateFlags.SelfDepth;
+            }
+        }
+        // 集中缓存到一个list里，待渲染前再统一重新计算
+        depthDirtySpriteList.Add(_sprite);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private void SetDepthDirtyFlag (exLayeredSprite _sprite, bool _dirty) {
+        if (_dirty) {
+            _sprite.updateFlags |= exUpdateFlags.SelfDepth;
+        }
+        else {
+            _sprite.updateFlags &= ~exUpdateFlags.SelfDepth;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    
+    private void UpdateSpriteDepth (exLayeredSprite _sprite, float _parentGlobalDepth) {
+        // caculate global depth
+        float newGlobalDepth = _parentGlobalDepth + _sprite.depth;
+        if ((_sprite as IFriendOfLayer).globalDepth == newGlobalDepth) {
+            //Debug.Log("[UpdateSpriteDepth|exLayer] return");
+            return;
+        }
+        (_sprite as IFriendOfLayer).globalDepth = newGlobalDepth;
+        // update mesh
         int oldMeshIndex = IndexOfMesh (_sprite);
         exDebug.Assert(oldMeshIndex != -1);
         exMesh mesh = meshList[oldMeshIndex];
-        float oldDepth = _sprite.depth;
-        bool addDepth = _newDepth > oldDepth;
-        // apply depth change
-        (_sprite as IFriendOfLayer).DoSetDepth(_newDepth);
-        //
-        if (IsRenderOrderChangedBetweenMesh(_sprite, oldMeshIndex, addDepth)) {
-            RemoveFromMesh (_sprite, mesh); // 这里需要保证depth改变后也能正常remove
+        if (IsRenderOrderChangedAmongMeshes(_sprite, oldMeshIndex)) {
+            //Debug.Log(string.Format("[UpdateSpriteDepth|exLayer] mesh: {0}", mesh));
+            RemoveFromMesh(_sprite, mesh); // 这里需要保证depth改变后也能正常remove
+            UpdateSpriteWhileRecreating.TryUpdate(_sprite);
             AddToMesh(_sprite, GetMeshToAdd(_sprite));
         }
         else {
-            // get old render order in mesh
-            // TODO: remove DoSetDepth
-            (_sprite as IFriendOfLayer).DoSetDepth(oldDepth);
-            int oldSortedSpriteIndex = mesh.sortedSpriteList.BinarySearch(_sprite);
-            exDebug.Assert(oldSortedSpriteIndex >= 0);  // 用原来的depth进行搜索，如果搜索不到，说明sortedSpriteList的排序是错的，这一般会是因为值被animtion误改了。
-            (_sprite as IFriendOfLayer).DoSetDepth(_newDepth);
+            // 这里不对查找进行优化，如果有必要可再加
+            //int oldSortedSpriteIndex = mesh.sortedSpriteList.BinarySearch(_sprite);
+            //exDebug.Assert(oldSortedSpriteIndex >= 0);  // 用原来的depth进行搜索，如果搜索不到，说明sortedSpriteList的排序是错的，这可能是因为值被animtion误改了。
+            int oldSortedSpriteIndex = mesh.sortedSpriteList.IndexOf(_sprite);
+            exDebug.Assert(oldSortedSpriteIndex >= 0);
             //
-            if (IsRenderOrderChangedInMesh(_sprite, oldMeshIndex, oldSortedSpriteIndex, addDepth)) {
-                RemoveFromMesh (_sprite, mesh); // 这里需要保证depth改变后也能正常remove
+            if (IsRenderOrderChangedInMesh(_sprite, oldMeshIndex, oldSortedSpriteIndex)) {
+                //Debug.Log("[UpdateSpriteDepth|exLayer] changed");
+                RemoveFromMesh(_sprite, mesh); // 这里需要保证depth改变后也能正常remove
+                UpdateSpriteWhileRecreating.TryUpdate(_sprite);
                 AddToMesh(_sprite, mesh);
             }
+            //else {
+            //    Debug.Log("[UpdateSpriteDepth|exLayer] not changed");
+            //}
         }
     }
     
     // ------------------------------------------------------------------ 
-    /// 用于更新sprite的depth、material、vertex count等数据
+    // 遍历_go及所有子sprite，按深度优先更新它们的globalDepth并且刷新mesh
     // ------------------------------------------------------------------ 
 
-    internal void OnPreSpriteChange (exLayeredSprite _sprite) {
+    private float GetParentGlobalDepth (GameObject _go) {
+        exLayeredSprite parent = _go.GetComponentUpwards<exLayeredSprite>();
+        return parent != null ? (parent as IFriendOfLayer).globalDepth : 0.0f;
+    }
+
+    // ------------------------------------------------------------------ 
+    // 遍历_go及所有子sprite，按深度优先更新它们的globalDepth并且刷新mesh
+    // ------------------------------------------------------------------ 
+
+    private void UpdateSpriteDepthRecursively (GameObject _go, float _parentGlobalDepth) {
+        // TODO: 考虑跳过未显示的sprite
+        exLayeredSprite sprite = _go.GetComponent(typeof(exLayeredSprite)) as exLayeredSprite;
+        if (sprite != null) {
+            UpdateSpriteDepth(sprite, _parentGlobalDepth);
+        }
+        float globalDepth = sprite != null ? (sprite as IFriendOfLayer).globalDepth : _parentGlobalDepth;
+        Transform trans = _go.transform;
+        for (int i = 0, childCount = trans.childCount; i < childCount; ++i) {
+            UpdateSpriteDepthRecursively(trans.GetChild(i).gameObject, globalDepth);
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    internal void SetSpriteBufferSize (exLayeredSprite _sprite, int _vertexCount, int _indexCount) {
+        // 先更新所有depth值，如果遍历到_sprite，则更新的同时重设buffer size
+
+        UpdateSpriteWhileRecreating.RegisterNewBufferSize(_sprite, _vertexCount, _indexCount);
+        UpdateAllSpritesDepth();
+        UpdateSpriteWhileRecreating.Clear();
+        
+        // 假如更新depth时没遍历到_sprite，则手动更新
+        
         int meshIndex = IndexOfMesh(_sprite);
         if (meshIndex != -1) {
             RemoveFromMesh (_sprite, meshList[meshIndex]);
         }
+        (_sprite as IFriendOfLayer).DoSetBufferSize(_vertexCount, _indexCount);
+        AddToMesh(_sprite, GetMeshToAdd(_sprite));
     }
-    
+
     // ------------------------------------------------------------------ 
-    /// 用于更新sprite的depth、material、vertex count等数据
+    // Desc:
     // ------------------------------------------------------------------ 
 
-    internal void OnAfterSpriteChange (exLayeredSprite _sprite) {
+    internal void RefreshSpriteMaterial (exLayeredSprite _sprite) {
+        // 先更新所有depth值，如果遍历到_sprite，则更新的同时SetMaterialDirty
+        
+        UpdateSpriteWhileRecreating.RegisterMaterialDirty(_sprite);
+        UpdateAllSpritesDepth();
+        UpdateSpriteWhileRecreating.Clear();
+
+        // 假如更新depth时没遍历到_sprite，则手动更新
+        
+        int meshIndex = IndexOfMesh(_sprite);
+        if (meshIndex != -1) {
+            RemoveFromMesh (_sprite, meshList[meshIndex]);
+        }
+        (_sprite as IFriendOfLayer).SetMaterialDirty();
         AddToMesh(_sprite, GetMeshToAdd(_sprite));
     }
 
@@ -704,6 +917,7 @@ public class exLayer : MonoBehaviour
         exDebug.Assert (_sprite.vertexCount == oldVertexCount);
 #endif
         AddToMesh(_sprite, _dst);
+        SetDepthDirtyFlag(_sprite, false);    // 小优化，不需要再更新depth，因为这里已经同时把depth更新过了
 #if EX_DEBUG
         exDebug.Assert (_sprite.vertexCount == oldVertexCount);
 #endif
@@ -944,6 +1158,9 @@ public class exLayer : MonoBehaviour
             nextSpriteUniqueId = Mathf.Max(_sprite.spriteIdInLayer + 1, nextSpriteUniqueId);
         }
 
+        // caculate depth
+        (_sprite as IFriendOfLayer).globalDepth = GetParentGlobalDepth(_sprite.gameObject) + _sprite.depth;
+
         // find available mesh
         exMesh mesh = GetMeshToAdd(_sprite);
         exDebug.Assert(mesh.vertices.Count + _sprite.vertexCount <= (layerType_ == exLayerType.Dynamic ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT),
@@ -1131,35 +1348,54 @@ public class exLayer : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private bool IsRenderOrderChangedBetweenMesh (exLayeredSprite _sprite, int _oldMeshIndex, bool _addDepth) { 
-        if (_addDepth) {
-            exLayeredSprite aboveSprite = GetNearestSpriteFromAboveMesh(_oldMeshIndex);
-            return (aboveSprite != null && _sprite > aboveSprite);
+    private bool IsRenderOrderChangedAmongMeshes (exLayeredSprite _sprite, int _oldMeshIndex) { 
+        exLayeredSprite aboveSprite = GetNearestSpriteFromAboveMesh(_oldMeshIndex);
+        if (aboveSprite != null && _sprite > aboveSprite) {
+            return true;
         }
-        else {
-            exLayeredSprite belowSprite = GetNearestSpriteFromBelowMesh(_oldMeshIndex);
-            return (belowSprite != null && _sprite < belowSprite);
-        }
+        exLayeredSprite belowSprite = GetNearestSpriteFromBelowMesh(_oldMeshIndex);
+        return (belowSprite != null && _sprite < belowSprite);
     }
 
     // ------------------------------------------------------------------ 
     // Desc:
     // ------------------------------------------------------------------ 
 
-    private bool IsRenderOrderChangedInMesh (exLayeredSprite _sprite, int _oldMeshIndex, int _oldSortedSpriteIndex, bool _addDepth) { 
+    private bool IsRenderOrderChangedInMesh (exLayeredSprite _sprite, int _oldMeshIndex, int _oldSortedSpriteIndex) { 
         exMesh mesh = meshList[_oldMeshIndex];
-        if (_addDepth) {
-            if (_oldSortedSpriteIndex < mesh.sortedSpriteList.Count - 1) {
-                exLayeredSprite aboveSprite = mesh.sortedSpriteList[_oldSortedSpriteIndex + 1];
-                return (_sprite > aboveSprite); // 是否要更后渲染;
+        if (_oldSortedSpriteIndex < mesh.sortedSpriteList.Count - 1) {
+            exLayeredSprite aboveSprite = mesh.sortedSpriteList[_oldSortedSpriteIndex + 1];
+            if (_sprite > aboveSprite) { // 是否要更后渲染
+                return true;
             }
         }
-        else {
-            if (_oldSortedSpriteIndex > 0) {
-                exLayeredSprite belowSprite = mesh.sortedSpriteList[_oldSortedSpriteIndex - 1];
-                return (_sprite < belowSprite);
-            }
+        if (_oldSortedSpriteIndex > 0) {
+            exLayeredSprite belowSprite = mesh.sortedSpriteList[_oldSortedSpriteIndex - 1];
+            return (_sprite < belowSprite);
         }
         return false;
+    }
+
+    // ------------------------------------------------------------------ 
+    /// 最终更新sprite的depth，只有当sprite在depthDirtySpriteList并且有exUpdateFlags.SelfDepth标记时，或者当sprite的任一父物体在depthDirtySpriteList时，depth才会重新计算
+    /// 调用这个方法后exLayeredSprite.globalDepth才会更新
+    // ------------------------------------------------------------------ 
+
+    private void UpdateAllSpritesDepth () {
+        for (int i = 0; i < depthDirtySpriteList.Count; ++i) {
+            exLayeredSprite sprite = depthDirtySpriteList[i];
+            if (sprite != null) {
+                UpdateSpriteDepthRecursively(sprite.gameObject, GetParentGlobalDepth(sprite.gameObject));
+            }
+        }
+        depthDirtySpriteList.Clear();
+
+        for (int i = 0; i < depthDirtyGoList.Count; ++i) {
+            GameObject go = depthDirtyGoList[i];
+            if (go != null) {
+                UpdateSpriteDepthRecursively(go, GetParentGlobalDepth(go));
+            }
+        }
+        depthDirtyGoList.Clear();
     }
 }

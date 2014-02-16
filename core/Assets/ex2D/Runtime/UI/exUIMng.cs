@@ -245,14 +245,7 @@ public class exUIMng : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public static exUIControl FindParent ( exUIControl _ctrl ) {
-        Transform tranParent = _ctrl.transform.parent;
-        while ( tranParent != null ) {
-            exUIControl el = tranParent.GetComponent<exUIControl>();
-            if ( el != null )
-                return el;
-            tranParent = tranParent.parent;
-        }
-        return null;
+        return _ctrl.FindParentComponent();
     } 
 
     // ------------------------------------------------------------------ 
