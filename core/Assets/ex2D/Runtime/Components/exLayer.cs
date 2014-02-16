@@ -243,11 +243,6 @@ public class exLayer : MonoBehaviour
     /// <summary> 任一mesh的font texture更新了，则统一刷新所有mesh </summary>
     [System.NonSerialized] private bool anyFontTextureRefreshed = false;
     
-    /// 缓存需要更改depth的sprite，在渲染前统一重新计算它们及所有子sprite的depth。
-    /// 不立刻更新的原因主要是为了能够批量一次性刷新，以节约遍历hierarchy及多次设置depth的开销。
-    /// 如果SetDirty用的go包含sprite，则放在这个list
-    [System.NonSerialized] private List<exLayeredSprite> depthDirtySpriteList = new List<exLayeredSprite>();
-
     /// 缓存包含需要更改depth的sprite的go，在渲染前统一重新计算它们及所有子sprite的depth。
     /// 不立刻更新的原因主要是为了能够批量一次性刷新，以节约遍历hierarchy及多次设置depth的开销。
     /// 如果SetDirty用的go不包含sprite，则放在这个list
@@ -612,88 +607,48 @@ public class exLayer : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ 
-    // Desc:
+    /// 如果在运行时改变了包含Sprite的GO的parent，需要手动调用这个方法以请求重新计算该Sprite和所有子Sprite的depth，不论它的parent之前是否已经调用过这个方法。
+    /// 只需要对改变了parent的GO调用即可，不需要对它的子GO调用。
     // ------------------------------------------------------------------ 
-    
     
     public void SetDepthDirty (GameObject _go) {
-        exLayeredSprite sprite = _go.GetComponent(typeof(exLayeredSprite)) as exLayeredSprite;
-        if (sprite != null) {
-            // 直接存sprite更快
-            SetDepthDirty(sprite);
-        }
-        else {
-            // 确保list里所有的go及子树不相互包含，避免重复计算depth
-            Transform myTransform = _go.transform;
-            for (int i = depthDirtyGoList.Count - 1; i >= 0; --i) {
-                GameObject other = depthDirtyGoList[i];
-                if (ReferenceEquals(other, _go)) {
-                    return;
-                }
-                if (other == null) {
-                    depthDirtyGoList.RemoveAt(i);
-                    continue;
-                }
-                Transform otherTransform = other.transform;
-                bool alreadyBeContainedInOthersHierarchy = myTransform.IsChildOf(otherTransform);
-                if (alreadyBeContainedInOthersHierarchy) {
-                    return;
-                }
-                bool otherIsChild = otherTransform.IsChildOf(myTransform);
-                if (otherIsChild) {
-                    depthDirtyGoList.RemoveAt(i);
-                }
-            }
-            // 集中缓存到一个list里，待渲染前再统一重新计算
-            depthDirtyGoList.Add(_go);
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    /// 如果在运行时改变了sprite的parent，需要手动调用这个方法以请求重新计算该Sprite和所有子Sprite的depth，不论它的parent之前是否已经调用过这个方法。
-    /// 只需要对改变了parent的sprite调用即可，不需要对它的子sprite调用。
-    // ------------------------------------------------------------------ 
-    
-    public void SetDepthDirty (exLayeredSprite _sprite) {
-        SetDepthDirtyFlag(_sprite, true);
-
-        // 确保list里所有的sprite及子树不相互包含，避免重复计算depth
-        Transform spriteTransform = _sprite.cachedTransform;
-        for (int i = depthDirtySpriteList.Count - 1; i >= 0; --i) {
-            exLayeredSprite other = depthDirtySpriteList[i];
-            if (ReferenceEquals(other, _sprite)) {
+        // 确保list里所有的go及子树不相互包含，避免重复计算depth
+        Transform myTransform = _go.transform;
+        for (int i = depthDirtyGoList.Count - 1; i >= 0; --i) {
+            GameObject other = depthDirtyGoList[i];
+            if (ReferenceEquals(other, _go)) {
                 return;
             }
             if (other == null) {
-                depthDirtySpriteList.RemoveAt(i);
+                depthDirtyGoList.RemoveAt(i);
                 continue;
             }
-            bool alreadyBeContainedInOthersHierarchy = spriteTransform.IsChildOf(other.cachedTransform);
+            Transform otherTransform = other.transform;
+            bool alreadyBeContainedInOthersHierarchy = myTransform.IsChildOf(otherTransform);
             if (alreadyBeContainedInOthersHierarchy) {
                 return;
             }
-            bool otherIsChild = other.cachedTransform.IsChildOf(spriteTransform);
+            bool otherIsChild = otherTransform.IsChildOf(myTransform);
             if (otherIsChild) {
-                depthDirtySpriteList.RemoveAt(i);
-                other.updateFlags &= ~exUpdateFlags.SelfDepth;
+                depthDirtyGoList.RemoveAt(i);
             }
         }
         // 集中缓存到一个list里，待渲染前再统一重新计算
-        depthDirtySpriteList.Add(_sprite);
+        depthDirtyGoList.Add(_go);
     }
 
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
+    //// ------------------------------------------------------------------ 
+    //// Desc:
+    //// ------------------------------------------------------------------ 
 
-    private void SetDepthDirtyFlag (exLayeredSprite _sprite, bool _dirty) {
-        if (_dirty) {
-            _sprite.updateFlags |= exUpdateFlags.SelfDepth;
-        }
-        else {
-            _sprite.updateFlags &= ~exUpdateFlags.SelfDepth;
-        }
-    }
+    //private void SetDepthDirtyFlag (exLayeredSprite _sprite, bool _dirty) {
+    //    if (_dirty) {
+    //        _sprite.updateFlags |= exUpdateFlags.SelfDepth;
+    //    }
+    //    else {
+    //        _sprite.updateFlags &= ~exUpdateFlags.SelfDepth;
+    //    }
+    //}
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -917,7 +872,6 @@ public class exLayer : MonoBehaviour
         exDebug.Assert (_sprite.vertexCount == oldVertexCount);
 #endif
         AddToMesh(_sprite, _dst);
-        SetDepthDirtyFlag(_sprite, false);    // 小优化，不需要再更新depth，因为这里已经同时把depth更新过了
 #if EX_DEBUG
         exDebug.Assert (_sprite.vertexCount == oldVertexCount);
 #endif
@@ -1382,14 +1336,6 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     private void UpdateAllSpritesDepth () {
-        for (int i = 0; i < depthDirtySpriteList.Count; ++i) {
-            exLayeredSprite sprite = depthDirtySpriteList[i];
-            if (sprite != null) {
-                UpdateSpriteDepthRecursively(sprite.gameObject, GetParentGlobalDepth(sprite.gameObject));
-            }
-        }
-        depthDirtySpriteList.Clear();
-
         for (int i = 0; i < depthDirtyGoList.Count; ++i) {
             GameObject go = depthDirtyGoList[i];
             if (go != null) {

@@ -27,10 +27,10 @@ public enum exUpdateFlags {
     Normal      = 16,  ///< update the normal, not implemented yet
     Text	    = 32,  ///< update the text, only used in sprite font
     Transparent = 64,  ///< hide sprite
-    SelfDepth       = 128, ///< update sprite's depth(not include its children), only used in layered sprite
+    //SelfDepth       = 128, ///< update sprite's depth(not include its children), only used in layered sprite
 
 	VertexAndIndex = (Index | Vertex),
-	AllExcludeIndex = (Vertex | UV | Color | Normal | Text | Transparent/* | Depth*/),
+	AllExcludeIndex = (Vertex | UV | Color | Normal | Text | Transparent/* | SelfDepth*/),
 	All = (AllExcludeIndex | Index),
 };
 

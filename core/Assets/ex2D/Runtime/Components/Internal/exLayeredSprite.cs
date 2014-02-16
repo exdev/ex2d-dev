@@ -438,7 +438,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             //if (float.IsNaN(depthNotApplyedToMesh)) {
             //    depthNotApplyedToMesh = depth_;
             //}
-            layer_.SetDepthDirty(this);
+            layer_.SetDepthDirty(gameObject);
         }
     }
     
