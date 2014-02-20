@@ -92,14 +92,14 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
     }
 
     // ------------------------------------------------------------------ 
-    [SerializeField] protected exTextUtility.WrapMode wrapMode_ = exTextUtility.WrapMode.Pre;
+    [SerializeField] protected bool wrapWord_ = false;
     // ------------------------------------------------------------------ 
 
-    public exTextUtility.WrapMode wrapMode {
-        get { return wrapMode_; }
+    public bool wrapWord {
+        get { return wrapWord_; }
         set {
-            if (wrapMode_ != value) {
-                wrapMode_ = value;
+            if (wrapWord_ != value) {
+                wrapWord_ = value;
                 updateFlags |= exUpdateFlags.Text;
 	        }
         }
@@ -180,8 +180,7 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
         set {
             if (letterSpacing_ != value) {
                 letterSpacing_ = value;
-                bool autoWrap = wrapMode_ == exTextUtility.WrapMode.Word || wrapMode_ == exTextUtility.WrapMode.PreWrap;
-                if (autoWrap) {
+                if (wrapWord_) {
                     updateFlags |= exUpdateFlags.Text;
                 }
                 else {
@@ -201,8 +200,7 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
         set {
             if (wordSpacing_ != value) {
                 wordSpacing_ = value;
-                bool autoWrap = wrapMode_ == exTextUtility.WrapMode.Word || wrapMode_ == exTextUtility.WrapMode.PreWrap;
-                if (autoWrap) {
+                if (wrapWord_) {
                     updateFlags |= exUpdateFlags.Text;
                 }
                 else {
@@ -384,7 +382,7 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
         get { return width_; }
         set {
             width_ = value;
-            if (wrapMode_ == exTextUtility.WrapMode.Word || wrapMode_ == exTextUtility.WrapMode.PreWrap) {
+            if (wrapWord_) {
                 updateFlags |= exUpdateFlags.Text;
             }
         }

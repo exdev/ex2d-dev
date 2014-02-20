@@ -297,6 +297,23 @@ using System.Collections.Generic;
         return false;
     }
 
+    public int GetAdvance ( char _symbol ) {
+        if ( bitmapFont_ != null ) {
+            exBitmapFont.CharInfo charInfo = bitmapFont_.GetCharInfo(_symbol);
+            if ( charInfo != null ) {
+                return (int)charInfo.xadvance;
+            }
+        }
+        else if (dynamicFont_ != null) {
+            CharacterInfo charInfo;
+            if ( dynamicFont_.GetCharacterInfo(_symbol, out charInfo, dynamicFontSize_, dynamicFontStyle_) ) {
+                return (int)charInfo.width;
+            }
+        }
+
+        return 0;
+    }
+
     public int GetKerning ( char _first, char _second ) {
         if (bitmapFont_ != null) {
             return bitmapFont_.GetKerning(_first, _second);
