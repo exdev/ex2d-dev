@@ -927,7 +927,7 @@ namespace ex2D.Detail {
                 char c = _text[_charIndex];
                 
                 // if new line
-                if (c == '\n') {
+                if ( c == '\n' || c == '\r' ) {
                     _vertices.buffer[_vbIndex + 0] = new Vector3();
                     _vertices.buffer[_vbIndex + 1] = new Vector3();
                     _vertices.buffer[_vbIndex + 2] = new Vector3();

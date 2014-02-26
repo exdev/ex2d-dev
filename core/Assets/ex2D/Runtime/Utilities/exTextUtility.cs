@@ -125,14 +125,14 @@ public static partial class exTextUtility {
 
                         // if next_ch is white-space, then collapse this char
                         if ( next_ch == ' ' || next_ch == '\t' || next_ch == '\f' ) {
-                            cur_index = next_index;
+                            cur_index = next_index-1;
                             continue;
                         }
 
                         // if next_ch is line-break and collapseLinebreak is true, then collapse this char
                         if ( next_ch == '\n' || next_ch == '\r' ) {
                             if ( _collapseLinebreak ) {
-                                cur_index = next_index;
+                                cur_index = next_index-1;
                                 continue;
                             }
                         }
@@ -201,16 +201,17 @@ public static partial class exTextUtility {
                         next_index = next_index + 1;
 
                         // if this character can break
-                        if ( next_index >= _text.Length || CanWordBreak (next_ch) ) {
+                        if ( CanWordBreak (next_ch) ) {
+                            next_index -= 1;
                             break;
                         }
 
                         // advanced character
                         if ( last_ch != '\0' ) {
-                            cur_x += _font.GetKerning(last_ch, ch);
+                            cur_x += _font.GetKerning(last_ch, next_ch);
                         }
-                        cur_x += _font.GetAdvance(ch);
-                        last_ch = ch;
+                        cur_x += _font.GetAdvance(next_ch);
+                        last_ch = next_ch;
 
                         // TODO: process word-break
                         // check if the word exceed content width
