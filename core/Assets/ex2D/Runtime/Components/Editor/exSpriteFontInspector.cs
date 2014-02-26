@@ -26,7 +26,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
     protected SerializedProperty textProp;
     protected SerializedProperty textAlignProp;
     protected SerializedProperty useKerningProp;
-    protected SerializedProperty wrapModeProp;
+    protected SerializedProperty wrapWordProp;
     protected SerializedProperty lineHeightProp;
     protected SerializedProperty customLineHeightProp;
     protected SerializedProperty letterSpacingProp;
@@ -44,7 +44,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
         textProp = serializedObject.FindProperty("text_");
         textAlignProp = serializedObject.FindProperty("textAlign_");
         useKerningProp = serializedObject.FindProperty("useKerning_");
-        wrapModeProp = serializedObject.FindProperty("wrapMode_");
+        wrapWordProp = serializedObject.FindProperty("wrapWord_");
         lineHeightProp = serializedObject.FindProperty("lineHeight_");
         customLineHeightProp = serializedObject.FindProperty("customLineHeight_");
         letterSpacingProp = serializedObject.FindProperty("letterSpacing_");
@@ -64,7 +64,7 @@ class exSpriteFontInspector : exLayeredSpriteInspector {
                                                     textProp,
                                                     textAlignProp,
                                                     useKerningProp,
-                                                    wrapModeProp,
+                                                    wrapWordProp,
                                                     lineHeightProp,
                                                     customLineHeightProp,
                                                     letterSpacingProp,
@@ -90,7 +90,7 @@ static class exISpriteFontInspector {
                                         SerializedProperty _textProp,
                                         SerializedProperty _textAlignProp,
                                         SerializedProperty _useKerningProp,
-                                        SerializedProperty _wrapModeProp,
+                                        SerializedProperty _wrapWordProp,
                                         SerializedProperty _lineHeightProp,
                                         SerializedProperty _customLineHeightProp,
                                         SerializedProperty _letterSpacingProp,
@@ -188,14 +188,14 @@ static class exISpriteFontInspector {
             }
         }
 
-        // wrap mode
+        // wrap word
         EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField ( _wrapModeProp, new GUIContent("Wrap Mode"), true );
+        EditorGUILayout.PropertyField ( _wrapWordProp, new GUIContent("Wrap Word"), true );
         if ( EditorGUI.EndChangeCheck() ) {
             foreach ( Object obj in _inspector.serializedObject.targetObjects ) {
                 exISpriteFont sp = obj as exISpriteFont;
                 if ( sp != null ) {
-                    sp.wrapMode = (exTextUtility.WrapMode)_wrapModeProp.enumValueIndex;
+                    sp.wrapWord = _wrapWordProp.boolValue;
                     EditorUtility.SetDirty(obj);
                 }
             }

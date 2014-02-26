@@ -106,14 +106,14 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
     }
 
     // ------------------------------------------------------------------ 
-    [SerializeField] protected exTextUtility.WrapMode wrapMode_ = exTextUtility.WrapMode.Pre;
+    [SerializeField] protected bool wrapWord_ = false;
     // ------------------------------------------------------------------ 
 
-    public exTextUtility.WrapMode wrapMode {
-        get { return wrapMode_; }
+    public bool wrapWord {
+        get { return wrapWord_; }
         set {
-            if (wrapMode_ != value) {
-                wrapMode_ = value;
+            if (wrapWord_ != value) {
+                wrapWord_ = value;
                 updateFlags |= exUpdateFlags.Text;
 	        }
         }
@@ -194,8 +194,7 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
         set {
             if (letterSpacing_ != value) {
                 letterSpacing_ = value;
-                bool autoWrap = wrapMode_ == exTextUtility.WrapMode.Word || wrapMode_ == exTextUtility.WrapMode.PreWrap;
-                if (autoWrap) {
+                if (wrapWord_) {
                     updateFlags |= exUpdateFlags.Text;
                 }
                 else {
@@ -215,8 +214,7 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
         set {
             if (wordSpacing_ != value) {
                 wordSpacing_ = value;
-                bool autoWrap = wrapMode_ == exTextUtility.WrapMode.Word || wrapMode_ == exTextUtility.WrapMode.PreWrap;
-                if (autoWrap) {
+                if (wrapWord_) {
                     updateFlags |= exUpdateFlags.Text;
                 }
                 else {
@@ -296,7 +294,7 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
         get { return width_; }
         set {
             width_ = value;
-            if (wrapMode_ == exTextUtility.WrapMode.Word || wrapMode_ == exTextUtility.WrapMode.PreWrap) {
+            if (wrapWord_) {
                 updateFlags |= exUpdateFlags.Text;
             }
         }
@@ -773,16 +771,18 @@ namespace ex2D.Detail {
             while ( finished == false ) {
                 int line_width = 0;
                 strBuilder.Length = 0;  // Clear
-                finished = exTextUtility.CalcTextLine ( out line_width, 
-                                                        out cur_index,
-                                                        strBuilder,
-                                                        _sprite.text,
-                                                        cur_index,
-                                                        (int)_sprite.width,
-                                                        _sprite.font,
-                                                        _sprite.wrapMode,
-                                                        _sprite.wordSpacing,
-                                                        _sprite.letterSpacing );
+                bool linebreak = exTextUtility.CalcTextLine ( out line_width, 
+                                                              out cur_index,
+                                                              strBuilder,
+                                                              _sprite.text,
+                                                              cur_index,
+                                                              (int)_sprite.width,
+                                                              _sprite.font,
+                                                              _sprite.wordSpacing,
+                                                              _sprite.letterSpacing,
+                                                              _sprite.wrapWord,
+                                                              false,
+                                                              false );
                 int lineStart = parsedVBIndex;
                 float lineWidth = BuildLine(strBuilder.ToString(), _sprite, _vertices, _uvs, ref parsedVBIndex, - _sprite.height, texelSize);
                 if (lineWidth > maxWidth) {
@@ -809,10 +809,11 @@ namespace ex2D.Detail {
                     break;
                 }
                 _sprite.height += _sprite.lineHeight;
-                if (finished) {
+                if ( linebreak ) {
                     _sprite.height += halfLineHeightMargin;
                 }
-                ++cur_index;
+
+                finished = (cur_index >= _sprite.text.Length);
             }
 
             return parsedVBIndex - _vbIndex;
@@ -926,7 +927,7 @@ namespace ex2D.Detail {
                 char c = _text[_charIndex];
                 
                 // if new line
-                if (c == '\n') {
+                if ( c == '\n' || c == '\r' ) {
                     _vertices.buffer[_vbIndex + 0] = new Vector3();
                     _vertices.buffer[_vbIndex + 1] = new Vector3();
                     _vertices.buffer[_vbIndex + 2] = new Vector3();
@@ -957,32 +958,6 @@ namespace ex2D.Detail {
                 }
             }
             return curX + lastWidth;
-        }
-    }
-}
-
-public static partial class exTextUtility {
-
-    // ------------------------------------------------------------------ 
-    // Desc: This only calculate result in one line
-    // ------------------------------------------------------------------ 
-
-    public static bool CalcTextLine ( out int _end_x,
-                                      out int _end_index,
-                                      StringBuilder _builder,
-                                      string _text,
-                                      int _start_index,
-                                      int _width,
-                                      exFont _font,
-                                      WrapMode _wrap,
-                                      int _wordSpacing,
-                                      int _letterSpacing)
-    {
-        if (_font.bitmapFont != null) {
-            return exTextUtility.CalcTextLine(out _end_x, out _end_index, _builder, _text, _start_index, _width, _font.bitmapFont, _font.fontSize, _wrap, _wordSpacing, _letterSpacing);
-        }
-        else {
-            return exTextUtility.CalcTextLine(out _end_x, out _end_index, _builder, _text, _start_index, _width, _font.dynamicFont, _font.fontSize, _wrap, _wordSpacing, _letterSpacing);
         }
     }
 }

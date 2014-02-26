@@ -25,7 +25,7 @@ public interface exISpriteFont : exISpriteBase {
     exFont font { get; }
     exBitmapFont bitmapFont { get; }
     Font dynamicFont { get; }
-    exTextUtility.WrapMode wrapMode { get; set; }
+    bool wrapWord { get; set; }
     int lineHeight { get; set; }
     bool customLineHeight { get; set; }
     int letterSpacing { get; set; }

@@ -116,7 +116,7 @@ public abstract class exPlane : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    protected virtual Vector3[] GetVertices (Space _space) {
+    public Vector3[] GetRectVertices (Space _space) {
         Vector2 anchorOffset;
         float halfHeight = height_ * 0.5f;
         float halfWidth = width_ * 0.5f;
@@ -156,6 +156,14 @@ public abstract class exPlane : MonoBehaviour {
         return new Vector3[4] {
             v0, v1, v2, v3
         };
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected virtual Vector3[] GetVertices (Space _space) {
+        return GetRectVertices (_space);
     }
 
     // ------------------------------------------------------------------ 

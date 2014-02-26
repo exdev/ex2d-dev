@@ -724,6 +724,20 @@ public static class exEditorUtility {
                 GL_DrawRectLine(vertices, _color, ignoreZ);
             }
         }
+
+        //
+        if ( _node is exSpriteFont ) {
+            Vector3[] vertices = _node.GetRectVertices(Space.Self);
+            Rect aabb = exGeometryUtility.GetAABoundingRect(vertices);
+            Matrix4x4 l2w = _node.transform.localToWorldMatrix;
+            vertices = new Vector3[4] {
+                l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMin, 0)),
+                l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMax, 0)),
+                l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMax, 0)),
+                l2w.MultiplyPoint3x4(new Vector3(aabb.xMax, aabb.yMin, 0)),
+            };
+            GL_DrawRectLine(vertices, _color, ignoreZ);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
