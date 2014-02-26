@@ -47,6 +47,7 @@ public class exLayer : MonoBehaviour
 
     public interface IFriendOfLayer {
         float globalDepth { get; set; }
+        void DoSetLayer (exLayer _layer);
         //void DoSetDepth (float _depth);
         void DoSetBufferSize (int _vertexCount, int _indexCount);
         void SetMaterialDirty ();
@@ -420,7 +421,7 @@ public class exLayer : MonoBehaviour
             int meshIndex = IndexOfMesh (_sprite);
             if (meshIndex != -1) {
                 RemoveFromMesh (_sprite, meshList [meshIndex]);
-                _sprite.layer = null;
+                (_sprite as IFriendOfLayer).DoSetLayer(null);
             }
             else {
                 _sprite.ResetLayerProperties ();  //if mesh has been destroyed, just reset sprite
@@ -1088,6 +1089,16 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     
     private void DoAddSprite (exLayeredSprite _sprite, bool _newSprite) {
+#if EX_DEBUG || UNITY_EDITOR
+        if (ReferenceEquals(_sprite.layer, this)) {
+            Debug.LogError("Sprite has been added to layer " + gameObject.name, _sprite);
+            return;
+        }
+        if (_sprite.layer != null) {
+            Debug.LogError("Sprite should remove from old layer before add to new one");
+            return;
+        }
+#endif
         Material mat = _sprite.material;
         if (mat == null) {
 #if EX_DEBUG
@@ -1096,7 +1107,7 @@ public class exLayer : MonoBehaviour
             return;
         }
 
-        _sprite.layer = this;
+        (_sprite as IFriendOfLayer).DoSetLayer(this);
 
         // set sprite id
         CheckDuplicated(_sprite);

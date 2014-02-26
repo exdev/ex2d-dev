@@ -88,15 +88,6 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         get {
             return layer_;
         }
-        internal set {  // TODO: 这个接口做成私有
-            if (value != null) {
-                exDebug.Assert(layer_ == null, "Sprite should remove from last layer before add to new one");
-                if (layer_ == null) {
-                    OnPreAddToLayer();
-                }
-            }
-            layer_ = value;
-        }
     }
     
     // 保存计算好的绝对depth值，只有在调用IComparable接口时才用到。(如果要检查在哪里用到，可以注释掉IComparable的实现)
@@ -376,6 +367,17 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     
     #endregion
 
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    
+    void exLayer.IFriendOfLayer.DoSetLayer (exLayer _layer) {
+        if (layer_ == null && _layer != null) {
+            OnPreAddToLayer();
+        }
+        layer_ = _layer;
+    }
+    
     //void exLayer.IFriendOfLayer.DoSetDepth (float _depth) {
     //    depth_ = _depth;
     //}
