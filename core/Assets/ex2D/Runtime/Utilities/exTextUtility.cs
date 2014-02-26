@@ -163,8 +163,6 @@ public static partial class exTextUtility {
 
                 // if this character can break
                 if ( next_index >= _text.Length || CanWordBreak (ch) ) {
-                    beginningOfLine = false;
-
                     // advanced character
                     if ( last_ch != '\0' ) {
                         cur_x += _font.GetKerning(last_ch, ch);
@@ -187,6 +185,8 @@ public static partial class exTextUtility {
                             }
                         }
                     }
+
+                    beginningOfLine = false;
                 }
                 else {
                     // advanced current character
