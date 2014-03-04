@@ -39,7 +39,7 @@ public class exUIProgressBar : exUIControl {
     // events
     List<exUIEventListener> onProgressChanged;
 
-    public void OnProgressChanged ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onProgressChanged, _event ); }
+    public void OnProgressChanged ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onProgressChanged", onProgressChanged, _event ); }
 
     public override void CacheEventListeners () {
         base.CacheEventListeners();

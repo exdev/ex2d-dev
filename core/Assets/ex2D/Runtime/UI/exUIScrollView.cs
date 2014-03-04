@@ -50,9 +50,9 @@ public class exUIScrollView : exUIControl {
     List<exUIEventListener> onScrollFinished;
     List<exUIEventListener> onContentResized;
 
-    public void OnScroll         ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onScroll, _event ); }
-    public void OnScrollFinished ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onScrollFinished,  _event ); }
-    public void OnContentResized ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onContentResized,  _event ); }
+    public void OnScroll         ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onScroll", onScroll, _event ); }
+    public void OnScrollFinished ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onScrollFinished", onScrollFinished,  _event ); }
+    public void OnContentResized ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onContentResized", onContentResized,  _event ); }
 
     public override void CacheEventListeners () {
         base.CacheEventListeners();

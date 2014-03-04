@@ -40,8 +40,8 @@ public class exUIToggle : exUIButton {
     List<exUIEventListener> onChecked;
     List<exUIEventListener> onUnchecked;
 
-    public void OnChecked   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onChecked, _event ); }
-    public void OnUnchecked ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onUnchecked, _event ); }
+    public void OnChecked   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onChecked", onChecked, _event ); }
+    public void OnUnchecked ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onUnchecked", onUnchecked, _event ); }
     
     public override void CacheEventListeners () {
         base.CacheEventListeners();

@@ -346,59 +346,154 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void DispatchEvent ( exUIControl _sender, List<exUIEventListener> _eventListeners, exUIEvent _event ) {
-        if ( _eventListeners.Count <= 0 )
-            return;
+    public void DispatchEvent ( exUIControl _sender, string _name, List<exUIEventListener> _listeners, exUIEvent _event ) {
+        _event.target = _sender; 
 
         if ( _event.bubbles ) {
             List<exUIControl> routine = GetRoutine( _sender );
-            _event.target = _sender; 
 
-            for ( int i = 0; i < _eventListeners.Count; ++i ) {
-                exUIEventListener listener = _eventListeners[i];
+            // capture phase
+            if ( _listeners != null ) {
+                for ( int i = 0; i < _listeners.Count; ++i ) {
+                    exUIEventListener listener = _listeners[i];
+                    if ( listener.capturePhase ) {
+                        _event.eventPhase = exUIEventPhase.Capture;
 
-                // capture phase
-                if ( listener.capturePhase ) {
-                    _event.eventPhase = exUIEventPhase.Capture;
-
-                    for ( int j = routine.Count-1; j >= 0; --j ) {
-                        _event.currentTarget = routine[j];
-                        listener.func ( _event );
-                        if ( _event.isPropagationStopped )
-                            continue;
+                        for ( int j = routine.Count-1; j >= 0; --j ) {
+                            exUIControl sender2 = routine[j];
+                            List<exUIEventListener> listeners2 = sender2.GetEventListeners(_name);
+                            _event.currentTarget = sender2;
+                            DoDispatchEvent ( sender2, listeners2, _event );
+                            if ( _event.isPropagationStopped )
+                                return;
+                        }
                     }
                 }
+            }
 
-                // target phase
+            // target phase
+            if ( _listeners != null ) {
                 _event.eventPhase = exUIEventPhase.Target;
                 _event.currentTarget = _sender;
-                listener.func ( _event );
+                DoDispatchEvent ( _sender, _listeners, _event );
                 if ( _event.isPropagationStopped )
-                    continue;
+                    return;
+            }
 
-                // bubble phase
-                _event.eventPhase = exUIEventPhase.Bubble;
-                for ( int j = 0; j < routine.Count; ++j ) {
-                    _event.currentTarget = routine[j];
-                    listener.func ( _event );
-                    if ( _event.isPropagationStopped )
-                        continue;
-                }
+            // bubble phase
+            _event.eventPhase = exUIEventPhase.Bubble;
+            for ( int j = 0; j < routine.Count; ++j ) {
+                exUIControl sender2 = routine[j];
+                List<exUIEventListener> listeners2 = sender2.GetEventListeners(_name);
+                _event.currentTarget = sender2;
+                DoDispatchEvent ( sender2, listeners2, _event );
+                if ( _event.isPropagationStopped )
+                    return;
             }
         }
         else {
-            _event.target = _sender; 
-
-            for ( int i = 0; i < _eventListeners.Count; ++i ) {
-                exUIEventListener listener = _eventListeners[i];
-
-                // target phase
-                _event.eventPhase = exUIEventPhase.Target;
-                _event.currentTarget = _sender;
-                listener.func ( _event );
-            }
+            _event.eventPhase = exUIEventPhase.Target;
+            _event.currentTarget = _sender;
+            DoDispatchEvent ( _sender, _listeners, _event );
         }
     }
+    public void DispatchEvent ( exUIControl _sender, string _name, exUIEvent _event ) {
+        List<exUIEventListener> listeners = _sender.GetEventListeners(_name);
+        DispatchEvent ( _sender, _name, listeners, _event );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DoDispatchEvent ( exUIControl _sender, List<exUIEventListener> _listeners, exUIEvent _event ) {
+        for ( int i = 0; i < _listeners.Count; ++i ) {
+            exUIEventListener listener = _listeners[i];
+
+            //
+            if ( _event.eventPhase == exUIEventPhase.Capture  ) {
+                if ( listener.capturePhase == false ) {
+                    continue;
+                }
+            }
+            else if ( _event.eventPhase == exUIEventPhase.Bubble ) {
+                if ( listener.capturePhase ) {
+                    continue;
+                }
+            }
+
+            // 
+            listener.func ( _event );
+
+            //
+            // if ( _event.isPropagationStopped )
+            //     break;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    // public void DispatchEvent ( exUIControl _sender, List<exUIEventListener> _eventListeners, exUIEvent _event ) {
+    //     if ( _eventListeners.Count <= 0 )
+    //         return;
+
+    //     if ( _event.bubbles ) {
+    //         List<exUIControl> routine = GetRoutine( _sender );
+    //         _event.target = _sender; 
+
+    //         for ( int i = 0; i < _eventListeners.Count; ++i ) {
+    //             exUIEventListener listener = _eventListeners[i];
+
+    //             // capture phase
+    //             if ( listener.capturePhase ) {
+    //                 _event.eventPhase = exUIEventPhase.Capture;
+
+    //                 for ( int j = routine.Count-1; j >= 0; --j ) {
+    //                     _event.currentTarget = routine[j];
+    //                     listener.func ( _event );
+    //                     if ( _event.isPropagationStopped )
+    //                         break;
+    //                 }
+
+    //                 if ( _event.isPropagationStopped )
+    //                     continue;
+    //             }
+
+    //             // target phase
+    //             _event.eventPhase = exUIEventPhase.Target;
+    //             _event.currentTarget = _sender;
+    //             listener.func ( _event );
+    //             if ( _event.isPropagationStopped )
+    //                 continue;
+
+    //             // bubble phase
+    //             _event.eventPhase = exUIEventPhase.Bubble;
+    //             for ( int j = 0; j < routine.Count; ++j ) {
+    //                 _event.currentTarget = routine[j];
+    //                 listener.func ( _event );
+    //                 if ( _event.isPropagationStopped )
+    //                     break;
+    //             }
+    //         }
+    //     }
+    //     else {
+    //         _event.target = _sender; 
+
+    //         for ( int i = 0; i < _eventListeners.Count; ++i ) {
+    //             exUIEventListener listener = _eventListeners[i];
+
+    //             // target phase
+    //             _event.eventPhase = exUIEventPhase.Target;
+    //             _event.currentTarget = _sender;
+    //             listener.func ( _event );
+
+    //             if ( _event.isPropagationStopped )
+    //                 break;
+    //         }
+    //     }
+    // }
 
     // ------------------------------------------------------------------ 
     // Desc: 

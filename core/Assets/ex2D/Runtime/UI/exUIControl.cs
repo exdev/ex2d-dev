@@ -72,20 +72,20 @@ public class exUIControl : exPlane {
     List<exUIEventListener> onMouseWheel;
 
     // event easy function
-    public void OnFocus      ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onFocus,      _event ); }
-    public void OnUnfocus    ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onUnfocus,    _event ); }
-    public void OnActive     ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onActive,     _event ); }
-    public void OnDeactive   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onDeactive,   _event ); }
+    public void OnFocus      ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onFocus",       onFocus,      _event ); }
+    public void OnUnfocus    ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onUnfocus",     onUnfocus,    _event ); }
+    public void OnActive     ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onActive",      onActive,     _event ); }
+    public void OnDeactive   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onDeactive",    onDeactive,   _event ); }
     // TODO { 
     // public void OnHoverEnter    ( exUIEvent _event )  { if ( onHoverIn    != null ) exUIMng.inst.DispatchEvent( this, onHoverIn,    _event ); }
     // public void OnHoverLeave   ( exUIEvent _event )  { if ( onHoverOut   != null ) exUIMng.inst.DispatchEvent( this, onHoverOut,   _event ); }
     // } TODO end 
-    public void OnHoverIn    ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onHoverIn,    _event ); }
-    public void OnHoverOut   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onHoverOut,   _event ); }
-    public void OnHoverMove  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onHoverMove,  _event ); }
-    public void OnPressDown  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onPressDown,  _event ); }
-    public void OnPressUp    ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onPressUp,    _event ); }
-    public void OnMouseWheel ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onMouseWheel, _event ); }
+    public void OnHoverIn    ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onHoverIn",     onHoverIn,    _event ); }
+    public void OnHoverOut   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onHoverOut",    onHoverOut,   _event ); }
+    public void OnHoverMove  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onHoverMove",   onHoverMove,  _event ); }
+    public void OnPressDown  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onPressDown",   onPressDown,  _event ); }
+    public void OnPressUp    ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onPressUp",     onPressUp,    _event ); }
+    public void OnMouseWheel ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onMouseWheel",  onMouseWheel, _event ); }
     
     public virtual void CacheEventListeners () {
         onFocus = eventListenerTable["onFocus"];
@@ -300,8 +300,19 @@ public class exUIControl : exPlane {
     public void DispatchEvent ( string _name, exUIEvent _event ) {
         if ( eventListenerTable.ContainsKey(_name) ) {
             List<exUIEventListener> eventListeners = eventListenerTable[_name];
-            exUIMng.inst.DispatchEvent ( this, eventListeners, _event );
+            exUIMng.inst.DispatchEvent ( this, _name, eventListeners, _event );
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public List<exUIEventListener> GetEventListeners ( string _name ) {
+        if ( eventListenerTable.ContainsKey(_name) ) {
+            return eventListenerTable[_name];
+        }
+        return null;
     }
 
     // ------------------------------------------------------------------ 

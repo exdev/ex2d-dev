@@ -38,9 +38,9 @@ public class exUIButton : exUIControl {
     List<exUIEventListener> onButtonDown;
     List<exUIEventListener> onButtonUp;
 
-    public void OnClick      ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onClick,      _event ); }
-    public void OnButtonDown ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onButtonDown, _event ); }
-    public void OnButtonUp   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onButtonUp,   _event ); }
+    public void OnClick      ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onClick",       onClick,      _event ); }
+    public void OnButtonDown ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onButtonDown",  onButtonDown, _event ); }
+    public void OnButtonUp   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onButtonUp",    onButtonUp,   _event ); }
     
     public override void CacheEventListeners () {
         base.CacheEventListeners();

@@ -34,7 +34,7 @@ public class exUIToggleGroup : exUIToggle {
     // events
     List<exUIEventListener> onCheckChanged;
 
-    public void OnCheckChanged   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onCheckChanged, _event ); }
+    public void OnCheckChanged   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onCheckChanged", onCheckChanged, _event ); }
     
     public override void CacheEventListeners () {
         base.CacheEventListeners();

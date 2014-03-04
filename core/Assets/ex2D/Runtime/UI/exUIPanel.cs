@@ -56,16 +56,16 @@ public class exUIPanel : exUIControl {
     List<exUIEventListener> onFinishFadeOut;
     List<exUIEventListener> onFadeOut;
 
-    public void OnEnter ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onEnter, _event ); }
-    public void OnExit  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onExit,  _event ); }
+    public void OnEnter ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onEnter",    onEnter, _event ); }
+    public void OnExit  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onExit",     onExit,  _event ); }
 
-    public void OnStartFadeIn   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onStartFadeIn,  _event ); }
-    public void OnFinishFadeIn  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onFinishFadeIn,  _event ); }
-    public void OnFadeIn        ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onFadeIn,  _event ); }
+    public void OnStartFadeIn   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onStartFadeIn",      onStartFadeIn,  _event ); }
+    public void OnFinishFadeIn  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onFinishFadeIn",     onFinishFadeIn,  _event ); }
+    public void OnFadeIn        ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onFadeIn",           onFadeIn,  _event ); }
 
-    public void OnStartFadeOut  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onStartFadeOut,  _event ); }
-    public void OnFinishFadeOut ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onFinishFadeOut,  _event ); }
-    public void OnFadeOut       ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, onFadeOut,  _event ); }
+    public void OnStartFadeOut  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onStartFadeOut",     onStartFadeOut,  _event ); }
+    public void OnFinishFadeOut ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onFinishFadeOut",    onFinishFadeOut,  _event ); }
+    public void OnFadeOut       ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onFadeOut",          onFadeOut,  _event ); }
 
     public override void CacheEventListeners () {
         base.CacheEventListeners();
