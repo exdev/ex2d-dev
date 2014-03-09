@@ -182,12 +182,12 @@ public class exMesh : MonoBehaviour
 
     public static void FlushBuffers (Mesh _mesh, exUpdateFlags _updateFlags, exList<Vector3> _vertices, exList<int> _indices, exList<Vector2> _uvs, exList<Color32> _colors32) {
         if ((_updateFlags & exUpdateFlags.VertexAndIndex) == exUpdateFlags.VertexAndIndex) {
-            // 如果索引还未更新就减少顶点数量，索引可能会成为非法的，所以这里要把索引一起清空
-            _mesh.triangles = null;  //这里如果使用clear，那么uv和color就必须赋值，否则有时会出错
+            // if we need to update vertices, we should also clear triangles first
+            _mesh.triangles = null;  // we dont use Mesh.Clear() since sometimes it goes wrong when the uv and color have not been updated
         }
         if ((_updateFlags & exUpdateFlags.Vertex) != 0 || 
-            (_updateFlags & exUpdateFlags.Index) != 0) {           // 如果要重设triangles，则必须同时重设vertices，否则mesh将显示不出来
-            _mesh.vertices = _vertices.FastToArray(); // 使用此方法会导致list的在需要变长时重新分配buffer，不过由于最终调用ToArray时本来就要分配新的buffer，所以没有影响。反而减少了当list尺寸不变时拿array的GC消耗。
+            (_updateFlags & exUpdateFlags.Index) != 0) {    // if we need to update triangles, we should also update vertices, or mesh will become invisible
+            _mesh.vertices = _vertices.FastToArray();
         }
         if ((_updateFlags & exUpdateFlags.UV) != 0) {
             _mesh.uv = _uvs.FastToArray();
@@ -196,7 +196,7 @@ public class exMesh : MonoBehaviour
             _mesh.colors32 = _colors32.FastToArray();
         }
         if ((_updateFlags & exUpdateFlags.Index) != 0) {
-            _mesh.triangles = _indices.FastToArray();
+            _mesh.triangles = _indices.FastToArray();       // we do update triangles here
         }
         if ((_updateFlags & exUpdateFlags.Index) != 0 || (_updateFlags & exUpdateFlags.Vertex) != 0) {
             _mesh.RecalculateBounds();  // Sometimes Unity will not automatically recalculate the bounding volume.
