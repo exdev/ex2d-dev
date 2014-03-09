@@ -223,10 +223,10 @@ public class ex2DRenderer : MonoBehaviour {
             exLayer layer = layerList[i];
             if (layer != null) {
                 if (customizeLayerZ_) {
-                    layer.SetWorldBoundsMinZ(layer.customZ);
+                    layer.SetWorldBoundsZMin(layer.customZ);
                 }
                 else {
-                    layer.SetWorldBoundsMinZ(layerZ);
+                    layer.SetWorldBoundsZMin(layerZ);
                     layerZ += layerInterval;
                 }
             }

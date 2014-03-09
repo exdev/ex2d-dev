@@ -220,7 +220,7 @@ public class exLayer : MonoBehaviour
                 return;
             }
             zMin_ = value;
-            SetWorldBoundsMinZ(zMin_);
+            SetWorldBoundsZMin(zMin_);
         }
     }
     
@@ -242,6 +242,7 @@ public class exLayer : MonoBehaviour
 
     [System.NonSerialized] private int nextSpriteUniqueId = 0;
     [System.NonSerialized] private bool alphaHasChanged = false;
+    [System.NonSerialized] private float zMin;
 
     /// <summary> 任一mesh的font texture更新了，则统一刷新所有mesh </summary>
     [System.NonSerialized] private bool anyFontTextureRefreshed = false;
@@ -277,7 +278,7 @@ public class exLayer : MonoBehaviour
         if (show_ == false) {
             return;
         }
-
+        
         // Remove null sprites
         // 有可能是子sprite被父sprite一起加入了layer中，但从未被激活过，导致OnDestroy没有调用到，所以必须先判断是否为空
         for (int m = meshList.Count - 1; m >= 0; --m) {
@@ -351,7 +352,7 @@ public class exLayer : MonoBehaviour
                     if (sprite.isInIndexBuffer && sprite.updateFlags != exUpdateFlags.None) {
                         exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
                         meshUpdateFlags |= spriteUpdateFlags;
-    }
+                    }
                 }
                 mesh.Apply(meshUpdateFlags);
             }
@@ -544,18 +545,11 @@ public class exLayer : MonoBehaviour
     /// 设置layer的深度，用于layer之间的排序
     // ------------------------------------------------------------------ 
 
-    public float SetWorldBoundsMinZ (float z) {
-        float interval = 0.01f;
-        for (int i = meshList.Count - 1; i >= 0; --i) {
-            exMesh mesh = meshList[i];
-            if (mesh != null) {
-                mesh.transform.position = new Vector3(0, 0, z);
-                z += interval;
-            }
-        }
-        return z;
+    public void SetWorldBoundsZMin (float _zMin) {
+        zMin = _zMin;
+        ResortMeshes();
     }
-        
+
     // ------------------------------------------------------------------ 
     /// 如果Hierarchy中有未加入到layer中的sprite，初始化他们。
     // ------------------------------------------------------------------ 
@@ -782,7 +776,7 @@ public class exLayer : MonoBehaviour
         Material mat = _sprite.material;
         for (int i = 0; i < meshList.Count; ++i) {
             exMesh mesh = meshList[i];
-            if (mesh != null && object.ReferenceEquals(mesh.material, mat)) {
+            if (object.ReferenceEquals(mesh.material, mat) && mesh != null) {   // mesh的引用永远不为空，这里判断的是它是否被unity销毁了
                 bool containsSprite = (_sprite.spriteIndexInMesh >= 0 && _sprite.spriteIndexInMesh < mesh.spriteList.Count && 
                                       ReferenceEquals(mesh.spriteList[_sprite.spriteIndexInMesh], _sprite));
                 //exDebug.Assert(containsSprite == mesh.spriteList.Contains(_sprite), "wrong sprite.spriteIndex");
@@ -804,7 +798,8 @@ public class exLayer : MonoBehaviour
         mesh.SetDynamic(layerType_ == exLayerType.Dynamic);
         meshList.Insert(_index, mesh);
         mesh.UpdateDebugName(this);
-        ex2DRenderer.instance.ResortLayerDepth();
+        //ex2DRenderer.instance.ResortLayerDepth();
+        ResortMeshes(_index);
         return mesh;
     }
 
@@ -813,25 +808,43 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     private exMesh GetNewMesh (Material _mat, int _index) {
-        for (int i = 0; i < meshList.Count; i++) {
+        for (int i = 0, count = meshList.Count; i < count; i++) {
             exMesh mesh = meshList[i];
-            if (mesh != null && mesh.spriteList.Count == 0) {
+            if (mesh.spriteList.Count == 0 && mesh != null) {   // mesh的引用永远不为空，这里判断的是它是否被unity销毁了
                 mesh.material = _mat;
                 mesh.UpdateDebugName(this);
                 if (i < _index) {
                     meshList.RemoveAt(i);
                     meshList.Insert(_index - 1, mesh);
-                    ex2DRenderer.instance.ResortLayerDepth();
+                    //ex2DRenderer.instance.ResortLayerDepth();
+                    ResortMeshes(_index - 1);
                 }
                 else if (i > _index) {
                     meshList.RemoveAt(i);
                     meshList.Insert(_index, mesh);
-                    ex2DRenderer.instance.ResortLayerDepth();
+                    //ex2DRenderer.instance.ResortLayerDepth();
+                    ResortMeshes(_index);
                 }
                 return mesh;
             }
         }
         return CreateNewMesh(_mat, _index);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private void ResortMeshes (int _startIndex = 0) {
+        float interval = 0.01f;
+        float z = zMin - _startIndex * interval;
+        for (int i = _startIndex, count = meshList.Count; i < count; ++i) {
+            exMesh mesh = meshList[i];
+            if (mesh != null) {
+                mesh.transform.position = new Vector3(0, 0, z);
+            }
+            z -= interval;
+        }
     }
 
     // ------------------------------------------------------------------ 
@@ -848,8 +861,8 @@ public class exLayer : MonoBehaviour
         Material mat = _sprite.material;
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
-            if (mesh != null && ReferenceEquals(mesh.material, mat) ) {
-                for (int j = 0; j < mesh.spriteList.Count; ++j) {
+            if (ReferenceEquals(mesh.material, mat) && mesh != null) {
+                for (int j = 0, jMax = mesh.spriteList.Count; j < jMax; ++j) {
                     if (_sprite.spriteIdInLayer == mesh.spriteList[j].spriteIdInLayer) {
                         _sprite.spriteIdInLayer = -1;        //duplicated
                         break;
@@ -1032,7 +1045,7 @@ public class exLayer : MonoBehaviour
             
             //split mesh if batch failed
             exDebug.Assert(exLayeredSprite.enableFastShowHide);    // 要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中
-            if (mesh.sortedSpriteList.Count == 0) continue;        // 跳过空的mesh，尽量把sprite合并到已有的mesh里面
+            if (mesh.sortedSpriteList.Count == 0) continue;       // 跳过空的mesh，尽量把sprite合并到已有的mesh里面
 
             exLayeredSprite top = mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1];
             bool aboveTopSprite = _sprite >= top;

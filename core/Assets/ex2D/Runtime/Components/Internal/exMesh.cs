@@ -458,7 +458,9 @@ public class exMesh : MonoBehaviour
 
     private Mesh CreateMesh () {
         Mesh mesh = new Mesh();
+#if EX_DEBUG
         mesh.name = "ex2D Layered Mesh";
+#endif
         mesh.hideFlags = HideFlags.DontSave;
         return mesh;
     }
