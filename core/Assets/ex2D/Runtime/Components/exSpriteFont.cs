@@ -809,12 +809,10 @@ namespace ex2D.Detail {
                     break;
                 }
                 _sprite.height += _sprite.lineHeight;
-                if ( linebreak ) {
-                    _sprite.height += halfLineHeightMargin;
-                }
-
                 finished = (cur_index >= _sprite.text.Length);
             }
+
+            _sprite.height += halfLineHeightMargin;
 
             return parsedVBIndex - _vbIndex;
 

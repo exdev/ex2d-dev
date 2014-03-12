@@ -133,7 +133,7 @@ using System.Collections.Generic;
     public int fontSize {
         get {
             if (bitmapFont_ != null) {
-                return bitmapFont_.size;
+                return bitmapFont_.lineHeight;
             }
             return dynamicFontSize_;
         }
@@ -283,6 +283,8 @@ using System.Collections.Generic;
                     _charInfo.uv = new Rect();
                 }
                 _charInfo.vert = new Rect(bitmapCharInfo.xoffset, - bitmapCharInfo.yoffset, bitmapCharInfo.width, - bitmapCharInfo.height);
+                float baseLineOffset = bitmapFont_.size - bitmapFont_.baseLine;
+                _charInfo.vert.y += baseLineOffset;
                 _charInfo.width = bitmapCharInfo.xadvance;
                 return true;
             }
