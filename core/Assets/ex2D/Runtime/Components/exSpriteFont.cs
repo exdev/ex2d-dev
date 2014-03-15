@@ -115,7 +115,7 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
             if (wrapWord_ != value) {
                 wrapWord_ = value;
                 updateFlags |= exUpdateFlags.Text;
-	        }
+            }
         }
     }
 

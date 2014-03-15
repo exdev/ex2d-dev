@@ -338,7 +338,7 @@ public class exSpriteAnimation : MonoBehaviour {
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
     
-	void Awake () {
+    void Awake () {
         Init();
         if (enabled) {  // 和Unity自带的Animation保持一致，未激活时不播放
             if (playAutomatically && defaultAnimation != null) {
@@ -348,16 +348,16 @@ public class exSpriteAnimation : MonoBehaviour {
                 enabled = false;
             }
         }
-	}
-	
+    }
+    
     // Unity自带的Animation在Update和LateUpdate之间执行。
     // 这里我们采用LateUpdate，用户如果有需要在帧切换之后执行的操作，可使用事件或自行修改优先级。
-	void LateUpdate () {
+    void LateUpdate () {
         if (curAnimation != null) {
             float delta = Time.deltaTime * curAnimation.speed;
             Step(delta);
         }
-	}
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions

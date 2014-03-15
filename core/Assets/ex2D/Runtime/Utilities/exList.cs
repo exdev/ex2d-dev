@@ -107,7 +107,7 @@ public class exList<T> where T : struct {
         }
     }
 
-    /// 使用此方法会导致list的在需要变长时重新分配buffer
+    /// 使用此方法会导致list变长后需要重新分配buffer
     public T[] FastToArray () {
         TrimExcess ();
         return buffer;

@@ -92,7 +92,10 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     
     // 保存计算好的绝对depth值，只有在调用IComparable接口时才用到。(如果要检查在哪里用到，可以注释掉IComparable的实现)
     // 当父节点的depth改变时，应该先更新父节点的globalDepth并应用到mesh上，再更新子节点。
-    [System.NonSerialized] private float globalDepth_ = 0;
+#if !EX_DEBUG
+    [System.NonSerialized]
+#endif
+    private float globalDepth_ = 0;
     float exLayer.IFriendOfLayer.globalDepth {
         get { return globalDepth_; }
         set { globalDepth_ = value; }
@@ -311,16 +314,17 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public static bool operator > (exLayeredSprite _lhs, exLayeredSprite _rhs) {
-        return _lhs.globalDepth_ > _rhs.globalDepth_ || (_lhs.globalDepth_ == _rhs.globalDepth_ && _lhs.spriteIdInLayer > _rhs.spriteIdInLayer);
+        bool ordered = ReferenceEquals(_lhs.layer_, null) || _lhs.layer_.ordered;
+        return _lhs.globalDepth_ > _rhs.globalDepth_ || (ordered && _lhs.globalDepth_ == _rhs.globalDepth_ && _lhs.spriteIdInLayer > _rhs.spriteIdInLayer);
     }
     
     // ------------------------------------------------------------------ 
     /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
-    /// 如果他们在同一个layer，则当layer是unordered时这个比较才有可能相等
     // ------------------------------------------------------------------ 
     
     public static bool operator >= (exLayeredSprite _lhs, exLayeredSprite _rhs) {
-        return _lhs.globalDepth_ > _rhs.globalDepth_ || (_lhs.globalDepth_ == _rhs.globalDepth_ && _lhs.spriteIdInLayer >= _rhs.spriteIdInLayer);
+        bool ordered = ReferenceEquals(_lhs.layer_, null) || _lhs.layer_.ordered;
+        return _lhs.globalDepth_ > _rhs.globalDepth_ || (_lhs.globalDepth_ == _rhs.globalDepth_ && (ordered == false || _lhs.spriteIdInLayer >= _rhs.spriteIdInLayer));
     }
     
     // ------------------------------------------------------------------ 
@@ -328,7 +332,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public static bool operator < (exLayeredSprite _lhs, exLayeredSprite _rhs) {
-        return _lhs.globalDepth_ < _rhs.globalDepth_ || (_lhs.globalDepth_ == _rhs.globalDepth_ && _lhs.spriteIdInLayer < _rhs.spriteIdInLayer);
+        bool ordered = ReferenceEquals(_lhs.layer_, null) || _lhs.layer_.ordered;
+        return _lhs.globalDepth_ < _rhs.globalDepth_ || (ordered && _lhs.globalDepth_ == _rhs.globalDepth_ && _lhs.spriteIdInLayer < _rhs.spriteIdInLayer);
     }
     
     // ------------------------------------------------------------------ 
@@ -337,7 +342,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public static bool operator <= (exLayeredSprite _lhs, exLayeredSprite _rhs) {
-        return _lhs.globalDepth_ < _rhs.globalDepth_ || (_lhs.globalDepth_ == _rhs.globalDepth_ && _lhs.spriteIdInLayer <= _rhs.spriteIdInLayer);
+        bool ordered = ReferenceEquals(_lhs.layer_, null) || _lhs.layer_.ordered;
+        return _lhs.globalDepth_ < _rhs.globalDepth_ || (_lhs.globalDepth_ == _rhs.globalDepth_ && (ordered == false || _lhs.spriteIdInLayer <= _rhs.spriteIdInLayer));
     }
     
     // ------------------------------------------------------------------ 
@@ -345,22 +351,15 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public int CompareTo(exLayeredSprite _other) {
-        // TODO: 直接返回减法结果
-        if (globalDepth_ < _other.globalDepth_)
-        {
+        if (globalDepth_ < _other.globalDepth_) {
             return -1;
         }
-        if (globalDepth_ > _other.globalDepth_)
-        {
+        if (globalDepth_ > _other.globalDepth_) {
             return 1;
         }
-        if (spriteIdInLayer < _other.spriteIdInLayer)
-        {
-            return -1;
-        }
-        if (spriteIdInLayer > _other.spriteIdInLayer)
-        {
-            return 1;
+        bool ordered = ReferenceEquals(layer_, null) || layer_.ordered;
+        if (ordered) {
+            return spriteIdInLayer - _other.spriteIdInLayer;
         }
         return 0;
     }
@@ -400,18 +399,18 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         exDebug.Assert(material != null);
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Public Functions
-    ///////////////////////////////////////////////////////////////////////////////
-
     // ------------------------------------------------------------------ 
     /// 只重设layer相关属性，但不真的从layer或mesh中删除。
     // ------------------------------------------------------------------ 
     
-    internal void ResetLayerProperties () {
+    void exLayer.IFriendOfLayer.ResetLayerProperties () {
         layer_ = null;
         isInIndexBuffer = false;
     }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Public Functions
+    ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
     // Desc:

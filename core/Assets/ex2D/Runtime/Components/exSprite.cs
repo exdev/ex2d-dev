@@ -1062,7 +1062,7 @@ namespace ex2D.Detail {
                     if (hasNext == false) {
                         // 后面都被Trim掉了
                         return;
-	                }
+                    }
                     exTextureInfo.Dice dice = diceEnumerator.Current;
                     if (dice.sizeType == exTextureInfo.DiceType.Max) {
                         _vertices.buffer[i++] = bottomLeft;

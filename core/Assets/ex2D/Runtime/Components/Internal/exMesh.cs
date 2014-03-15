@@ -19,19 +19,19 @@ using System.Collections.Generic;
 
 [System.FlagsAttribute]
 public enum exUpdateFlags {
-	None		= 0,   ///< none
-	Index	    = 1,   ///< update the indices
-	Vertex		= 2,   ///< update the vertices
-	UV	        = 4,   ///< update the uv coordination
-	Color	    = 8,   ///< update the vertex color
+    None        = 0,   ///< none
+    Index        = 1,   ///< update the indices
+    Vertex        = 2,   ///< update the vertices
+    UV            = 4,   ///< update the uv coordination
+    Color        = 8,   ///< update the vertex color
     Normal      = 16,  ///< update the normal, not implemented yet
-    Text	    = 32,  ///< update the text, only used in sprite font
+    Text        = 32,  ///< update the text, only used in sprite font
     Transparent = 64,  ///< hide sprite
     //SelfDepth       = 128, ///< update sprite's depth(not include its children), only used in layered sprite
 
-	VertexAndIndex = (Index | Vertex),
-	AllExcludeIndex = (Vertex | UV | Color | Normal | Text | Transparent/* | SelfDepth*/),
-	All = (AllExcludeIndex | Index),
+    VertexAndIndex = (Index | Vertex),
+    AllExcludeIndex = (Vertex | UV | Color | Normal | Text | Transparent/* | SelfDepth*/),
+    All = (AllExcludeIndex | Index),
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -418,7 +418,7 @@ public class exMesh : MonoBehaviour
     private Mesh SwapMeshBuffer() {
         exDebug.Assert(isDynamic);
         if (enableDoubleBuffer) {
-    		isEvenMeshBuffer = !isEvenMeshBuffer;
+            isEvenMeshBuffer = !isEvenMeshBuffer;
             exUpdateFlags currentBufferUpdate = updateFlags;
             updateFlags |= lastUpdateFlags;          // combine changes during two frame
             lastUpdateFlags = currentBufferUpdate;   // for next buffer

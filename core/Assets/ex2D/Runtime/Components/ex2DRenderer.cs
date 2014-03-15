@@ -185,11 +185,12 @@ public class ex2DRenderer : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void InsertLayer ( int _idx, exLayer _layer ) {
-        if ( _idx < 0 )
-            _idx = 0;
-        if ( _idx >= layerList.Count )
-            _idx = layerList.Count;
-
+        _idx = Mathf.Clamp(_idx, 0, layerList.Count);
+        if (layerList.Contains(_layer)) {
+            Debug.LogWarning("Layer already exists in ex2DRenderer: " + _layer, _layer);
+            return;
+        }
+        
         layerList.Insert( _idx, _layer );
 
         //
@@ -204,9 +205,9 @@ public class ex2DRenderer : MonoBehaviour {
     public exLayer GetLayer (string _layerName) {
         for (int i = 0; i < layerList.Count; ++i) {
             exLayer layer = layerList[i];
-        	if (layer != null && layer.name == _layerName) {
+            if (layer != null && layer.name == _layerName) {
                 return layer;
-        	}
+            }
         }
         return null;
     }

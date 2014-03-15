@@ -51,6 +51,7 @@ public class exLayer : MonoBehaviour
         //void DoSetDepth (float _depth);
         void DoSetBufferSize (int _vertexCount, int _indexCount);
         void SetMaterialDirty ();
+        void ResetLayerProperties ();
     }
 
     // ------------------------------------------------------------------ 
@@ -143,16 +144,19 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     [SerializeField] 
-    private bool ordered_ = true;
+    private bool ordered_ = false;
     public bool ordered {
         get {
             return ordered_;
         }
         set { 
-            if (ordered_ == value) {
-                return;
+            if (ordered_ != value) {
+                ordered_ = value;
+                if (ordered_) {
+                    DestroyMeshes();
+                    GenerateMeshes();
+                }
             }
-            ordered_ = value;
         }
     }
 
@@ -422,15 +426,15 @@ public class exLayer : MonoBehaviour
             int meshIndex = IndexOfMesh (_sprite);
             if (meshIndex != -1) {
                 RemoveFromMesh (_sprite, meshList [meshIndex]);
-                (_sprite as IFriendOfLayer).DoSetLayer(null);
+                (_sprite as IFriendOfLayer).DoSetLayer (null);
             }
             else {
-                _sprite.ResetLayerProperties ();  //if mesh has been destroyed, just reset sprite
+                (_sprite as IFriendOfLayer).ResetLayerProperties ();  //if mesh has been destroyed, just reset sprite
             }
             if (_sprite.spriteIdInLayer == nextSpriteUniqueId - 1 && nextSpriteUniqueId > 0) {
                 --nextSpriteUniqueId;
             }
-            _sprite.spriteIdInLayer = 0;
+            _sprite.spriteIdInLayer = -1;
         }
     }
     
@@ -529,6 +533,7 @@ public class exLayer : MonoBehaviour
         DestroyMeshes();
         GenerateMeshes();
         meshList.TrimExcess();
+        depthDirtyGoList.TrimExcess();
 
         for (int i = 0; i < meshList.Count; ++i) {
             exMesh mesh = meshList[i];
@@ -555,9 +560,24 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
         
     public void GenerateMeshes () {
+        // 在DestroyMeshes后，GenerateMeshes前有可能又加入了新的sprite，这时需要防止新的sprite和旧的sprite id重复
+        int existedMaxSpriteId = 0;
+        for (int m = meshList.Count - 1; m >= 0; --m) {
+            exMesh mesh = meshList[m];
+            if (mesh != null) {
+                for (int i = mesh.spriteList.Count - 1; i >= 0; --i) {
+                    int id = mesh.spriteList[i].spriteIdInLayer;
+                    if (existedMaxSpriteId < id) {
+                        existedMaxSpriteId = id;
+                    }
+                }
+            }
+        }
+        //
         exLayeredSprite[] spriteList = GetComponentsInChildren<exLayeredSprite>(true);
         foreach (exLayeredSprite sprite in spriteList) {
             if (ReferenceEquals(sprite.layer, this) == false) {
+                sprite.spriteIdInLayer += existedMaxSpriteId;
                 DoAddSprite(sprite, false);
             }
         }
@@ -577,10 +597,10 @@ public class exLayer : MonoBehaviour
         exLayeredSprite[] spriteList = GetComponentsInChildren<exLayeredSprite>(true);
         foreach (exLayeredSprite sprite in spriteList) {
             if (sprite != null) {
-                if (sprite.layer != null && ReferenceEquals(sprite.layer, this) == false) {
+                if (ReferenceEquals(sprite.layer, this) == false && sprite.layer != null) {
                     Debug.LogError("Sprite's hierarchy is invalid!", sprite);
                 }
-                sprite.ResetLayerProperties();
+                (sprite as IFriendOfLayer).ResetLayerProperties();
             }
         }
         for (int i = meshList.Count - 1; i >= 0; --i) {
@@ -903,7 +923,7 @@ public class exLayer : MonoBehaviour
         int delta = mesh.vertices.Count - _newVertexCount;
         int realDelta = 0;
         for (int i = mesh.sortedSpriteList.Count - 1; i >= 0; --i) {
-    	    exLayeredSprite aboveSprite = mesh.sortedSpriteList[i];
+            exLayeredSprite aboveSprite = mesh.sortedSpriteList[i];
             realDelta += aboveSprite.vertexCount;
             if (realDelta >= delta) {
                 exMesh dstMesh;
@@ -970,7 +990,7 @@ public class exLayer : MonoBehaviour
             exDebug.Assert(0 < _aboveSpriteIndex && _aboveSpriteIndex <= mesh.sortedSpriteList.Count - 1, "no need to shift the mesh");
         }
         else {
-            exDebug.Assert(0 < _aboveSpriteIndex && _aboveSpriteIndex < mesh.sortedSpriteList.Count - 1, "no need to shift the mesh");
+            exDebug.Assert(0 < _aboveSpriteIndex && _aboveSpriteIndex < mesh.sortedSpriteList.Count - 1, "no need to shift the mesh", this);
             ++_aboveSpriteIndex;     // just insert above same depth sprite
         }
         if (_aboveSpriteIndex <= mesh.sortedSpriteList.Count) {
@@ -998,7 +1018,7 @@ public class exLayer : MonoBehaviour
         GetBelowVertexCountInMesh(_meshIndex, _sprite, _maxVertexCount, out aboveSpriteIndex);
         int belowVertexCount = mesh.vertices.Count;
         for (int i = mesh.sortedSpriteList.Count - 1; i >= aboveSpriteIndex; --i) {
-        	exLayeredSprite aboveSprite = mesh.sortedSpriteList[i];
+            exLayeredSprite aboveSprite = mesh.sortedSpriteList[i];
             belowVertexCount -= aboveSprite.vertexCount;
             if (belowVertexCount + newSpriteVertexCount <= _maxVertexCount) {
                 ShiftSpritesUp(_meshIndex, belowVertexCount, _maxVertexCount); // 上移
@@ -1037,38 +1057,54 @@ public class exLayer : MonoBehaviour
     private exMesh GetMeshToAdd (exLayeredSprite _sprite) {
         Material mat = _sprite.material;
         int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT;
+        maxVertexCount -= _sprite.vertexCount;
+        exMesh lastMesh = null;
         // TODO: 如果sprite的vertex count大于maxVertexCount
-        int restVertexCount = maxVertexCount - _sprite.vertexCount;
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
             if (mesh == null) continue;
-            
-            //split mesh if batch failed
             exDebug.Assert(exLayeredSprite.enableFastShowHide);    // 要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中
             if (mesh.sortedSpriteList.Count == 0) continue;       // 跳过空的mesh，尽量把sprite合并到已有的mesh里面
 
             exLayeredSprite top = mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1];
+            exLayeredSprite bot = mesh.sortedSpriteList[0];
+            bool canSkipMesh = ordered_ == false && _sprite <= bot;   // 如果sprite的depth和mesh里所有的depth都相等，则可放到当前mesh下
+
             bool aboveTopSprite = _sprite >= top;
-            if (aboveTopSprite) {   // 在这个mesh之上层 TODO: 如果是unordered，还可以优化成检查同一个depth的mesh后面是否有相同材质的mesh
-                if (ReferenceEquals(mesh.material, mat) && mesh.vertices.Count <= restVertexCount) {
-                    return mesh;
+            if (aboveTopSprite) {   // 在这个mesh之上层
+                if (ReferenceEquals(mesh.material, mat) && mesh.vertices.Count <= maxVertexCount) {
+                    return mesh;                        // bingo
+                }
+                if (canSkipMesh) {
+                    continue;                           // 不符合条件，跳到下一个mesh去判断，有可能就不用创建新mesh
                 }
                 else {
-                    return GetNewMesh(mat, i + 1);   //在mesh上层创建一个新mesh
+                    bool canAppendToLastMesh = !ReferenceEquals(lastMesh, null)
+                                                && ReferenceEquals(lastMesh.material, mat)
+                                                && lastMesh.vertices.Count <= maxVertexCount;
+                    if (canAppendToLastMesh)
+                        return lastMesh;                 // 贴到上一个mesh屁股下
+                    else
+                        return GetNewMesh(mat, i + 1);   // 不符合条件，在mesh上层创建一个新mesh
                 }
             }
-            else {
-                exLayeredSprite bot = mesh.sortedSpriteList[0];
-                bool aboveBottomSprite = _sprite > bot;
-                if (aboveBottomSprite) {   // 在这个mesh的depth内
-                    if (ReferenceEquals(mesh.material, mat)) {
-                        if (mesh.vertices.Count <= restVertexCount) {
-                            return mesh;
-                        }
-                        else {
-                            // mesh太大，把同材质的连续mesh的上面的sprite分出去，然后用新加的sprite依次填满空出来的格子
-                            return GetShiftedMesh(i, _sprite, maxVertexCount);
-                        }
+
+            bool aboveBottomSprite = _sprite >= bot;
+            if (aboveBottomSprite) {
+                // 在这个mesh的depth内，如果bot == top，则不会运行到这里
+                if (ReferenceEquals(mesh.material, mat)) {
+                    if (mesh.vertices.Count <= maxVertexCount) {
+                        return mesh;                    // bingo
+                    }
+                    if (canSkipMesh)
+                        continue;                       // 不符合条件，跳到下一个mesh去判断，有可能就不用创建新mesh
+                    else
+                                                         // 材质相同但mesh过大，把mesh的上面的sprite分出去，然后用新加的sprite依次填满空出来的格子
+                        return GetShiftedMesh(i, _sprite, maxVertexCount);
+                }
+                else {
+                    if (canSkipMesh) {
+                        continue;                       // 不符合条件，跳到下一个mesh去判断，有可能就不用创建新mesh
                     }
                     else {
                         // 两个相同材质的sprite中间插入了另一个材质的sprite，则需要将上下两个sprite拆分到两个不同的mesh
@@ -1077,19 +1113,20 @@ public class exLayer : MonoBehaviour
                         return GetNewMesh(mat, i + 1);
                     }
                 }
-                // 否则和bot的深度相等，这时交由下层的mesh去处理
             }
+
+            lastMesh = mesh;
         }
         if (meshList.Count > 0) {
             exMesh bottomMesh = meshList[0];
-            if (ReferenceEquals(bottomMesh.material, mat) && bottomMesh.vertices.Count <= restVertexCount) {
+            if (ReferenceEquals(bottomMesh.material, mat) && bottomMesh.vertices.Count <= maxVertexCount) {
                 // 插入到最下面一个mesh
                 return bottomMesh;
             }
             // 在最下面创建一个新mesh
             exMesh newMesh = GetNewMesh(mat, 0);
             if (ReferenceEquals(bottomMesh.material, mat)) {
-                ShiftSpritesDown(0, restVertexCount, maxVertexCount);   // 向下把mesh都填满
+                ShiftSpritesDown(0, maxVertexCount, maxVertexCount);   // 向下把mesh都填满
             }
             return newMesh;
         }
@@ -1223,11 +1260,18 @@ public class exLayer : MonoBehaviour
         if (!_sprite.isInIndexBuffer) {
             int sortedSpriteIndex;
             if (_mesh.sortedSpriteList.Count > 0) {
-                sortedSpriteIndex = _mesh.sortedSpriteList.BinarySearch(_sprite);   // TODO: benchmark
-                exDebug.Assert(sortedSpriteIndex < 0, sortedSpriteIndex.ToString());  //sprite实现的比较方法决定了这种情况下不可能找到等同的排序
+                if (ordered_ == false && _sprite >= _mesh.sortedSpriteList[_mesh.sortedSpriteList.Count - 1]) {
+                    // check whether we can just append it
+                    sortedSpriteIndex = _mesh.sortedSpriteList.Count;
+                }
+                else {
+                    sortedSpriteIndex = _mesh.sortedSpriteList.BinarySearch(_sprite);
+                    exDebug.Assert(ordered_ == false || sortedSpriteIndex < 0, "sprite实现的比较方法决定了这种情况下不可能找到等同的排序");
+                }
                 if (sortedSpriteIndex < 0) {
                     sortedSpriteIndex = ~sortedSpriteIndex;
                 }
+                
                 if (sortedSpriteIndex >= _mesh.sortedSpriteList.Count) {
                     // this sprite's depth is biggest
                     _sprite.indexBufferIndex = _mesh.indices.Count;
@@ -1297,7 +1341,7 @@ public class exLayer : MonoBehaviour
     private exLayeredSprite GetNearestSpriteFromBelowMesh (int _curMeshIndex) {
         for (int belowMeshIndex = _curMeshIndex - 1; belowMeshIndex >= 0; --belowMeshIndex) {
             exMesh belowMesh = meshList[belowMeshIndex];
-            if (belowMesh != null && belowMesh.sortedSpriteList.Count > 0) {
+            if (belowMesh.sortedSpriteList.Count > 0 && belowMesh != null) {
                 return belowMesh.sortedSpriteList[belowMesh.sortedSpriteList.Count - 1];
             }
         }
@@ -1311,7 +1355,7 @@ public class exLayer : MonoBehaviour
     private exLayeredSprite GetNearestSpriteFromAboveMesh (int _curMeshIndex) {
         for (int aboveMeshIndex = _curMeshIndex + 1; aboveMeshIndex < meshList.Count; ++aboveMeshIndex) {
             exMesh aboveMesh = meshList[aboveMeshIndex];
-            if (aboveMesh != null && aboveMesh.sortedSpriteList.Count > 0) {
+            if (aboveMesh.sortedSpriteList.Count > 0 && aboveMesh != null) {
                 return aboveMesh.sortedSpriteList[0];
             }
         }

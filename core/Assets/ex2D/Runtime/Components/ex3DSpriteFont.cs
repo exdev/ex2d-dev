@@ -101,7 +101,7 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
             if (wrapWord_ != value) {
                 wrapWord_ = value;
                 updateFlags |= exUpdateFlags.Text;
-	        }
+            }
         }
     }
 
