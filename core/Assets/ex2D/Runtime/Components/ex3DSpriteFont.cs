@@ -442,7 +442,7 @@ public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
         vertices.AddRange(visibleVertexCount);
 
-        SpriteFontBuilder.BuildText(this, _space, vertices, 0, null);
+        SpriteFontBuilder.BuildText(this, _space, vertices, 0);
         return vertices.ToArray();
     }
     

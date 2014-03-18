@@ -395,7 +395,7 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
         vertices.AddRange(vertexCount_);
         exDebug.Assert(vertexCount_ >= text_.Length * 4);
         
-        SpriteFontBuilder.BuildText(this, _space, vertices, 0, null);
+        SpriteFontBuilder.BuildText(this, _space, vertices, 0);
         return vertices.ToArray();
     }
 
@@ -544,7 +544,24 @@ namespace ex2D.Detail {
     ///////////////////////////////////////////////////////////////////////////////
 
     internal static class SpriteFontBuilder {
-        
+
+        ///////////////////////////////////////////////////////////////////////////////
+        // Temp parameters for BuildText
+        ///////////////////////////////////////////////////////////////////////////////
+
+        private static Color32 top;
+        private static Color32 bot;
+
+        private static exList<Vector3> vertices;
+        private static exList<Vector2> uvs;
+        private static exList<Color32> colors32;
+        private static int vbIndex;
+        //private static Vector2 texelSize;
+
+        ///////////////////////////////////////////////////////////////////////////////
+        // Functions
+        ///////////////////////////////////////////////////////////////////////////////
+
         // ------------------------------------------------------------------ 
         // Desc: 
         // ------------------------------------------------------------------ 
@@ -567,10 +584,22 @@ namespace ex2D.Detail {
                 return _sprite.updateFlags;
             }
 #endif
+            bool colorUpdated = false;   // 有渐变色时，每个字符单独计算顶点色，否则全局填充顶点色
+
             //Debug.Log(string.Format("[UpdateBuffers|SpriteFontBuilder] _vbIndex: {0} _ibIndex: {1}", _vbIndex, _ibIndex));
             if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.Vertex)) != 0) {
-                //exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
-                BuildText(_sprite, _space, _vertices, _vbIndex, _uvs);
+                top = new Color32 ();
+                bot = new Color32 ();
+                if (_alpha > 0.0f) {
+                    // 初始化渐变色要用到的全局参数
+                    Color tmp = _sprite.color; tmp.a *= _alpha;
+                    top = _sprite.topColor * tmp;
+                    bot = _sprite.botColor * tmp;
+                }
+                colorUpdated = ! (top.r == bot.r && top.g == bot.g && top.b == bot.b && top.a == bot.a);
+
+                BuildText(_sprite, _space, _vertices, _vbIndex, _uvs, colorUpdated ? _colors32 : null);
+
                 if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
                     _sprite.updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV | exUpdateFlags.Color);
                 }
@@ -587,24 +616,13 @@ namespace ex2D.Detail {
                     _indices.buffer[i + 5] = v;
                 }
             }
-            if ((_sprite.updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null) {
-                Color32 top, bot;
-                if (_alpha > 0.0f) {
-                    var color = _sprite.topColor * _sprite.color;
-                    top = new Color(color.r, color.g, color.b, color.a * _alpha);
-                    color = _sprite.botColor * _sprite.color;
-                    bot = new Color(color.r, color.g, color.b, color.a * _alpha);
-                }
-                else {
-                    top = new Color32 ();
-                    bot = new Color32 ();
-                }
+            if ((_sprite.updateFlags & exUpdateFlags.Color) != 0 && _colors32 != null && colorUpdated == false) {
+                // if not gradient we just need to fill same color here
+                Color tmp = _sprite.topColor * _sprite.color;
+                Color32 color32 = new Color(tmp.r, tmp.g, tmp.b, tmp.a * _alpha);
                 int vertexBufferEnd = _vbIndex + _sprite.text.Length * 4;
-                for (int i = _vbIndex; i < vertexBufferEnd; i += 4) {
-                    _colors32.buffer[i + 0] = bot;
-                    _colors32.buffer[i + 1] = top;
-                    _colors32.buffer[i + 2] = top;
-                    _colors32.buffer[i + 3] = bot;
+                for (int i = _vbIndex; i < vertexBufferEnd; ++i) {
+                    _colors32.buffer[i] = color32;
                 }
             }
             exUpdateFlags updatedFlags = _sprite.updateFlags;
@@ -616,19 +634,20 @@ namespace ex2D.Detail {
         // Desc:
         // ------------------------------------------------------------------ 
 
-        public static void BuildText (exISpriteFont _sprite, Space _space, exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs = null) {
+        public static void BuildText (exISpriteFont _sprite, Space _space, exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs = null, exList<Color32> _colors32 = null) {
+            // 保存变量到全局，减少内部传参
+            vertices = _vertices;
+            uvs = _uvs;
+            colors32 = _colors32;
+            vbIndex = _vbIndex;
+
             // request font texture, this may called OnFontTextureRebuilt to set _sprite.updateFlags
             _sprite.font.RequestCharactersInTexture (_sprite.text);
-            
-            if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.UV)) == 0) {
-                _uvs = null;    // no need to update uv
-            }
-
             _sprite.height = 0.0f;
             float displayWidth = 0; // 实际渲染的宽度不等于sprite.width(换行宽度)
             int visibleVertexCount = 0;
             if (_sprite.font.isValid) {
-                visibleVertexCount = BuildTextInLocalSpace(_sprite, _vertices, _vbIndex, _uvs, out displayWidth);
+                visibleVertexCount = BuildTextInLocalSpace(_sprite, out displayWidth);
             }
             if (visibleVertexCount == 0 && _sprite.vertexCount >= 4) {
                 visibleVertexCount = 4;
@@ -735,6 +754,10 @@ namespace ex2D.Detail {
                 }
             }
             
+            vertices = null;
+            uvs = null;
+            colors32 = null;
+
             // TODO: pixel-perfect
         }
         
@@ -742,7 +765,7 @@ namespace ex2D.Detail {
         /// Return used vertex count
         // ------------------------------------------------------------------ 
         
-        public static int BuildTextInLocalSpace (exISpriteFont _sprite, exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs, out float maxWidth) {
+        private static int BuildTextInLocalSpace (exISpriteFont _sprite, out float maxWidth) {
             // cache property
             //string text = _sprite.text;
             //bool useKerning = _sprite.useKerning;
@@ -752,10 +775,17 @@ namespace ex2D.Detail {
             //int wordSpacing = _sprite.wordSpacing;
             //int letterSpacing = _sprite.letterSpacing;
             //
-            Vector2 texelSize = new Vector2();
-            if (_uvs != null && _sprite.font.texture != null) {
-                texelSize = _sprite.font.texture.texelSize;
+
+            if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.Color)) == 0) {
+                colors32 = null;    // no need to update color
             }
+            //texelSize = new Vector2();
+            if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.UV)) == 0) {
+                uvs = null;         // no need to update uv
+            }
+            //else if (uvs != null && _sprite.font.texture != null) {
+            //    texelSize = _sprite.font.texture.texelSize;
+            //}
 
             float halfLineHeightMargin = (_sprite.lineHeight - _sprite.fontSize) * 0.5f;
             _sprite.height = halfLineHeightMargin;
@@ -765,26 +795,26 @@ namespace ex2D.Detail {
             //       而且一个mesh其实也显示不了太多字。
             StringBuilder strBuilder = new StringBuilder(_sprite.text.Length);
             int cur_index = 0;
-            int parsedVBIndex = _vbIndex;
+            int parsedVbIndex = vbIndex;
             bool finished = false;
 
             while ( finished == false ) {
                 int line_width = 0;
                 strBuilder.Length = 0;  // Clear
-                bool linebreak = exTextUtility.CalcTextLine ( out line_width, 
-                                                              out cur_index,
-                                                              strBuilder,
-                                                              _sprite.text,
-                                                              cur_index,
-                                                              (int)_sprite.width,
-                                                              _sprite.font,
-                                                              _sprite.wordSpacing,
-                                                              _sprite.letterSpacing,
-                                                              _sprite.wrapWord,
-                                                              false,
-                                                              false );
-                int lineStart = parsedVBIndex;
-                float lineWidth = BuildLine(strBuilder.ToString(), _sprite, _vertices, _uvs, ref parsedVBIndex, - _sprite.height, texelSize);
+                exTextUtility.CalcTextLine ( out line_width, 
+                                            out cur_index,
+                                            strBuilder,
+                                            _sprite.text,
+                                            cur_index,
+                                            (int)_sprite.width,
+                                            _sprite.font,
+                                            _sprite.wordSpacing,
+                                            _sprite.letterSpacing,
+                                            _sprite.wrapWord,
+                                            false,
+                                            false );
+                int lineStart = parsedVbIndex;
+                float lineWidth = BuildLine(strBuilder.ToString(), _sprite, ref parsedVbIndex, - _sprite.height);
                 if (lineWidth > maxWidth) {
                     maxWidth = lineWidth;
                 }
@@ -797,14 +827,14 @@ namespace ex2D.Detail {
                 case TextAlignment.Center:
                     // convert to top center
                     float halfLineWidth = lineWidth * 0.5f;
-                    for (int i = lineStart; i < parsedVBIndex; ++i) {
-                        _vertices.buffer[i].x -= halfLineWidth;
+                    for (int i = lineStart; i < parsedVbIndex; ++i) {
+                        vertices.buffer[i].x -= halfLineWidth;
                     }
                     break;
                 case TextAlignment.Right:
                     // convert to top right
-                    for (int i = lineStart; i < parsedVBIndex; ++i) {
-                        _vertices.buffer[i].x -= lineWidth;
+                    for (int i = lineStart; i < parsedVbIndex; ++i) {
+                        vertices.buffer[i].x -= lineWidth;
                     }
                     break;
                 }
@@ -814,7 +844,7 @@ namespace ex2D.Detail {
 
             _sprite.height += halfLineHeightMargin;
 
-            return parsedVBIndex - _vbIndex;
+            return parsedVbIndex - vbIndex;
 
             // DISABLE {
             //int parsedVBIndex = _vbIndex;
@@ -857,52 +887,51 @@ namespace ex2D.Detail {
         // Desc: 
         // ------------------------------------------------------------------ 
 
-        public static bool BuildChar (exFont _font,
-                                        char _char,
-                                        float _x,
-                                        float _y,
-                                        out float charWidth,
-                                        out float advance,
-                                        exList<Vector3> _vertices,
-                                        exList<Vector2> _uvs,
-                                        int _vbIndex,
-                                        Vector2 _texelSize) {
+        private static bool BuildChar (exFont _font, char _char, Vector2 _pos, int _vbIndex, out float charWidth, out float advance) {
             CharacterInfo ci;
             if (_font.GetCharInfo(_char, out ci) == false) {
                 // character is not present, it will not display
                 // Debug.Log("character is not present: " + c, this);
-                _vertices.buffer[_vbIndex + 0] = new Vector3();
-                _vertices.buffer[_vbIndex + 1] = new Vector3();
-                _vertices.buffer[_vbIndex + 2] = new Vector3();
-                _vertices.buffer[_vbIndex + 3] = new Vector3();
+                vertices.buffer[_vbIndex + 0] = new Vector3();
+                vertices.buffer[_vbIndex + 1] = new Vector3();
+                vertices.buffer[_vbIndex + 2] = new Vector3();
+                vertices.buffer[_vbIndex + 3] = new Vector3();
                 charWidth = -1;
                 advance = -1;
                 return false;
             }
 
-            _vertices.buffer[_vbIndex + 0] = new Vector3(_x + ci.vert.xMin, _y + ci.vert.yMax, 0.0f);
-            _vertices.buffer[_vbIndex + 1] = new Vector3(_x + ci.vert.xMin, _y + ci.vert.yMin, 0.0f);
-            _vertices.buffer[_vbIndex + 2] = new Vector3(_x + ci.vert.xMax, _y + ci.vert.yMin, 0.0f);
-            _vertices.buffer[_vbIndex + 3] = new Vector3(_x + ci.vert.xMax, _y + ci.vert.yMax, 0.0f);
+            vertices.buffer[_vbIndex + 0] = new Vector3(_pos.x + ci.vert.xMin, _pos.y + ci.vert.yMax, 0.0f);
+            vertices.buffer[_vbIndex + 1] = new Vector3(_pos.x + ci.vert.xMin, _pos.y + ci.vert.yMin, 0.0f);
+            vertices.buffer[_vbIndex + 2] = new Vector3(_pos.x + ci.vert.xMax, _pos.y + ci.vert.yMin, 0.0f);
+            vertices.buffer[_vbIndex + 3] = new Vector3(_pos.x + ci.vert.xMax, _pos.y + ci.vert.yMax, 0.0f);
             
             // advance x
             charWidth = ci.vert.width;
             advance = ci.width;
 
-            // build uv
-            if (_uvs != null) {
+            // set uv
+            if (uvs != null) {
                 if (ci.flipped) {
-                    _uvs.buffer [_vbIndex + 0] = new Vector2 (ci.uv.xMin, ci.uv.yMin);
-                    _uvs.buffer [_vbIndex + 1] = new Vector2 (ci.uv.xMax, ci.uv.yMin);
-                    _uvs.buffer [_vbIndex + 2] = new Vector2 (ci.uv.xMax, ci.uv.yMax);
-                    _uvs.buffer [_vbIndex + 3] = new Vector2 (ci.uv.xMin, ci.uv.yMax);
+                    uvs.buffer[_vbIndex + 0] = new Vector2(ci.uv.xMin, ci.uv.yMin);
+                    uvs.buffer[_vbIndex + 1] = new Vector2(ci.uv.xMax, ci.uv.yMin);
+                    uvs.buffer[_vbIndex + 2] = new Vector2(ci.uv.xMax, ci.uv.yMax);
+                    uvs.buffer[_vbIndex + 3] = new Vector2(ci.uv.xMin, ci.uv.yMax);
                 }
                 else {
-                    _uvs.buffer [_vbIndex + 0] = new Vector2 (ci.uv.xMin, ci.uv.yMin);
-                    _uvs.buffer [_vbIndex + 1] = new Vector2 (ci.uv.xMin, ci.uv.yMax);
-                    _uvs.buffer [_vbIndex + 2] = new Vector2 (ci.uv.xMax, ci.uv.yMax);
-                    _uvs.buffer [_vbIndex + 3] = new Vector2 (ci.uv.xMax, ci.uv.yMin);
+                    uvs.buffer[_vbIndex + 0] = new Vector2(ci.uv.xMin, ci.uv.yMin);
+                    uvs.buffer[_vbIndex + 1] = new Vector2(ci.uv.xMin, ci.uv.yMax);
+                    uvs.buffer[_vbIndex + 2] = new Vector2(ci.uv.xMax, ci.uv.yMax);
+                    uvs.buffer[_vbIndex + 3] = new Vector2(ci.uv.xMax, ci.uv.yMin);
                 }
+            }
+
+            // set color
+            if (colors32 != null) {
+                colors32.buffer[_vbIndex + 0] = bot;
+                colors32.buffer[_vbIndex + 1] = top;
+                colors32.buffer[_vbIndex + 2] = top;
+                colors32.buffer[_vbIndex + 3] = bot;
             }
             return true;
         }
@@ -911,51 +940,51 @@ namespace ex2D.Detail {
         // Desc: 
         // ------------------------------------------------------------------ 
         
-        public static float BuildLine (string _text, exISpriteFont _sprite, exList<Vector3> _vertices, exList<Vector2> _uvs, ref int _vbIndex, float _top, Vector2 _texelSize) {
+        private static float BuildLine (string _text, exISpriteFont _sprite, ref int _parsedVbIndex, float _top) {
             // cache property
             var letterSpacing = _sprite.letterSpacing;
             var wordSpacing = _sprite.wordSpacing;
             bool useKerning = _sprite.useKerning;
             exFont font = _sprite.font;
             //
-            float curX = 0.0f;
+            Vector2 pos = new Vector2(0.0f, _top);
             float lastAdvance = 0.0f;
             float lastWidth = 0.0f;
-            for (int _charIndex = 0; _charIndex < _text.Length; ++_charIndex, _vbIndex += 4, curX += letterSpacing) {
+            for (int _charIndex = 0; _charIndex < _text.Length; ++_charIndex, _parsedVbIndex += 4, pos.x += letterSpacing) {
                 char c = _text[_charIndex];
                 
                 // if new line
                 if ( c == '\n' || c == '\r' ) {
-                    _vertices.buffer[_vbIndex + 0] = new Vector3();
-                    _vertices.buffer[_vbIndex + 1] = new Vector3();
-                    _vertices.buffer[_vbIndex + 2] = new Vector3();
-                    _vertices.buffer[_vbIndex + 3] = new Vector3();
+                    vertices.buffer[_parsedVbIndex + 0] = new Vector3();
+                    vertices.buffer[_parsedVbIndex + 1] = new Vector3();
+                    vertices.buffer[_parsedVbIndex + 2] = new Vector3();
+                    vertices.buffer[_parsedVbIndex + 3] = new Vector3();
                     ++_charIndex;
-                    _vbIndex += 4;
+                    _parsedVbIndex += 4;
                     break;
                 }
                 
                 bool hasPreviousChar = _charIndex > 0;
                 if (hasPreviousChar) {
-                    curX += lastAdvance;
+                    pos.x += lastAdvance;
                     // kerning
                     if (useKerning) {
-                        curX += font.GetKerning(_text[_charIndex - 1], c);
+                        pos.x += font.GetKerning(_text[_charIndex - 1], c);
                     }
                     // wordSpacing
                     if (c == ' ') {
-                        curX += wordSpacing;
+                        pos.x += wordSpacing;
                     }
                 }
 
                 float width, advance;
-                if (BuildChar(font, c, curX, _top, out width, out advance, _vertices, _uvs, _vbIndex, _texelSize)) {
+                if (BuildChar(font, c, pos, _parsedVbIndex, out width, out advance)) {
                     // advance x
                     lastWidth = width;
                     lastAdvance = advance;
                 }
             }
-            return curX + lastWidth;
+            return pos.x + lastWidth;
         }
     }
 }
