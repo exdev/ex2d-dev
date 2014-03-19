@@ -124,8 +124,13 @@ public static class exMath {
     public static Vector3 Lerp ( Vector3 _from, Vector3 _to, float _v ) {
         return _from * ( 1.0f - _v ) + _to * _v;
     }
+
+    // ------------------------------------------------------------------ 
+    // No clamp version of Color.Lerp
+    // ------------------------------------------------------------------ 
+
     public static Color Lerp ( Color _from, Color _to, float _v ) {
-        return _from * ( 1.0f - _v ) + _to * _v;
+        return new Color(_from.r + ((_to.r - _from.r) * _v), _from.g + ((_to.g - _from.g) * _v), _from.b + ((_to.b - _from.b) * _v), _from.a + ((_to.a - _from.a) * _v));
     }
     public static Rect Lerp ( Rect _from, Rect _to, float _v ) {
         Rect rect = new Rect();

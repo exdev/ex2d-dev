@@ -183,7 +183,7 @@ static class exISpriteFontInspector {
                 exISpriteFont sp = obj as exISpriteFont;
                 if ( sp != null ) {
                     sp.useKerning = _useKerningProp.boolValue;
-                    EditorUtility.SetDirty(sp as Object);
+                    EditorUtility.SetDirty(obj);
                 }
             }
         }
@@ -267,7 +267,7 @@ static class exISpriteFontInspector {
                 exISpriteFont sp = obj as exISpriteFont;
                 if ( sp != null ) {
                     sp.topColor = _topColorProp.colorValue;
-                    EditorUtility.SetDirty(sp as Object);
+                    EditorUtility.SetDirty(obj);
                 }
             }
         }
@@ -280,7 +280,7 @@ static class exISpriteFontInspector {
                 exISpriteFont sp = obj as exISpriteFont;
                 if ( sp != null ) {
                     sp.botColor = _botColorProp.colorValue;
-                    EditorUtility.SetDirty(sp as Object);
+                    EditorUtility.SetDirty(obj);
                 }
             }
         }

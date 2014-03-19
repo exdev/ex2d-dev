@@ -353,6 +353,18 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
                                                     exList<Vector2> _uvs,
                                                     exList<Color32> _colors32,
                                                     exList<int> _indices) {
+        if (font_.isValid == false) {
+            if ((updateFlags & exUpdateFlags.Text) != 0) {
+                updateFlags &= ~exUpdateFlags.Text;
+                Vector3 meshBBoxPoint = _vertices.buffer.Length > 0 ? _vertices.buffer[0] : new Vector3();
+                for (int i = 1; i < vertexCount_; ++i) {
+                    _vertices.buffer[vertexBufferIndex + i] = meshBBoxPoint;
+                }
+                return exUpdateFlags.Vertex;
+            }
+            return exUpdateFlags.None;
+        }
+
         // save dirty flag because SpriteFontBuilder.UpdateBuffers will overwrite it
         exUpdateFlags applyedFlags = exUpdateFlags.None;
         bool transparentDirty = (updateFlags & exUpdateFlags.Transparent) != 0;
@@ -375,9 +387,9 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
         
         if (transparentDirty && transparent_) {
             // 如果有exUpdateFlags.Text一样会被UpdateBuffers显示出来，需要重新设为不可见
-            Vector3 samePoint = _vertices.buffer[0];
+            Vector3 meshBBoxPoint = _vertices.buffer.Length > 0 ? _vertices.buffer[0] : new Vector3();
             for (int i = 1; i < vertexCount_; ++i) {
-                _vertices.buffer[vertexBufferIndex + i] = samePoint;
+                _vertices.buffer[vertexBufferIndex + i] = meshBBoxPoint;
             }
         }
         return applyedFlags;
@@ -549,8 +561,8 @@ namespace ex2D.Detail {
         // Temp parameters for BuildText
         ///////////////////////////////////////////////////////////////////////////////
 
-        private static Color32 top;
-        private static Color32 bot;
+        private static Color topFinalColor;
+        private static Color botFinalColor;
 
         private static exList<Vector3> vertices;
         private static exList<Vector2> uvs;
@@ -586,22 +598,31 @@ namespace ex2D.Detail {
 #endif
             bool colorUpdated = false;   // 有渐变色时，每个字符单独计算顶点色，否则全局填充顶点色
 
-            //Debug.Log(string.Format("[UpdateBuffers|SpriteFontBuilder] _vbIndex: {0} _ibIndex: {1}", _vbIndex, _ibIndex));
-            if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.Vertex)) != 0) {
-                top = new Color32 ();
-                bot = new Color32 ();
+            // Debug.Log(string.Format("[UpdateBuffers|SpriteFontBuilder] _vbIndex: {0} _ibIndex: {1}", _vbIndex, _ibIndex));
+            if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.Vertex | exUpdateFlags.Color)) != 0) {
                 if (_alpha > 0.0f) {
                     // 初始化渐变色要用到的全局参数
                     Color tmp = _sprite.color; tmp.a *= _alpha;
-                    top = _sprite.topColor * tmp;
-                    bot = _sprite.botColor * tmp;
+                    topFinalColor = _sprite.topColor * tmp;
+                    botFinalColor = _sprite.botColor * tmp;
+                    if (_sprite.fontSize != 0) {
+                        botFinalColor = exMath.Lerp(topFinalColor, botFinalColor, 1.0f / _sprite.fontSize);   // 预除
+                    }
+                    else {
+                        botFinalColor = topFinalColor;
+                        Debug.LogWarning("Failed to use gradient font color due to invalid font size", _sprite as Object);
+                    }
                 }
-                colorUpdated = ! (top.r == bot.r && top.g == bot.g && top.b == bot.b && top.a == bot.a);
-
-                BuildText(_sprite, _space, _vertices, _vbIndex, _uvs, colorUpdated ? _colors32 : null);
-
-                if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
-                    _sprite.updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV | exUpdateFlags.Color);
+                else {
+                    topFinalColor = new Color ();
+                    botFinalColor = new Color ();
+                }
+                colorUpdated = topFinalColor != botFinalColor;
+                if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.Vertex)) != 0 || colorUpdated) {
+                    BuildText(_sprite, _space, _vertices, _vbIndex, _uvs, colorUpdated ? _colors32 : null);
+                    if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
+                        _sprite.updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV | exUpdateFlags.Color);
+                    }
                 }
             }
             if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
@@ -766,16 +787,6 @@ namespace ex2D.Detail {
         // ------------------------------------------------------------------ 
         
         private static int BuildTextInLocalSpace (exISpriteFont _sprite, out float maxWidth) {
-            // cache property
-            //string text = _sprite.text;
-            //bool useKerning = _sprite.useKerning;
-            //int width = (int)_sprite.width;
-            //exFont font = _sprite.font;
-            //exTextUtility.WrapMode wrapMode = _sprite.wrapMode;
-            //int wordSpacing = _sprite.wordSpacing;
-            //int letterSpacing = _sprite.letterSpacing;
-            //
-
             if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.Color)) == 0) {
                 colors32 = null;    // no need to update color
             }
@@ -845,42 +856,6 @@ namespace ex2D.Detail {
             _sprite.height += halfLineHeightMargin;
 
             return parsedVbIndex - vbIndex;
-
-            // DISABLE {
-            //int parsedVBIndex = _vbIndex;
-            //for (int charIndex = 0; charIndex < _sprite.text.Length; ) {
-            //    int lineStart = parsedVBIndex;
-            //    // build line
-            //    float lineWidth = BuildLine(_sprite, _vertices, _uvs, ref charIndex, ref parsedVBIndex, texelSize, - _sprite.height);
-            //    // text alignment
-            //    switch (_sprite.textAlign) {
-            //        case TextAlignment.Left:
-            //        // convert to top left
-            //        break;
-            //        case TextAlignment.Center:
-            //        // convert to top center
-            //        float halfLineWidth = lineWidth * 0.5f;
-            //        for (int i = lineStart; i < parsedVBIndex; ++i) {
-            //            _vertices.buffer[i].x -= halfLineWidth;
-            //        }
-            //        break;
-            //        case TextAlignment.Right:
-            //        // convert to top right
-            //        for (int i = lineStart; i < parsedVBIndex; ++i) {
-            //            _vertices.buffer[i].x -= lineWidth;
-            //        }
-            //        break;
-            //    }
-            //    // update width and height
-            //    if (lineWidth > _sprite.width) {
-            //        _sprite.width = lineWidth;
-            //    }
-            //    _sprite.height += _sprite.font.fontSize;
-            //    if (charIndex < _sprite.text.Length) {
-            //        _sprite.height += _sprite.lineHeight;
-            //    }
-            //}
-            // } DISABLE end
         }
         
         // ------------------------------------------------------------------ 
@@ -900,11 +875,12 @@ namespace ex2D.Detail {
                 advance = -1;
                 return false;
             }
-
-            vertices.buffer[_vbIndex + 0] = new Vector3(_pos.x + ci.vert.xMin, _pos.y + ci.vert.yMax, 0.0f);
-            vertices.buffer[_vbIndex + 1] = new Vector3(_pos.x + ci.vert.xMin, _pos.y + ci.vert.yMin, 0.0f);
-            vertices.buffer[_vbIndex + 2] = new Vector3(_pos.x + ci.vert.xMax, _pos.y + ci.vert.yMin, 0.0f);
-            vertices.buffer[_vbIndex + 3] = new Vector3(_pos.x + ci.vert.xMax, _pos.y + ci.vert.yMax, 0.0f);
+            Vector3 min = new Vector3(_pos.x + ci.vert.xMin, _pos.y + ci.vert.yMin, 0.0f);
+            Vector3 max = new Vector3(_pos.x + ci.vert.xMax, _pos.y + ci.vert.yMax, 0.0f);
+            vertices.buffer[_vbIndex + 0] = new Vector3(min.x, max.y, 0.0f);
+            vertices.buffer[_vbIndex + 1] = min;
+            vertices.buffer[_vbIndex + 2] = new Vector3(max.x, min.y, 0.0f);
+            vertices.buffer[_vbIndex + 3] = max;
             
             // advance x
             charWidth = ci.vert.width;
@@ -912,26 +888,30 @@ namespace ex2D.Detail {
 
             // set uv
             if (uvs != null) {
+                Vector2 start = new Vector2(ci.uv.xMin, ci.uv.yMin);
+                Vector2 end = new Vector2(ci.uv.xMax, ci.uv.yMax);
                 if (ci.flipped) {
-                    uvs.buffer[_vbIndex + 0] = new Vector2(ci.uv.xMin, ci.uv.yMin);
-                    uvs.buffer[_vbIndex + 1] = new Vector2(ci.uv.xMax, ci.uv.yMin);
-                    uvs.buffer[_vbIndex + 2] = new Vector2(ci.uv.xMax, ci.uv.yMax);
-                    uvs.buffer[_vbIndex + 3] = new Vector2(ci.uv.xMin, ci.uv.yMax);
+                    uvs.buffer[_vbIndex + 0] = start;
+                    uvs.buffer[_vbIndex + 1] = new Vector2(end.x, start.y);
+                    uvs.buffer[_vbIndex + 2] = end;
+                    uvs.buffer[_vbIndex + 3] = new Vector2(start.x, end.y);
                 }
                 else {
-                    uvs.buffer[_vbIndex + 0] = new Vector2(ci.uv.xMin, ci.uv.yMin);
-                    uvs.buffer[_vbIndex + 1] = new Vector2(ci.uv.xMin, ci.uv.yMax);
-                    uvs.buffer[_vbIndex + 2] = new Vector2(ci.uv.xMax, ci.uv.yMax);
-                    uvs.buffer[_vbIndex + 3] = new Vector2(ci.uv.xMax, ci.uv.yMin);
+                    uvs.buffer[_vbIndex + 0] = start;
+                    uvs.buffer[_vbIndex + 1] = new Vector2(start.x, end.y);
+                    uvs.buffer[_vbIndex + 2] = end;
+                    uvs.buffer[_vbIndex + 3] = new Vector2(end.x, start.y);
                 }
             }
 
             // set color
             if (colors32 != null) {
-                colors32.buffer[_vbIndex + 0] = bot;
-                colors32.buffer[_vbIndex + 1] = top;
-                colors32.buffer[_vbIndex + 2] = top;
-                colors32.buffer[_vbIndex + 3] = bot;
+                Color32 t = exMath.Lerp(topFinalColor, botFinalColor, -ci.vert.yMin);
+                Color32 b = exMath.Lerp(topFinalColor, botFinalColor, -ci.vert.yMax);
+                colors32.buffer[_vbIndex + 0] = b;
+                colors32.buffer[_vbIndex + 1] = t;
+                colors32.buffer[_vbIndex + 2] = t;
+                colors32.buffer[_vbIndex + 3] = b;
             }
             return true;
         }
