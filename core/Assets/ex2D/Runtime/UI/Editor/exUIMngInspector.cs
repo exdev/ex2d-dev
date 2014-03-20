@@ -39,7 +39,7 @@ class exUIMngInspector : Editor {
         }
 
         exUIMng mng = target as exUIMng;
-        if ( mng.showDebugInfo ) {
+        if ( mng.showDebugInfo && EditorApplication.isPlaying ) {
 
             int areaWidth = Screen.width-40;
             int areaHeight = 300;

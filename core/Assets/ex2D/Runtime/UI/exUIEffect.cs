@@ -390,55 +390,64 @@ public class exUIEffect : MonoBehaviour {
             EffectInfo_Scale.PropInfo propInfo = _state.info.propInfos[i];
             switch ( propInfo.type ) {
             case EffectEventType.Deactive:
-                _ctrl.onDeactive += delegate ( exUIControl _sender ) {
-                    enabled = true;
-                    _state.Begin( propInfo.val );
-                };
-                _ctrl.onActive += delegate ( exUIControl _sender ) {
-                    enabled = true;
-                    _state.Begin( _state.info.normal );
-                };
+                _ctrl.AddEventListener( "onDeactive", 
+                                        delegate ( exUIEvent _event ) {
+                                            enabled = true;
+                                            _state.Begin( propInfo.val );
+                                        } );
+                _ctrl.AddEventListener( "onActive", 
+                                        delegate ( exUIEvent _event ) {
+                                            enabled = true;
+                                            _state.Begin( _state.info.normal );
+                                        } );
                 break;
 
             case EffectEventType.Press:
-                _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    enabled = true;
-                    _state.Begin( propInfo.val );
-                };
-                _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    enabled = true;
-                    _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
-                };
-                _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    if ( _ctrl.grabMouseOrTouch == false ) {
-                        enabled = true;
-                        _state.Begin( _state.info.normal );
-                    }
-                };
+                _ctrl.AddEventListener ( "onPressDown",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( propInfo.val );
+                                         } ); 
+                _ctrl.AddEventListener ( "onPressUp",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                                         } );
+                _ctrl.AddEventListener ( "onHoverOut",
+                                         delegate ( exUIEvent _event ) {
+                                             if ( _ctrl.grabMouseOrTouch == false ) {
+                                                 enabled = true;
+                                                 _state.Begin( _state.info.normal );
+                                             }
+                                         } );
                 break;
 
             case EffectEventType.Hover:
-                _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    enabled = true;
-                    _state.Begin( propInfo.val );
-                };
-                _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    enabled = true;
-                    _state.Begin( _state.info.normal );
-                };
+                _ctrl.AddEventListener ( "onHoverIn",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( propInfo.val );
+                                         } );
+                _ctrl.AddEventListener ( "onHoverOut",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( _state.info.normal );
+                                         } );
                 break;
 
             case EffectEventType.Unchecked:
                 exUIToggle toggle = _ctrl as exUIToggle;
                 if ( toggle != null ) {
-                    toggle.onUnchecked += delegate ( exUIControl _sender ) {
-                        enabled = true;
-                        _state.Begin( propInfo.val );
-                    };
-                    toggle.onChecked += delegate ( exUIControl _sender ) {
-                        enabled = true;
-                        _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
-                    };
+                    _ctrl.AddEventListener ( "onUnchecked",
+                                             delegate ( exUIEvent _event ) {
+                                                 enabled = true;
+                                                 _state.Begin( propInfo.val );
+                                             } );
+                    _ctrl.AddEventListener ( "onChecked",
+                                             delegate ( exUIEvent _event ) {
+                                                 enabled = true;
+                                                 _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                                             } );
                 }
                 break;
             }
@@ -456,49 +465,57 @@ public class exUIEffect : MonoBehaviour {
             EffectInfo_Offset.PropInfo propInfo = _state.info.propInfos[i];
             switch ( propInfo.type ) {
             case EffectEventType.Deactive:
-                _ctrl.onDeactive += delegate ( exUIControl _sender ) {
-                    enabled = true;
-                    _state.Begin( propInfo.val );
-                };
-                _ctrl.onActive += delegate ( exUIControl _sender ) {
-                    enabled = true;
-                    _state.Begin( _state.info.normal );
-                };
+                _ctrl.AddEventListener ( "onDeactive",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( propInfo.val );
+                                         } );
+                _ctrl.AddEventListener ( "onActive",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( _state.info.normal );
+                                         } );
                 break;
 
             case EffectEventType.Press:
-                _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    enabled = true;
-                    _state.Begin( propInfo.val );
-                };
-                _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    enabled = true;
-                    _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
-                };
+                _ctrl.AddEventListener ( "onPressDown",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( propInfo.val );
+                                         } );
+                _ctrl.AddEventListener ( "onPressUp",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                                         } );
                 break;
 
             case EffectEventType.Hover:
-                _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    enabled = true;
-                    _state.Begin( propInfo.val );
-                };
-                _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    enabled = true;
-                    _state.Begin( _state.info.normal );
-                };
+                _ctrl.AddEventListener ( "onHoverIn",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( propInfo.val );
+                                         } );
+                _ctrl.AddEventListener ( "onHoverOut",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( _state.info.normal );
+                                         } );
                 break;
 
             case EffectEventType.Unchecked:
                 exUIToggle toggle = _ctrl as exUIToggle;
                 if ( toggle != null ) {
-                    toggle.onUnchecked += delegate ( exUIControl _sender ) {
-                        enabled = true;
-                        _state.Begin( propInfo.val );
-                    };
-                    toggle.onChecked += delegate ( exUIControl _sender ) {
-                        enabled = true;
-                        _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
-                    };
+                    _ctrl.AddEventListener ( "onUnchecked",
+                                             delegate ( exUIEvent _event ) {
+                                                 enabled = true;
+                                                 _state.Begin( propInfo.val );
+                                             } );
+                    _ctrl.AddEventListener ( "onChecked",
+                                             delegate ( exUIEvent _event ) {
+                                                 enabled = true;
+                                                 _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                                             } );
                 }
                 break;
             }
@@ -516,49 +533,57 @@ public class exUIEffect : MonoBehaviour {
             EffectInfo_Color.PropInfo propInfo = _state.info.propInfos[i];
             switch ( propInfo.type ) {
             case EffectEventType.Deactive:
-                _ctrl.onDeactive += delegate ( exUIControl _sender ) {
-                    enabled = true;
-                    _state.Begin( propInfo.val );
-                };
-                _ctrl.onActive += delegate ( exUIControl _sender ) {
-                    enabled = true;
-                    _state.Begin( _state.info.normal );
-                };
+                _ctrl.AddEventListener ( "onDeactive",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( propInfo.val );
+                                         } );
+                _ctrl.AddEventListener ( "onActive",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( _state.info.normal );
+                                         } );
                 break;
 
             case EffectEventType.Press:
-                _ctrl.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    enabled = true;
-                    _state.Begin( propInfo.val );
-                };
-                _ctrl.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    enabled = true;
-                    _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
-                };
+                _ctrl.AddEventListener ( "onPressDown",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( propInfo.val );
+                                         } );
+                _ctrl.AddEventListener ( "onPressUp",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                                         } );
                 break;
 
             case EffectEventType.Hover:
-                _ctrl.onHoverIn += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    enabled = true;
-                    _state.Begin( propInfo.val );
-                };
-                _ctrl.onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    enabled = true;
-                    _state.Begin( _state.info.normal );
-                };
+                _ctrl.AddEventListener ( "onHoverIn",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( propInfo.val );
+                                         } );
+                _ctrl.AddEventListener ( "onHoverOut",
+                                         delegate ( exUIEvent _event ) {
+                                             enabled = true;
+                                             _state.Begin( _state.info.normal );
+                                         } );
                 break;
 
             case EffectEventType.Unchecked:
                 exUIToggle toggle = _ctrl as exUIToggle;
                 if ( toggle != null ) {
-                    toggle.onUnchecked += delegate ( exUIControl _sender ) {
-                        enabled = true;
-                        _state.Begin( propInfo.val );
-                    };
-                    toggle.onChecked += delegate ( exUIControl _sender ) {
-                        enabled = true;
-                        _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
-                    };
+                    _ctrl.AddEventListener ( "onUnchecked",
+                                             delegate ( exUIEvent _event ) {
+                                                 enabled = true;
+                                                 _state.Begin( propInfo.val );
+                                             } );
+                    _ctrl.AddEventListener ( "onChecked",
+                                             delegate ( exUIEvent _event ) {
+                                                 enabled = true;
+                                                 _state.Begin( _state.info.GetValue( EffectEventType.Hover ) );
+                                             } );
                 }
                 break;
             }

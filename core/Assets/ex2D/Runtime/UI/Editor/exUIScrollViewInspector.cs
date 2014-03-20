@@ -105,7 +105,7 @@ class exUIScrollViewInspector : exUIControlInspector {
             if ( scrollView != null ) {
                 aabb.width = scrollView.contentSize.x;
                 aabb.yMin = aabb.yMax - scrollView.contentSize.y;
-                aabb.center += scrollView.GetScrollOffset();
+                aabb.center += scrollView.scrollOffset;
                 vertices = new Vector3[4] {
                     l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMin, 0)),
                     l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMax, 0)),

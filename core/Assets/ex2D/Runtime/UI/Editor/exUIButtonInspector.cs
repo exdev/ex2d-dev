@@ -23,4 +23,33 @@ using System.Reflection;
 [CanEditMultipleObjects]
 [CustomEditor(typeof(exUIButton))]
 class exUIButtonInspector : exUIControlInspector {
+
+    protected SerializedProperty allowDragProp;
+    protected SerializedProperty dragThresholdProp;
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected override void InitProperties () {
+        base.InitProperties();
+
+        allowDragProp = serializedObject.FindProperty("allowDrag");
+        dragThresholdProp = serializedObject.FindProperty("dragThreshold");
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+	protected override void DoInspectorGUI () {
+        base.DoInspectorGUI();
+
+        EditorGUILayout.PropertyField ( allowDragProp );
+        GUI.enabled = !allowDragProp.boolValue;
+        EditorGUILayout.PropertyField ( dragThresholdProp );
+        GUI.enabled = true;
+
+        EditorGUILayout.Space();
+    }
 }

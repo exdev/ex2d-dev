@@ -272,11 +272,29 @@ namespace UnityEngine {
         }
 
         // ------------------------------------------------------------------ 
+        /// Returns the component of Type in any of the GameObject's parents.
+        // ------------------------------------------------------------------ 
+
+        public static T GetComponentUpwards<T> (this GameObject _go) where T : Component {
+            Transform parentTransform = _go.transform.parent;
+            while (parentTransform != null) {
+                T component = parentTransform.GetComponent(typeof(T)) as T;
+                if (component != null) {
+                    return component;
+                }
+                parentTransform = parentTransform.parent;
+            }
+            return null;
+        }
+        public static T FindParentComponent<T> (this T component) where T : Component {
+            return component.gameObject.GetComponentUpwards<T>();
+        }
+
+        // ------------------------------------------------------------------ 
         /// Use this method instead of GetComponentInChildren that may alloc lots of GC
         // ------------------------------------------------------------------ 
 
-        public static T GetComponentInChildrenFast<T>(this GameObject go) where T : Component
-        {
+        public static T GetComponentInChildrenFast<T>(this GameObject go) where T : Component {
             if (go.activeInHierarchy) {
                 Component component = go.GetComponent(typeof(T));
                 if (component != null) {
@@ -296,8 +314,7 @@ namespace UnityEngine {
             }
             return null;
         }
-        public static T GetComponentInChildrenFast<T> (this Component component) where T : Component 
-        {
+        public static T GetComponentInChildrenFast<T> (this Component component) where T : Component {
             return component.gameObject.GetComponentInChildrenFast<T>();
         }
     }

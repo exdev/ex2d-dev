@@ -931,7 +931,7 @@ class exSceneEditor : EditorWindow {
             if ( scrollView != null ) {
                 aabb.width = scrollView.contentSize.x;
                 aabb.yMin = aabb.yMax - scrollView.contentSize.y;
-                aabb.center += scrollView.GetScrollOffset();
+                aabb.center += scrollView.scrollOffset;
                 vertices = new Vector3[4] {
                     l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMin, 0)),
                     l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMax, 0)),
@@ -1198,8 +1198,8 @@ class exSceneEditor : EditorWindow {
                         for ( int i = 0; i < planes.Length; ++i ) {
                             exPlane plane = planes[i];
                             if ( plane != this ) {
-                                plane.width = sprite.width;
-                                plane.height = sprite.height;
+                                // plane.width = sprite.width;
+                                // plane.height = sprite.height;
                                 plane.anchor = sprite.anchor;
                                 plane.offset = sprite.offset;
                             }
@@ -1238,7 +1238,11 @@ class exSceneEditor : EditorWindow {
                 trans_rotation = Handles.Disc ( trans_rotation, trans_position, Vector3.forward, handleSize * 0.5f, true, 1 );
 
             if ( EditorGUI.EndChangeCheck() ) {
+#if UNITY_4_3
                 UnityEditor.Undo.RecordObjects(Selection.transforms, "Change Transform");
+#else
+                UnityEditor.Undo.RegisterUndo(Selection.transforms, "Change Transform");
+#endif
 
                 if ( Selection.transforms.Length == 1 ) {
                     trans.position = trans_position;

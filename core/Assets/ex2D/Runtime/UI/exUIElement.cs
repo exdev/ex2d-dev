@@ -1179,18 +1179,18 @@ public class exUIElement {
                 builder.Length = 0;
                 int last_index = cur_index;
 
-                //
-                finished = exTextUtility.CalcTextLine ( ref line_width, 
-                                                        ref cur_index,
-                                                        ref builder,
-                                                        _text,
-                                                        cur_index,
-                                                        cur_width,
-                                                        ttfFont,
-                                                        fontSize,
-                                                        wrapMode,
-                                                        wordSpacing,
-                                                        letterSpacing );
+                // //
+                // finished = exTextUtility.CalcTextLine ( out line_width, 
+                //                                         out cur_index,
+                //                                         builder,
+                //                                         _text,
+                //                                         cur_index,
+                //                                         cur_width,
+                //                                         ttfFont,
+                //                                         fontSize,
+                //                                         wrapMode,
+                //                                         wordSpacing,
+                //                                         letterSpacing );
 
                 // if inline-block's first line exceed, it will start from next line 
                 if ( firstWordCheck ) {
@@ -1273,17 +1273,17 @@ public class exUIElement {
                 int last_index = cur_index;
 
                 //
-                finished = exTextUtility.CalcTextLine ( ref line_width, 
-                                                        ref cur_index,
-                                                        ref builder,
-                                                        _text,
-                                                        cur_index,
-                                                        cur_width,
-                                                        bitmapFont,
-                                                        fontSize,
-                                                        wrapMode,
-                                                        wordSpacing,
-                                                        letterSpacing );
+                // finished = exTextUtility.CalcTextLine ( out line_width, 
+                //                                         out cur_index,
+                //                                         builder,
+                //                                         _text,
+                //                                         cur_index,
+                //                                         cur_width,
+                //                                         bitmapFont,
+                //                                         fontSize,
+                //                                         wrapMode,
+                //                                         wordSpacing,
+                //                                         letterSpacing );
 
                 // if inline-block's first line exceed, it will start from next line 
                 if ( firstWordCheck ) {

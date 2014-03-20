@@ -24,31 +24,10 @@ using System.Collections.Generic;
 public class exUIControl : exPlane {
 
     [System.Serializable]
-    public class EventDef {
-        public string name;
-        public Type[] parameterTypes;
-        public Type delegateType;
-
-        public EventDef ( string _name, Type[] _parameterTypes, Type _delegateType ) {
-            name = _name;
-            parameterTypes = _parameterTypes;
-            delegateType = _delegateType;
-        }
-    }
-
-    public static EventDef FindEventDef ( EventDef[] _eventDefs, string _name ) {
-        for ( int i = 0; i < _eventDefs.Length; ++i ) {
-            EventDef eventDef = _eventDefs[i];
-            if ( eventDef.name == _name )
-                return eventDef; 
-        }
-        return null;
-    }
-
-    [System.Serializable]
     public class SlotInfo {
         public GameObject receiver = null;
         public string method = "";
+        public bool capturePhase = false; 
     }
 
     [System.Serializable]
@@ -67,42 +46,104 @@ public class exUIControl : exPlane {
     ///////////////////////////////////////////////////////////////////////////////
 
     // event-defs
-    public static EventDef[] eventDefs = new EventDef[] {
-        new EventDef ( "onFocus",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onUnfocus",    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onActive",     new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onDeactive",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onHoverIn",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
-        new EventDef ( "onHoverOut",   new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
-        new EventDef ( "onHoverMove",  new Type[] { typeof(exUIControl), typeof(List<exHotPoint>) }, typeof(Action<exUIControl,List<exHotPoint>>) ),
-        new EventDef ( "onPressDown",  new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
-        new EventDef ( "onPressUp",    new Type[] { typeof(exUIControl), typeof(exHotPoint) }, typeof(Action<exUIControl,exHotPoint>) ),
-        new EventDef ( "onMouseWheel", new Type[] { typeof(exUIControl), typeof(float) }, typeof(Action<exUIControl,float>) ),
+    public static string[] eventNames = new string[] {
+        "onFocus",
+        "onUnfocus",
+        "onActive",
+        "onDeactive",
+        "onHoverIn",
+        "onHoverOut",
+        "onHoverMove",
+        "onPressDown",
+        "onPressUp",
+        "onMouseWheel",
     };
 
     // events
-    public event Action<exUIControl> onFocus;
-    public event Action<exUIControl> onUnfocus;
-    public event Action<exUIControl> onActive;
-    public event Action<exUIControl> onDeactive;
-    public event Action<exUIControl,exHotPoint> onHoverIn;
-    public event Action<exUIControl,exHotPoint> onHoverOut;
-    public event Action<exUIControl,List<exHotPoint>> onHoverMove;
-    public event Action<exUIControl,exHotPoint> onPressDown;
-    public event Action<exUIControl,exHotPoint> onPressUp;
-    public event Action<exUIControl,float> onMouseWheel;
+    List<exUIEventListener> onFocus;
+    List<exUIEventListener> onUnfocus;
+    List<exUIEventListener> onActive;
+    List<exUIEventListener> onDeactive;
+    List<exUIEventListener> onHoverIn;
+    List<exUIEventListener> onHoverOut;
+    List<exUIEventListener> onHoverMove;
+    List<exUIEventListener> onPressDown;
+    List<exUIEventListener> onPressUp;
+    List<exUIEventListener> onMouseWheel;
 
     // event easy function
-    public void Send_OnFocus () { if ( onFocus != null ) onFocus (this); }
-    public void Send_OnUnfocus () { if ( onUnfocus != null ) onUnfocus (this); }
-    public void Send_OnActive () { if ( onActive != null ) onActive (this); }
-    public void Send_OnDeactive () { if ( onDeactive != null ) onDeactive (this); }
-    public void Send_OnHoverIn ( exHotPoint _hotPoint ) { if ( onHoverIn != null ) onHoverIn (this,_hotPoint); }
-    public void Send_OnHoverOut ( exHotPoint _hotPoint ) { if ( onHoverOut != null ) onHoverOut (this,_hotPoint); }
-    public void Send_OnHoverMove ( List<exHotPoint> _hotPoints ) { if ( onHoverMove != null ) onHoverMove (this,_hotPoints); }
-    public void Send_OnPressDown ( exHotPoint _hotPoint ) { if ( onPressDown != null ) onPressDown (this,_hotPoint); }
-    public void Send_OnPressUp ( exHotPoint _hotPoint ) { if ( onPressUp != null ) onPressUp (this,_hotPoint); }
-    public void Send_OnMouseWheel ( float _delta ) { if ( onMouseWheel != null ) onMouseWheel (this,_delta); }
+    public void OnFocus      ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onFocus",       onFocus,      _event ); }
+    public void OnUnfocus    ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onUnfocus",     onUnfocus,    _event ); }
+    public void OnActive     ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onActive",      onActive,     _event ); }
+    public void OnDeactive   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onDeactive",    onDeactive,   _event ); }
+    // TODO { 
+    // public void OnHoverEnter    ( exUIEvent _event )  { if ( onHoverIn    != null ) exUIMng.inst.DispatchEvent( this, onHoverIn,    _event ); }
+    // public void OnHoverLeave   ( exUIEvent _event )  { if ( onHoverOut   != null ) exUIMng.inst.DispatchEvent( this, onHoverOut,   _event ); }
+    // } TODO end 
+    public void OnHoverIn    ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onHoverIn",     onHoverIn,    _event ); }
+    public void OnHoverOut   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onHoverOut",    onHoverOut,   _event ); }
+    public void OnHoverMove  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onHoverMove",   onHoverMove,  _event ); }
+    public void OnPressDown  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onPressDown",   onPressDown,  _event ); }
+    public void OnPressUp    ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onPressUp",     onPressUp,    _event ); }
+    public void OnMouseWheel ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onMouseWheel",  onMouseWheel, _event ); }
+    
+    public virtual void CacheEventListeners () {
+        onFocus = eventListenerTable["onFocus"];
+        onUnfocus = eventListenerTable["onUnfocus"];
+        onActive = eventListenerTable["onActive"];
+        onDeactive = eventListenerTable["onDeactive"];
+        onHoverIn = eventListenerTable["onHoverIn"];
+        onHoverOut = eventListenerTable["onHoverOut"];
+        onHoverMove = eventListenerTable["onHoverMove"];
+        onPressDown = eventListenerTable["onPressDown"];
+        onPressUp = eventListenerTable["onPressUp"];
+        onMouseWheel = eventListenerTable["onMouseWheel"];
+    }
+
+    public virtual string[] GetEventNames () {
+        string[] names = new string[eventNames.Length];
+        for ( int i = 0; i < eventNames.Length; ++i ) {
+            names[i] = eventNames[i];
+        }
+        return names;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    static void AddEventListeners ( exUIControl _ctrl, string _eventName, List<SlotInfo> _slots ) {
+        foreach ( SlotInfo slot in _slots ) {
+            bool foundMethod = false;
+            if ( slot.receiver == null )
+                continue;
+
+            MonoBehaviour[] allMonoBehaviours = slot.receiver.GetComponents<MonoBehaviour>();
+            for ( int i = 0; i < allMonoBehaviours.Length; ++i ) {
+                MonoBehaviour monoBehaviour =  allMonoBehaviours[i]; 
+
+                // don't get method from control
+                if ( monoBehaviour is exUIControl )
+                    continue;
+
+                MethodInfo mi = monoBehaviour.GetType().GetMethod( slot.method, 
+                                                                   BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                                                                   null,
+                                                                   new Type[] { typeof(exUIEvent) },
+                                                                   null );
+                if ( mi != null ) {
+                    Action<exUIEvent> func 
+                        = (Action<exUIEvent>)Delegate.CreateDelegate( typeof(Action<exUIEvent>), monoBehaviour, mi);
+                    _ctrl.AddEventListener ( _eventName, func, slot.capturePhase );
+                    foundMethod = true;
+                }
+            }
+
+            if ( foundMethod == false ) {
+                Debug.LogWarning ("Can not find method " + slot.method + " in " + slot.receiver.name );
+            }
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // properties
@@ -128,10 +169,13 @@ public class exUIControl : exPlane {
         set {
             if ( active_ != value ) {
                 active_ = value;
+
+                exUIEvent uiEvent = new exUIEvent();
+                uiEvent.bubbles = false;
                 if ( active_ )
-                    Send_OnActive();
+                    OnActive( uiEvent );
                 else 
-                    Send_OnDeactive();
+                    OnDeactive( uiEvent );
 
                 for ( int i = 0; i < children.Count; ++i ) {
                     children[i].activeInHierarchy = value;
@@ -146,10 +190,13 @@ public class exUIControl : exPlane {
         set { 
             if ( active_ != value ) {
                 active_ = value;
+
+                exUIEvent uiEvent = new exUIEvent();
+                uiEvent.bubbles = false;
                 if ( active_ )
-                    Send_OnActive();
+                    OnActive( uiEvent );
                 else 
-                    Send_OnDeactive();
+                    OnDeactive( uiEvent );
             }
         }
     }
@@ -158,6 +205,10 @@ public class exUIControl : exPlane {
     public bool useCollider = false;
     public bool grabMouseOrTouch = false;
     public List<EventTrigger> events = new List<EventTrigger>();
+
+    // event listener
+    protected Dictionary<string,List<exUIEventListener>> eventListenerTable = new Dictionary<string,List<exUIEventListener>>();
+    protected List<exUIEventListener>[] cachedEventListenerTable;
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -168,14 +219,20 @@ public class exUIControl : exPlane {
     // ------------------------------------------------------------------ 
 
     protected void Awake () {
+        string[] eventNames = GetEventNames ();
+        for ( int i = 0; i < eventNames.Length; ++i ) {
+            string eventName = eventNames[i];
+            if ( eventListenerTable.ContainsKey(eventName) == false ) {
+                eventListenerTable.Add( eventName, new List<exUIEventListener>() );
+            }
+        }
+
         for ( int i = 0; i < events.Count; ++i ) {
             EventTrigger eventTrigger = events[i];
-            EventDef def = GetEventDef(eventTrigger.name);
-            AddEventHandlers ( def.name, 
-                               def.parameterTypes, 
-                               def.delegateType, 
-                               eventTrigger.slots );
+            AddEventListeners ( this, eventTrigger.name, eventTrigger.slots ); 
         }
+
+        CacheEventListeners();
     }
 
     // ------------------------------------------------------------------ 
@@ -196,70 +253,66 @@ public class exUIControl : exPlane {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public virtual EventDef GetEventDef ( string _name ) {
-        return exUIControl.FindEventDef ( eventDefs, _name );
+    public void AddEventListener ( string _name, System.Action<exUIEvent> _func, bool _capturePhase = false ) {
+        List<exUIEventListener> eventListeners = null;
+
+        if ( eventListenerTable.ContainsKey(_name) ) {
+            eventListeners = eventListenerTable[_name];
+            for ( int i = 0; i < eventListeners.Count; ++i ) {
+                exUIEventListener eventListener = eventListeners[i];
+                if ( eventListener.func == _func &&
+                     eventListener.capturePhase == _capturePhase ) 
+                {
+                    return;
+                }
+            }
+        }
+
+        if ( eventListeners == null ) {
+            eventListeners = new List<exUIEventListener>();
+            eventListenerTable.Add(_name, eventListeners);
+        }
+
+        //
+        exUIEventListener newEventInfo = new exUIEventListener();
+        newEventInfo.func = _func;
+        newEventInfo.capturePhase = _capturePhase;
+        eventListeners.Add(newEventInfo);
+    }
+
+    public void RemoveEventListener ( string _name, System.Action<exUIEvent> _func, bool _capturePhase = false ) {
+        List<exUIEventListener> eventListeners = null;
+
+        if ( eventListenerTable.ContainsKey(_name) ) {
+            eventListeners = eventListenerTable[_name];
+            for ( int i = 0; i < eventListeners.Count; ++i ) {
+                exUIEventListener eventListener = eventListeners[i];
+                if ( eventListener.func == _func &&
+                     eventListener.capturePhase == _capturePhase ) 
+                {
+                    eventListeners.RemoveAt(i);
+                    return;
+                }
+            }
+        }
+    }
+
+    public void DispatchEvent ( string _name, exUIEvent _event ) {
+        if ( eventListenerTable.ContainsKey(_name) ) {
+            List<exUIEventListener> eventListeners = eventListenerTable[_name];
+            exUIMng.inst.DispatchEvent ( this, _name, eventListeners, _event );
+        }
     }
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public virtual string[] GetEventDefNames () {
-        string[] names = new string[eventDefs.Length];
-        for ( int i = 0; i < eventDefs.Length; ++i ) {
-            names[i] = eventDefs[i].name;
+    public List<exUIEventListener> GetEventListeners ( string _name ) {
+        if ( eventListenerTable.ContainsKey(_name) ) {
+            return eventListenerTable[_name];
         }
-        return names;
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void AddEventHandlers ( string _eventName, Type[] _parameterTypes, Type _delegateType, List<SlotInfo> _slots ) {
-        Type controlType = this.GetType();
-        EventInfo eventInfo = controlType.GetEvent(_eventName);
-        if ( eventInfo != null ) {
-
-            foreach ( SlotInfo slot in _slots ) {
-
-                bool foundMethod = false;
-                if ( slot.receiver == null )
-                    continue;
-
-                MonoBehaviour[] allMonoBehaviours = slot.receiver.GetComponents<MonoBehaviour>();
-                for ( int i = 0; i < allMonoBehaviours.Length; ++i ) {
-                    MonoBehaviour monoBehaviour =  allMonoBehaviours[i]; 
-
-                    // don't get method from control
-                    if ( monoBehaviour is exUIControl )
-                        continue;
-
-                    MethodInfo mi = monoBehaviour.GetType().GetMethod( slot.method, 
-                                                                       BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                                                                       null,
-                                                                       _parameterTypes,
-                                                                       null );
-                    if ( mi != null ) {
-                        Delegate delegateForMethod = Delegate.CreateDelegate( _delegateType, monoBehaviour, mi);
-                        // NOTE: in iPhone, AddEventHandler will report "Attempting to JIT compile method" error.
-                        //       this can only be fixed by use the following code. founded from
-                        //       http://monotouch.2284126.n4.nabble.com/Attempting-to-JIT-compile-method-what-am-I-doing-wrong-td4492920.html
-                        // eventInfo.AddEventHandler(this, delegateForMethod);
-                        MethodInfo addMI = eventInfo.GetAddMethod();
-                        addMI.Invoke( this, new object[] { delegateForMethod } );
-                        foundMethod = true;
-                    }
-                }
-
-                if ( foundMethod == false ) {
-                    Debug.LogWarning ("Can not find method " + slot.method + " in " + slot.receiver.name );
-                }
-            } 
-        }
-        else {
-            Debug.LogWarning ("Can not find event " + _eventName + " in " + gameObject.name );
-        }
+        return null;
     }
 
     // ------------------------------------------------------------------ 

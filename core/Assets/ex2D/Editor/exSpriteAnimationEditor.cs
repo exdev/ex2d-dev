@@ -636,6 +636,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                                                                      } );
         if ( EditorGUI.EndChangeCheck() ) {
             curEdit.wrapMode = newWrapMode;
+            EditorUtility.SetDirty(curEdit);
         }
 
         // Anim Stop Action 
@@ -648,6 +649,7 @@ partial class exSpriteAnimationEditor : EditorWindow {
                                                                             } );
         if ( EditorGUI.EndChangeCheck() ) {
             curEdit.stopAction = newStopAction;
+            EditorUtility.SetDirty(curEdit);
         }
 
         // Frame Rate

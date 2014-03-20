@@ -67,7 +67,22 @@ public class ControlSorterByLevel: IComparer<exUIControl> {
 
 public class ControlSorterByPriority: IComparer<exUIControl> {
     public int Compare( exUIControl _a, exUIControl _b ) {
-        return _b.priority - _a.priority;
+        int priority_a = _a.priority;
+        int priority_b = _b.priority;
+
+        if ( _a == _b )
+            return 0;
+
+        if ( _a.gameObject.activeInHierarchy == false || _a.activeInHierarchy == false )
+            priority_a = -999;
+
+        if ( _b.gameObject.activeInHierarchy == false || _b.activeInHierarchy == false )
+            priority_b = -999;
+
+        if ( priority_a == priority_b )
+            return -1;
+
+        return priority_b - priority_a;
     }
 }
 
@@ -95,7 +110,7 @@ public class ControlSorterByPriority2: IComparer<exUIControl> {
             parent = parent.parent;
         }
 
-        return priority_b - priority_a;
+        return priority_a - priority_b;
     }
 }
 
@@ -116,20 +131,20 @@ public class ControlSorterByZ: IComparer<exUIControl> {
 // Desc: 
 // ------------------------------------------------------------------ 
 
-public struct exHotPoint {
-    public int id;
-    public bool active;
-    public bool pressDown;
-    public bool pressUp;
-    public Vector2 pos;
-    public Vector2 delta;
-    public Vector3 worldPos;
-    public Vector3 worldDelta;
+public class exHotPoint {
+    public int id = -1;
+    public bool active = false;
+    public bool pressDown = false;
+    public bool pressUp = false;
+    public Vector2 pos = Vector2.zero;
+    public Vector2 delta = Vector2.zero;
+    public Vector3 worldPos = Vector3.zero;
+    public Vector3 worldDelta = Vector3.zero;
 
-    public exUIControl hover;
-    public exUIControl pressed;
+    public exUIControl hover = null;
+    public exUIControl pressed = null;
 
-    public bool isMouse;
+    public bool isMouse = false;
     public bool isTouch { get { return isMouse == false; } }  
 
     // 0: left, 1: right, 2: middle
@@ -200,15 +215,37 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public static exUIControl FindParent ( exUIControl _ctrl ) {
-        Transform tranParent = _ctrl.transform.parent;
-        while ( tranParent != null ) {
-            exUIControl el = tranParent.GetComponent<exUIControl>();
-            if ( el != null )
-                return el;
-            tranParent = tranParent.parent;
+    public static List<exUIControl> GetRoutine ( exUIControl _ctrl ) {
+        List<exUIControl> routine = new List<exUIControl>();
+
+        exUIControl parentCtrl = _ctrl.parent;
+        while ( parentCtrl != null ) {
+            routine.Add(parentCtrl);
+            parentCtrl = parentCtrl.parent;
         }
-        return null;
+        return routine;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static exUIControl FindRoot ( exUIControl _ctrl ) {
+        exUIControl root = null;
+        exUIControl parentCtrl = _ctrl;
+        while ( parentCtrl != null ) {
+            root = parentCtrl;
+            parentCtrl = parentCtrl.parent;
+        }
+        return root;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public static exUIControl FindParent ( exUIControl _ctrl ) {
+        return _ctrl.FindParentComponent();
     } 
 
     // ------------------------------------------------------------------ 
@@ -288,17 +325,175 @@ public class exUIMng : MonoBehaviour {
 
     public void SetFocus ( exUIControl _ctrl ) {
         if ( focus != _ctrl ) {
+            exUIControl unfocus = focus;
             if ( focus != null ) {
-                focus.Send_OnUnfocus();
+                exUIFocusEvent focusEvent = new exUIFocusEvent();
+                focusEvent.relatedTarget = focus;
+                focus.OnUnfocus(focusEvent);
             }
 
             focus = _ctrl;
 
             if ( focus != null ) {
-                focus.Send_OnFocus();
+                exUIFocusEvent focusEvent = new exUIFocusEvent();
+                focusEvent.relatedTarget = unfocus;
+                focus.OnFocus(focusEvent);
             }
         }
     }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void DispatchEvent ( exUIControl _sender, string _name, List<exUIEventListener> _listeners, exUIEvent _event ) {
+        _event.target = _sender; 
+
+        if ( _event.bubbles ) {
+            List<exUIControl> routine = GetRoutine( _sender );
+
+            // capture phase
+            if ( _listeners != null ) {
+                for ( int i = 0; i < _listeners.Count; ++i ) {
+                    exUIEventListener listener = _listeners[i];
+                    if ( listener.capturePhase ) {
+                        _event.eventPhase = exUIEventPhase.Capture;
+
+                        for ( int j = routine.Count-1; j >= 0; --j ) {
+                            exUIControl sender2 = routine[j];
+                            List<exUIEventListener> listeners2 = sender2.GetEventListeners(_name);
+                            _event.currentTarget = sender2;
+                            DoDispatchEvent ( sender2, listeners2, _event );
+                            if ( _event.isPropagationStopped )
+                                return;
+                        }
+                    }
+                }
+            }
+
+            // target phase
+            if ( _listeners != null ) {
+                _event.eventPhase = exUIEventPhase.Target;
+                _event.currentTarget = _sender;
+                DoDispatchEvent ( _sender, _listeners, _event );
+                if ( _event.isPropagationStopped )
+                    return;
+            }
+
+            // bubble phase
+            _event.eventPhase = exUIEventPhase.Bubble;
+            for ( int j = 0; j < routine.Count; ++j ) {
+                exUIControl sender2 = routine[j];
+                List<exUIEventListener> listeners2 = sender2.GetEventListeners(_name);
+                _event.currentTarget = sender2;
+                DoDispatchEvent ( sender2, listeners2, _event );
+                if ( _event.isPropagationStopped )
+                    return;
+            }
+        }
+        else {
+            _event.eventPhase = exUIEventPhase.Target;
+            _event.currentTarget = _sender;
+            DoDispatchEvent ( _sender, _listeners, _event );
+        }
+    }
+    public void DispatchEvent ( exUIControl _sender, string _name, exUIEvent _event ) {
+        List<exUIEventListener> listeners = _sender.GetEventListeners(_name);
+        DispatchEvent ( _sender, _name, listeners, _event );
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void DoDispatchEvent ( exUIControl _sender, List<exUIEventListener> _listeners, exUIEvent _event ) {
+        for ( int i = 0; i < _listeners.Count; ++i ) {
+            exUIEventListener listener = _listeners[i];
+
+            //
+            if ( _event.eventPhase == exUIEventPhase.Capture  ) {
+                if ( listener.capturePhase == false ) {
+                    continue;
+                }
+            }
+            else if ( _event.eventPhase == exUIEventPhase.Bubble ) {
+                if ( listener.capturePhase ) {
+                    continue;
+                }
+            }
+
+            // 
+            listener.func ( _event );
+
+            //
+            // if ( _event.isPropagationStopped )
+            //     break;
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    // public void DispatchEvent ( exUIControl _sender, List<exUIEventListener> _eventListeners, exUIEvent _event ) {
+    //     if ( _eventListeners.Count <= 0 )
+    //         return;
+
+    //     if ( _event.bubbles ) {
+    //         List<exUIControl> routine = GetRoutine( _sender );
+    //         _event.target = _sender; 
+
+    //         for ( int i = 0; i < _eventListeners.Count; ++i ) {
+    //             exUIEventListener listener = _eventListeners[i];
+
+    //             // capture phase
+    //             if ( listener.capturePhase ) {
+    //                 _event.eventPhase = exUIEventPhase.Capture;
+
+    //                 for ( int j = routine.Count-1; j >= 0; --j ) {
+    //                     _event.currentTarget = routine[j];
+    //                     listener.func ( _event );
+    //                     if ( _event.isPropagationStopped )
+    //                         break;
+    //                 }
+
+    //                 if ( _event.isPropagationStopped )
+    //                     continue;
+    //             }
+
+    //             // target phase
+    //             _event.eventPhase = exUIEventPhase.Target;
+    //             _event.currentTarget = _sender;
+    //             listener.func ( _event );
+    //             if ( _event.isPropagationStopped )
+    //                 continue;
+
+    //             // bubble phase
+    //             _event.eventPhase = exUIEventPhase.Bubble;
+    //             for ( int j = 0; j < routine.Count; ++j ) {
+    //                 _event.currentTarget = routine[j];
+    //                 listener.func ( _event );
+    //                 if ( _event.isPropagationStopped )
+    //                     break;
+    //             }
+    //         }
+    //     }
+    //     else {
+    //         _event.target = _sender; 
+
+    //         for ( int i = 0; i < _eventListeners.Count; ++i ) {
+    //             exUIEventListener listener = _eventListeners[i];
+
+    //             // target phase
+    //             _event.eventPhase = exUIEventPhase.Target;
+    //             _event.currentTarget = _sender;
+    //             listener.func ( _event );
+
+    //             if ( _event.isPropagationStopped )
+    //                 break;
+    //         }
+    //     }
+    // }
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -380,6 +575,66 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    public void HoverOut ( exUIControl _ctrl, int _id ) {
+        exHotPoint[] hotPoints = null;
+
+        if ( hasTouch || simulateMouseAsTouch ) {
+            hotPoints = touchPoints;
+        }
+        else {
+            hotPoints = mousePoints;
+        }
+
+        //
+        for ( int i = 0; i < hotPoints.Length; ++i ) {
+            exHotPoint hotPoint = hotPoints[i];
+
+            if ( hotPoint.active == false )
+                continue;
+
+            if ( hotPoint.id != _id )
+                continue;
+
+            exUIPointInfo pointInfo = new exUIPointInfo();
+            pointInfo.id = hotPoint.id;
+            pointInfo.pos = hotPoint.pos;
+            pointInfo.delta = hotPoint.delta;
+            pointInfo.worldPos = hotPoint.worldPos;
+            pointInfo.worldDelta = hotPoint.worldDelta;
+
+            exUIPointEvent pointEvent = new exUIPointEvent();
+            pointEvent.isMouse = hotPoint.isMouse;
+            pointEvent.pointInfos = new exUIPointInfo [] {
+                pointInfo
+            };
+
+            // on hover out
+            if ( _ctrl != null ) {
+                _ctrl.OnHoverOut(pointEvent);
+            }
+
+            hotPoint.hover = null;
+
+            // on hover in
+            if ( _ctrl.parent != null ) {
+                pointEvent.Reset();
+                hotPoint.hover = _ctrl.parent;
+                _ctrl.parent.OnHoverIn(pointEvent);
+
+
+                if ( hotPoint.isTouch ) {
+                    pointEvent.Reset();
+                    hotPoint.pressed = _ctrl.parent;
+                    _ctrl.parent.OnPressDown(pointEvent);
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     void HandleEvents () {
         // make sure all hotpoints de-active at first
         for ( int i = 0; i < touchPoints.Length; ++i ) {
@@ -407,7 +662,7 @@ public class exUIMng : MonoBehaviour {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void DispatchHotPoints ( exHotPoint[] _hotPoints, bool _isMouse ) {
+    void HandleHotPoints ( exHotPoint[] _hotPoints, bool _isMouse ) {
 
         // ======================================================== 
         // handle hover event
@@ -420,24 +675,43 @@ public class exUIMng : MonoBehaviour {
             if ( hotPoint.active == false )
                 continue;
 
+            if ( hotPoint.pressed != null && hotPoint.pressed.grabMouseOrTouch )
+                continue;
+
             // get hot control
             exUIControl lastCtrl = hotPoint.hover;
             exUIControl curCtrl = PickControl(hotPoint.pos);
             hotPoint.hover = curCtrl;
 
             if ( lastCtrl != curCtrl ) {
+                exUIPointInfo pointInfo = new exUIPointInfo();
+                pointInfo.id = hotPoint.id;
+                pointInfo.pos = hotPoint.pos;
+                pointInfo.delta = hotPoint.delta;
+                pointInfo.worldPos = hotPoint.worldPos;
+                pointInfo.worldDelta = hotPoint.worldDelta;
+
+                exUIPointEvent pointEvent = new exUIPointEvent();
+                pointEvent.isMouse = hotPoint.isMouse;
+                pointEvent.pointInfos = new exUIPointInfo [] {
+                    pointInfo
+                };
+
                 // on hover out
                 if ( lastCtrl != null ) {
-                    lastCtrl.Send_OnHoverOut(hotPoint);
+                    lastCtrl.OnHoverOut(pointEvent);
                 }
 
                 // on hover in
                 if ( curCtrl != null ) {
-                    curCtrl.Send_OnHoverIn(hotPoint);
+                    pointEvent.Reset();
+                    curCtrl.OnHoverIn(pointEvent);
+
+                    if ( hotPoint.isTouch ) {
+                        hotPoint.pressDown = true;
+                    }
                 }
             }
-
-            _hotPoints[i] = hotPoint;
         }
 
         if ( _isMouse ) {
@@ -451,7 +725,9 @@ public class exUIMng : MonoBehaviour {
 
             float scroll = Input.GetAxis("Mouse ScrollWheel");
             if ( scroll != 0.0f && _hotPoints[0].hover != null ) {
-                _hotPoints[0].hover.Send_OnMouseWheel(scroll);
+                exUIWheelEvent wheelEvent = new exUIWheelEvent();
+                wheelEvent.delta = scroll;
+                _hotPoints[0].hover.OnMouseWheel(wheelEvent);
             }
         }
 
@@ -473,11 +749,22 @@ public class exUIMng : MonoBehaviour {
 
                 // send press down event
                 if ( curCtrl != null ) {
-                    curCtrl.Send_OnPressDown(hotPoint);
+                    exUIPointInfo pointInfo = new exUIPointInfo();
+                    pointInfo.id = hotPoint.id;
+                    pointInfo.pos = hotPoint.pos;
+                    pointInfo.delta = hotPoint.delta;
+                    pointInfo.worldPos = hotPoint.worldPos;
+                    pointInfo.worldDelta = hotPoint.worldDelta;
+
+                    exUIPointEvent pointEvent = new exUIPointEvent();
+                    pointEvent.isMouse = hotPoint.isMouse;
+                    pointEvent.pointInfos = new exUIPointInfo [] {
+                        pointInfo
+                    };
+
+                    curCtrl.OnPressDown(pointEvent);
                 }
                 hotPoint.pressed = curCtrl;
-
-                _hotPoints[i] = hotPoint;
             }
         }
 
@@ -516,7 +803,25 @@ public class exUIMng : MonoBehaviour {
 
         // send hot-point move event
         foreach (KeyValuePair<exUIControl, List<exHotPoint>> iter in moveEvents ) {
-            iter.Key.Send_OnHoverMove ( iter.Value );
+
+            exUIPointEvent pointEvent = new exUIPointEvent();
+            pointEvent.pointInfos = new exUIPointInfo [iter.Value.Count];
+
+            for ( int i = 0; i < iter.Value.Count; ++i ) {
+                exHotPoint hotPoint = iter.Value[i];
+
+                exUIPointInfo pointInfo = new exUIPointInfo();
+                pointInfo.id = hotPoint.id;
+                pointInfo.pos = hotPoint.pos;
+                pointInfo.delta = hotPoint.delta;
+                pointInfo.worldPos = hotPoint.worldPos;
+                pointInfo.worldDelta = hotPoint.worldDelta;
+
+                pointEvent.pointInfos[i] = pointInfo;
+                pointEvent.isMouse = hotPoint.isMouse;
+            }
+
+            iter.Key.OnHoverMove (pointEvent);
         }
 
         // ======================================================== 
@@ -531,6 +836,19 @@ public class exUIMng : MonoBehaviour {
 
             // 
             if ( hotPoint.pressUp ) {
+                exUIPointInfo pointInfo = new exUIPointInfo();
+                pointInfo.id = hotPoint.id;
+                pointInfo.pos = hotPoint.pos;
+                pointInfo.delta = hotPoint.delta;
+                pointInfo.worldPos = hotPoint.worldPos;
+                pointInfo.worldDelta = hotPoint.worldDelta;
+
+                exUIPointEvent pointEvent = new exUIPointEvent();
+                pointEvent.isMouse = hotPoint.isMouse;
+                pointEvent.pointInfos = new exUIPointInfo [] {
+                    pointInfo
+                };
+
                 exUIControl curCtrl = hotPoint.hover;
                 if ( hotPoint.pressed != null && hotPoint.pressed.grabMouseOrTouch ) {
                     curCtrl = hotPoint.pressed;
@@ -538,14 +856,13 @@ public class exUIMng : MonoBehaviour {
 
                 // send press down event
                 if ( curCtrl != null ) {
-                    curCtrl.Send_OnPressUp(hotPoint);
+                    curCtrl.OnPressUp(pointEvent);
 
                     if ( hotPoint.isTouch )
-                        curCtrl.Send_OnHoverOut(hotPoint);
+                        curCtrl.OnHoverOut(pointEvent);
                 }
 
                 hotPoint.pressed = null;
-                _hotPoints[i] = hotPoint;
             }
         }
     }
@@ -579,11 +896,9 @@ public class exUIMng : MonoBehaviour {
                 hotPoint.pressDown = (touch.phase == TouchPhase.Began);
                 hotPoint.pressUp = (touch.phase == TouchPhase.Canceled || touch.phase == TouchPhase.Ended);
             }
-
-            touchPoints[touch.fingerId] = hotPoint;
         }
 
-        DispatchHotPoints ( touchPoints, false );
+        HandleHotPoints ( touchPoints, false );
     }
 
     // ------------------------------------------------------------------ 
@@ -594,6 +909,7 @@ public class exUIMng : MonoBehaviour {
         if ( simulateMouseAsTouch ) {
             for ( int i = 0; i < 3; ++i ) {
                 exHotPoint hotPoint = touchPoints[i];
+                hotPoint.id = i;
 
                 // check if active the hotPoint
                 hotPoint.active = Input.GetMouseButtonDown(i) || Input.GetMouseButton(i) || Input.GetMouseButtonUp(i);
@@ -617,11 +933,9 @@ public class exUIMng : MonoBehaviour {
                     hotPoint.pressDown = Input.GetMouseButtonDown(i);
                     hotPoint.pressUp = Input.GetMouseButtonUp(i);
                 }
-
-                touchPoints[i] = hotPoint;
             }
 
-            DispatchHotPoints ( touchPoints, false );
+            HandleHotPoints ( touchPoints, false );
         }
         else {
             for ( int i = 0; i < 3; ++i ) {
@@ -646,11 +960,9 @@ public class exUIMng : MonoBehaviour {
                     hotPoint.pressDown = Input.GetMouseButtonDown(i);
                     hotPoint.pressUp = Input.GetMouseButtonUp(i);
                 }
-
-                mousePoints[i] = hotPoint;
             }
 
-            DispatchHotPoints ( mousePoints, true );
+            HandleHotPoints ( mousePoints, true );
         }
     }
 

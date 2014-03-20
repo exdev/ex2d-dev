@@ -29,27 +29,31 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected float depth_ = 0;
-    /// The sorting depth of this sprite in its layer. Sprite with lower depth are rendered before sprites with higher depth.
+    /// The sorting depth of this sprite relative to its parent sprite. Sprite with lower depth are rendered before sprites with higher depth.
     // ------------------------------------------------------------------ 
 
     public float depth {
-        get { return depth_; }
+        get {
+            return depth_;
+            //if (float.IsNaN(depthNotApplyedToMesh)) {
+            //    return depth_;
+            //}
+            //else {
+            //    return depthNotApplyedToMesh;
+            //}
+        }
         set {
             if ( depth_ != value ) {
-                if (layer_ != null && isInIndexBuffer) {
-                    layer_.SetSpriteDepth(this, value);
-                }
-                else {
-                    depth_ = value;
-                }
+                depth_ = value;
+                SetDepthDirty();
             }
         }
     }
 
-    /// 用于相同depth的sprite之间的排序
 #if !EX_DEBUG
     [HideInInspector]
 #endif
+    /// 用于相同depth的sprite之间的排序
     public int spriteIdInLayer = -1;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -72,28 +76,31 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             }
         }
     }
+
+    //[System.NonSerialized] internal float depthNotApplyedToMesh = float.NaN;
     
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
     
-    [System.NonSerialized]
-    protected exLayer layer_ = null;
+    [System.NonSerialized] protected exLayer layer_ = null;
     public exLayer layer {
         get {
             return layer_;
         }
-        internal set {
-            if (value != null) {
-                exDebug.Assert(layer_ == null, "Sprite should remove from last layer before add to new one");
-                if (layer_ == null) {
-                    OnPreAddToLayer();
-                }
-            }
-            layer_ = value;
-        }
     }
     
+    // 保存计算好的绝对depth值，只有在调用IComparable接口时才用到。(如果要检查在哪里用到，可以注释掉IComparable的实现)
+    // 当父节点的depth改变时，应该先更新父节点的globalDepth并应用到mesh上，再更新子节点。
+#if !EX_DEBUG
+    [System.NonSerialized]
+#endif
+    private float globalDepth_ = 0;
+    float exLayer.IFriendOfLayer.globalDepth {
+        get { return globalDepth_; }
+        set { globalDepth_ = value; }
+    }
+
     ///如果从layer中隐藏，isInIndexBuffer必须设为false
     public bool isInIndexBuffer {
         get {
@@ -112,6 +119,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     [System.NonSerialized] protected Transform cachedTransform_ = null;    
     public Transform cachedTransform {
         get {
+            // 这里确保transform不会先于gameObject销毁，如果返回值为空，很可能是因为exLayeredSprite被销毁了
             if (ReferenceEquals(cachedTransform_, null)) {
                 cachedTransform_ = transform;
                 cachedWorldMatrix = cachedTransform_.localToWorldMatrix;
@@ -168,12 +176,20 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
                 if (parentLayer != null) {
                     // Checks to ensure that the sprite is still parented to the right layer
                     SetLayer(parentLayer);
+                    bool parentGlobalDepthChanged = 0.0f + depth_ != globalDepth_;
+                    if (parentGlobalDepthChanged) {
+                        SetDepthDirty();
+                    }
                     return;
                 }
                 else {
                     exLayeredSprite parentSprite = parentTransform.GetComponent<exLayeredSprite>();
                     if (parentSprite != null) {
                         SetLayer(parentSprite.layer_);
+                        bool parentGlobalDepthChanged = parentSprite.globalDepth_ + depth_ != globalDepth_;
+                        if (parentGlobalDepthChanged) {
+                            SetDepthDirty();
+                        }
                         return;
                     }
                     else {
@@ -194,10 +210,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     
     protected override void UpdateMaterial () {
         if (layer_ != null) {
-            layer_.OnPreSpriteChange(this);
-            material_ = null;   // set dirty, make material update.
-            exDebug.Assert(material != null);
-            layer_.OnAfterSpriteChange(this);
+            layer_.RefreshSpriteMaterial(this);
         }
         else {
             material_ = null;   // set dirty, make material update.
@@ -208,7 +221,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // Desc:
     // ------------------------------------------------------------------ 
 
-    internal override float GetScaleX (Space _space) {
+    public override float GetScaleX (Space _space) {
         if (_space == Space.World) {
             // 在已知matrix的情况下，这个方法比lossyScale快了6倍，但返回的scale不完全精确，因为不计入rotation的影响。
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
@@ -223,7 +236,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // Desc:
     // ------------------------------------------------------------------ 
 
-    internal override float GetScaleY (Space _space) {
+    public override float GetScaleY (Space _space) {
         if (_space == Space.World) {
             // 在已知matrix的情况下，这个方法比lossyScale快了6倍，但返回的scale不完全精确，因为不计入rotation的影响。
             exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
@@ -301,16 +314,17 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public static bool operator > (exLayeredSprite _lhs, exLayeredSprite _rhs) {
-        return _lhs.depth_ > _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer > _rhs.spriteIdInLayer);
+        bool ordered = ReferenceEquals(_lhs.layer_, null) || _lhs.layer_.ordered;
+        return _lhs.globalDepth_ > _rhs.globalDepth_ || (ordered && _lhs.globalDepth_ == _rhs.globalDepth_ && _lhs.spriteIdInLayer > _rhs.spriteIdInLayer);
     }
     
     // ------------------------------------------------------------------ 
     /// Compare sprites by render depth, ignore layer. Sprites with lower depth are rendered before sprites with higher depth. 
-    /// 如果他们在同一个layer，则当layer是unordered时这个比较才有可能相等
     // ------------------------------------------------------------------ 
     
     public static bool operator >= (exLayeredSprite _lhs, exLayeredSprite _rhs) {
-        return _lhs.depth_ > _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer >= _rhs.spriteIdInLayer);
+        bool ordered = ReferenceEquals(_lhs.layer_, null) || _lhs.layer_.ordered;
+        return _lhs.globalDepth_ > _rhs.globalDepth_ || (_lhs.globalDepth_ == _rhs.globalDepth_ && (ordered == false || _lhs.spriteIdInLayer >= _rhs.spriteIdInLayer));
     }
     
     // ------------------------------------------------------------------ 
@@ -318,7 +332,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public static bool operator < (exLayeredSprite _lhs, exLayeredSprite _rhs) {
-        return _lhs.depth_ < _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer < _rhs.spriteIdInLayer);
+        bool ordered = ReferenceEquals(_lhs.layer_, null) || _lhs.layer_.ordered;
+        return _lhs.globalDepth_ < _rhs.globalDepth_ || (ordered && _lhs.globalDepth_ == _rhs.globalDepth_ && _lhs.spriteIdInLayer < _rhs.spriteIdInLayer);
     }
     
     // ------------------------------------------------------------------ 
@@ -327,7 +342,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public static bool operator <= (exLayeredSprite _lhs, exLayeredSprite _rhs) {
-        return _lhs.depth_ < _rhs.depth_ || (_lhs.depth_ == _rhs.depth_ && _lhs.spriteIdInLayer <= _rhs.spriteIdInLayer);
+        bool ordered = ReferenceEquals(_lhs.layer_, null) || _lhs.layer_.ordered;
+        return _lhs.globalDepth_ < _rhs.globalDepth_ || (_lhs.globalDepth_ == _rhs.globalDepth_ && (ordered == false || _lhs.spriteIdInLayer <= _rhs.spriteIdInLayer));
     }
     
     // ------------------------------------------------------------------ 
@@ -335,43 +351,66 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     // ------------------------------------------------------------------ 
     
     public int CompareTo(exLayeredSprite _other) {
-        if (depth_ < _other.depth_)
-        {
+        if (globalDepth_ < _other.globalDepth_) {
             return -1;
         }
-        if (depth_ > _other.depth_)
-        {
+        if (globalDepth_ > _other.globalDepth_) {
             return 1;
         }
-        if (spriteIdInLayer < _other.spriteIdInLayer)
-        {
-            return -1;
-        }
-        if (spriteIdInLayer > _other.spriteIdInLayer)
-        {
-            return 1;
+        bool ordered = ReferenceEquals(layer_, null) || layer_.ordered;
+        if (ordered) {
+            return spriteIdInLayer - _other.spriteIdInLayer;
         }
         return 0;
     }
     
     #endregion
 
-    void exLayer.IFriendOfLayer.DoSetDepth (float _depth) {
-        depth_ = _depth;
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    
+    void exLayer.IFriendOfLayer.DoSetLayer (exLayer _layer) {
+        if (layer_ == null && _layer != null) {
+            OnPreAddToLayer();
+        }
+        layer_ = _layer;
+    }
+    
+    //void exLayer.IFriendOfLayer.DoSetDepth (float _depth) {
+    //    depth_ = _depth;
+    //}
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    
+    void exLayer.IFriendOfLayer.DoSetBufferSize (int _vertexCount, int _indexCount) {
+        vertexCount_ = _vertexCount;
+        indexCount_ = _indexCount;
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Public Functions
-    ///////////////////////////////////////////////////////////////////////////////
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    
+    void exLayer.IFriendOfLayer.SetMaterialDirty () {
+        material_ = null;
+        exDebug.Assert(material != null);
+    }
 
     // ------------------------------------------------------------------ 
     /// 只重设layer相关属性，但不真的从layer或mesh中删除。
     // ------------------------------------------------------------------ 
     
-    internal void ResetLayerProperties () {
+    void exLayer.IFriendOfLayer.ResetLayerProperties () {
         layer_ = null;
         isInIndexBuffer = false;
     }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Public Functions
+    ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
     // Desc:
@@ -386,6 +425,21 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         }
         else if (layer_ != null) {
             layer_.Remove(this);
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// 如果在运行时改变了sprite的parent，需要手动调用这个方法以请求重新计算该Sprite和所有子Sprite的depth，不论它的parent之前是否已经调用过这个方法。
+    /// 只需要对改变了parent的sprite调用即可，不需要对它的子sprite调用。
+    // ------------------------------------------------------------------ 
+    
+    [ContextMenu("SetDepthDirty")]
+    public void SetDepthDirty () {
+        if (layer_ != null) {
+            //if (float.IsNaN(depthNotApplyedToMesh)) {
+            //    depthNotApplyedToMesh = depth_;
+            //}
+            layer_.SetDepthDirty(gameObject);
         }
     }
     

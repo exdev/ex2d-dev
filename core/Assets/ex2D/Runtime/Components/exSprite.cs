@@ -46,7 +46,7 @@ public class exSprite : exLayeredSprite, exISprite {
     public exTextureInfo textureInfo {
         get { return textureInfo_; }
         set {
-            // 如果用户在运行时改变了textureInfo，则需要重新设置textureInfo
+            // 如果用户在运行时改变了exTextureInfo，则需要重新set
             if (value != null) {
                 if (isOnEnabled) {
                     Show ();
@@ -55,7 +55,6 @@ public class exSprite : exLayeredSprite, exISprite {
             else if (isOnEnabled && textureInfo_ != null) {
                 Hide ();
             }
-            // 如果用户在运行时改变了textureInfo，则需要重新设置textureInfo
             exSpriteUtility.SetTextureInfo (this, ref textureInfo_, value, useTextureOffset_, spriteType_);
         }
     }
@@ -94,7 +93,7 @@ public class exSprite : exLayeredSprite, exISprite {
                 }
                 spriteType_ = value;
                 if (layer_ != null) {
-                    UpdateBufferSize ();
+                    (this as exISprite).UpdateBufferSize ();
                     updateFlags |= exUpdateFlags.All;
                 }
             }
@@ -111,7 +110,7 @@ public class exSprite : exLayeredSprite, exISprite {
             if ( tiledSpacing_ != value ) {
                 tiledSpacing_ = value;
                 if (layer_ != null) {
-                    UpdateBufferSize();
+                    (this as exISprite).UpdateBufferSize();
                     updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV);
                 }
             }
@@ -129,7 +128,7 @@ public class exSprite : exLayeredSprite, exISprite {
             if ( borderOnly_ != value ) {
                 borderOnly_ = value;
                 if (spriteType_ == exSpriteType.Sliced && layer_ != null) {
-                    UpdateBufferSize();
+                    (this as exISprite).UpdateBufferSize();
                     updateFlags |= exUpdateFlags.All;
                 }
             }
@@ -159,7 +158,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
 
     public float leftBorderSize {
-        get { return leftBorderSize_; }
+        get { return customBorderSize ? leftBorderSize_ : textureInfo_.borderLeft; }
         set {
             if ( leftBorderSize_ != value ) {
                 leftBorderSize_ = value;
@@ -176,7 +175,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
 
     public float rightBorderSize {
-        get { return rightBorderSize_; }
+        get { return customBorderSize ? rightBorderSize_ : textureInfo_.borderRight; }
         set {
             if ( rightBorderSize_ != value ) {
                 rightBorderSize_ = value;
@@ -193,7 +192,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
 
     public float topBorderSize {
-        get { return topBorderSize_; }
+        get { return customBorderSize ? topBorderSize_ : textureInfo_.borderTop; }
         set {
             if ( topBorderSize_ != value ) {
                 topBorderSize_ = value;
@@ -210,7 +209,7 @@ public class exSprite : exLayeredSprite, exISprite {
     // ------------------------------------------------------------------ 
 
     public float bottomBorderSize {
-        get { return bottomBorderSize_; }
+        get { return customBorderSize ? bottomBorderSize_ : textureInfo_.borderBottom; }
         set {
             if ( bottomBorderSize_ != value ) {
                 bottomBorderSize_ = value;
@@ -244,12 +243,12 @@ public class exSprite : exLayeredSprite, exISprite {
             }
             else if (customSize_ != value) {
                 customSize_ = value;
-                if (customSize_ == false && textureInfo_ != null) {
-                    if (textureInfo_.width != width_ || textureInfo_.height != height_) {
+                if (textureInfo_ != null && textureInfo_.width != width_ || textureInfo_.height != height_) {
+                    if (customSize_ == false) {
                         width_ = textureInfo_.width;
                         height_ = textureInfo_.height;
-                        updateFlags |= exUpdateFlags.Vertex;
                     }
+                    updateFlags |= exUpdateFlags.Vertex;
                 }
             }
         }
@@ -267,7 +266,7 @@ public class exSprite : exLayeredSprite, exISprite {
         set {
             base.width = value;
             if (spriteType_ == exSpriteType.Tiled && layer_ != null) {
-                UpdateBufferSize ();
+                (this as exISprite).UpdateBufferSize ();
                 updateFlags |= exUpdateFlags.UV;
             }
         }
@@ -285,7 +284,7 @@ public class exSprite : exLayeredSprite, exISprite {
         set {
             base.height = value;
             if (spriteType_ == exSpriteType.Tiled && layer_ != null) {
-                UpdateBufferSize ();
+                (this as exISprite).UpdateBufferSize ();
                 updateFlags |= exUpdateFlags.UV;
             }
         }
@@ -336,9 +335,6 @@ public class exSprite : exLayeredSprite, exISprite {
                     _colors32.buffer [vertexBufferIndex + i] = color32;
                 }
             }
-            applyedFlags |= updateFlags;
-            updateFlags = exUpdateFlags.None;
-            return applyedFlags;
         }
         else {
             if (updateFlags != exUpdateFlags.None) {
@@ -348,17 +344,20 @@ public class exSprite : exLayeredSprite, exISprite {
                     for (int i = indexBufferIndex; i < indexBufferIndex + indexCount_; ++i) {
                         _indices.buffer[i] = vertexBufferIndex;
                     }
+                    applyedFlags |= exUpdateFlags.VertexAndIndex;
                 }
                 else {
                     Vector3 pos = cachedTransform.position;
                     for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount_; ++i) {
                         _vertices.buffer[i] = pos;
                     }
+                    applyedFlags |= exUpdateFlags.Vertex;
                 }
-                return exUpdateFlags.All;
             }
-            return exUpdateFlags.None;
         }
+        applyedFlags |= updateFlags;
+        updateFlags = exUpdateFlags.None;
+        return applyedFlags;
     }
     
 #endregion // Functions used to update geometry buffer
@@ -373,7 +372,7 @@ public class exSprite : exLayeredSprite, exISprite {
         }
 
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
-        UpdateBufferSize();
+        (this as exISprite).UpdateBufferSize();
         vertices.AddRange(vertexCount_);
         switch (spriteType_) {
         case exSpriteType.Simple:
@@ -403,37 +402,22 @@ public class exSprite : exLayeredSprite, exISprite {
         this.GetVertexAndIndexCount(out vertexCount_, out indexCount_);
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Other functions
-    ///////////////////////////////////////////////////////////////////////////////
-    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void UpdateBufferSize () {
+    void exISprite.UpdateBufferSize () {
         int newVertexCount, newIndexCount;
         this.GetVertexAndIndexCount (out newVertexCount, out newIndexCount);
         if (vertexCount_ != newVertexCount || indexCount_ != newIndexCount) {
             if (layer_ != null) {
-                layer_.OnPreSpriteChange(this);
-                vertexCount_ = newVertexCount;
-                indexCount_ = newIndexCount;
-                layer_.OnAfterSpriteChange(this);
+                layer_.SetSpriteBufferSize(this, newVertexCount, newIndexCount);
             }
             else {
                 vertexCount_ = newVertexCount;
                 indexCount_ = newIndexCount;
             }
         }
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void exISprite.UpdateBufferSize () {
-        UpdateBufferSize ();
     }
 }
 
@@ -1078,7 +1062,7 @@ namespace ex2D.Detail {
                     if (hasNext == false) {
                         // 后面都被Trim掉了
                         return;
-	                }
+                    }
                     exTextureInfo.Dice dice = diceEnumerator.Current;
                     if (dice.sizeType == exTextureInfo.DiceType.Max) {
                         _vertices.buffer[i++] = bottomLeft;

@@ -88,24 +88,11 @@ class exSpriteColorControllerInspector : Editor {
                 foreach ( Object obj in serializedObject.targetObjects ) {
                     exSpriteColorController ctrl = obj as exSpriteColorController;
                     if ( ctrl ) {
-                        // first we need to recover the color
-                        for ( int i = 0; i < ctrl.colorInfos.Count; ++i ) {
-                            exSpriteColorController.ColorInfo colorInfo = ctrl.colorInfos[i];
-                            if ( colorInfo.sprite != null ) {
-                                colorInfo.sprite.color = colorInfo.color * Color.white;
-                            }
-                        }
+                        ctrl.color = Color.white;
+                        ctrl.colorInfos.Clear();
 
                         // register new value
                         ctrl.RegisterAllChildren();
-
-                        // reset the color
-                        for ( int i = 0; i < ctrl.colorInfos.Count; ++i ) {
-                            exSpriteColorController.ColorInfo colorInfo = ctrl.colorInfos[i];
-                            if ( colorInfo.sprite != null ) {
-                                colorInfo.sprite.color = colorInfo.color * ctrl.color;
-                            }
-                        }
 
                         EditorUtility.SetDirty(ctrl);
                     }

@@ -65,11 +65,11 @@ public static class exBitmapFontUtility {
         string fontInfoPath = AssetDatabase.GetAssetPath(_fontInfo);
         string dirname = Path.GetDirectoryName(fontInfoPath);
 
-		string line;
+        string line;
         FileInfo fileInfo = new FileInfo(fontInfoPath);
-		StreamReader reader = fileInfo.OpenText();
+        StreamReader reader = fileInfo.OpenText();
         int textureHeight = -1;
-		while ( (line = reader.ReadLine()) != null ) {
+        while ( (line = reader.ReadLine()) != null ) {
 
             string[] words = line.Split(' ');
             if ( words[0] == "info" ) {

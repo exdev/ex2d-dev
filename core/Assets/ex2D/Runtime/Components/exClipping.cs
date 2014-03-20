@@ -93,7 +93,7 @@ public class exClipping : exPlane {
         for (int spriteIndex = 0; spriteIndex < spritesToAdd.Length; ++spriteIndex) {
             exSpriteBase sprite = spritesToAdd [spriteIndex];
             sprite.clip = this;
-            Material tmp = sprite.material;
+            //Material tmp = sprite.material;
         }
         // } TODO end 
 

@@ -26,57 +26,76 @@ public class exUIPanel : exUIControl {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    public override EventDef GetEventDef ( string _name ) {
-        EventDef eventDef = exUIControl.FindEventDef ( eventDefs, _name );
-        if ( eventDef == null )
-            eventDef = base.GetEventDef(_name);
-        return eventDef;
-    }
-
-    public override string[] GetEventDefNames () {
-        string[] baseNames = base.GetEventDefNames();
-        string[] names = new string[baseNames.Length + eventDefs.Length];
-
-        for ( int i = 0; i < baseNames.Length; ++i ) {
-            names[i] = baseNames[i];
-        }
-
-        for ( int i = 0; i < eventDefs.Length; ++i ) {
-            names[i+baseNames.Length] = eventDefs[i].name;
-        }
-
-        return names;
-    }
-
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
 
     // event-defs
-    public static new EventDef[] eventDefs = new EventDef[] {
-        new EventDef ( "onEnter",         new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onExit",          new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
+    public static new string[] eventNames = new string[] {
+        "onEnter",
+        "onExit",
 
-        new EventDef ( "onStartFadeIn",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onFinishFadeIn",  new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onFadeIn",        new Type[] { typeof(exUIControl), typeof(float) }, typeof(Action<exUIControl,float>) ),
+        "onStartFadeIn",
+        "onFinishFadeIn",
+        "onFadeIn",
 
-        new EventDef ( "onStartFadeOut",  new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onFinishFadeOut", new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onFadeOut",       new Type[] { typeof(exUIControl), typeof(float) }, typeof(Action<exUIControl,float>) ),
+        "onStartFadeOut",
+        "onFinishFadeOut",
+        "onFadeOut",
     };
 
     // events
-    public event System.Action<exUIControl> onEnter; // same frame after transition.onEnd invoked
-    public event System.Action<exUIControl> onExit;  // same frame before transition.onStart invoked
+    List<exUIEventListener> onEnter; // same frame after transition.onEnd invoked
+    List<exUIEventListener> onExit;  // same frame before transition.onStart invoked
 
-    public event System.Action<exUIControl> onStartFadeIn;
-    public event System.Action<exUIControl> onFinishFadeIn;
-    public event System.Action<exUIControl,float> onFadeIn;
+    List<exUIEventListener> onStartFadeIn;
+    List<exUIEventListener> onFinishFadeIn;
+    List<exUIEventListener> onFadeIn;
 
-    public event System.Action<exUIControl> onStartFadeOut;
-    public event System.Action<exUIControl> onFinishFadeOut;
-    public event System.Action<exUIControl,float> onFadeOut;
+    List<exUIEventListener> onStartFadeOut;
+    List<exUIEventListener> onFinishFadeOut;
+    List<exUIEventListener> onFadeOut;
+
+    public void OnEnter ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onEnter",    onEnter, _event ); }
+    public void OnExit  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onExit",     onExit,  _event ); }
+
+    public void OnStartFadeIn   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onStartFadeIn",      onStartFadeIn,  _event ); }
+    public void OnFinishFadeIn  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onFinishFadeIn",     onFinishFadeIn,  _event ); }
+    public void OnFadeIn        ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onFadeIn",           onFadeIn,  _event ); }
+
+    public void OnStartFadeOut  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onStartFadeOut",     onStartFadeOut,  _event ); }
+    public void OnFinishFadeOut ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onFinishFadeOut",    onFinishFadeOut,  _event ); }
+    public void OnFadeOut       ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onFadeOut",          onFadeOut,  _event ); }
+
+    public override void CacheEventListeners () {
+        base.CacheEventListeners();
+
+        onEnter = eventListenerTable["onEnter"];
+        onExit = eventListenerTable["onExit"];
+        
+        onStartFadeIn = eventListenerTable["onStartFadeIn"];
+        onFinishFadeIn = eventListenerTable["onFinishFadeIn"];
+        onFadeIn = eventListenerTable["onFadeIn"];
+
+        onStartFadeOut = eventListenerTable["onStartFadeOut"];
+        onFinishFadeOut = eventListenerTable["onFinishFadeOut"];
+        onFadeOut = eventListenerTable["onFadeOut"];
+    }
+
+    public override string[] GetEventNames () {
+        string[] baseNames = base.GetEventNames();
+        string[] names = new string[baseNames.Length + eventNames.Length];
+
+        for ( int i = 0; i < baseNames.Length; ++i ) {
+            names[i] = baseNames[i];
+        }
+
+        for ( int i = 0; i < eventNames.Length; ++i ) {
+            names[i+baseNames.Length] = eventNames[i];
+        }
+
+        return names;
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -95,7 +114,9 @@ public class exUIPanel : exUIControl {
     // ------------------------------------------------------------------ 
 
     public void Enter () {
-        if ( onEnter != null ) onEnter(this);
+        exUIEvent uiEvent = new exUIEvent();
+        uiEvent.bubbles = false;
+        OnEnter (uiEvent);
     }
 
     // ------------------------------------------------------------------ 
@@ -103,7 +124,9 @@ public class exUIPanel : exUIControl {
     // ------------------------------------------------------------------ 
 
     public void Exit () {
-        if ( onExit != null ) onExit(this);
+        exUIEvent uiEvent = new exUIEvent();
+        uiEvent.bubbles = false;
+        OnExit (uiEvent);
     }
 
     // ------------------------------------------------------------------ 
@@ -111,7 +134,9 @@ public class exUIPanel : exUIControl {
     // ------------------------------------------------------------------ 
 
     public void StartFadeIn () {
-        if ( onStartFadeIn != null ) onStartFadeIn(this);
+        exUIEvent uiEvent = new exUIEvent();
+        uiEvent.bubbles = false;
+        OnStartFadeIn (uiEvent);
     }
 
     // ------------------------------------------------------------------ 
@@ -119,7 +144,9 @@ public class exUIPanel : exUIControl {
     // ------------------------------------------------------------------ 
 
     public void FinishFadeIn () {
-        if ( onFinishFadeIn != null ) onFinishFadeIn(this);
+        exUIEvent uiEvent = new exUIEvent();
+        uiEvent.bubbles = false;
+        OnFinishFadeIn (uiEvent);
     }
 
     // ------------------------------------------------------------------ 
@@ -127,7 +154,10 @@ public class exUIPanel : exUIControl {
     // ------------------------------------------------------------------ 
 
     public void FadeIn ( float _ratio ) {
-        if ( onFadeIn != null ) onFadeIn( this, _ratio );
+        exUIRatioEvent ratioEvent = new exUIRatioEvent();
+        ratioEvent.bubbles = false;
+        ratioEvent.ratio = _ratio;
+        OnFadeIn (ratioEvent);
     }
 
     // ------------------------------------------------------------------ 
@@ -135,7 +165,9 @@ public class exUIPanel : exUIControl {
     // ------------------------------------------------------------------ 
 
     public void StartFadeOut () {
-        if ( onStartFadeOut != null ) onStartFadeOut(this);
+        exUIEvent uiEvent = new exUIEvent();
+        uiEvent.bubbles = false;
+        OnStartFadeOut(uiEvent);
     }
 
     // ------------------------------------------------------------------ 
@@ -143,7 +175,9 @@ public class exUIPanel : exUIControl {
     // ------------------------------------------------------------------ 
 
     public void FinishFadeOut () {
-        if ( onFinishFadeOut != null ) onFinishFadeOut(this);
+        exUIEvent uiEvent = new exUIEvent();
+        uiEvent.bubbles = false;
+        OnFinishFadeOut(uiEvent);
     }
 
     // ------------------------------------------------------------------ 
@@ -151,6 +185,9 @@ public class exUIPanel : exUIControl {
     // ------------------------------------------------------------------ 
 
     public void FadeOut ( float _ratio ) {
-        if ( onFadeOut != null ) onFadeOut( this, _ratio );
+        exUIRatioEvent ratioEvent = new exUIRatioEvent();
+        ratioEvent.bubbles = false;
+        ratioEvent.ratio = _ratio;
+        OnFadeOut (ratioEvent);
     }
 }

@@ -72,39 +72,45 @@ public class exUIScrollBar : exUIControl {
             if ( btnBar ) {
                 btnBar.grabMouseOrTouch = true;
 
-                btnBar.onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    if ( dragging )
-                        return;
+                btnBar.AddEventListener ( "onPressDown", 
+                                          delegate ( exUIEvent _event ) {
+                                              if ( dragging )
+                                                  return;
 
-                    if ( _point.isTouch || _point.GetMouseButton(0) ) {
-                        dragging = true;
-                        draggingID = _point.id;
+                                              exUIPointEvent pointEvent = _event as exUIPointEvent;
+                                              if ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) {
+                                                  dragging = true;
+                                                  draggingID = pointEvent.mainPoint.id;
 
-                        exUIMng.inst.SetFocus(this);
-                    }
-                };
+                                                  exUIMng.inst.SetFocus(this);
+                                              }
+                                          } );
 
-                btnBar.onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
-                    if ( ( _point.isTouch || _point.GetMouseButton(0) ) && _point.id == draggingID ) {
-                        if ( dragging ) {
-                            dragging = false;
-                            draggingID = -1;
-                        }
-                    }
-                };
+                btnBar.AddEventListener ( "onPressUp", 
+                                          delegate ( exUIEvent _event ) {
+                                              exUIPointEvent pointEvent = _event as exUIPointEvent;
+                                              if ( ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) && pointEvent.pointInfos[0].id == draggingID ) {
+                                                  if ( dragging ) {
+                                                      dragging = false;
+                                                      draggingID = -1;
+                                                  }
+                                              }
+                                          } );
 
-                btnBar.onHoverMove += delegate ( exUIControl _sender, List<exHotPoint> _points ) {
-                    if ( scrollView ) {
-                        for ( int i = 0; i < _points.Count; ++i ) {
-                            exHotPoint point = _points[i];
-                            if ( dragging && ( point.isTouch || point.GetMouseButton(0) ) && point.id == draggingID  ) {
-                                Vector2 delta = point.worldDelta; 
-                                delta.y = -delta.y;
-                                scrollView.Scroll (delta/ratio);
-                            }
-                        }
-                    }
-                };
+                btnBar.AddEventListener ( "onHoverMove", 
+                                          delegate ( exUIEvent _event ) {
+                                              if ( scrollView ) {
+                                                  exUIPointEvent pointEvent = _event as exUIPointEvent;
+                                                  for ( int i = 0; i < pointEvent.pointInfos.Length; ++i ) {
+                                                      exUIPointInfo point = pointEvent.pointInfos[i];
+                                                      if ( dragging && ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) && point.id == draggingID  ) {
+                                                          Vector2 delta = point.worldDelta; 
+                                                          delta.y = -delta.y;
+                                                          scrollView.Scroll (delta/ratio);
+                                                      }
+                                                  }
+                                              }
+                                          } );
             }
         }
 
@@ -125,30 +131,33 @@ public class exUIScrollBar : exUIControl {
 
         // handle scroll view
         if ( scrollView ) {
-            scrollView.onContentResized += delegate ( exUIControl _sender, Vector2 _size ) {
-                UpdateScrollBarRatio ();
-                UpdateScrollBar ();
-            };
-            scrollView.onScroll += delegate ( exUIControl _sender, Vector2 _offset ) {
-                if ( direction == Direction.Horizontal ) {
-                    scrollOffset = _offset.x * ratio;
-                }
-                else {
-                    scrollOffset = _offset.y * ratio;
-                }
-                UpdateScrollBar ();
+            scrollView.AddEventListener ( "onContentResized",
+                                          delegate ( exUIEvent _event ) {
+                                              UpdateScrollBarRatio ();
+                                              UpdateScrollBar ();
+                                          } );
+            scrollView.AddEventListener ( "onScroll",
+                                          delegate ( exUIEvent _event ) {
+                                              if ( direction == Direction.Horizontal ) {
+                                                  scrollOffset = scrollView.scrollOffset.x * ratio;
+                                              }
+                                              else {
+                                                  scrollOffset = scrollView.scrollOffset.y * ratio;
+                                              }
+                                              UpdateScrollBar ();
 
-                //
-                if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
-                    activeSelf = true;
-                }
-            };
-            scrollView.onScrollFinished += delegate ( exUIControl _sender ) {
-                if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
-                    cooldownTimer = cooldown;
-                    isCoolingDown = true;
-                }
-            };
+                                              //
+                                              if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
+                                                  activeSelf = true;
+                                              }
+                                          } );
+            scrollView.AddEventListener ( "onScrollFinished",
+                                          delegate ( exUIEvent _event ) {
+                                              if ( scrollView.showCondition == exUIScrollView.ShowCondition.WhenDragging ) {
+                                                  cooldownTimer = cooldown;
+                                                  isCoolingDown = true;
+                                              }
+                                          } );
             UpdateScrollBarRatio ();
             UpdateScrollBar ();
 
@@ -233,7 +242,7 @@ public class exUIScrollBar : exUIControl {
             }
         }
 
-        ratio = bgSize/contentSize;
+        ratio = Mathf.Min(bgSize/contentSize,1.0f);
     }
 
     // ------------------------------------------------------------------ 
@@ -274,7 +283,7 @@ public class exUIScrollBar : exUIControl {
             bar.width -= trimSize;
 
             //
-            bar.transform.localPosition = new Vector3( scrollStart.x + scrollOffset - slicedOffset,
+            bar.transform.localPosition = new Vector3( scrollStart.x + finalOffset - slicedOffset,
                                                       -scrollStart.y,
                                                        scrollStart.z );
         }

@@ -20,7 +20,7 @@ using System.Text;
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-public static class exTextUtility {
+public static partial class exTextUtility {
 
     public static GUIStyle fontHelper = new GUIStyle();
 
@@ -32,262 +32,230 @@ public static class exTextUtility {
     }
 
     // ------------------------------------------------------------------ 
-    // Desc: This only calculate result in one line
+    // Desc: 
+    // http://baike.baidu.com/view/40801.htm
+    // http://www.ipmtea.net/javascript/201009/23_294.html
     // ------------------------------------------------------------------ 
 
-    public static bool CalcTextLine ( ref int _end_x, 
-                                      ref int _end_index,
-                                      ref StringBuilder _builder,
-                                      string _text, 
-                                      int _start_index, 
-                                      int _width,
-                                      Font _font, 
-                                      int _fontSize, 
-                                      WrapMode _wrap, 
-                                      int _wordSpacing, 
-                                      int _letterSpacing ) 
-    {
-        int cur_index = _start_index;
-        int cur_x = 0;
+    public static bool IsChinese ( char _ch ) {
+        return (0x2E80 <= _ch && _ch <= 0xFAFF) 
+            && (
+                (0x4E00 <= _ch && _ch <= 0x9FBF) // CJK Unified Ideographs (*most frequency) 
+                || (0x2E80 <= _ch && _ch <= 0x2EFF) // CJK Radicals Supplement
+                || (0x2F00 <= _ch && _ch <= 0x2FDF) // Kangxi Radicals
+                || (0x3000 <= _ch && _ch <= 0x303F) // CJK Symbols and Punctuation
+                || (0x31C0 <= _ch && _ch <= 0x31EF) // CJK Strokes
+                || (0x3200 <= _ch && _ch <= 0x32FF) // Enclosed CJK Letters and Months
+                || (0x3300 <= _ch && _ch <= 0x33FF) // CJK Compatibility
+                || (0x3400 <= _ch && _ch <= 0x4DBF) // CJK Unified Ideographs Extension A
+                || (0x4DC0 <= _ch && _ch <= 0x4DFF) // Yijing Hexagrams Symbols
+                || (0xF900 <= _ch && _ch <= 0xFAFF) // CJK Compatibility Ideographs
+               );
+    }
 
-        while ( cur_index < _text.Length ) {
-            int next_index = cur_index+1;
-            char cur_char = _text[cur_index];
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
 
-            // process new-line
-            if ( cur_char == '\n' ) {
-                if ( _wrap == WrapMode.Pre || _wrap == WrapMode.PreWrap ) {
-                    _end_x = cur_x;
-                    _end_index = cur_index;
-                    return false;
-                }
-                cur_char = ' ';
-            }
+    public static bool IsJapanese ( char _ch ) {
+        return (0x3040 <= _ch && _ch <= 0x309F) // Hiragana 
+            || (0x30A0 <= _ch && _ch <= 0x30FF) // Katakana
+            || (0x31F0 <= _ch && _ch <= 0x31FF) // Katakana Phonetic Extensions
+            ;
+    }
 
-            // process white-space
-            if ( cur_char == ' ' ) {
-                bool doShrink = false;
-                bool skipThis = false;
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
 
-                // shrink the started white-space
-                if ( cur_index == _start_index &&
-                     ( /*_wrap == WrapMode.PreWrap ||*/ _wrap == WrapMode.Word || _wrap == WrapMode.None ) ) 
-                {
-                    skipThis = true;
-                    doShrink = true;
-                }
-                else if ( _wrap == WrapMode.Word || _wrap == WrapMode.None ) {
-                    doShrink = true;
-                }
-
-                //
-                if ( doShrink ) {
-                    while ( next_index < _text.Length ) {
-                        char next_char = _text[next_index];
-                        if ( next_char != ' ' && next_char != '\n' )
-                            break;
-                        ++next_index;
-                    }
-
-                    // if we are at the end of the line, just ignore any white-space.
-                    if ( next_index >= _text.Length ) {
-                        _end_x = cur_x;
-                        _end_index = cur_index;
-                        return true;
-                    }
-                }
-                if ( skipThis ) {
-                    cur_index = next_index;
-                    continue;
-                }
-            }
-
-            // get character info
-            CharacterInfo charInfo;
-            _font.GetCharacterInfo ( cur_char, out charInfo, _fontSize );
-
-            // advance-x
-            cur_x += (int)charInfo.width + _letterSpacing;
-            if ( cur_char == ' ' )
-                cur_x += _wordSpacing;
-
-            //
-            cur_index = next_index;
-
-            // check if wrap the next-word
-            if ( cur_char == ' ' && (_wrap == WrapMode.Word || _wrap == WrapMode.PreWrap) ) {
-
-                int tmp_x = cur_x;
-                int tmp_index = next_index;
-
-                if ( tmp_index >= _text.Length )
-                    break;
-
-                char tmp_char = _text[tmp_index];
-                while ( tmp_char != ' ' && tmp_char != '\n' ) {
-                    CharacterInfo tmp_charInfo;
-                    _font.GetCharacterInfo ( tmp_char, out tmp_charInfo, _fontSize );
-
-                    tmp_x += (int)tmp_charInfo.width + _letterSpacing;
-
-                    if ( tmp_x > _width ) {
-                        _end_x = cur_x - (int)charInfo.width - _letterSpacing - _wordSpacing;
-                        _end_index = cur_index-1;
-                        return false;
-                    }
-
-                    ++tmp_index;
-                    if ( tmp_index >= _text.Length )
-                        break;
-                    tmp_char = _text[tmp_index];
-                }
-            }
-
-            // NOTE: we put builder here to skip white-space when text been break into nextline
-            _builder.Append(cur_char);
-        }
-
-        //
-        _end_x = cur_x;
-        _end_index = cur_index;
-
-        return true;
+    public static bool CanWordBreak ( char _ch ) {
+        return (_ch == ' ' || _ch == '\t' || _ch == '\f' || _ch == '\n' || _ch == '\r')
+            || IsChinese (_ch)
+            || IsJapanese (_ch);
     }
 
     // ------------------------------------------------------------------ 
     // Desc: This only calculate result in one line
     // ------------------------------------------------------------------ 
 
-    public static bool CalcTextLine ( ref int _end_x, 
-                                      ref int _end_index,
-                                      ref StringBuilder _builder,
+    public static bool CalcTextLine ( out int _end_x, 
+                                      out int _end_index,
+                                      StringBuilder _builder,
                                       string _text, 
-                                      int _start_index, 
-                                      int _width,
-                                      exBitmapFont _font, 
-                                      int _fontSize, 
-                                      WrapMode _wrap, 
-                                      int _wordSpacing, 
-                                      int _letterSpacing ) 
+                                      int _index,
+                                      int _maxWidth,
+                                      exFont _font, 
+                                      int _wordSpacing,
+                                      int _letterSpacing,
+                                      bool _wrapWord,
+                                      bool _collapseSpace,
+                                      bool _collapseLinebreak )
     {
-        int cur_index = _start_index;
-        int cur_x = 0;
-        int line_width = 0;
+        int cur_index = _index; 
+        int next_index = _index;
+        int word_start_index = _index;
+        int cur_x = 0; 
+        int word_start_x = 0;
+        bool linebreak = false;
+        bool trimWhitespace = true; 
+        bool beginningOfLine = true;
+        char last_ch = '\0';
 
         while ( cur_index < _text.Length ) {
-            int next_index = cur_index+1;
-            char cur_char = _text[cur_index];
+            bool skipcpy = false;
+            char ch = _text[cur_index];
+            next_index = cur_index+1;
 
-            // process new-line
-            if ( cur_char == '\n' ) {
-                if ( _wrap == WrapMode.Pre || _wrap == WrapMode.PreWrap ) {
-                    _end_x = line_width;
-                    _end_index = cur_index;
-                    return false;
+            // if this is line-break
+            if ( ch == '\n' || ch == '\r' ) {
+                if ( _collapseLinebreak ) {
+                    ch = ' '; // turn it to space
                 }
-                cur_char = ' ';
+                else {
+                    linebreak = true;
+                }
             }
 
-            // process white-space
-            if ( cur_char == ' ' ) {
-                bool doShrink = false;
-                bool skipThis = false;
-
-                // pre-wrap will shrink the started white-space
-                if ( cur_index == _start_index &&
-                     ( /*_wrap == WrapMode.PreWrap ||*/ _wrap == WrapMode.Word || _wrap == WrapMode.None ) ) 
-                {
-                    skipThis = true;
-                    doShrink = true;
-                }
-                else if ( _wrap == WrapMode.Word || _wrap == WrapMode.None ) {
-                    doShrink = true;
-                }
-
-                //
-                if ( doShrink ) {
+            // if this is space 
+            if ( ch == ' ' || ch == '\t' || ch == '\f' ) {
+                if ( _collapseSpace ) {
                     while ( next_index < _text.Length ) {
-                        char next_char = _text[next_index];
-                        if ( next_char != ' ' && next_char != '\n' )
-                            break;
-                        ++next_index;
-                    }
+                        char next_ch = _text[next_index];
+                        next_index = next_index + 1;
 
-                    // if we are at the end of the line, just ignore any white-space.
-                    if ( next_index >= _text.Length ) {
-                        _end_x = line_width;
-                        _end_index = cur_index;
-                        return true;
-                    }
-                }
-                if ( skipThis ) {
-                    cur_index = next_index;
-                    continue;
-                }
-            }
+                        // if next_ch is white-space, then collapse this char
+                        if ( next_ch == ' ' || next_ch == '\t' || next_ch == '\f' ) {
+                            cur_index = next_index-1;
+                            continue;
+                        }
 
-            // get character info
-            exBitmapFont.CharInfo charInfo = _font.GetCharInfo(cur_char);
-            if ( charInfo != null ) {
-                // get the line-width
-                line_width = cur_x + (int)charInfo.width + _letterSpacing;
-                if ( cur_char == ' ' ) {
-                    line_width += _wordSpacing;
-                }
-
-                // advance-x
-                cur_x += (int)charInfo.xadvance + _letterSpacing;
-                if ( cur_char == ' ' )
-                    cur_x += _wordSpacing;
-
-                //
-                cur_index = next_index;
-
-                // check if wrap the next-word
-                if ( cur_char == ' ' && (_wrap == WrapMode.Word || _wrap == WrapMode.PreWrap) ) {
-
-                    int tmp_x = cur_x;
-                    int tmp_index = next_index;
-                    int tmp_width = line_width;
-
-                    if ( tmp_index >= _text.Length )
-                        break;
-
-                    char tmp_char = _text[tmp_index];
-                    while ( tmp_char != ' ' && tmp_char != '\n' ) {
-                        exBitmapFont.CharInfo tmp_charInfo = _font.GetCharInfo(tmp_char);
-                        if ( tmp_charInfo != null ) {
-                            tmp_width = tmp_x + (int)tmp_charInfo.width + _letterSpacing;
-                            tmp_x += (int)tmp_charInfo.xadvance + _letterSpacing;
-
-                            if ( tmp_width > _width ) {
-                                // NOTE: in BitmapFont, space have zero width, so we use cur_x here NOT line_width
-                                _end_x = cur_x - (int)charInfo.width - _letterSpacing - _wordSpacing;
-                                _end_index = cur_index-1;
-                                return false;
+                        // if next_ch is line-break and collapseLinebreak is true, then collapse this char
+                        if ( next_ch == '\n' || next_ch == '\r' ) {
+                            if ( _collapseLinebreak ) {
+                                cur_index = next_index-1;
+                                continue;
                             }
                         }
 
-                        ++tmp_index;
-                        if ( tmp_index >= _text.Length )
+                        //
+                        break;
+                    }
+
+                    // skip first-time collapse
+                    if ( trimWhitespace ) {
+                        trimWhitespace = false;
+                        cur_index = next_index;
+                        continue;
+                    }
+
+                    // yes, must turn it to space to make sure only one space
+                    ch = ' ';
+                }
+            }
+
+            //
+            trimWhitespace = false;
+
+            // process word-break, word-wrap
+            if ( _wrapWord ) {
+                word_start_index = cur_index;
+                word_start_x = cur_x;
+
+                // if this character can break
+                if ( next_index >= _text.Length || CanWordBreak (ch) ) {
+                    // advanced character
+                    if ( last_ch != '\0' ) {
+                        cur_x += _font.GetKerning(last_ch, ch);
+                    }
+                    cur_x += _font.GetAdvance(ch);
+                    last_ch = ch;
+
+                    // check if the word exceed content width
+                    if ( cur_x > _maxWidth ) {
+                        if ( !beginningOfLine ) {
+                            linebreak = true;
+
+                            // skip copy the white-space if it is at the end of the wrap
+                            if ( ch == ' ' || ch == '\t' || ch == '\f' ) {
+                                skipcpy = true;
+                            }
+                            else {
+                                next_index = word_start_index;
+                                cur_x = word_start_x;
+                            }
+                        }
+                    }
+
+                    beginningOfLine = false;
+                }
+                else {
+                    // advanced current character
+                    if ( last_ch != '\0' ) {
+                        cur_x += _font.GetKerning(last_ch, ch);
+                    }
+                    cur_x += _font.GetAdvance(ch);
+                    last_ch = ch;
+
+                    while ( next_index < _text.Length ) {
+                        char next_ch = _text[next_index];
+                        next_index = next_index + 1;
+
+                        // if this character can break
+                        if ( CanWordBreak (next_ch) ) {
+                            next_index -= 1;
                             break;
-                        tmp_char = _text[tmp_index];
+                        }
+
+                        // advanced character
+                        if ( last_ch != '\0' ) {
+                            cur_x += _font.GetKerning(last_ch, next_ch);
+                        }
+                        cur_x += _font.GetAdvance(next_ch);
+                        last_ch = next_ch;
+
+                        // TODO: process word-break
+                        // check if the word exceed content width
+                        if ( cur_x > _maxWidth ) {
+                            if ( !beginningOfLine ) {
+                                linebreak = true;
+
+                                next_index = word_start_index;
+                                cur_x = word_start_x;
+                                skipcpy = true;
+                                break;
+                            }
+                        }
                     }
                 }
-
-                // NOTE: we put builder here to skip white-space when text been break into nextline
-                _builder.Append(cur_char);
             }
             else {
-                cur_index = next_index;
+                // advanced character
+                if ( last_ch != '\0' ) {
+                    cur_x += _font.GetKerning(last_ch, ch);
+                }
+                cur_x += _font.GetAdvance(ch);
+                last_ch = ch;
+            } 
+
+            // copy character to newtext_p
+            if ( !skipcpy ) {
+                int cpylen = next_index-cur_index;
+                if ( cpylen > 0 ) {
+                    _builder.Append(_text, cur_index, cpylen );
+                }
+            }
+
+            // step
+            cur_index = next_index;
+            if ( linebreak ) {
+                break;
             }
         }
 
-        //
-        _end_x = line_width;
+        _end_x = cur_x;
         _end_index = cur_index;
 
-        return true;
+        return linebreak;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
