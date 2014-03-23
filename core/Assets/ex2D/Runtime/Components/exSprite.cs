@@ -368,7 +368,7 @@ public class exSprite : exLayeredSprite, exISprite {
 
     protected override Vector3[] GetVertices (Space _space) {
         if (textureInfo_ == null || layer_ == null) {
-            return new Vector3[0];
+            return exUtility<Vector3>.emptyArray;
         }
 
         exList<Vector3> vertices = exList<Vector3>.GetTempList();

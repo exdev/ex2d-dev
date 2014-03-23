@@ -23,8 +23,6 @@ using System.Collections;
 
 public class exList<T> where T : struct {
 
-    static readonly T[] emptyArray = new T[0];
-
     static exList<T> tempList_;
     public static exList<T> GetTempList () {
         if (tempList_ == null) {
@@ -59,7 +57,7 @@ public class exList<T> where T : struct {
     ///////////////////////////////////////////////////////////////////////////////
 
     public exList () {
-        buffer = emptyArray;
+        buffer = exUtility<T>.emptyArray;
     }
 
     public exList (int capacity) {
@@ -103,7 +101,7 @@ public class exList<T> where T : struct {
             }
         }
         else {
-            buffer = emptyArray;
+            buffer = exUtility<T>.emptyArray;
         }
     }
 

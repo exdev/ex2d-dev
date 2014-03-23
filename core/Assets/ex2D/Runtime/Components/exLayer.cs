@@ -248,13 +248,18 @@ public class exLayer : MonoBehaviour
     [System.NonSerialized] private bool alphaHasChanged = false;
     [System.NonSerialized] private float zMin;
 
-    /// <summary> 任一mesh的font texture更新了，则统一刷新所有mesh </summary>
+    /// 任一mesh的font texture更新了，则统一刷新所有mesh
     [System.NonSerialized] private bool anyFontTextureRefreshed = false;
     
     /// 缓存包含需要更改depth的sprite的go，在渲染前统一重新计算它们及所有子sprite的depth。
     /// 不立刻更新的原因主要是为了能够批量一次性刷新，以节约遍历hierarchy及多次设置depth的开销。
     /// 如果SetDirty用的go不包含sprite，则放在这个list
     [System.NonSerialized] private List<GameObject> depthDirtyGoList = new List<GameObject>();
+
+    /// max mesh vertex count
+    public int maxMeshVertex {
+        get { return (layerType_ == exLayerType.Dynamic) ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT; }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable Functions
@@ -296,7 +301,7 @@ public class exLayer : MonoBehaviour
             }
         }
 
-        // compact mesh
+        // compact meshes
         for (int m = 0; m < meshList.Count; ) {
             exMesh mesh = meshList[m];
             bool meshDestroyed = (mesh == null);
@@ -306,7 +311,7 @@ public class exLayer : MonoBehaviour
                 }
                 meshList.RemoveAt (m);
                 if (m - 1 >= 0 && m < meshList.Count) {
-                    int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT;
+                    int maxVertexCount = maxMeshVertex;
                     if (meshList [m - 1].vertices.Count < maxVertexCount) {
                         ShiftSpritesDown (m - 1, maxVertexCount, maxVertexCount);
                     }
@@ -339,10 +344,12 @@ public class exLayer : MonoBehaviour
                     }
                 }
             }
-            mesh.Apply(meshUpdateFlags);
+            if (meshUpdateFlags != exUpdateFlags.None) {
+                mesh.Apply(meshUpdateFlags);
+            }
         }
         
-        // Re-update sprites which updateFlags dirtyed again. This may caused by unity refreshing dynamic font texture during last loop
+        // Re-update sprites which updateFlags dirtyed again. This may caused by unity refreshing dynamic font texture during main update
         if (anyFontTextureRefreshed) {
             // 可能有多个mesh公用同一个material的情况，所以后一个mesh的font texture刷新时，前一个mesh中的sprite，如果因此标记为脏，则要再刷新一次。
             // 为了保持设计的简洁，这里暂时不做优化，乖乖多遍历一次。
@@ -358,7 +365,9 @@ public class exLayer : MonoBehaviour
                         meshUpdateFlags |= spriteUpdateFlags;
                     }
                 }
-                mesh.Apply(meshUpdateFlags);
+                if (meshUpdateFlags != exUpdateFlags.None) {
+                    mesh.Apply(meshUpdateFlags);
+                }
             }
         }
     }
@@ -1056,8 +1065,7 @@ public class exLayer : MonoBehaviour
 
     private exMesh GetMeshToAdd (exLayeredSprite _sprite) {
         Material mat = _sprite.material;
-        int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT;
-        maxVertexCount -= _sprite.vertexCount;
+        int maxVertexCount = maxMeshVertex - _sprite.vertexCount;
         exMesh lastMesh = null;
         // TODO: 如果sprite的vertex count大于maxVertexCount
         for (int i = meshList.Count - 1; i >= 0; --i) {
@@ -1174,7 +1182,7 @@ public class exLayer : MonoBehaviour
 
         // find available mesh
         exMesh mesh = GetMeshToAdd(_sprite);
-        exDebug.Assert(mesh.vertices.Count + _sprite.vertexCount <= (layerType_ == exLayerType.Dynamic ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT),
+        exDebug.Assert(mesh.vertices.Count + _sprite.vertexCount <= maxMeshVertex,
             string.Format("Invalid mesh vertex count : {0}", (mesh.vertices.Count + _sprite.vertexCount)));
         AddToMesh(_sprite, mesh);
     }

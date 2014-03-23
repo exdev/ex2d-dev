@@ -274,6 +274,21 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
 
 #endif
 
+    //// ------------------------------------------------------------------ 
+    //[SerializeField] protected bool richText_ = false;
+    ///// Enable HTML-style tags for Text Formatting Markup.
+    //// ------------------------------------------------------------------ 
+
+    //public bool richText {
+    //    get { return richText_; }
+    //    set {
+    //        if (richText_ != value) {
+    //            richText_ = value;
+    //            updateFlags |= exUpdateFlags.Color;
+    //        }
+    //    }
+    //}
+
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -436,7 +451,7 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void SetFont (exBitmapFont _bitmapFont) {
+    public virtual void SetFont (exBitmapFont _bitmapFont) {
         font_.Set(_bitmapFont);
         UpdateTexture();
     }
@@ -445,7 +460,7 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    public void SetFont (Font _dynamicFont) {
+    public virtual void SetFont (Font _dynamicFont) {
         font_.Set(_dynamicFont);
         UpdateTexture();
     }
@@ -480,7 +495,7 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
         //            if (useOutline_) {
         //                textLength += (text_.Length * 4);
         //            }
-        exDebug.Assert (textLength <= exMesh.MAX_QUAD_COUNT);
+        exDebug.Assert (textLength <= layer_.maxMeshVertex / exMesh.QUAD_VERTEX_COUNT);
         int textCapacity = _oldTextCapacity;
 #if UNITY_EDITOR && !EX_DEBUG
         if (UnityEditor.EditorApplication.isPlaying == false) {
@@ -507,9 +522,7 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
         else {
             textCapacity = textLength;
         }
-        if (textCapacity > exMesh.MAX_QUAD_COUNT) {
-            textCapacity = exMesh.MAX_QUAD_COUNT;
-        }
+        textCapacity = Mathf.Min(textCapacity, layer_.maxMeshVertex / exMesh.QUAD_VERTEX_COUNT);
         return textCapacity;
     }
 

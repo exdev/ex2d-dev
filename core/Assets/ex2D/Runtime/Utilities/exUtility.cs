@@ -24,7 +24,7 @@ using Diagnostics = System.Diagnostics;
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-public struct exUtility {
+public static class exUtility {
 
     public static void Swap<T> (ref T lhs, ref T rhs) {
         T tmp = lhs;
@@ -33,13 +33,17 @@ public struct exUtility {
     }
 }
 
+public static class exUtility<T> {
+    public static readonly T[] emptyArray = new T[0];
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 /// Define specific HideFlags for debugging
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-internal class exReleaseFlags
+internal static class exReleaseFlags
 {
 #if EX_DEBUG
     public const HideFlags hideAndDontSave = HideFlags.DontSave;
