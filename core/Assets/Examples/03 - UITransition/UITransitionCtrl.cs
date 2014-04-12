@@ -116,7 +116,7 @@ public class UITransitionCtrl : FSMBase {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void OnNext ( exUIControl _sender ) {
+    void OnNext ( exUIEvent _event ) {
         ++idx;
         if ( idx > 2 )
             idx = 2;
@@ -126,7 +126,7 @@ public class UITransitionCtrl : FSMBase {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void OnBack ( exUIControl _sender ) {
+    void OnBack ( exUIEvent _event ) {
         --idx;
         if ( idx < 0 )
             idx = 0;

@@ -20,7 +20,7 @@ using System.IO;
 ///////////////////////////////////////////////////////////////////////////////
 
 [CanEditMultipleObjects]
-[CustomEditor(typeof(exStandaloneSpriteInspector))]
+[CustomEditor(typeof(exStandaloneSprite))]
 class exStandaloneSpriteInspector : exSpriteBaseInspector {
 
     // ------------------------------------------------------------------ 

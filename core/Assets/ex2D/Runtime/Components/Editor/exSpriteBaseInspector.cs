@@ -24,10 +24,10 @@ using ex2D.Detail;
 [CustomEditor(typeof(exSpriteBase))]
 class exSpriteBaseInspector : exPlaneInspector {
 
-    protected SerializedProperty customSizeProp;
-    protected SerializedProperty shearProp;
-    protected SerializedProperty colorProp;
-    protected SerializedProperty shaderProp;
+    public SerializedProperty customSizeProp;
+    public SerializedProperty shearProp;
+    public SerializedProperty colorProp;
+    public SerializedProperty shaderProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -192,8 +192,8 @@ class exSpriteBaseInspector : exPlaneInspector {
                     for ( int i = 0; i < planes.Length; ++i ) {
                         exPlane plane = planes[i];
                         if ( plane != this ) {
-                            plane.width = sprite.width;
-                            plane.height = sprite.height;
+                            // plane.width = sprite.width;
+                            // plane.height = sprite.height;
                             plane.anchor = sprite.anchor;
                             plane.offset = sprite.offset;
                         }

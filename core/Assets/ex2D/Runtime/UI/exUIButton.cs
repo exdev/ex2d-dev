@@ -26,23 +26,40 @@ public class exUIButton : exUIControl {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    public override EventDef GetEventDef ( string _name ) {
-        EventDef eventDef = exUIControl.FindEventDef ( eventDefs, _name );
-        if ( eventDef == null )
-            eventDef = base.GetEventDef(_name);
-        return eventDef;
+    // event-defs
+    public static new string[] eventNames = new string[] {
+        "onClick",
+        "onButtonDown",
+        "onButtonUp",
+    };
+
+    // events
+    List<exUIEventListener> onClick;
+    List<exUIEventListener> onButtonDown;
+    List<exUIEventListener> onButtonUp;
+
+    public void OnClick      ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onClick",       onClick,      _event ); }
+    public void OnButtonDown ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onButtonDown",  onButtonDown, _event ); }
+    public void OnButtonUp   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onButtonUp",    onButtonUp,   _event ); }
+    
+    public override void CacheEventListeners () {
+        base.CacheEventListeners();
+
+        onClick = eventListenerTable["onClick"];
+        onButtonDown = eventListenerTable["onButtonDown"];
+        onButtonUp = eventListenerTable["onButtonUp"];
     }
 
-    public override string[] GetEventDefNames () {
-        string[] baseNames = base.GetEventDefNames();
-        string[] names = new string[baseNames.Length + eventDefs.Length];
+    public override string[] GetEventNames () {
+        string[] baseNames = base.GetEventNames();
+        string[] names = new string[baseNames.Length + eventNames.Length];
 
         for ( int i = 0; i < baseNames.Length; ++i ) {
             names[i] = baseNames[i];
         }
 
-        for ( int i = 0; i < eventDefs.Length; ++i ) {
-            names[i+baseNames.Length] = eventDefs[i].name;
+        for ( int i = 0; i < eventNames.Length; ++i ) {
+            names[i+baseNames.Length] = eventNames[i];
         }
 
         return names;
@@ -52,21 +69,13 @@ public class exUIButton : exUIControl {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    // event-defs
-    public static new EventDef[] eventDefs = new EventDef[] {
-        new EventDef ( "onClick",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onButtonDown", new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onButtonUp",   new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-    };
-
-    // events
-    public event System.Action<exUIControl> onClick;
-    public event System.Action<exUIControl> onButtonDown;
-    public event System.Action<exUIControl> onButtonUp;
+    public bool allowDrag = true;
+    public float dragThreshold = 40.0f;
 
     //
     bool pressing = false;
-    // Vector2 pressDownAt = Vector2.zero; 
+    int pressingID = -1;
+    Vector2 pressDownAt = Vector2.zero; 
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -79,32 +88,78 @@ public class exUIButton : exUIControl {
     protected new void Awake () {
         base.Awake();
 
-        onPressDown += delegate ( exUIControl _sender, exHotPoint _point ) {
-            if ( pressing )
-                return;
+        AddEventListener( "onPressDown", 
+                          delegate ( exUIEvent _event ) {
+                              if ( pressing )
+                                  return;
 
-            if ( _point.isTouch || _point.GetMouseButton(0) ) {
-                pressing = true;
-                // pressDownAt = _point.pos;
+                              exUIPointEvent pointEvent = _event as exUIPointEvent;
 
-                exUIMng.inst.SetFocus(this);
-                if ( onButtonDown != null ) onButtonDown (this);
-            }
-        };
+                              if ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) {
+                                  pressing = true;
+                                  pressDownAt = pointEvent.mainPoint.pos;
+                                  pressingID = pointEvent.mainPoint.id;
 
-        onPressUp += delegate ( exUIControl _sender, exHotPoint _point ) {
-            if ( _point.isTouch || _point.GetMouseButton(0) ) {
-                if ( onButtonUp != null ) onButtonUp (this);
+                                  exUIMng.inst.SetFocus(this);
 
-                if ( pressing ) {
-                    pressing = false;
-                    if ( onClick != null ) onClick (this);
-                }
-            }
-        };
+                                  exUIEvent evtButtonDown = new exUIEvent();
+                                  evtButtonDown.bubbles = false;
+                                  OnButtonDown(evtButtonDown);
 
-        onHoverOut += delegate ( exUIControl _sender, exHotPoint _point ) {
-            pressing = false;
-        };
+                                  _event.StopPropagation();
+                              }
+                          } );
+
+        AddEventListener( "onPressUp", 
+                          delegate ( exUIEvent _event ) {
+                              exUIPointEvent pointEvent = _event as exUIPointEvent;
+                              if ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) {
+                                  exUIEvent evtButtonUp = new exUIEvent();
+                                  evtButtonUp.bubbles = false;
+                                  OnButtonUp(evtButtonUp);
+
+                                  if ( pressing ) {
+                                      pressing = false;
+
+                                      exUIEvent evtClick = new exUIEvent();
+                                      evtClick.bubbles = false;
+                                      OnClick (evtClick);
+
+                                      _event.StopPropagation();
+                                  }
+                              }
+                          } );
+
+        AddEventListener( "onHoverOut", 
+                          delegate ( exUIEvent _event ) {
+                              if ( pressing ) {
+                                  pressing = false;
+                                  pressingID = -1;
+                                  _event.StopPropagation();
+                              }
+                          } );
+
+        AddEventListener( "onHoverMove", 
+                          delegate ( exUIEvent _event ) {
+                              if ( pressing ) {
+                                  exUIPointEvent pointEvent = _event as exUIPointEvent;
+
+                                   for ( int i = 0; i < pointEvent.pointInfos.Length; ++i ) {
+                                       exUIPointInfo point = pointEvent.pointInfos[i];
+                                       if ( point.id == pressingID ) {
+                                          Vector2 delta = pointEvent.mainPoint.pos - pressDownAt; 
+                                          if ( allowDrag == false &&
+                                               delta.sqrMagnitude >= dragThreshold * dragThreshold )
+                                          {
+                                              exUIMng.inst.HoverOut ( this, point.id);
+                                          }
+                                          else {
+                                              _event.StopPropagation();
+                                          }
+                                       }
+                                  }
+                              }
+                          } );
+
     }
 }

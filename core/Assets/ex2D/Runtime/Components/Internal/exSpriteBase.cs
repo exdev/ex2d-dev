@@ -95,6 +95,11 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     
     [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
     
+    exUpdateFlags exISpriteBase.updateFlags {
+        get { return updateFlags; }
+        set { updateFlags = value; }
+    }
+
     [System.NonSerialized] protected exClipping clip_;
     public exClipping clip {
         get {
@@ -110,6 +115,10 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     
     [System.NonSerialized] internal Matrix4x4 cachedWorldMatrix;    // 内部使用，只有exLayeredSprite的值才可读
 
+    Matrix4x4 exISpriteBase.cachedWorldMatrix {
+        get { return cachedWorldMatrix; }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
@@ -121,14 +130,10 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     public override float width {
         get { return width_; }
         set {
-            if (customSize_) {
-                if (width_ != value) {
-                    width_ = value;
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-            }
-            else {
-                Debug.LogWarning("Can not set sprite's width when sprite is not using customSize!");
+            if (width_ != value) {
+                width_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+                customSize = true;
             }
         }
     }
@@ -140,14 +145,10 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     public override float height {
         get { return height_; }
         set {
-            if (customSize_) {
-                if (height_ != value) {
-                    height_ = value;
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-            }
-            else {
-                Debug.LogWarning("Can not set sprite's height when sprite is not using customSize!");
+            if (height_ != value) {
+                height_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+                customSize = true;
             }
         }
     }
@@ -315,13 +316,13 @@ public abstract class exSpriteBase : exPlane, exISpriteBase {
     // Get lossy scale
     // ------------------------------------------------------------------ 
 
-    internal abstract float GetScaleX (Space _space);
+    public abstract float GetScaleX (Space _space);
     
     // ------------------------------------------------------------------ 
     // Get lossy scale
     // ------------------------------------------------------------------ 
 
-    internal abstract float GetScaleY (Space _space);
+    public abstract float GetScaleY (Space _space);
 
     // ------------------------------------------------------------------ 
     // Desc: 

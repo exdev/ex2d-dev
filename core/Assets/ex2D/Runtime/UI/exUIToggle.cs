@@ -26,23 +26,40 @@ public class exUIToggle : exUIButton {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    public override EventDef GetEventDef ( string _name ) {
-        EventDef eventDef = exUIControl.FindEventDef ( eventDefs, _name );
-        if ( eventDef == null )
-            eventDef = base.GetEventDef(_name);
-        return eventDef;
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // event-defs
+    public static new string[] eventNames = new string[] {
+        "onChecked",
+        "onUnchecked",
+    };
+
+    // events
+    List<exUIEventListener> onChecked;
+    List<exUIEventListener> onUnchecked;
+
+    public void OnChecked   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onChecked", onChecked, _event ); }
+    public void OnUnchecked ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onUnchecked", onUnchecked, _event ); }
+    
+    public override void CacheEventListeners () {
+        base.CacheEventListeners();
+
+        onChecked = eventListenerTable["onChecked"];
+        onUnchecked = eventListenerTable["onUnchecked"];
     }
 
-    public override string[] GetEventDefNames () {
-        string[] baseNames = base.GetEventDefNames();
-        string[] names = new string[baseNames.Length + eventDefs.Length];
+    public override string[] GetEventNames () {
+        string[] baseNames = base.GetEventNames();
+        string[] names = new string[baseNames.Length + eventNames.Length];
 
         for ( int i = 0; i < baseNames.Length; ++i ) {
             names[i] = baseNames[i];
         }
 
-        for ( int i = 0; i < eventDefs.Length; ++i ) {
-            names[i+baseNames.Length] = eventDefs[i].name;
+        for ( int i = 0; i < eventNames.Length; ++i ) {
+            names[i+baseNames.Length] = eventNames[i];
         }
 
         return names;
@@ -51,16 +68,6 @@ public class exUIToggle : exUIButton {
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
-
-    // event-defs
-    public static new EventDef[] eventDefs = new EventDef[] {
-        new EventDef ( "onChecked",      new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-        new EventDef ( "onUnchecked",    new Type[] { typeof(exUIControl) }, typeof(Action<exUIControl>) ),
-    };
-
-    // events
-    public event System.Action<exUIControl> onChecked;
-    public event System.Action<exUIControl> onUnchecked;
 
     //
     [SerializeField] protected bool isChecked_ = false;
@@ -71,12 +78,14 @@ public class exUIToggle : exUIButton {
                 isChecked_ = value;
 
                 if ( isChecked_ == false ) {
-                    if ( onUnchecked != null )
-                        onUnchecked (this);
+                    exUIEvent uiEvent = new exUIEvent();
+                    uiEvent.bubbles = false;
+                    OnUnchecked (uiEvent);
                 }
                 else {
-                    if ( onChecked != null )
-                        onChecked (this);
+                    exUIEvent uiEvent = new exUIEvent();
+                    uiEvent.bubbles = false;
+                    OnChecked (uiEvent);
                 }
             }
         }
@@ -95,14 +104,15 @@ public class exUIToggle : exUIButton {
     protected new void Awake () {
         base.Awake();
 
-        onClick += delegate ( exUIControl _sender ) {
-            if ( isRadio ) {
-                isChecked = true;
-            }
-            else {
-                isChecked = !isChecked;
-            }
-        };
+        AddEventListener( "onClick",
+                          delegate ( exUIEvent _event ) {
+                              if ( isRadio ) {
+                                  isChecked = true;
+                              }
+                              else {
+                                  isChecked = !isChecked;
+                              }
+                          } );
     }
 
     // ------------------------------------------------------------------ 

@@ -31,23 +31,32 @@ public class exUIProgressBar : exUIControl {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    public override EventDef GetEventDef ( string _name ) {
-        EventDef eventDef = exUIControl.FindEventDef ( eventDefs, _name );
-        if ( eventDef == null )
-            eventDef = base.GetEventDef(_name);
-        return eventDef;
+    // event-defs
+    public static new string[] eventNames = new string[] {
+        "onProgressChanged",
+    };
+
+    // events
+    List<exUIEventListener> onProgressChanged;
+
+    public void OnProgressChanged ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onProgressChanged", onProgressChanged, _event ); }
+
+    public override void CacheEventListeners () {
+        base.CacheEventListeners();
+
+        onProgressChanged = eventListenerTable["onProgressChanged"];
     }
 
-    public override string[] GetEventDefNames () {
-        string[] baseNames = base.GetEventDefNames();
-        string[] names = new string[baseNames.Length + eventDefs.Length];
+    public override string[] GetEventNames () {
+        string[] baseNames = base.GetEventNames();
+        string[] names = new string[baseNames.Length + eventNames.Length];
 
         for ( int i = 0; i < baseNames.Length; ++i ) {
             names[i] = baseNames[i];
         }
 
-        for ( int i = 0; i < eventDefs.Length; ++i ) {
-            names[i+baseNames.Length] = eventDefs[i].name;
+        for ( int i = 0; i < eventNames.Length; ++i ) {
+            names[i+baseNames.Length] = eventNames[i];
         }
 
         return names;
@@ -56,14 +65,6 @@ public class exUIProgressBar : exUIControl {
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
-
-    // event-defs
-    public static new EventDef[] eventDefs = new EventDef[] {
-        new EventDef ( "onProgressChanged",      new Type[] { typeof(exUIControl), typeof(float) }, typeof(Action<exUIControl,float>) ),
-    };
-
-    // events
-    public event System.Action<exUIControl,float> onProgressChanged;
 
     //
     [SerializeField] protected float progress_ = 0.0f;
@@ -75,8 +76,22 @@ public class exUIProgressBar : exUIControl {
 
                 UpdateBar ();
 
-                if ( onProgressChanged != null )
-                    onProgressChanged ( this, progress_ );
+                exUIRatioEvent ratioEvent = new exUIRatioEvent();
+                ratioEvent.bubbles = false;
+                ratioEvent.ratio = progress_;
+                OnProgressChanged (ratioEvent);
+            }
+        }
+    }
+
+    //
+    [SerializeField] protected float barSize_ = 0.0f;
+    public float barSize {
+        get { return barSize_; }
+        set {
+            if ( barSize_ != value ) {
+                barSize_ = value;
+                UpdateBar ();
             }
         }
     }
@@ -94,25 +109,27 @@ public class exUIProgressBar : exUIControl {
     ///////////////////////////////////////////////////////////////////////////////
 
     public static void SetBarSize ( exSprite _bar, 
-                                    exUIControl _ctrl, 
+                                    float _barSize, 
                                     float _progress, 
                                     Direction _direction ) 
     {
         if ( _bar != null ) {
             if ( _direction == Direction.Horizontal ) {
                 if ( _bar.spriteType == exSpriteType.Sliced ) {
-                    _bar.width = _progress * (_ctrl.width - _bar.leftBorderSize - _bar.rightBorderSize) + _bar.leftBorderSize + _bar.rightBorderSize;
+                    float progressWidth = _progress * (_barSize-_bar.leftBorderSize-_bar.rightBorderSize);
+                    _bar.width = progressWidth + _bar.leftBorderSize + _bar.rightBorderSize;
                 }
                 else {
-                    _bar.width = _progress * _ctrl.width;
+                    _bar.width = _progress * _barSize;
                 }
             }
             else {
                 if ( _bar.spriteType == exSpriteType.Sliced ) {
-                    _bar.height = _progress * (_ctrl.height - _bar.topBorderSize - _bar.bottomBorderSize) + _bar.topBorderSize + _bar.bottomBorderSize;
+                    float progressHeight = _progress * (_barSize-_bar.topBorderSize-_bar.bottomBorderSize);
+                    _bar.height = progressHeight + _bar.topBorderSize + _bar.bottomBorderSize;
                 }
                 else {
-                    _bar.height = _progress * _ctrl.height;
+                    _bar.height = _progress * _barSize;
                 }
             }
         }
@@ -133,10 +150,6 @@ public class exUIProgressBar : exUIControl {
         Transform transBar = transform.Find("__bar");
         if ( transBar ) {
             bar = transBar.GetComponent<exSprite>();
-            if ( bar ) {
-                bar.customSize = true;
-                bar.anchor = Anchor.TopLeft;
-            }
         }
 
         UpdateBar ();
@@ -147,6 +160,6 @@ public class exUIProgressBar : exUIControl {
     // ------------------------------------------------------------------ 
 
     void UpdateBar () {
-        SetBarSize ( bar, this, progress_, direction );
+        SetBarSize ( bar, barSize_, progress_, direction );
     }
 }

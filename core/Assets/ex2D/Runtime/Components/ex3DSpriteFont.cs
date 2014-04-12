@@ -21,7 +21,7 @@ using ex2D.Detail;
 ///////////////////////////////////////////////////////////////////////////////
 
 [AddComponentMenu("ex2D/3D Sprite Font")]
-public class ex3DSpriteFont : exStandaloneSprite {
+public class ex3DSpriteFont : exStandaloneSprite, exISpriteFont {
 
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -30,6 +30,10 @@ public class ex3DSpriteFont : exStandaloneSprite {
     /// 每个exSpriteFont都有单独的一个exFont实例
     [SerializeField] protected exFont font_ = new exFont();
     
+    exFont exISpriteFont.font {
+        get { return font_; }
+    }
+
     public exBitmapFont bitmapFont {
         get {
             return font_.bitmapFont;
@@ -62,18 +66,6 @@ public class ex3DSpriteFont : exStandaloneSprite {
             }
         }
     }
-    
-/*    public int lineHeight {
-        get {
-            return font_.lineHeight;
-        }
-        set {
-            if (font_.lineHeight != value) {
-                font_.lineHeight = value;
-                updateFlags |= exUpdateFlags.Vertex;
-            }
-        }
-    }*/
 
     public int fontSize {
         get {
@@ -99,20 +91,19 @@ public class ex3DSpriteFont : exStandaloneSprite {
         }
     }
 
-    //// ------------------------------------------------------------------ 
-    //[SerializeField] protected bool useMultiline_ = false;
-    ///// If useMultiline is true, the exSpriteFont.text accept multiline string. 
-    //// ------------------------------------------------------------------ 
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected bool wrapWord_ = false;
+    // ------------------------------------------------------------------ 
 
-    //public bool useMultiline {
-    //    get { return useMultiline_; }
-    //    set {
-    //        if ( useMultiline_ != value ) {
-    //            useMultiline_ = value;
-    //            updateFlags |= exUpdateFlags.Text;  // TODO: only need to update vertex ?
-    //        }
-    //    }
-    //}
+    public bool wrapWord {
+        get { return wrapWord_; }
+        set {
+            if (wrapWord_ != value) {
+                wrapWord_ = value;
+                updateFlags |= exUpdateFlags.Text;
+            }
+        }
+    }
 
     // ------------------------------------------------------------------ 
     [SerializeField] protected TextAlignment textAlign_ = TextAlignment.Left;
@@ -144,19 +135,77 @@ public class ex3DSpriteFont : exStandaloneSprite {
             }
         }
     }
-
+    
     // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 spacing_;
-    /// spacing_.x : the fixed width applied between two characters in the text. 
-    /// spacing_.y : the fixed line space applied between two lines.
+    [SerializeField] protected int lineHeight_ = 0;
+    /// the fixed line space applied between two lines.
     // ------------------------------------------------------------------ 
 
-    public Vector2 spacing {
-        get { return spacing_; }
+    public int lineHeight {
+        get { return customLineHeight_ ? lineHeight_ : font_.fontSize; }
         set {
-            if (spacing_ != value) {
-                spacing_ = value;
+            if (lineHeight_ != value) {
+                lineHeight_ = value;
                 updateFlags |= exUpdateFlags.Vertex;
+                customLineHeight_ = true;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected bool customLineHeight_ = false;
+    ///
+    // ------------------------------------------------------------------ 
+
+    public bool customLineHeight {
+        get { return customLineHeight_; }
+        set {
+            if (customLineHeight_ != value) {
+                customLineHeight_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+                if (customLineHeight_ == false) {
+                    lineHeight_ = font_.fontSize;
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected int letterSpacing_ = 0;
+    /// the fixed width applied between two characters in the text. 
+    // ------------------------------------------------------------------ 
+
+    public int letterSpacing {
+        get { return letterSpacing_; }
+        set {
+            if (letterSpacing_ != value) {
+                letterSpacing_ = value;
+                if (wrapWord_) {
+                    updateFlags |= exUpdateFlags.Text;
+                }
+                else {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    [SerializeField] protected int wordSpacing_ = 0;
+    /// the fixed width applied between two words in the text. 
+    // ------------------------------------------------------------------ 
+
+    public int wordSpacing {
+        get { return wordSpacing_; }
+        set {
+            if (wordSpacing_ != value) {
+                wordSpacing_ = value;
+                if (wrapWord_) {
+                    updateFlags |= exUpdateFlags.Text;
+                }
+                else {
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
             }
         }
     }
@@ -194,107 +243,107 @@ public class ex3DSpriteFont : exStandaloneSprite {
         }
     }
 
-    // outline option
+    //// outline option
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected bool useOutline_ = false;
-    /// If useOutline is true, the component will render the text with outline
-    // ------------------------------------------------------------------ 
+    //// ------------------------------------------------------------------ 
+    //[SerializeField] protected bool useOutline_ = false;
+    ///// If useOutline is true, the component will render the text with outline
+    //// ------------------------------------------------------------------ 
 
-    public bool useOutline {
-        get { return useOutline_; }
-        set {
-            if (useOutline_ != value) {
-                useOutline_ = value;
-                updateFlags |= exUpdateFlags.Text; 
-            }
-        }
-    }
+    //public bool useOutline {
+    //    get { return useOutline_; }
+    //    set {
+    //        if (useOutline_ != value) {
+    //            useOutline_ = value;
+    //            updateFlags |= exUpdateFlags.Text; 
+    //        }
+    //    }
+    //}
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected float outlineWidth_ = 1.0f;
-    /// The width of the outline text
-    // ------------------------------------------------------------------ 
+    //// ------------------------------------------------------------------ 
+    //[SerializeField] protected float outlineWidth_ = 1.0f;
+    ///// The width of the outline text
+    //// ------------------------------------------------------------------ 
 
-    public float outlineWidth {
-        get { return outlineWidth_; }
-        set {
-            if (outlineWidth_ != value) {
-                outlineWidth_ = value;
-                if (useOutline_) {
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-            }
-        }
-    }
+    //public float outlineWidth {
+    //    get { return outlineWidth_; }
+    //    set {
+    //        if (outlineWidth_ != value) {
+    //            outlineWidth_ = value;
+    //            if (useOutline_) {
+    //                updateFlags |= exUpdateFlags.Vertex;
+    //            }
+    //        }
+    //    }
+    //}
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Color outlineColor_ = Color.black;
-    /// The color of the outline text
-    // ------------------------------------------------------------------ 
+    //// ------------------------------------------------------------------ 
+    //[SerializeField] protected Color outlineColor_ = Color.black;
+    ///// The color of the outline text
+    //// ------------------------------------------------------------------ 
 
-    public Color outlineColor {
-        get { return outlineColor_; }
-        set {
-            if (outlineColor_ != value) {
-                outlineColor_ = value;
-                if (useOutline_) {
-                    updateFlags |= exUpdateFlags.Color;
-                }
-            }
-        }
-    }
+    //public Color outlineColor {
+    //    get { return outlineColor_; }
+    //    set {
+    //        if (outlineColor_ != value) {
+    //            outlineColor_ = value;
+    //            if (useOutline_) {
+    //                updateFlags |= exUpdateFlags.Color;
+    //            }
+    //        }
+    //    }
+    //}
 
-    // shadow option
+    //// shadow option
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected bool useShadow_ = false;
-    /// If useShadow is true, the component will render the text with shadow
-    // ------------------------------------------------------------------ 
+    //// ------------------------------------------------------------------ 
+    //[SerializeField] protected bool useShadow_ = false;
+    ///// If useShadow is true, the component will render the text with shadow
+    //// ------------------------------------------------------------------ 
 
-    public bool useShadow {
-        get { return useShadow_; }
-        set {
-            if (useShadow_ != value) {
-                useShadow_ = value;
-                updateFlags |= exUpdateFlags.Text; 
-            }
-        }
-    }
+    //public bool useShadow {
+    //    get { return useShadow_; }
+    //    set {
+    //        if (useShadow_ != value) {
+    //            useShadow_ = value;
+    //            updateFlags |= exUpdateFlags.Text; 
+    //        }
+    //    }
+    //}
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 shadowBias_ = new Vector2(1.0f, -1.0f);
-    /// The bias of the shadow text 
-    // ------------------------------------------------------------------ 
+    //// ------------------------------------------------------------------ 
+    //[SerializeField] protected Vector2 shadowBias_ = new Vector2(1.0f, -1.0f);
+    ///// The bias of the shadow text 
+    //// ------------------------------------------------------------------ 
 
-    public Vector2 shadowBias {
-        get { return shadowBias_; }
-        set {
-            if (shadowBias_ != value) {
-                shadowBias_ = value;
-                if (useShadow_) {
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-            }
-        }
-    }
+    //public Vector2 shadowBias {
+    //    get { return shadowBias_; }
+    //    set {
+    //        if (shadowBias_ != value) {
+    //            shadowBias_ = value;
+    //            if (useShadow_) {
+    //                updateFlags |= exUpdateFlags.Vertex;
+    //            }
+    //        }
+    //    }
+    //}
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Color shadowColor_ = Color.black;
-    /// The color of the shadow text 
-    // ------------------------------------------------------------------ 
+    //// ------------------------------------------------------------------ 
+    //[SerializeField] protected Color shadowColor_ = Color.black;
+    ///// The color of the shadow text 
+    //// ------------------------------------------------------------------ 
 
-    public Color shadowColor {
-        get { return shadowColor_; }
-        set {
-            if (shadowColor_ != value) {
-                shadowColor_ = value;
-                if (useShadow_) {
-                    updateFlags |= exUpdateFlags.Color;
-                }
-            }
-        }
-    }
+    //public Color shadowColor {
+    //    get { return shadowColor_; }
+    //    set {
+    //        if (shadowColor_ != value) {
+    //            shadowColor_ = value;
+    //            if (useShadow_) {
+    //                updateFlags |= exUpdateFlags.Color;
+    //            }
+    //        }
+    //    }
+    //}
     
 #if UNITY_EDITOR
     
@@ -331,12 +380,22 @@ public class ex3DSpriteFont : exStandaloneSprite {
 
     public override float width {
         get { return width_; }
-        set { width_ = value; }
+        set {
+            width_ = value;
+            if (wrapWord_) {
+                updateFlags |= exUpdateFlags.Text;
+            }
+        }
     }
 
     public override float height {
         get { return height_; }
         set { height_ = value; }
+    }
+
+    public override bool customSize {
+        get { return true; }
+        set { customSize_ = true; }
     }
     
     ///////////////////////////////////////////////////////////////////////////////
@@ -368,16 +427,7 @@ public class ex3DSpriteFont : exStandaloneSprite {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
-        SpriteFontParams sfp;
-        sfp.text = text_;
-        sfp.font = font_;
-        sfp.spacing = spacing_;
-        sfp.textAlign = textAlign_;
-        sfp.useKerning = useKerning_;
-        sfp.vertexCount = vertexCount_;
-        sfp.indexCount = indexCount_;
-        return SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.Self, ref topColor_, ref botColor_, 1.0f, 
-                                                _vertices, _uvs, _colors32, _indices, 0, 0);
+        return SpriteFontBuilder.UpdateBuffers (this, Space.Self, 1.0f, _vertices, _uvs, _colors32, _indices, 0, 0);
     }
 
     #endregion  // Functions used to update geometry buffer
@@ -392,16 +442,7 @@ public class ex3DSpriteFont : exStandaloneSprite {
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
         vertices.AddRange(visibleVertexCount);
 
-        SpriteFontParams sfp;
-        sfp.text = text_;
-        sfp.font = font_;
-        sfp.spacing = spacing_;
-        sfp.textAlign = textAlign_;
-        sfp.useKerning = useKerning_;
-        sfp.vertexCount = vertexCount_;
-        sfp.indexCount = indexCount_;
-
-        SpriteFontBuilder.BuildText(this, ref sfp, _space, vertices, 0, null);
+        SpriteFontBuilder.BuildText(this, _space, vertices, 0);
         return vertices.ToArray();
     }
     
@@ -471,6 +512,10 @@ public class ex3DSpriteFont : exStandaloneSprite {
 
     void OnFontTextureRebuilt () {
         updateFlags |= exUpdateFlags.Text;      // TODO: only need to update UV
+
+        // 立刻刷新mesh，因为有可能在同一帧内，自己刷新过了，
+        // 其它sprite font刷新时又请求重建了font texture，如果此时自己只更改标记将导致在本帧出现一次闪烁。
+        LateUpdate();
     }
 }
 //#endif

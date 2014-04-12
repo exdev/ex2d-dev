@@ -61,6 +61,38 @@ class exUIControlInspector : exPlaneInspector {
             styles = new Styles();
         }
 
+        //
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        if ( GUILayout.Button("Sync Size", GUILayout.Width(70), GUILayout.Height(20) ) ) {
+            exPlane targetPlane = target as exPlane;
+            if ( targetPlane.hasSprite ) {
+                exSpriteBase spriteBase = targetPlane.GetComponent<exSpriteBase>();
+                if ( targetPlane.width != spriteBase.width ) {
+                    targetPlane.width = spriteBase.width;
+                    EditorUtility.SetDirty(targetPlane);
+                }
+
+                if ( targetPlane.height != spriteBase.height ) {
+                    targetPlane.height = spriteBase.height;
+                    EditorUtility.SetDirty(targetPlane);
+                }
+
+                if ( targetPlane.anchor != spriteBase.anchor ) {
+                    targetPlane.anchor = spriteBase.anchor;
+                    EditorUtility.SetDirty(targetPlane);
+                }
+
+                if ( targetPlane.offset != spriteBase.offset ) {
+                    targetPlane.offset = spriteBase.offset;
+                    EditorUtility.SetDirty(targetPlane);
+                }
+            }
+        }
+        GUILayout.EndHorizontal();
+
+        //
+        EditorGUILayout.Space();
         EditorGUILayout.PropertyField ( priorityProp );
 
         // active
@@ -137,7 +169,7 @@ class exUIControlInspector : exPlaneInspector {
             // event adding selector
             List<string> eventDefNameList = new List<string>(); 
             eventDefNameList.Add( "Event List" );
-            eventDefNameList.AddRange( uiControl.GetEventDefNames() );
+            eventDefNameList.AddRange( uiControl.GetEventNames() );
 
             foreach ( exUIControl.EventTrigger eventTrigger in uiControl.events ) {
                 int idx = eventDefNameList.IndexOf(eventTrigger.name);
@@ -148,8 +180,7 @@ class exUIControlInspector : exPlaneInspector {
 
             int choice = EditorGUILayout.Popup ( "Add Event", 0, eventDefNameList.ToArray() );
             if ( choice != 0 ) {
-                exUIControl.EventDef eventDef = uiControl.GetEventDef( eventDefNameList[choice] );
-                exUIControl.EventTrigger newTrigger = new exUIControl.EventTrigger ( eventDef.name );
+                exUIControl.EventTrigger newTrigger = new exUIControl.EventTrigger ( eventDefNameList[choice] );
                 uiControl.events.Add(newTrigger);
                 EditorUtility.SetDirty(target);
             }
@@ -159,8 +190,7 @@ class exUIControlInspector : exPlaneInspector {
                 EditorGUILayout.Space();
 
                 exUIControl.EventTrigger eventTrigger = uiControl.events[i];
-                exUIControl.EventDef eventDef = uiControl.GetEventDef( eventTrigger.name );
-                if ( EventField ( eventTrigger, eventDef ) ) {
+                if ( EventField ( eventTrigger ) ) {
                     uiControl.events.RemoveAt(i);
                     --i;
                     EditorUtility.SetDirty(target);
@@ -177,7 +207,7 @@ class exUIControlInspector : exPlaneInspector {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    protected bool EventField ( exUIControl.EventTrigger _eventTrigger, exUIControl.EventDef _def ) {
+    protected bool EventField ( exUIControl.EventTrigger _eventTrigger ) {
         bool deleted = false;
 
 		GUILayout.BeginHorizontal();
@@ -186,7 +216,7 @@ class exUIControlInspector : exPlaneInspector {
             GUILayout.BeginVertical();
                 EditorGUILayout.BeginHorizontal();
                     // name
-                    GUILayout.Toggle( true, _def.name, "dragtab");
+                    GUILayout.Toggle( true, _eventTrigger.name, "dragtab");
 
                     // delete
                     if ( GUILayout.Button( styles.iconToolbarMinus, 
@@ -203,7 +233,7 @@ class exUIControlInspector : exPlaneInspector {
 
                     // slots
                     for ( int i = 0; i < _eventTrigger.slots.Count; ++i ) {
-                        exUIControl.SlotInfo slotInfo = SlotField ( _eventTrigger.slots[i], _def );
+                        exUIControl.SlotInfo slotInfo = SlotField ( _eventTrigger.slots[i] );
                         if ( slotInfo == null ) {
                             _eventTrigger.slots.RemoveAt(i);
                             --i;
@@ -239,8 +269,9 @@ class exUIControlInspector : exPlaneInspector {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    protected exUIControl.SlotInfo SlotField ( exUIControl.SlotInfo _slot, exUIControl.EventDef _eventDef ) {
+    protected exUIControl.SlotInfo SlotField ( exUIControl.SlotInfo _slot ) {
         exUIControl.SlotInfo slot = _slot;
+        System.Type[] parameterTypes = new System.Type[] { typeof(exUIEvent) }; 
 
         EditorGUILayout.BeginHorizontal();
             // receiver
@@ -268,11 +299,11 @@ class exUIControlInspector : exPlaneInspector {
                         MethodInfo mi = methods[m];
                         ParameterInfo[] miParameterTypes = mi.GetParameters();
                         if ( mi.ReturnType == typeof(void) && 
-                             miParameterTypes.Length == _eventDef.parameterTypes.Length ) 
+                             miParameterTypes.Length == parameterTypes.Length ) 
                         {
                             bool notMatch = false;
                             for ( int p = 0; p < miParameterTypes.Length; ++p ) {
-                                if ( miParameterTypes[p].ParameterType != _eventDef.parameterTypes[p] ) {
+                                if ( miParameterTypes[p].ParameterType != parameterTypes[p] ) {
                                     notMatch = true;
                                     break;
                                 }

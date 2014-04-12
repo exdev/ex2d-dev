@@ -28,26 +28,32 @@ public class PanelTransition : MonoBehaviour {
     public void Awake () {
         exUIPanel panel = GetComponent<exUIPanel>();
         if ( panel ) {
-            panel.onStartFadeIn += delegate ( exUIControl _sender ) {
-                transform.position = Vector3.zero;
-                panel.gameObject.SetActive(true);
-            };
-            panel.onFinishFadeOut += delegate ( exUIControl _sender ) {
-                transform.position = new Vector3(2000,2000,0);
-                panel.gameObject.SetActive(false);
-            };
+            panel.AddEventListener( "onStartFadeIn",
+                                    delegate ( exUIEvent _event ) {
+                                        transform.position = Vector3.zero;
+                                        panel.gameObject.SetActive(true);
+                                    } );
+            panel.AddEventListener( "onFinishFadeOut",
+                                    delegate ( exUIEvent _event ) {
+                                        transform.position = new Vector3(2000,2000,0);
+                                        panel.gameObject.SetActive(false);
+                                    } );
 
             if ( useLeftToRight ) {
-                panel.onFadeIn += delegate ( exUIControl _sender, float _ratio ) {
-                    transform.position = Vector3.Lerp( new Vector3( -1000, 0, 0 ),
-                                                       new Vector3( 0, 0, 0 ),
-                                                       _ratio );
-                };
-                panel.onFadeOut += delegate ( exUIControl _sender, float _ratio ) {
-                    transform.position = Vector3.Lerp( new Vector3( 0, 0, 0 ),
-                                                       new Vector3( 1000, 0, 0 ),
-                                                       _ratio );
-                };
+                panel.AddEventListener( "onFadeIn",
+                                        delegate ( exUIEvent _event ) {
+                                            exUIRatioEvent ratioEvent = _event as exUIRatioEvent;
+                                            transform.position = Vector3.Lerp( new Vector3( -1000, 0, 0 ),
+                                                                               new Vector3( 0, 0, 0 ),
+                                                                               ratioEvent.ratio );
+                                        } );
+                panel.AddEventListener( "onFadeOut",
+                                        delegate ( exUIEvent _event ) {
+                                            exUIRatioEvent ratioEvent = _event as exUIRatioEvent;
+                                            transform.position = Vector3.Lerp( new Vector3( 0, 0, 0 ),
+                                                                               new Vector3( 1000, 0, 0 ),
+                                                                               ratioEvent.ratio );
+                                        } );
             }
         }
     }

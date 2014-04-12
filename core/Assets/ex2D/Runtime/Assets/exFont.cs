@@ -105,7 +105,7 @@ using System.Collections.Generic;
         textureRebuildCallback_ = null;
     }
     
-/*    // ------------------------------------------------------------------ 
+    /*// ------------------------------------------------------------------ 
     [SerializeField] private int dynamicLineHeight;
     /// the space of the line
     // ------------------------------------------------------------------ 
@@ -133,7 +133,7 @@ using System.Collections.Generic;
     public int fontSize {
         get {
             if (bitmapFont_ != null) {
-                return bitmapFont_.size;
+                return bitmapFont_.lineHeight;
             }
             return dynamicFontSize_;
         }
@@ -218,7 +218,7 @@ using System.Collections.Generic;
         }
     }
 
-    private float jOffsetY;
+    [System.NonSerialized] private float baseline;
     
     ///////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -283,18 +283,37 @@ using System.Collections.Generic;
                     _charInfo.uv = new Rect();
                 }
                 _charInfo.vert = new Rect(bitmapCharInfo.xoffset, - bitmapCharInfo.yoffset, bitmapCharInfo.width, - bitmapCharInfo.height);
+                float baselineOffset = bitmapFont_.size - bitmapFont_.baseLine;
+                _charInfo.vert.y += baselineOffset;
                 _charInfo.width = bitmapCharInfo.xadvance;
                 return true;
             }
         }
         else if (dynamicFont_ != null) {
             if (dynamicFont_.GetCharacterInfo(_symbol, out _charInfo, dynamicFontSize_, dynamicFontStyle_)) {
-                _charInfo.vert.y -= jOffsetY;
+                _charInfo.vert.y -= baseline;
                 return true;
             }
         }
         _charInfo = new CharacterInfo();
         return false;
+    }
+
+    public int GetAdvance ( char _symbol ) {
+        if ( bitmapFont_ != null ) {
+            exBitmapFont.CharInfo charInfo = bitmapFont_.GetCharInfo(_symbol);
+            if ( charInfo != null ) {
+                return (int)charInfo.xadvance;
+            }
+        }
+        else if (dynamicFont_ != null) {
+            CharacterInfo charInfo;
+            if ( dynamicFont_.GetCharacterInfo(_symbol, out charInfo, dynamicFontSize_, dynamicFontStyle_) ) {
+                return (int)charInfo.width;
+            }
+        }
+
+        return 0;
     }
 
     public int GetKerning ( char _first, char _second ) {
@@ -307,10 +326,11 @@ using System.Collections.Generic;
     public void RequestCharactersInTexture ( string _text ) {
         if (dynamicFont_ != null) {
             /// yes, Unity's GetCharacterInfo have y problem, you should get lowest character j's y-offset adjust it.
+            /// 这里需要获得字体里字符最高和最低点，最高最低点经常出现在“|)_”等字符，考虑到性能因素不逐一进行比较，取'j'的高度有点误差但比较通用。
             dynamicFont_.RequestCharactersInTexture("j", dynamicFontSize_, dynamicFontStyle_);
-            CharacterInfo jCharInfo;
-            dynamicFont_.GetCharacterInfo('j', out jCharInfo, dynamicFontSize_, dynamicFontStyle_);
-            jOffsetY = jCharInfo.vert.yMin;
+            CharacterInfo tmp;
+            dynamicFont_.GetCharacterInfo('j', out tmp, dynamicFontSize_, dynamicFontStyle_);
+            baseline = tmp.vert.yMin + (dynamicFontSize_ + tmp.vert.height) * 0.5f;
             //
             dynamicFont_.RequestCharactersInTexture (_text, dynamicFontSize_, dynamicFontStyle_);
         }

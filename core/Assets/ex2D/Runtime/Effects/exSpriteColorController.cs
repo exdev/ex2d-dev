@@ -127,4 +127,16 @@ public class exSpriteColorController : MonoBehaviour {
             colorInfos.Add(colorInfo);
         }
     } 
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void RemoveNullSprites () {
+        for ( int i = colorInfos.Count-1; i >= 0; --i ) {
+            if ( colorInfos[i].sprite == null ) {
+                colorInfos.RemoveAt(i);
+            }
+        }
+    }
 }

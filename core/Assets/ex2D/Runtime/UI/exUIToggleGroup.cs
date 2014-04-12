@@ -26,23 +26,32 @@ public class exUIToggleGroup : exUIToggle {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    public override EventDef GetEventDef ( string _name ) {
-        EventDef eventDef = exUIControl.FindEventDef ( eventDefs, _name );
-        if ( eventDef == null )
-            eventDef = base.GetEventDef(_name);
-        return eventDef;
+    // event-defs
+    public static new string[] eventNames = new string[] {
+        "onCheckChanged",
+    };
+
+    // events
+    List<exUIEventListener> onCheckChanged;
+
+    public void OnCheckChanged   ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onCheckChanged", onCheckChanged, _event ); }
+    
+    public override void CacheEventListeners () {
+        base.CacheEventListeners();
+
+        onCheckChanged = eventListenerTable["onCheckChanged"];
     }
 
-    public override string[] GetEventDefNames () {
-        string[] baseNames = base.GetEventDefNames();
-        string[] names = new string[baseNames.Length + eventDefs.Length];
+    public override string[] GetEventNames () {
+        string[] baseNames = base.GetEventNames();
+        string[] names = new string[baseNames.Length + eventNames.Length];
 
         for ( int i = 0; i < baseNames.Length; ++i ) {
             names[i] = baseNames[i];
         }
 
-        for ( int i = 0; i < eventDefs.Length; ++i ) {
-            names[i+baseNames.Length] = eventDefs[i].name;
+        for ( int i = 0; i < eventNames.Length; ++i ) {
+            names[i+baseNames.Length] = eventNames[i];
         }
 
         return names;
@@ -51,14 +60,6 @@ public class exUIToggleGroup : exUIToggle {
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
-
-    // event-defs
-    public static new EventDef[] eventDefs = new EventDef[] {
-        new EventDef ( "onCheckChanged", new Type[] { typeof(exUIControl), typeof(int) }, typeof(Action<exUIControl,int>) ),
-    };
-
-    // events
-    public event System.Action<exUIControl,int> onCheckChanged;
 
     //
     [SerializeField] protected int index_ = 0;
@@ -82,9 +83,9 @@ public class exUIToggleGroup : exUIToggle {
                     }
                 }
 
-                if ( onCheckChanged != null ) {
-                    onCheckChanged (this,index_);
-                } 
+                exUIEvent uiEvent = new exUIEvent();
+                uiEvent.bubbles = false;
+                OnCheckChanged (uiEvent);
             }
         }
     }
@@ -134,8 +135,9 @@ public class exUIToggleGroup : exUIToggle {
     // ------------------------------------------------------------------ 
 
     void RegisterEvent ( exUIToggle _toggle ) {
-        _toggle.onChecked += delegate ( exUIControl _sender ) {
-            index = toggles.IndexOf(_toggle);
-        };
+        _toggle.AddEventListener( "onChecked",
+                                  delegate ( exUIEvent _event ) {
+                                      index = toggles.IndexOf(_toggle);
+                                  } ); 
     }
 }

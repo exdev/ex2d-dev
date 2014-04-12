@@ -85,24 +85,10 @@ public class ex2DRenderer : MonoBehaviour {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    void Awake () {
+    void OnEnable () {
         if (instance_ == null) {
             instance_ = this;
         }
-    }
-    
-    // ------------------------------------------------------------------ 
-    // Desc:
-    // ------------------------------------------------------------------ 
-
-    void OnEnable () {
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            if (instance_ == null) {
-                instance_ = this;
-            }
-        }
-#endif
         for ( int i = 0; i < layerList.Count; ++i ) {
             exLayer layer = layerList[i];
             if ( layer != null ) {
@@ -117,13 +103,9 @@ public class ex2DRenderer : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void OnDisable () {
-#if UNITY_EDITOR
-        if (!UnityEditor.EditorApplication.isPlaying) {
-            if (ReferenceEquals(this, instance_)) {
-                instance_ = null;
-            }
+        if (ReferenceEquals(this, instance_)) {
+            instance_ = null;
         }
-#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -131,9 +113,6 @@ public class ex2DRenderer : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void OnDestroy () {
-        if (ReferenceEquals(this, instance_)) {
-            instance_ = null;
-        }
         cachedCamera_ = null;
     }
 
@@ -206,11 +185,12 @@ public class ex2DRenderer : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     public void InsertLayer ( int _idx, exLayer _layer ) {
-        if ( _idx < 0 )
-            _idx = 0;
-        if ( _idx >= layerList.Count )
-            _idx = layerList.Count;
-
+        _idx = Mathf.Clamp(_idx, 0, layerList.Count);
+        if (layerList.Contains(_layer)) {
+            Debug.LogWarning("Layer already exists in ex2DRenderer: " + _layer, _layer);
+            return;
+        }
+        
         layerList.Insert( _idx, _layer );
 
         //
@@ -225,9 +205,9 @@ public class ex2DRenderer : MonoBehaviour {
     public exLayer GetLayer (string _layerName) {
         for (int i = 0; i < layerList.Count; ++i) {
             exLayer layer = layerList[i];
-        	if (layer != null && layer.name == _layerName) {
+            if (layer != null && layer.name == _layerName) {
                 return layer;
-        	}
+            }
         }
         return null;
     }
@@ -244,10 +224,10 @@ public class ex2DRenderer : MonoBehaviour {
             exLayer layer = layerList[i];
             if (layer != null) {
                 if (customizeLayerZ_) {
-                    layer.SetWorldBoundsMinZ(layer.customZ);
+                    layer.SetWorldBoundsZMin(layer.customZ);
                 }
                 else {
-                    layer.SetWorldBoundsMinZ(layerZ);
+                    layer.SetWorldBoundsZMin(layerZ);
                     layerZ += layerInterval;
                 }
             }

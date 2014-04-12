@@ -5,6 +5,7 @@ public class EasyProfiler : MonoBehaviour {
 
     private int beginFrame;
     private float beginTime;
+    private float baseTime;
 
     string testName;
     bool showReturnToMenu = false;
@@ -41,14 +42,25 @@ public class EasyProfiler : MonoBehaviour {
         Print("开始执行" + testName);
         beginTime = Time.realtimeSinceStartup;
     }
-    public void CpuProfilerEnd () {
+    public void CpuProfilerEnd (bool baseTest = false) {
         float elapse = Time.realtimeSinceStartup - beginTime;
-        Print("完成{0}, 用时 {1} 秒", testName, elapse);
+        if (baseTest) {
+            baseTime = elapse;
+            Print("完成基准测试, 用时 {0} 秒", baseTime);
+        }
+        else {
+            Print("完成{0}, 用时 {1} 秒，比基准多出 {2} 秒", testName, elapse, elapse - baseTime);
+        }
     }
     public void CpuProfiler (string _testName, System.Action _testFunc) {
         CpuProfilerBegin(_testName);
         _testFunc();
         CpuProfilerEnd();
+    }
+    public void CpuProfilerBase (System.Action _testFunc) {
+        CpuProfilerBegin("基准测试...");
+        _testFunc();
+        CpuProfilerEnd(true);
     }
 
     [ContextMenu("Test")]
