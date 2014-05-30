@@ -128,8 +128,8 @@ public static class exDebug {
         case BuildTarget.WebPlayer:
         case BuildTarget.WebPlayerStreamed:
             return BuildTargetGroup.WebPlayer;
-        case BuildTarget.Wii:
-            return BuildTargetGroup.Wii;
+        // case BuildTarget.Wii:
+        //     return BuildTargetGroup.Wii;
         case BuildTarget.iPhone:
             return BuildTargetGroup.iPhone;
         case BuildTarget.PS3:
