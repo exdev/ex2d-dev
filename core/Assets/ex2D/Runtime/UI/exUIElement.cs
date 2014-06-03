@@ -21,7 +21,7 @@ using System.Text;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-[System.Serializable]
+// [System.Serializable]
 public class exUIElement {
 
     public enum ContentType {

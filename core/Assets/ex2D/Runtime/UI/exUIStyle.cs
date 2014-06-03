@@ -246,7 +246,7 @@ public class exCSS_max_size {
 }
 
 // css color
-[System.Serializable]
+// [System.Serializable]
 public class exCSS_color { 
     public enum Type {
         Color,
@@ -258,7 +258,7 @@ public class exCSS_color {
 }
 
 // css image
-[System.Serializable]
+// [System.Serializable]
 public class exCSS_image { 
     public enum Type {
         TextureInfo,
@@ -274,7 +274,7 @@ public class exCSS_image {
 }
 
 // css font
-[System.Serializable]
+// [System.Serializable]
 public class exCSS_font { 
     public enum Type {
         TTF,
@@ -295,7 +295,7 @@ public class exCSS_font {
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-[System.Serializable]
+// [System.Serializable]
 public class exUIStyle {
 
     // size
