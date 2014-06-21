@@ -28,6 +28,28 @@ public static class exGenericAssetUtility<T> where T : ScriptableObject {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+	public static string SaveFileInProject ( string _title, string _dirPath, string _fileName, string _extension ) {
+		string path = EditorUtility.SaveFilePanel(_title, _dirPath, _fileName, _extension);
+
+        // cancelled
+		if ( path.Length == 0 )
+			return "";
+
+		string cwd = System.IO.Directory.GetCurrentDirectory().Replace("\\","/") + "/assets/";
+		if ( path.ToLower().IndexOf(cwd.ToLower()) != 0 ) {
+			path = "";
+			EditorUtility.DisplayDialog(_title, "Assets must be saved inside the Assets folder", "Ok");
+		}
+		else {
+			path = path.Substring ( cwd.Length - "/assets".Length );
+		}
+		return path;
+	}
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     public static T LoadExistsOrCreate ( string _path, string _name ) {
         T asset = AssetDatabase.LoadAssetAtPath ( Path.Combine(_path,_name+".asset"), typeof(T) ) as T;
         if ( asset == null ) {
@@ -89,7 +111,7 @@ public static class exGenericAssetUtility<T> where T : ScriptableObject {
             }
         }
         else {
-            assetPath = exEditorUtility.SaveFileInProject ( "Create...", "Assets/", _assetName, "asset" );
+            assetPath = SaveFileInProject ( "Create...", "Assets/", _assetName, "asset" );
             if ( string.IsNullOrEmpty (assetPath) )
                 return;
         }
