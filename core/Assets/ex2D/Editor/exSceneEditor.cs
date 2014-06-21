@@ -651,8 +651,8 @@ class exSceneEditor : EditorWindow {
                     if ( o is exTextureInfo ||
                          o is exBitmapFont ||
                          o is Font ||
-                         o is exSpriteAnimationClip ||
-                         o is exUILayoutInfo ) 
+                         o is exSpriteAnimationClip )
+                          
                     {
                         DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
                         break;
@@ -706,12 +706,6 @@ class exSceneEditor : EditorWindow {
                             sprite.textureInfo = clip.frameInfos[0].textureInfo;
                         }
                         InitSprite(sprite);
-                    }
-                    else if ( o is exUILayoutInfo ) {
-                        newGO = new GameObject(o.name);
-                        exUILayout layout = newGO.AddComponent<exUILayout>();
-                        layout.layoutInfo = o as exUILayoutInfo;
-                        layout.Sync();
                     }
 
                     if ( newGO != null && activeLayer != null ) {
