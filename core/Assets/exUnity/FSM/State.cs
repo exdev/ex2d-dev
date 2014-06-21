@@ -1,4 +1,4 @@
-// ======================================================================================
+﻿// ======================================================================================
 // File         : State.cs
 // Author       : Wu Jie 
 // Last Change  : 12/20/2011 | 11:51:04 AM | Tuesday,December
@@ -23,7 +23,6 @@ namespace fsm {
     // State
     ///////////////////////////////////////////////////////////////////////////////
 
-    // [System.Serializable]
     public class State {
 
         public enum Mode {
@@ -116,8 +115,9 @@ namespace fsm {
         // event handles
         ///////////////////////////////////////////////////////////////////////////////
 
-        public System.Action<State,State> onEnter = null;
-        public System.Action<State,State> onExit = null;
+        public System.Action<Transition> onFadeIn = null;
+        public System.Action<State, State> onEnter = null;
+        public System.Action<State, State> onExit = null;
         public System.Action<State> onAction = null;
 
         ///////////////////////////////////////////////////////////////////////////////
@@ -202,10 +202,15 @@ namespace fsm {
                     if ( transition.onCheck() ) {
 
                         // exit states
-                        transition.source.parent.ExitStates ( transition.target, transition.source );
+                        transition.source.parent.ExitStates ( transition.target, transition.source );   // TODO: 这里应该不进行++i
 
                         // transition on start
                         if ( transition.onStart != null ) transition.onStart();
+                        
+                        // fade in states
+                        if ( transition.target.onFadeIn != null ) {
+                            transition.target.onFadeIn(transition);
+                        }
 
                         // set current transition
                         currentTransition = transition;
@@ -307,6 +312,28 @@ namespace fsm {
         // Desc: 
         // ------------------------------------------------------------------ 
 
+        public bool IsInChildState (State state, bool containsTransTarget = true) {
+            if (inTransition && containsTransTarget) {
+                if (ReferenceEquals(currentTransition.target, state)) {
+                    return true;
+                }
+            }
+            for ( int i = 0; i < currentStates.Count; ++i ) {
+                State child = currentStates[i];
+                if (ReferenceEquals(child, state)) {
+                    return true;
+                }
+                if (child.IsInChildState(state, containsTransTarget)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // ------------------------------------------------------------------ 
+        // Desc: 
+        // ------------------------------------------------------------------ 
+
         protected void ExitAllStates ( State _toEnter ) {
             for ( int i = 0; i < currentStates.Count; ++i ) {
 
@@ -334,6 +361,8 @@ namespace fsm {
             return count;
         }
 
+#if UNITY_EDITOR
+
         // ------------------------------------------------------------------ 
         // Desc: 
         // ------------------------------------------------------------------ 
@@ -350,13 +379,15 @@ namespace fsm {
                 s.ShowDebugInfo ( _level + 1, currentStates.IndexOf(s) != -1, _textStyle );
             }
         }
+
+#endif
+
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     // FinalState
     ///////////////////////////////////////////////////////////////////////////////
 
-    [System.Serializable]
     public class FinalState : State {
 
         // ------------------------------------------------------------------ 

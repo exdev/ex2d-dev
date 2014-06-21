@@ -22,7 +22,6 @@ namespace fsm {
     // Transition
     ///////////////////////////////////////////////////////////////////////////////
 
-    // [System.Serializable]
     public class Transition {
 
         ///////////////////////////////////////////////////////////////////////////////
@@ -50,7 +49,6 @@ namespace fsm {
     // TimerTransition
     ///////////////////////////////////////////////////////////////////////////////
 
-    [System.Serializable]
     public class TimerTransition : Transition {
         public float duration = 1.0f; 
         public System.Action<float> onTick = null; // onTick ( timer/duration )
