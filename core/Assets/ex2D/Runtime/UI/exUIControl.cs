@@ -85,7 +85,7 @@ public class exUIControl : exPlane {
     public void OnHoverMove  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onHoverMove",   onHoverMove,  _event ); }
     public void OnPressDown  ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onPressDown",   onPressDown,  _event ); }
     public void OnPressUp    ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onPressUp",     onPressUp,    _event ); }
-    public void OnMouseWheel ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onMouseWheel",  onMouseWheel, _event ); }
+    public void OnEXMouseWheel ( exUIEvent _event )  { exUIMng.inst.DispatchEvent( this, "onMouseWheel",  onMouseWheel, _event ); }
     
     public virtual void CacheEventListeners () {
         onFocus = eventListenerTable["onFocus"];

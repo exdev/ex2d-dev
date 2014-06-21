@@ -727,7 +727,7 @@ public class exUIMng : MonoBehaviour {
             if ( scroll != 0.0f && _hotPoints[0].hover != null ) {
                 exUIWheelEvent wheelEvent = new exUIWheelEvent();
                 wheelEvent.delta = scroll;
-                _hotPoints[0].hover.OnMouseWheel(wheelEvent);
+                _hotPoints[0].hover.OnEXMouseWheel(wheelEvent);
             }
         }
 

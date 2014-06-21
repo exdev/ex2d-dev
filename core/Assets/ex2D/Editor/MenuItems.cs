@@ -1,17 +1,7 @@
-// ======================================================================================
-// File         : MenuItems.cs
-// Author       : Wu Jie 
-// Last Change  : 02/17/2013 | 21:51:52 PM | Sunday,February
-// Description  : 
-// ======================================================================================
-
-///////////////////////////////////////////////////////////////////////////////
-// usings
-///////////////////////////////////////////////////////////////////////////////
-
 using UnityEngine;
 using UnityEditor;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -75,45 +65,57 @@ public static class MenuItems {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    [MenuItem ("Assets/Create/ex2D/TextureInfo From Selected", false, 2000)]
+    [MenuItem ("Assets/Create/ex2D/TextureInfo From Selected %&t", false, 2000)]
     static void Create_TextureInfo_FromSelected () {
-        Texture2D rawTexture = Selection.activeObject as Texture2D;
-
-        // check if this is a font info
-        if ( rawTexture == null ) {
-            Debug.LogError ( "You can only create texture-info from selected texture" );
+        if ( Selection.objects.Length == 0 )
             return;
+
+        List<Object> nextSelections = new List<Object>();
+        foreach ( Object obj in Selection.objects ) {
+            Texture2D rawTexture = obj as Texture2D;
+
+            // check if this is a font info
+            if ( rawTexture == null ) {
+                Debug.LogError ( "You can only create texture-info from selected texture" );
+                return;
+            }
+
+            string rawTexturePath = AssetDatabase.GetAssetPath(rawTexture);
+            string dirPath = Path.GetDirectoryName(rawTexturePath);
+
+            exEditorUtility.ImportTextureForAtlas(rawTexture);
+
+            exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate ( dirPath, rawTexture.name );
+            textureInfo.rawTextureGUID = exEditorUtility.AssetToGUID(rawTexture);
+            textureInfo.rawAtlasGUID = exEditorUtility.AssetToGUID(rawTexture);
+            textureInfo.texture = rawTexture;
+            textureInfo.rotated = false;
+            textureInfo.trim = true;
+            textureInfo.trimThreshold = 1;
+            Rect trimRect = exTextureUtility.GetTrimTextureRect( rawTexture, 
+                                                                 1,
+                                                                 new Rect( 0, 0, rawTexture.width, rawTexture.height ) );
+            if ( trimRect.width <= 0 || trimRect.height <= 0 ) {
+                textureInfo.trim = false;
+                trimRect = new Rect ( 0, 0, rawTexture.width, rawTexture.height );
+            }
+            textureInfo.trim_x = (int)trimRect.x;
+            textureInfo.trim_y = (int)trimRect.y;
+            textureInfo.width = (int)trimRect.width;
+            textureInfo.height = (int)trimRect.height;
+            textureInfo.x = (int)trimRect.x;
+            textureInfo.y = (int)trimRect.y;
+            textureInfo.rawWidth = rawTexture.width;
+            textureInfo.rawHeight = rawTexture.height;
+
+            AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(textureInfo) );
+            AssetDatabase.Refresh();
+
+            nextSelections.Add(textureInfo);
         }
 
-        string rawTexturePath = AssetDatabase.GetAssetPath(rawTexture);
-        string dirPath = Path.GetDirectoryName(rawTexturePath);
-
-        exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate ( dirPath, rawTexture.name );
-        textureInfo.rawTextureGUID = exEditorUtility.AssetToGUID(rawTexture);
-        textureInfo.rawAtlasGUID = exEditorUtility.AssetToGUID(rawTexture);
-        textureInfo.texture = rawTexture;
-        textureInfo.rotated = false;
-        textureInfo.trim = true;
-        textureInfo.trimThreshold = 1;
-        Rect trimRect = exTextureUtility.GetTrimTextureRect( rawTexture, 
-                                                             1,
-                                                             new Rect( 0, 0, rawTexture.width, rawTexture.height ) );
-        if ( trimRect.width <= 0 || trimRect.height <= 0 ) {
-            textureInfo.trim = false;
-            trimRect = new Rect ( 0, 0, rawTexture.width, rawTexture.height );
-        }
-        textureInfo.trim_x = (int)trimRect.x;
-        textureInfo.trim_y = (int)trimRect.y;
-        textureInfo.width = (int)trimRect.width;
-        textureInfo.height = (int)trimRect.height;
-        textureInfo.x = (int)trimRect.x;
-        textureInfo.y = (int)trimRect.y;
-        textureInfo.rawWidth = rawTexture.width;
-        textureInfo.rawHeight = rawTexture.height;
-
-
-        AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(textureInfo) );
-        Selection.activeObject = textureInfo;
+        Selection.objects = nextSelections.ToArray();
+        Selection.activeObject = nextSelections[0];
     }
 
     // ------------------------------------------------------------------ 
