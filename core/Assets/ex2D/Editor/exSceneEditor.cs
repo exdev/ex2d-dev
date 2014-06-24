@@ -925,7 +925,11 @@ class exSceneEditor : EditorWindow {
             if ( scrollView != null ) {
                 aabb.width = scrollView.contentSize.x;
                 aabb.yMin = aabb.yMax - scrollView.contentSize.y;
+
+                float contentX = (scrollView.horizontalContentDir == exUIScrollView.ContentDirection.LeftToRight) ? 0.0f : (scrollView.contentSize.x-scrollView.width);
+                float contentY = (scrollView.verticalContentDir == exUIScrollView.ContentDirection.TopToBottom) ? 0.0f : (scrollView.contentSize.y-scrollView.height);
                 aabb.center += scrollView.scrollOffset;
+                aabb.center += new Vector2( contentX, contentY );
                 vertices = new Vector3[4] {
                     l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMin, 0)),
                     l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMax, 0)),
