@@ -290,9 +290,9 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         if ((updateFlags & exUpdateFlags.Transparent) != 0) {
             updateFlags &= ~exUpdateFlags.Transparent;
             if (transparent_) {
-                Vector3 samePoint = _vertices.buffer[0];
+                Vector3 anyPoint = _vertices.buffer[0];
                 for (int i = 1; i < vertexCount_; ++i) {
-                    _vertices.buffer[vertexBufferIndex + i] = samePoint;
+                    _vertices.buffer[vertexBufferIndex + i] = anyPoint;
                 }
                 updateFlags &= ~exUpdateFlags.Vertex;
             }

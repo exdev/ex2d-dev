@@ -354,15 +354,32 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
                                                     exList<Color32> _colors32,
                                                     exList<int> _indices) {
         if (font_.isValid == false) {
-            if ((updateFlags & exUpdateFlags.Text) != 0) {
-                updateFlags &= ~exUpdateFlags.Text;
-                Vector3 meshBBoxPoint = _vertices.buffer.Length > 0 ? _vertices.buffer[0] : new Vector3();
-                for (int i = 1; i < vertexCount_; ++i) {
-                    _vertices.buffer[vertexBufferIndex + i] = meshBBoxPoint;
+            var retval = exUpdateFlags.None;
+            bool updateIndex = (updateFlags & (exUpdateFlags.Index | exUpdateFlags.Text)) != 0 && _indices != null;
+            if (updateIndex) {
+                // ensure index buffer in vertex range
+                int indexBufferEnd = indexBufferIndex + indexCount - 5;
+                for (int i = indexBufferIndex, v = vertexBufferIndex; i < indexBufferEnd; i += 6, v += 4) {
+                    _indices.buffer[i] = v;
+                    _indices.buffer[i + 1] = v + 1;
+                    _indices.buffer[i + 2] = v + 2;
+                    _indices.buffer[i + 3] = v + 2;
+                    _indices.buffer[i + 4] = v + 3;
+                    _indices.buffer[i + 5] = v;
                 }
-                return exUpdateFlags.Vertex;
+                updateFlags &= ~exUpdateFlags.Index;
+                retval |= exUpdateFlags.Index;
             }
-            return exUpdateFlags.None;
+            bool updateVertex = (updateFlags & exUpdateFlags.Text) != 0;
+            if (updateVertex) {
+                Vector3 anyPoint = _vertices.buffer.Length > 0 ? _vertices.buffer[0] : new Vector3();
+                for (int i = 0; i < vertexCount_; ++i) {
+                    _vertices.buffer[vertexBufferIndex + i] = anyPoint;
+                }
+                updateFlags &= ~exUpdateFlags.Text;
+                retval |= exUpdateFlags.Vertex;
+            }
+            return retval;
         }
 
         // save dirty flag because SpriteFontBuilder.UpdateBuffers will overwrite it
@@ -387,9 +404,9 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
         
         if (transparentDirty && transparent_) {
             // 如果有exUpdateFlags.Text一样会被UpdateBuffers显示出来，需要重新设为不可见
-            Vector3 meshBBoxPoint = _vertices.buffer.Length > 0 ? _vertices.buffer[0] : new Vector3();
+            Vector3 anyPoint = _vertices.buffer.Length > 0 ? _vertices.buffer[0] : new Vector3();
             for (int i = 1; i < vertexCount_; ++i) {
-                _vertices.buffer[vertexBufferIndex + i] = meshBBoxPoint;
+                _vertices.buffer[vertexBufferIndex + i] = anyPoint;
             }
         }
         return applyedFlags;

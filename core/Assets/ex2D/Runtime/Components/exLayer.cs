@@ -482,7 +482,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     
     internal void HideSprite (exLayeredSprite _sprite) {
-        exDebug.Assert(false, "GetMeshToAdd要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中");
+        exDebug.Assert(false, "必须开启enableFastShowHide，因为GetMeshToAdd要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中");
         if (_sprite.isInIndexBuffer) {
             int meshIndex = IndexOfMesh(_sprite);
             if (meshIndex != -1) {
@@ -763,10 +763,18 @@ public class exLayer : MonoBehaviour
         if (UpdateSpriteWhileRecreating.Clear() == false) { // 假如更新depth时没遍历到_sprite，则手动更新
             int meshIndex = IndexOfMesh(_sprite);
             if (meshIndex != -1) {
+                //meshList[meshIndex].OutputDebugInfo();
+                //Debug.Log("before remove");
+                //meshList[meshIndex].OutputDebugInfo(true);
                 RemoveFromMesh(_sprite, meshList[meshIndex]);
+                //Debug.Log("after remove");
+                //meshList[meshIndex].OutputDebugInfo(true);
             }
             (_sprite as IFriendOfLayer).SetMaterialDirty();
-            AddToMesh(_sprite, GetMeshToAdd(_sprite));
+            var mesh = GetMeshToAdd(_sprite);
+            AddToMesh(_sprite, mesh);
+            //Debug.Log("after add");
+            //mesh.OutputDebugInfo(true);
         }
     }
 
@@ -1223,6 +1231,7 @@ public class exLayer : MonoBehaviour
                         Debug.Log(string.Format("[RemoveFromMesh|exLayer] index: {1} _mesh.indices.Count: {0}", _mesh.indices.Count, index));
                     }
                     _mesh.indices.buffer[index] -= vertexCount;
+                    //exDebug.Assert(_mesh.indices.buffer[index] >= 0, "Failed setting triangles. Some indices are referencing out of bounds vertices.");
                 }
             }
         }
