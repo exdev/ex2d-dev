@@ -6,6 +6,7 @@
 // ======================================================================================
 
 #define DUPLICATE_WHEN_PINGPONE
+//#define AUTO_DISABLE
 
 ///////////////////////////////////////////////////////////////////////////////
 // usings
@@ -344,9 +345,11 @@ public class exSpriteAnimation : MonoBehaviour {
             if (playAutomatically && defaultAnimation != null) {
                 Play(defaultAnimation.name, 0);
             }
+#if AUTO_DISABLE
             else {
                 enabled = false;
             }
+#endif
         }
     }
     
@@ -357,6 +360,10 @@ public class exSpriteAnimation : MonoBehaviour {
             float delta = Time.deltaTime * curAnimation.speed;
             Step(delta);
         }
+    }
+
+    void OnDisable () {
+        Stop();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -404,6 +411,7 @@ public class exSpriteAnimation : MonoBehaviour {
 
     public void Stop () {
         Stop (curAnimation);
+        curAnimation = null;
     }
 
     // ------------------------------------------------------------------ 
@@ -416,7 +424,6 @@ public class exSpriteAnimation : MonoBehaviour {
             exSpriteAnimationClip.StopAction stopAction = _animState.stopAction;
 
             _animState.time = 0.0f;
-            _animState = null;
 
             switch ( stopAction ) {
             case exSpriteAnimationClip.StopAction.DoNothing:
@@ -435,7 +442,9 @@ public class exSpriteAnimation : MonoBehaviour {
                 break;
             }
         }
+#if AUTO_DISABLE
         enabled = false;
+#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -664,7 +673,9 @@ public class exSpriteAnimation : MonoBehaviour {
             curIndex = -1;
             curAnimation.time = _time;
             Sample();
+#if AUTO_DISABLE
             enabled = true;
+#endif
         }
     }
 
