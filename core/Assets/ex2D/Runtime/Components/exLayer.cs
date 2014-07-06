@@ -763,7 +763,6 @@ public class exLayer : MonoBehaviour
         if (UpdateSpriteWhileRecreating.Clear() == false) { // 假如更新depth时没遍历到_sprite，则手动更新
             int meshIndex = IndexOfMesh(_sprite);
             if (meshIndex != -1) {
-                //meshList[meshIndex].OutputDebugInfo();
                 //Debug.Log("before remove");
                 //meshList[meshIndex].OutputDebugInfo(true);
                 RemoveFromMesh(_sprite, meshList[meshIndex]);
@@ -1227,11 +1226,18 @@ public class exLayer : MonoBehaviour
             if (sprite.isInIndexBuffer) {
                 int indexEnd = sprite.indexBufferIndex + sprite.indexCount;
                 for (int index = sprite.indexBufferIndex; index < indexEnd; ++index) {
-                    if (index >= _mesh.indices.Count) {
-                        Debug.Log(string.Format("[RemoveFromMesh|exLayer] index: {1} _mesh.indices.Count: {0}", _mesh.indices.Count, index));
+                    //if (index >= _mesh.indices.Count) {
+                    //    Debug.Log(string.Format("[RemoveFromMesh|exLayer] index: {1} _mesh.indices.Count: {0}", _mesh.indices.Count, index));
+                    //}
+                    if (_mesh.indices.buffer[index] > 0) {  // if index inited
+                        _mesh.indices.buffer[index] -= vertexCount;
+#if EX_DEBUG
+                        if (_mesh.indices.buffer[index] < 0) {
+                            Debug.LogError(string.Format("Failed setting triangles. Some indices are referencing out of bounds vertices. " +
+                                                         "removing sprite: {0}, mesh: {1}", _sprite.gameObject.name, _mesh.gameObject.name), _sprite);
+                        }
+#endif
                     }
-                    _mesh.indices.buffer[index] -= vertexCount;
-                    //exDebug.Assert(_mesh.indices.buffer[index] >= 0, "Failed setting triangles. Some indices are referencing out of bounds vertices.");
                 }
             }
         }
@@ -1312,6 +1318,7 @@ public class exLayer : MonoBehaviour
             }
             // insert into _sortedSpriteList
             _mesh.sortedSpriteList.Insert(sortedSpriteIndex, _sprite);
+            // 这里并没给index buffer分配初始值，所以index很有可能全是0，如果减小index值时，要注意是否还是0，如果是0就不能再减小了。
         }
     }
     

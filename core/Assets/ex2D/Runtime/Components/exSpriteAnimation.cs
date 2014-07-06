@@ -421,10 +421,12 @@ public class exSpriteAnimation : MonoBehaviour {
 
     public void Stop ( exSpriteAnimationState _animState ) {
         if ( _animState != null ) {
-            exSpriteAnimationClip.StopAction stopAction = _animState.stopAction;
-
+            if (ReferenceEquals(_animState, curAnimation)) {
+                curAnimation = null;
+            }
             _animState.time = 0.0f;
 
+            exSpriteAnimationClip.StopAction stopAction = _animState.stopAction;
             switch ( stopAction ) {
             case exSpriteAnimationClip.StopAction.DoNothing:
                 break;
