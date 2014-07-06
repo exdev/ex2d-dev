@@ -9,7 +9,7 @@
 // defines
 ///////////////////////////////////////////////////////////////////////////////
 
-#define FORCE_UPDATE_VERTEX_INFO ///< 删除mesh最后面的顶点时，仅先从index buffer和vertex buffer中清除，其它数据不标记为脏。因为是尾端的冗余数据，不同步也可以。
+#define LAZY_UPDATE_BUFFER_TAIL ///< 删除mesh最后面的顶点时，仅先从index buffer和vertex buffer中清除，其它数据不标记为脏。因为是尾端的冗余数据，不同步也可以。
 
 ///////////////////////////////////////////////////////////////////////////////
 // usings
@@ -1248,7 +1248,7 @@ public class exLayer : MonoBehaviour
         _mesh.colors32.RemoveRange(_sprite.vertexBufferIndex, vertexCount);
         _mesh.uvs.RemoveRange(_sprite.vertexBufferIndex, vertexCount);
 
-#if FORCE_UPDATE_VERTEX_INFO
+#if LAZY_UPDATE_BUFFER_TAIL
         bool removeLastSprite = (_sprite.spriteIndexInMesh == _mesh.spriteList.Count);
         if (!removeLastSprite) {
             _mesh.updateFlags |= (exUpdateFlags.Color | exUpdateFlags.UV | exUpdateFlags.Normal);

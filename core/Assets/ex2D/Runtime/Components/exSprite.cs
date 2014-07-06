@@ -338,7 +338,6 @@ public class exSprite : exLayeredSprite, exISprite {
         }
         else {
             if (updateFlags != exUpdateFlags.None) {
-                updateFlags = exUpdateFlags.None;   // 防止每帧刷新
                 if (_indices != null) {
                     _vertices.buffer[vertexBufferIndex] = cachedTransform.position;
                     for (int i = indexBufferIndex; i < indexBufferIndex + indexCount_; ++i) {
