@@ -48,8 +48,6 @@ _build/
 *.vimproject
 .vimfiles.*/
 .exvim.*/
-quick_gen_project_*_autogen.bat
-quick_gen_project_*_autogen.sh
 
 #/////////////////////////////////////////////////////////////////////////////
 # project file
@@ -58,5 +56,3 @@ quick_gen_project_*_autogen.sh
 _log/
 *.err
 *.userprefs
-*/-tk2d.asset
-*/-tk2d.asset.meta

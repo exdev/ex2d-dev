@@ -161,7 +161,7 @@ class exTextureInfoEditor : EditorWindow {
         // settings & scene
         EditorGUILayout.BeginHorizontal();
             //
-            int width = 250;
+            int width = 300;
             Settings (width);
 
             //
@@ -300,8 +300,28 @@ class exTextureInfoEditor : EditorWindow {
         switch ( editModeIndex ) {
             // attach pionts
         case 0:
-            if ( GUILayout.Button("Add...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
-                // TODO:
+            GUILayout.Label ( "Attach Points:" );
+            EditorGUI.BeginChangeCheck();
+                for ( int i = 0; i < curEdit.attachPoints.Count; ++i ) {
+                    exTextureInfo.AttachInfo info = curEdit.attachPoints[i];
+                    EditorGUILayout.BeginHorizontal();
+                    info.name = GUILayout.TextField(info.name, GUILayout.Width(80));
+                    info.pos = EditorGUILayout.Vector2Field( "", info.pos, GUILayout.Width(150) );
+                    curEdit.attachPoints[i] = info;
+
+                    if ( GUILayout.Button("Delete", GUILayout.Width(50), GUILayout.Height(15)) ) {
+                        curEdit.attachPoints.RemoveAt(i);
+                        --i;
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+
+                if ( GUILayout.Button("Add...", GUILayout.Width(50), GUILayout.Height(20) ) ) {
+                    curEdit.attachPoints.Add( new exTextureInfo.AttachInfo( "attach", Vector2.zero ) );
+                }
+
+            if ( EditorGUI.EndChangeCheck() ) {
+                EditorUtility.SetDirty(curEdit);
             }
 
             break;
@@ -526,6 +546,25 @@ class exTextureInfoEditor : EditorWindow {
                                                   new Vector3 ( trim_end_x,   trim_end_y, 0.0f ),
                                                   }, 
                                                   trimRectColor );
+            }
+
+            // draw attach points
+            if ( editModeIndex == 0 ) {
+                for ( int i = 0; i < curEdit.attachPoints.Count; ++i ) {
+                    exTextureInfo.AttachInfo attachInfo = curEdit.attachPoints[i];
+
+                    float start_x = attachInfo.pos.x - 1.0f;
+                    float start_y = attachInfo.pos.y - 1.0f;
+                    float end_x = attachInfo.pos.x + 1.0f;
+                    float end_y = attachInfo.pos.y + 1.0f;
+
+                    exEditorUtility.GL_DrawRectLine ( new Vector3[] {
+                                                      new Vector3 ( start_x, start_y, 0.0f ),
+                                                      new Vector3 ( start_x,  end_y, 0.0f ),
+                                                      new Vector3 ( end_x,  end_y, 0.0f ),
+                                                      new Vector3 ( end_x, start_y, 0.0f ),
+                                                      }, Color.green );
+                }
             }
 
             // draw sliced line

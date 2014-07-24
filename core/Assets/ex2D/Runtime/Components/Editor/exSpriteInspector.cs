@@ -303,6 +303,28 @@ class exSpriteInspector : exLayeredSpriteInspector {
         // GUILayout.EndHorizontal();
         // } DISABLE end 
 
+        if ( GUILayout.Button("Create/Update Attaches", GUILayout.Height(20) ) ) {
+            foreach (Object obj in serializedObject.targetObjects) {
+                exSprite sp = obj as exSprite;
+                if (sp && sp.textureInfo) {
+                    for ( int i = 0; i < sp.textureInfo.attachPoints.Count; ++i ) {
+                        exTextureInfo.AttachInfo attachInfo = sp.textureInfo.attachPoints[i];
+                        Transform trans = sp.transform.Find(attachInfo.name); 
+                        GameObject go = null;
+                        if ( trans == null ) {
+                            go = new GameObject();
+                        }
+                        else {
+                            go = trans.gameObject;
+                        }
+                        go.name = attachInfo.name;
+                        go.transform.parent = sp.transform;
+                        go.transform.localPosition = new Vector3 ( attachInfo.pos.x, attachInfo.pos.y, 0.0f );
+                    }
+                }
+            }
+        }
+
         EditorGUILayout.Space();
     }
 }
