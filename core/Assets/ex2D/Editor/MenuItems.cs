@@ -99,7 +99,8 @@ public static class MenuItems {
             textureInfo.rawWidth = rawTexture.width;
             textureInfo.rawHeight = rawTexture.height;
 
-            AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(textureInfo) );
+            EditorUtility.SetDirty(textureInfo);
+            AssetDatabase.ImportAsset( AssetDatabase.GetAssetPath(textureInfo), ImportAssetOptions.ForceSynchronousImport );
             AssetDatabase.Refresh();
 
             nextSelections.Add(textureInfo);
