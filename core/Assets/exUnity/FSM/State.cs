@@ -13,6 +13,10 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+#if UNITY_EDITOR
+    using UnityEditor;
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 // defines
 ///////////////////////////////////////////////////////////////////////////////
@@ -36,6 +40,11 @@ namespace fsm {
 
         public string name = "";
         public Mode mode = Mode.Exclusive;
+
+        // route state will check condition and transfer to 
+        // the next state immediately before transition.onStart
+        // it will then reset the initState of its parent.
+        public bool isRoute = false; 
 
         protected State parent_ = null;
         public State parent {
@@ -115,7 +124,6 @@ namespace fsm {
         // event handles
         ///////////////////////////////////////////////////////////////////////////////
 
-        public System.Action<Transition> onFadeIn = null;
         public System.Action<State, State> onEnter = null;
         public System.Action<State, State> onExit = null;
         public System.Action<State> onAction = null;
@@ -204,14 +212,19 @@ namespace fsm {
                         // exit states
                         transition.source.parent.ExitStates ( transition.target, transition.source );   // TODO: 这里应该不进行++i
 
+                        // route happends here
+                        if ( transition.target.mode == Mode.Exclusive &&
+                             transition.target.children.Count > 0 ) 
+                        {
+                            State firstChild = transition.target.children[0];
+                            if ( firstChild.isRoute ) {
+                                firstChild.CheckRoute(transition);
+                            }
+                        }
+
                         // transition on start
                         if ( transition.onStart != null ) transition.onStart();
                         
-                        // fade in states
-                        if ( transition.target.onFadeIn != null ) {
-                            transition.target.onFadeIn(transition);
-                        }
-
                         // set current transition
                         currentTransition = transition;
                         inTransition = true;
@@ -225,6 +238,28 @@ namespace fsm {
                 }
             }
         }
+
+        // ------------------------------------------------------------------ 
+        // Desc: 
+        // ------------------------------------------------------------------ 
+
+        public void CheckRoute ( Transition _parentTransition ) {
+            bool hasTransition = false;
+            for ( int i = 0; i < transitionList.Count; ++i ) {
+                Transition transition = transitionList[i];
+                transition.Bridge(_parentTransition);
+
+                if ( transition.onCheck() ) {
+                    parent.initState = transition.target;
+                    hasTransition = true;
+                    break;
+                }
+            }
+            if ( hasTransition == false ) {
+                Debug.LogError( "FSM error: route state must have transition" );
+            }
+        }
+
 
         // ------------------------------------------------------------------ 
         // Desc: 
@@ -312,20 +347,34 @@ namespace fsm {
         // Desc: 
         // ------------------------------------------------------------------ 
 
-        public bool IsInChildState (State state, bool containsTransTarget = true) {
-            if (inTransition && containsTransTarget) {
-                if (ReferenceEquals(currentTransition.target, state)) {
+        public bool IsActiveState (State _state, bool _containsTransTarget = true) {
+            if (inTransition && _containsTransTarget) {
+                if (ReferenceEquals(currentTransition.target, _state)) {
                     return true;
                 }
             }
             for ( int i = 0; i < currentStates.Count; ++i ) {
                 State child = currentStates[i];
-                if (ReferenceEquals(child, state)) {
+                if (ReferenceEquals(child, _state)) {
                     return true;
                 }
-                if (child.IsInChildState(state, containsTransTarget)) {
+                if (child.IsActiveState(_state, _containsTransTarget)) {
                     return true;
                 }
+            }
+            return false;
+        }
+
+        // ------------------------------------------------------------------ 
+        // Desc: 
+        // ------------------------------------------------------------------ 
+
+        public bool IsAncientOf ( State _state ) {
+            State p = _state.parent_;
+            while ( p != null ) {
+                if ( p == this )
+                    return true;
+                p = p.parent_;
             }
             return false;
         }
@@ -361,22 +410,83 @@ namespace fsm {
             return count;
         }
 
+        // ------------------------------------------------------------------ 
+        // Desc: 
+        // ------------------------------------------------------------------ 
+
+        protected Transition GetCurrentTransition () {
+            if ( currentTransition != null ) {
+                return currentTransition;
+            }
+
+            State p = parent_;
+            while ( p != null ) {
+                if ( p.inTransition && p.currentTransition != null )
+                    return p.currentTransition;
+                p = p.parent_;
+            }
+
+            return null;
+        }
+
 #if UNITY_EDITOR
 
         // ------------------------------------------------------------------ 
         // Desc: 
         // ------------------------------------------------------------------ 
 
-        public void ShowDebugInfo ( int _level, bool _active, GUIStyle _textStyle ) {
-            _textStyle.normal.textColor = _active ? Color.green : new Color( 0.5f, 0.5f, 0.5f );
+        public void ShowDebugInfo ( int _level, bool _active, GUIStyle _textStyle, Transition _t ) {
+
+            Color colorEnter = Color.green;
+            Color colorExit = Color.red;
+            Color colorActive = Color.blue;
+            Color colorDeactive = new Color( 0.5f, 0.5f, 0.5f );
+
+            if ( EditorGUIUtility.isProSkin ) {
+                colorEnter = Color.yellow;
+                colorExit = Color.red;
+                colorActive = Color.green;
+                colorDeactive = new Color( 0.4f, 0.4f, 0.4f );
+            }
+
+            string suffix = "";
+            if ( _active ) {
+                if ( inTransition ) {
+                    _textStyle.fontStyle = FontStyle.Bold;
+                    suffix = " *";
+                }
+                else {
+                    _textStyle.fontStyle = FontStyle.Normal;
+                }
+                _textStyle.normal.textColor = colorActive;
+            }
+            else {
+                _textStyle.fontStyle = FontStyle.Normal;
+                if ( _t != null ) {
+                    if ( _t.source == this ) {
+                        suffix = " >>>";
+                        _textStyle.normal.textColor = colorExit;
+                    }
+                    else if ( _t.target == this ) {
+                        suffix = " <<<";
+                        _textStyle.normal.textColor = colorEnter;
+                    }
+                    else {
+                        _textStyle.normal.textColor = colorDeactive;
+                    }
+                }
+                else {
+                    _textStyle.normal.textColor = colorDeactive;
+                }
+            }
             GUILayout.BeginHorizontal ();
                 GUILayout.Space(5);
-                GUILayout.Label ( new string('\t',_level) + name, _textStyle, new GUILayoutOption[] {} );
+                GUILayout.Label ( new string('\t',_level) + name + suffix, _textStyle, new GUILayoutOption[] {} );
             GUILayout.EndHorizontal ();
 
             for ( int i = 0; i < children.Count; ++i ) {
                 State s = children[i];
-                s.ShowDebugInfo ( _level + 1, currentStates.IndexOf(s) != -1, _textStyle );
+                s.ShowDebugInfo ( _level + 1, currentStates.IndexOf(s) != -1, _textStyle, inTransition ? currentTransition : _t );
             }
         }
 

@@ -79,6 +79,8 @@ class exFSMDebugger : EditorWindow {
         wantsMouseMove = false;
         autoRepaintOnSceneChange = true;
         // position = new Rect ( 50, 50, 800, 600 );
+
+        OnSelectionChange ();
     }
 
     // ------------------------------------------------------------------ 

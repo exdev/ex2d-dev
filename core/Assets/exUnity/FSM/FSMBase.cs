@@ -26,7 +26,7 @@ public class FSMBase : MonoBehaviour {
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    [System.NonSerialized] public fsm.Machine stateMachine = null;
+    [System.NonSerialized] public fsm.Machine stateMachine = new fsm.Machine();
 
     // ------------------------------------------------------------------ 
     // Desc: 
