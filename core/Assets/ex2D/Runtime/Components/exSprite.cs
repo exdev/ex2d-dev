@@ -56,6 +56,8 @@ public class exSprite : exLayeredSprite, exISprite {
                 Hide ();
             }
             exSpriteUtility.SetTextureInfo (this, ref textureInfo_, value, useTextureOffset_, spriteType_);
+
+            UpdateAttachPoints();
         }
     }
     
@@ -216,6 +218,17 @@ public class exSprite : exLayeredSprite, exISprite {
                 if (spriteType_ == exSpriteType.Sliced && layer_ != null) {
                     updateFlags |= exUpdateFlags.Vertex;
                 }
+            }
+        }
+    }
+
+    [SerializeField] protected bool enableAttachPoints_;
+    public bool enableAttachPoints {
+        get { return enableAttachPoints_; }
+        set {
+            if ( enableAttachPoints_ != value ) {
+                enableAttachPoints_ = value;
+                UpdateAttachPoints();
             }
         }
     }
@@ -391,6 +404,25 @@ public class exSprite : exLayeredSprite, exISprite {
         }
 
         return vertices.ToArray();
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    protected void UpdateAttachPoints () {
+        if ( textureInfo_ != null && enableAttachPoints_ ) {
+            for ( int i = 0; i < textureInfo_.attachPoints.Count; ++i ) {
+                exTextureInfo.AttachInfo attachInfo = textureInfo_.attachPoints[i];
+                Transform trans = transform.Find(attachInfo.name);
+                if ( trans == null ) {
+                    Debug.LogWarning("Can't find attach point " + attachInfo.name + ", please create it in the editor.");
+                }
+                else {
+                    trans.localPosition = this.CalcAttachPointLocalPosition( attachInfo.pos );
+                }
+            }
+        }
     }
     
     // ------------------------------------------------------------------ 

@@ -14,6 +14,7 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using ex2D.Detail;
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoardPatternInspector
@@ -33,6 +34,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
     protected SerializedProperty rightProp;
     protected SerializedProperty topProp;
     protected SerializedProperty bottomProp;
+    protected SerializedProperty enableAttachPointsProp;
 
     // ------------------------------------------------------------------ 
     // Desc: 
@@ -51,6 +53,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
         rightProp = serializedObject.FindProperty("rightBorderSize_");
         topProp = serializedObject.FindProperty("topBorderSize_");
         bottomProp = serializedObject.FindProperty("bottomBorderSize_");
+        enableAttachPointsProp = serializedObject.FindProperty("enableAttachPoints_");
     }
 
     // ------------------------------------------------------------------ 
@@ -303,6 +306,19 @@ class exSpriteInspector : exLayeredSpriteInspector {
         // GUILayout.EndHorizontal();
         // } DISABLE end 
 
+        // custom border size
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField ( enableAttachPointsProp, new GUIContent("Custom Border Size"), true );
+        if ( EditorGUI.EndChangeCheck() ) {
+            foreach ( Object obj in serializedObject.targetObjects ) {
+                exSprite sp = obj as exSprite;
+                if ( sp ) {
+                    sp.enableAttachPoints = enableAttachPointsProp.boolValue;
+                    EditorUtility.SetDirty(sp);
+                }
+            }
+        }
+
         if ( GUILayout.Button("Create/Update Attaches", GUILayout.Height(20) ) ) {
             foreach (Object obj in serializedObject.targetObjects) {
                 exSprite sp = obj as exSprite;
@@ -319,7 +335,7 @@ class exSpriteInspector : exLayeredSpriteInspector {
                         }
                         go.name = attachInfo.name;
                         go.transform.parent = sp.transform;
-                        go.transform.localPosition = new Vector3 ( attachInfo.pos.x, attachInfo.pos.y, 0.0f );
+                        go.transform.localPosition = sp.CalcAttachPointLocalPosition( attachInfo.pos );
                     }
                 }
             }

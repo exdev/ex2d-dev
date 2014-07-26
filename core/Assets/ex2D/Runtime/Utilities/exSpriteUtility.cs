@@ -171,6 +171,84 @@ public static class exSpriteUtility {
 ///////////////////////////////////////////////////////////////////////////////
 
 public static partial class exISpriteExtends {
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+    
+    public static Vector3 CalcAttachPointLocalPosition (this exISprite _sprite, Vector2 _attachPos ) {
+            exTextureInfo textureInfo = _sprite.textureInfo;
+            Vector2 anchorOffset;
+            float halfHeight = textureInfo.height * 0.5f;
+            float halfWidth = textureInfo.width * 0.5f;
+    
+            if (_sprite.useTextureOffset) {
+                switch (_sprite.anchor) {
+                case Anchor.TopLeft:
+                    anchorOffset.x = halfWidth + textureInfo.trim_x;
+                    anchorOffset.y = -halfHeight + textureInfo.trim_y - (textureInfo.rawHeight - textureInfo.height);
+                    break;
+                case Anchor.TopCenter:
+                    anchorOffset.x = textureInfo.trim_x - (textureInfo.rawWidth - textureInfo.width) * 0.5f;
+                    anchorOffset.y = -halfHeight + textureInfo.trim_y - (textureInfo.rawHeight - textureInfo.height);
+                    break;
+                case Anchor.TopRight:
+                    anchorOffset.x = -halfWidth + textureInfo.trim_x - (textureInfo.rawWidth - textureInfo.width);
+                    anchorOffset.y = -halfHeight + textureInfo.trim_y - (textureInfo.rawHeight - textureInfo.height);
+                    break;
+                //
+                case Anchor.MidLeft:
+                    anchorOffset.x = halfWidth + textureInfo.trim_x;
+                    anchorOffset.y = textureInfo.trim_y - (textureInfo.rawHeight - textureInfo.height) * 0.5f;
+                    break;
+                case Anchor.MidCenter:
+                    anchorOffset.x = textureInfo.trim_x - (textureInfo.rawWidth - textureInfo.width) * 0.5f;
+                    anchorOffset.y = textureInfo.trim_y - (textureInfo.rawHeight - textureInfo.height) * 0.5f;
+                    break;
+                case Anchor.MidRight:
+                    anchorOffset.x = -halfWidth + textureInfo.trim_x - (textureInfo.rawWidth - textureInfo.width);
+                    anchorOffset.y = textureInfo.trim_y - (textureInfo.rawHeight - textureInfo.height) * 0.5f;
+                    break;
+                //
+                case Anchor.BotLeft:
+                    anchorOffset.x = halfWidth + textureInfo.trim_x;
+                    anchorOffset.y = halfHeight + textureInfo.trim_y;
+                    break;
+                case Anchor.BotCenter:
+                    anchorOffset.x = textureInfo.trim_x - (textureInfo.rawWidth - textureInfo.width) * 0.5f;
+                    anchorOffset.y = halfHeight + textureInfo.trim_y;
+                    break;
+                case Anchor.BotRight:
+                    anchorOffset.x = -halfWidth + textureInfo.trim_x - (textureInfo.rawWidth - textureInfo.width);
+                    anchorOffset.y = halfHeight + textureInfo.trim_y;
+                    break;
+                //
+                default:
+                    anchorOffset.x = textureInfo.trim_x - (textureInfo.rawWidth - textureInfo.width) * 0.5f;
+                    anchorOffset.y = textureInfo.trim_y - (textureInfo.rawHeight - textureInfo.height) * 0.5f;
+                    break;
+                }
+            }
+            else {
+                switch ( _sprite.anchor ) {
+                case Anchor.TopLeft   : anchorOffset.x = halfWidth;   anchorOffset.y = -halfHeight;  break;
+                case Anchor.TopCenter : anchorOffset.x = 0.0f;        anchorOffset.y = -halfHeight;  break;
+                case Anchor.TopRight  : anchorOffset.x = -halfWidth;  anchorOffset.y = -halfHeight;  break;
+    
+                case Anchor.MidLeft   : anchorOffset.x = halfWidth;   anchorOffset.y = 0.0f;         break;
+                case Anchor.MidCenter : anchorOffset.x = 0.0f;        anchorOffset.y = 0.0f;         break;
+                case Anchor.MidRight  : anchorOffset.x = -halfWidth;  anchorOffset.y = 0.0f;         break;
+    
+                case Anchor.BotLeft   : anchorOffset.x = halfWidth;   anchorOffset.y = halfHeight;   break;
+                case Anchor.BotCenter : anchorOffset.x = 0.0f;        anchorOffset.y = halfHeight;   break;
+                case Anchor.BotRight  : anchorOffset.x = -halfWidth;  anchorOffset.y = halfHeight;   break;
+    
+                default               : anchorOffset.x = 0.0f;        anchorOffset.y = 0.0f;         break;
+                }
+            }
+
+            return new Vector3 ( _attachPos.x + anchorOffset.x, _attachPos.y + anchorOffset.y, 0.0f ); 
+    }
 
     // ------------------------------------------------------------------ 
     // Desc: 
