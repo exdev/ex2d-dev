@@ -25,7 +25,7 @@ public enum exUpdateFlags {
     UV          = 4,   ///< update the uv coordination
     Color       = 8,   ///< update the vertex color
     Normal      = 16,  ///< update the normal, not implemented yet
-    Text        = 32,  ///< update the text, only used in sprite font
+    Text        = 32 | Vertex | UV | Color,  ///< update the text, only used in sprite font
     Transparent = 64,  ///< transparent flag changed
     //SelfDepth = 128, ///< update sprite's depth(not include its children), only used in layered sprite
 
@@ -340,7 +340,12 @@ public class exMesh : MonoBehaviour
 
     [ContextMenu("Output Mesh Info")]
     [System.Diagnostics.Conditional("EX_DEBUG")]
-    public void OutputDebugInfo (bool outputBuffer = false) {
+    public void OutputDebugInfo () {
+        OutputDebugInfo(false);
+    }
+
+    [System.Diagnostics.Conditional("EX_DEBUG")]
+    public void OutputDebugInfo (bool outputBuffer) {
         Mesh mesh = GetMeshBuffer();
         if (mesh == null) {
             Debug.Log("mesh is null");
