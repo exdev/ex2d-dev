@@ -382,7 +382,6 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
             return retval;
         }
 
-        // save dirty flag in case it overwritten in SpriteFontBuilder.UpdateBuffers
         bool transparentDirty = (updateFlags & exUpdateFlags.Transparent) != 0;
         if (transparentDirty) {
             updateFlags &= ~exUpdateFlags.Transparent;
@@ -393,7 +392,7 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
                     _vertices.buffer[vertexBufferIndex + i] = anyPoint;
                 }
                 updateFlags &= ~exUpdateFlags.Vertex;
-                return exUpdateFlags.Vertex;
+                return updateFlags | exUpdateFlags.Vertex;   // 既然不可见，直接让mesh更新各个buffer即可。这里不重设updateFlags，所以变回可见时会正确初始化。
             }
             else {
                 // revert vertex

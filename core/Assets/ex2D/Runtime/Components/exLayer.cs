@@ -1229,12 +1229,13 @@ public class exLayer : MonoBehaviour
                     //if (index >= _mesh.indices.Count) {
                     //    Debug.Log(string.Format("[RemoveFromMesh|exLayer] index: {1} _mesh.indices.Count: {0}", _mesh.indices.Count, index));
                     //}
-                    if (_mesh.indices.buffer[index] > 0) {  // if index inited
+                    if (_mesh.indices.buffer[index] > 0) {  // only shift if inited index in case of negative index value
                         _mesh.indices.buffer[index] -= vertexCount;
 #if EX_DEBUG
-                        if (_mesh.indices.buffer[index] < 0) {
+                        if (_mesh.indices.buffer[index] < 0 && (sprite.updateFlags & exUpdateFlags.Index) == 0) {
                             Debug.LogError(string.Format("Failed setting triangles. Some indices are referencing out of bounds vertices. " +
-                                                         "removing sprite: {0}, mesh: {1}", _sprite.gameObject.name, _mesh.gameObject.name), _sprite);
+                                                         "removing sprite: {0}, error sprite: {2} mesh: {1}", _sprite.gameObject.name, _mesh.gameObject.name, sprite), sprite);
+                            sprite.OutputDebugInfo();
                         }
 #endif
                     }
@@ -1307,6 +1308,7 @@ public class exLayer : MonoBehaviour
             int indexCount = _sprite.indexCount;
             exDebug.Assert(indexCount > 0);
             _mesh.indices.AddRange(indexCount);
+            // TODO: Array.Copy
             for (int i = _mesh.indices.Count - 1 - indexCount; i >= _sprite.indexBufferIndex ; --i) {
                 _mesh.indices.buffer[i + indexCount] = _mesh.indices.buffer[i];
             }

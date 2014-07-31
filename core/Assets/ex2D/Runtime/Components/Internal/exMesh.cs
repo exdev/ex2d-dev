@@ -26,7 +26,7 @@ public enum exUpdateFlags {
     Color       = 8,   ///< update the vertex color
     Normal      = 16,  ///< update the normal, not implemented yet
     Text        = 32 | Vertex | UV | Color,  ///< update the text, only used in sprite font
-    Transparent = 64,  ///< transparent flag changed
+    Transparent = 64,  ///< transparent flag changed, only used in layered sprite
     //SelfDepth = 128, ///< update sprite's depth(not include its children), only used in layered sprite
 
     VertexAndIndex = (Index | Vertex),
@@ -364,7 +364,7 @@ public class exMesh : MonoBehaviour
         }
 
         if (outputBuffer) {
-            string buf = "Vertex Buffer: ";
+            string buf = "Vertex Buffer[" + vertices.Count + "]: ";
             foreach (var v in vertices.buffer) {
                 buf += v;
                 buf += " ";
