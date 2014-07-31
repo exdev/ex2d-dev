@@ -346,7 +346,7 @@ public class exMesh : MonoBehaviour
 
     [System.Diagnostics.Conditional("EX_DEBUG")]
     public void OutputDebugInfo (bool outputBuffer) {
-        Mesh mesh = GetMeshBuffer();
+        Mesh mesh = GetMeshBuffer();    // 注意如果要交换缓冲区，这里拿到的是上一帧的mesh
         if (mesh == null) {
             Debug.Log("mesh is null");
             return;

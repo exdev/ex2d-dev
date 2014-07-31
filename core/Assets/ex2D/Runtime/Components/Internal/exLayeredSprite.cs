@@ -509,4 +509,41 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             updateFlags |= exUpdateFlags.Vertex;
         }
     }
+
+    [ContextMenu("Debug Info")]
+    [System.Diagnostics.Conditional("UNITY_EDITOR")]
+    public void OutputDebugInfo () {
+        if (layer_ == null) {
+            Debug.Log("layer is null");
+            return;
+        }
+        Debug.Log("isInIndexBuffer: " + isInIndexBuffer);
+        int meshIndex = layer_.IndexOfMesh(this);
+        if (meshIndex == -1) {
+            Debug.Log("no mesh");
+        }
+        var mesh = layer_.meshList[meshIndex];
+        Debug.Log(string.Format("{4}: vertexBufferIndex: {0} vertexCount: {1} indexBufferIndex: {2} indexCount: {3} ", vertexBufferIndex, vertexCount, indexBufferIndex, indexCount, gameObject.name), this);
+
+        string buf = "vertex buffer (not flushed): ";
+        for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount; ++i) {
+            buf += mesh.vertices.buffer[i];
+            buf += " ";
+        }
+        Debug.Log(buf, this);
+        
+        buf = "index buffer (not flushed): ";
+        for (int i = indexBufferIndex; i < indexBufferIndex + indexCount; ++i) {
+            buf += mesh.indices.buffer[i];
+            buf += ",";
+        }
+        Debug.Log(buf, this);    
+
+        buf = "uv buffer (not flushed): ";
+        for (int i = vertexBufferIndex; i < vertexBufferIndex + vertexCount; ++i) {
+            buf += mesh.uvs.buffer[i].ToString("F4");
+            buf += ",";
+        }
+        Debug.Log(buf, this);
+    }
 }

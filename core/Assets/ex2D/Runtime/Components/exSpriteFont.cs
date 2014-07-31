@@ -400,8 +400,8 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
                 updateFlags |= exUpdateFlags.Vertex;
             }
         }
-        else if (transparent_ && (updateFlags & exUpdateFlags.Vertex) != 0) {
-            updateFlags &= ~exUpdateFlags.Vertex;
+        else if (transparent_) {
+            return exUpdateFlags.None;
         }
 
         return SpriteFontBuilder.UpdateBuffers (this, Space.World, layer_.alpha, _vertices, _uvs, 
