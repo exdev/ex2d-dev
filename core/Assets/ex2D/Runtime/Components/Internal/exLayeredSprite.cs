@@ -521,6 +521,7 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         int meshIndex = layer_.IndexOfMesh(this);
         if (meshIndex == -1) {
             Debug.Log("no mesh");
+            return;
         }
         var mesh = layer_.meshList[meshIndex];
         Debug.Log(string.Format("{4}: vertexBufferIndex: {0} vertexCount: {1} indexBufferIndex: {2} indexCount: {3} ", vertexBufferIndex, vertexCount, indexBufferIndex, indexCount, gameObject.name), this);

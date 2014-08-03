@@ -103,6 +103,14 @@ public class exLayer : MonoBehaviour
         // Desc:
         // ------------------------------------------------------------------ 
 
+        public static bool MeshMaybeChange (exLayeredSprite _sprite) {
+            return ReferenceEquals(_sprite, spriteNeedsToSetBufferSize) || ReferenceEquals(_sprite, spriteNeedsToSetMaterialDirty);
+        }
+
+        // ------------------------------------------------------------------ 
+        // Desc:
+        // ------------------------------------------------------------------ 
+
         public static bool Clear () {
             bool processed = (spriteNeedsToSetBufferSize == null && spriteNeedsToSetMaterialDirty == null);
             spriteNeedsToSetBufferSize = null;
@@ -679,11 +687,15 @@ public class exLayer : MonoBehaviour
             return;
         }
         (_sprite as IFriendOfLayer).globalDepth = newGlobalDepth;
+        if (_sprite.isInIndexBuffer == false) {
+            return;
+        }
         // update mesh
         int oldMeshIndex = IndexOfMesh (_sprite);
         exDebug.Assert(oldMeshIndex != -1);
         exMesh mesh = meshList[oldMeshIndex];
-        if (IsRenderOrderChangedAmongMeshes(_sprite, oldMeshIndex)) {
+        bool meshMaybeChange = UpdateSpriteWhileRecreating.MeshMaybeChange(_sprite);
+        if (meshMaybeChange || IsRenderOrderChangedAmongMeshes(_sprite, oldMeshIndex)) {
             //Debug.Log(string.Format("[UpdateSpriteDepth|exLayer] mesh: {0}", mesh));
             RemoveFromMesh(_sprite, mesh); // 这里需要保证depth改变后也能正常remove
             UpdateSpriteWhileRecreating.TryUpdate(_sprite);
@@ -699,7 +711,6 @@ public class exLayer : MonoBehaviour
             if (IsRenderOrderChangedInMesh(_sprite, oldMeshIndex, oldSortedSpriteIndex)) {
                 //Debug.Log("[UpdateSpriteDepth|exLayer] changed");
                 RemoveFromMesh(_sprite, mesh); // 这里需要保证depth改变后也能正常remove
-                UpdateSpriteWhileRecreating.TryUpdate(_sprite);
                 AddToMesh(_sprite, mesh);
             }
             //else {
