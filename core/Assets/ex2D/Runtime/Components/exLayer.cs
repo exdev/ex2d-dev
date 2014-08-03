@@ -875,13 +875,24 @@ public class exLayer : MonoBehaviour
 
     private void ResortMeshes (int _startIndex = 0) {
         float interval = 0.01f;
-        float z = zMin - _startIndex * interval;
-        for (int i = _startIndex, count = meshList.Count; i < count; ++i) {
+        //float z = zMin - _startIndex * interval;
+        float nextZ = zMin;
+        // 由于mesh的碎片化，所以mesh的z是不确定的
+        // 这里先要查找meshList前面最远的z，以它作为排序的起始点
+        for (int i = _startIndex - 1; i > 0; --i) {
             exMesh mesh = meshList[i];
             if (mesh != null) {
-                mesh.transform.position = new Vector3(0, 0, z);
+                nextZ = mesh.transform.position.z - interval;
+                break;
             }
-            z -= interval;
+        }
+        //
+        for (int i = _startIndex, max = meshList.Count; i < max; ++i) {
+            exMesh mesh = meshList[i];
+            if (mesh != null) {
+                mesh.transform.position = new Vector3(0, 0, nextZ);
+                nextZ -= interval;
+            }
         }
     }
 
