@@ -311,6 +311,7 @@ public class exSpriteAnimation : MonoBehaviour {
     
     //private float curWrappedTime = 0.0f;
     private int curIndex = -1;
+    private int playStartFrame = 0;    // 在调用Play的当帧的LateUpdate不进行step
 
     ///////////////////////////////////////////////////////////////////////////////
     // other properties
@@ -356,7 +357,7 @@ public class exSpriteAnimation : MonoBehaviour {
     // Unity自带的Animation在Update和LateUpdate之间执行。
     // 这里我们采用LateUpdate，用户如果有需要在帧切换之后执行的操作，可使用事件或自行修改优先级。
     void LateUpdate () {
-        if (curAnimation != null) {
+        if (curAnimation != null && Time.frameCount > playStartFrame) {
             float delta = Time.deltaTime * curAnimation.speed;
             Step(delta);
         }
@@ -674,6 +675,7 @@ public class exSpriteAnimation : MonoBehaviour {
         if (curAnimation != null) {
             curIndex = -1;
             curAnimation.time = _time;
+            playStartFrame = Time.frameCount;
             Sample();
 #if AUTO_DISABLE
             enabled = true;
