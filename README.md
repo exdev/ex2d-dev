@@ -8,6 +8,4 @@
 
 ## License
 
-The source code in this repository can only be used for the purpose of understanding and learning how ex2D runtime classes work. You are only allowed to include these source code in your commercial and non-commercial projects if you have got the ex2D standard/evaluation license.
-
-You are not allowed to sell these code in any form.
+ex2D uses GPL v3.0 License. Please read [LICENSE](https://github.com/exdev/ex2d-dev/blob/master/LICENSE.txt) for more details.
