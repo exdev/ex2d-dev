@@ -87,6 +87,18 @@ public partial class exTextureInfo : ScriptableObject {
         }
     }
 
+    [System.Serializable]
+    public struct AttachInfo {
+        public string name;
+        public Vector2 pos;
+
+        public AttachInfo ( string _name, Vector2 _pos ) {
+            this.name = _name; 
+            this.pos = _pos;
+        }
+    }
+    public List<AttachInfo> attachPoints = new List<AttachInfo>();
+
     [SerializeField]
     private List<int> diceData = new List<int>();   // TODO: use array
 

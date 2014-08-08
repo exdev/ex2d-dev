@@ -52,14 +52,39 @@ class exAnimationDebugger : exGenericComponentDebugger<Animation> {
     // ------------------------------------------------------------------ 
 
     protected override void ShowDebugInfo () {
+        Color colorTitle = Color.black;
+        Color colorActive = Color.blue;
+        Color colorDeactive = new Color( 0.5f, 0.5f, 0.5f );
+
+        if ( EditorGUIUtility.isProSkin ) {
+            colorTitle = new Color( 0.8f, 0.8f, 0.8f );
+            colorActive = Color.green;
+            colorDeactive = new Color( 0.4f, 0.4f, 0.4f );
+        }
+
+        GUILayout.BeginHorizontal ();
+            GUILayout.Space(5);
+            textStyle.normal.textColor = colorTitle;
+            textStyle.fontStyle = FontStyle.Bold;
+            GUILayout.Label ( "layer"  , textStyle , GUILayout.Width(40) );
+            GUILayout.Label ( "name"   , textStyle , new GUILayoutOption[] {} );
+            GUILayout.Label ( "weight" , textStyle , GUILayout.Width(50) );
+            GUILayout.Label ( "n-time" , textStyle , GUILayout.Width(50) );
+            GUILayout.Label ( "speed"  , textStyle , GUILayout.Width(50) );
+        GUILayout.EndHorizontal ();
+
+        GUILayout.Space(5);
+
         foreach ( AnimationState state in curEdit ) {
             GUILayout.BeginHorizontal ();
                 GUILayout.Space(5);
-                textStyle.normal.textColor = state.enabled ? Color.green : new Color( 0.5f, 0.5f, 0.5f );
-                GUILayout.Label ( "[" + state.layer + "]", textStyle, GUILayout.Width(30) );
-                GUILayout.Label ( state.name, textStyle, new GUILayoutOption[] {} );
-                GUILayout.Label ( state.weight.ToString("f3"), textStyle, GUILayout.Width(50) );
-                GUILayout.Label ( state.speed.ToString("f3"), textStyle, GUILayout.Width(50) );
+                textStyle.fontStyle = FontStyle.Normal;
+                textStyle.normal.textColor = state.enabled ? colorActive : colorDeactive;
+                GUILayout.Label ( "[" + state.layer + "]"             , textStyle , GUILayout.Width(40) );
+                GUILayout.Label ( state.name                          , textStyle , new GUILayoutOption[] {} );
+                GUILayout.Label ( state.weight.ToString("f3")         , textStyle , GUILayout.Width(50) );
+                GUILayout.Label ( state.normalizedTime.ToString("f3") , textStyle , GUILayout.Width(50) );
+                GUILayout.Label ( state.speed.ToString("f3")          , textStyle , GUILayout.Width(50) );
             GUILayout.EndHorizontal ();
         }
     } 

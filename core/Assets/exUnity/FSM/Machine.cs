@@ -1,4 +1,4 @@
-// ======================================================================================
+﻿// ======================================================================================
 // File         : Machine.cs
 // Author       : Wu Jie 
 // Last Change  : 12/20/2011 | 13:15:20 PM | Tuesday,December
@@ -170,6 +170,8 @@ namespace fsm {
             }
         }
 
+#if UNITY_EDITOR
+
         // ------------------------------------------------------------------ 
         // Desc: 
         // ------------------------------------------------------------------ 
@@ -180,8 +182,10 @@ namespace fsm {
             logDebugInfo = GUILayout.Toggle( logDebugInfo, "Log States" );
 
             if ( showDebugInfo ) {
-                ShowDebugInfo ( 0, true, _textStyle );
+                ShowDebugInfo ( 0, true, _textStyle, currentTransition );
             }
         }
+#endif
     }
+
 }

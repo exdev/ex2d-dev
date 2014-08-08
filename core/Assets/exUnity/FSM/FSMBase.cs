@@ -1,7 +1,7 @@
 // ======================================================================================
-// File         : exUILayoutInfo.cs
+// File         : FSMBase.cs
 // Author       : Wu Jie 
-// Last Change  : 08/30/2013 | 16:43:39 PM | Friday,August
+// Last Change  : 04/19/2012 | 23:18:35 PM | Thursday,April
 // Description  : 
 // ======================================================================================
 
@@ -12,65 +12,57 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 
 ///////////////////////////////////////////////////////////////////////////////
-///
-/// The ui-layout information
-///
+// \class FSMBase 
+// 
+// \brief 
+// 
 ///////////////////////////////////////////////////////////////////////////////
 
-public class exUILayoutInfo : ScriptableObject {
-    public int resolutionIdx = 0;
-    public int width = 0;
-    public int height = 0;
-
-    public exUIElement root = new exUIElement();
+public class FSMBase : MonoBehaviour {
 
     ///////////////////////////////////////////////////////////////////////////////
-    //
+    // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
+
+    [System.NonSerialized] public fsm.Machine stateMachine = new fsm.Machine();
 
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    void OnEnable () {
-        LinkElement ( root );
-        Apply();
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    //
-    ///////////////////////////////////////////////////////////////////////////////
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    public void Apply () {
-        if ( width < 0 )
-            width = int.MaxValue;
-
-        if ( height < 0 )
-            height = int.MaxValue;
-
-        root.Layout_PreProcess();
-        root.Layout( 0, 0, width, height );
-        root.AdjustLines ( width, height );
-    }
-
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    void LinkElement ( exUIElement _el ) {
-        for ( int i = 0; i < _el.children.Count; ++i ) {
-            exUIElement child = _el.children[i];
-            child.parent_ = _el;
-
-            LinkElement ( child );
+    public virtual void Init () {
+        if ( stateMachine == null ) {
+            stateMachine = new fsm.Machine();
         }
     }
-}
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void StartFSM () {
+        if ( stateMachine != null ) {
+            stateMachine.Start();
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void RestartFSM () {
+        if ( stateMachine != null )
+            stateMachine.Restart();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public virtual void Tick () {
+        if ( stateMachine != null )
+            stateMachine.Tick();
+    }
+}

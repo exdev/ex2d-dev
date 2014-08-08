@@ -20,14 +20,14 @@ using System.Collections.Generic;
 [System.FlagsAttribute]
 public enum exUpdateFlags {
     None        = 0,   ///< none
-    Index        = 1,   ///< update the indices
-    Vertex        = 2,   ///< update the vertices
-    UV            = 4,   ///< update the uv coordination
-    Color        = 8,   ///< update the vertex color
+    Index       = 1,   ///< update the indices
+    Vertex      = 2,   ///< update the vertices
+    UV          = 4,   ///< update the uv coordination
+    Color       = 8,   ///< update the vertex color
     Normal      = 16,  ///< update the normal, not implemented yet
-    Text        = 32,  ///< update the text, only used in sprite font
-    Transparent = 64,  ///< hide sprite
-    //SelfDepth       = 128, ///< update sprite's depth(not include its children), only used in layered sprite
+    Text        = 32 | Vertex | UV | Color,  ///< update the text, only used in sprite font
+    Transparent = 64,  ///< transparent flag changed, only used in layered sprite
+    //SelfDepth = 128, ///< update sprite's depth(not include its children), only used in layered sprite
 
     VertexAndIndex = (Index | Vertex),
     AllExcludeIndex = (Vertex | UV | Color | Normal | Text | Transparent/* | SelfDepth*/),
@@ -197,6 +197,20 @@ public class exMesh : MonoBehaviour
         }
         if ((_updateFlags & exUpdateFlags.Index) != 0) {
             _mesh.triangles = _indices.FastToArray();       // we do update triangles here
+            //string bufv = "Vertex Buffer: ";
+            //string vertices = "Mesh.vertices[" + _mesh.vertices.Length + "]: ";
+            //foreach (var v in _mesh.vertices) {
+            //    bufv += v;
+            //    bufv += ", ";
+            //}
+            //Debug.Log(bufv);
+            //var buf = _indices.FastToArray();
+            //string triangles = "Mesh.indices[" + buf.Length + "]: ";
+            //foreach (var index in buf) {
+            //    triangles += index;
+            //    triangles += ",";
+            //}
+            //Debug.Log(triangles);
         }
         if ((_updateFlags & exUpdateFlags.Index) != 0 || (_updateFlags & exUpdateFlags.Vertex) != 0) {
             _mesh.RecalculateBounds();  // Sometimes Unity will not automatically recalculate the bounding volume.
@@ -225,6 +239,12 @@ public class exMesh : MonoBehaviour
         }
 
         FlushBuffers (mesh, updateFlags, vertices, indices, uvs, colors32);
+#if EX_DEBUG
+        if (mesh.uv.Length != mesh.vertices.Length) {
+            Debug.LogError("Shader wants texture coordinates... uv.Length != vertex.Length");
+            OutputDebugInfo(true);
+        }
+#endif
 
         if ((updateFlags & exUpdateFlags.Vertex) != 0) {
             // 当fast hide sprite时，判断是否可以隐藏整个mesh，减少draw call
@@ -266,7 +286,7 @@ public class exMesh : MonoBehaviour
         indices.TrimExcess();
         uvs.TrimExcess();
         colors32.TrimExcess();
-        updateFlags |= (exUpdateFlags.Color | exUpdateFlags.UV | exUpdateFlags.Normal);   //need to flush to mesh if not defined exLayer.FORCE_UPDATE_VERTEX_INFO
+        updateFlags |= (exUpdateFlags.Color | exUpdateFlags.UV | exUpdateFlags.Normal);   //need to flush to mesh if defined exLayer.LAZY_UPDATE_BUFFER_TAIL
     }
  
     // ------------------------------------------------------------------ 
@@ -321,50 +341,70 @@ public class exMesh : MonoBehaviour
     [ContextMenu("Output Mesh Info")]
     [System.Diagnostics.Conditional("EX_DEBUG")]
     public void OutputDebugInfo () {
-        Mesh mesh = GetMeshBuffer();
+        OutputDebugInfo(false);
+    }
+
+    [System.Diagnostics.Conditional("EX_DEBUG")]
+    public void OutputDebugInfo (bool outputBuffer) {
+        Mesh mesh = GetMeshBuffer();    // 注意如果要交换缓冲区，这里拿到的是上一帧的mesh
         if (mesh == null) {
             Debug.Log("mesh is null");
             return;
         }
 
-        Debug.Log(string.Format("exMesh SpriteCount: {0} Current mesh buffer: {1}", spriteList.Count, isEvenMeshBuffer ? 0 : 1), this);
+        var allSprites = string.Join(", ", spriteList.ConvertAll<string>(x => x.gameObject.name).ToArray());
+        Debug.Log(string.Format("exMesh: {3} spriteList[{0}]: ({2}) CurBufferId: {1}", spriteList.Count, isEvenMeshBuffer ? 0 : 1, allSprites, gameObject.name), this);
 
-        string vertexInfo = "Vertex Buffer: ";
-        //foreach (var v in vertices) {
-        //    vertexInfo += v;
-        //    vertexInfo += ", ";
-        //}
-        //Debug.Log(vertexInfo, this);
+        if (outputBuffer) {
+            string spriteInfo = "Sprite Info: ";
+            foreach (var v in sortedSpriteList) {
+                Debug.Log(string.Format("{4}: vertexBufferIndex: {0} vertexCount: {1} indexBufferIndex: {2} indexCount: {3} ", v.vertexBufferIndex, v.vertexCount, v.indexBufferIndex, v.indexCount, v.gameObject.name), v);
+            }
+            Debug.Log(spriteInfo, this);
+        }
+
+        if (outputBuffer) {
+            string buf = "Vertex Buffer[" + vertices.Count + "]: ";
+            foreach (var v in vertices.buffer) {
+                buf += v;
+                buf += " ";
+            }
+            Debug.Log(buf, this);            
+        }
         
-        vertexInfo = "Mesh.vertices[" + mesh.vertexCount + "]: ";
+        string meshVertices = "Mesh.vertices[" + mesh.vertexCount + "]: ";
         foreach (var v in mesh.vertices) {
-            vertexInfo += v.ToString("F3");
-            vertexInfo += ", ";
+            meshVertices += v.ToString("F3");
+            meshVertices += ", ";
         }
-        Debug.Log(vertexInfo, this);
+        Debug.Log(meshVertices, this);
 
-        string indicesInfo = "Index Buffer: ";
-        //foreach (var index in indices) {
-        //    indicesInfo += index;
-        //    indicesInfo += ",";
-        //}
-        //Debug.Log(indicesInfo, this);
+        if (outputBuffer) {
+            string buf = "Index Buffer: ";
+            foreach (var index in indices.buffer) {
+                buf += index;
+                buf += ",";
+            }
+            Debug.Log(buf, this);    
+        }
 
-        indicesInfo = "Mesh.indices[" + mesh.triangles.Length + "]: ";
+        string triangles = "Mesh.indices[" + mesh.triangles.Length + "]: ";
         foreach (var index in mesh.triangles) {
-            indicesInfo += index;
-            indicesInfo += ",";
+            triangles += index;
+            triangles += ",";
         }
-        Debug.Log(indicesInfo, this);
+        Debug.Log(triangles, this);
 
-        string uvInfo = "UV Buffer: ";
-        //foreach (var uv in uvs) {
-        //    uvInfo += uv;
-        //    uvInfo += ",";
-        //}
-        //Debug.Log(uvInfo, this);
-        
-        uvInfo = "Mesh.uvs: ";
+        if (outputBuffer) {
+            string buf = "UV Buffer[" + uvs.buffer.Length + "]: ";
+            foreach (var uv in uvs.buffer) {
+                buf += uv;
+                buf += ",";
+            }
+            Debug.Log(buf, this);
+        }
+
+        string uvInfo = "Mesh.uvs[" + mesh.uv.Length + "]: ";
         foreach (var uv in mesh.uv) {
             uvInfo += uv.ToString("F4");
             uvInfo += ",";
@@ -511,6 +551,12 @@ public class exMesh : MonoBehaviour
             matName = "None";
         }
         gameObject.name = string.Format("_exMesh@{0}({1})", layerForDebug.name, matName);
+        if (mesh0 != null) {
+            mesh0.name = gameObject.name + "_0";
+        }
+        if (mesh1 != null) {
+            mesh1.name = gameObject.name + "_1";
+        }
 #endif
     }
 }

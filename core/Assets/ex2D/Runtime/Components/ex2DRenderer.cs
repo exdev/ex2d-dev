@@ -86,6 +86,9 @@ public class ex2DRenderer : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void OnEnable () {
+#if EX_DEBUG
+        Debug.Log("Enable 2D Renderer");
+#endif
         if (instance_ == null) {
             instance_ = this;
         }
@@ -103,6 +106,15 @@ public class ex2DRenderer : MonoBehaviour {
     // ------------------------------------------------------------------ 
 
     void OnDisable () {
+#if EX_DEBUG
+        Debug.Log("Disable 2D Renderer");
+#endif
+        for ( int i = 0; i < layerList.Count; ++i ) {
+            exLayer layer = layerList[i];
+            if ( layer != null ) {
+                layer.DestroyMeshes();
+            }
+        }
         if (ReferenceEquals(this, instance_)) {
             instance_ = null;
         }
@@ -122,8 +134,9 @@ public class ex2DRenderer : MonoBehaviour {
 
     void LateUpdate () {
         for ( int i = layerList.Count-1; i >= 0; --i ) {
-            if ( layerList[i] == null )
+            if (layerList[i] == null) {
                 layerList.RemoveAt(i);
+            }
         }
         
         UpdateLayers();
@@ -159,10 +172,18 @@ public class ex2DRenderer : MonoBehaviour {
     // Desc:
     // ------------------------------------------------------------------ 
 
-    public exLayer CreateLayer () {
-        GameObject layerGo = new GameObject("New Layer");
+    public exLayer CreateLayer ( string name = "New Layer", int _idx = -1 ) {
+#if EX_DEBUG
+        Debug.Log("CreateLayer " + name);
+#endif
+        GameObject layerGo = new GameObject(name);
         exLayer layer = layerGo.AddComponent<exLayer>();
-        layerList.Add(layer);
+        if (_idx == -1) {
+            layerList.Add(layer);
+        }
+        else {
+            layerList.Insert(_idx, layer);
+        }
         ResortLayerDepth();
         return layer;
     }
@@ -176,6 +197,9 @@ public class ex2DRenderer : MonoBehaviour {
         exDebug.Assert(layerList.Contains(_layer), "can't find layer in ex2DRenderer");
         layerList.Remove(_layer);
         if (_layer != null) {
+#if EX_DEBUG
+            Debug.Log("DestroyLayer " + _layer.gameObject.name);
+#endif
             _layer.gameObject.Destroy();
         }
     }
@@ -190,12 +214,22 @@ public class ex2DRenderer : MonoBehaviour {
             Debug.LogWarning("Layer already exists in ex2DRenderer: " + _layer, _layer);
             return;
         }
-        
+#if EX_DEBUG
+        Debug.Log("InsertLayer " + _layer.gameObject.name + " to " + _idx);
+#endif
         layerList.Insert( _idx, _layer );
 
         //
         _layer.GenerateMeshes();
         ResortLayerDepth();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public bool HasLayer (exLayer _layer) {
+        return layerList.Contains(_layer);
     }
     
     // ------------------------------------------------------------------ 

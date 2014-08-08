@@ -354,45 +354,57 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
                                                     exList<Color32> _colors32,
                                                     exList<int> _indices) {
         if (font_.isValid == false) {
-            if ((updateFlags & exUpdateFlags.Text) != 0) {
-                updateFlags &= ~exUpdateFlags.Text;
-                Vector3 meshBBoxPoint = _vertices.buffer.Length > 0 ? _vertices.buffer[0] : new Vector3();
-                for (int i = 1; i < vertexCount_; ++i) {
-                    _vertices.buffer[vertexBufferIndex + i] = meshBBoxPoint;
+            var retval = exUpdateFlags.None;
+            bool updateIndex = (updateFlags & (exUpdateFlags.Index | exUpdateFlags.Text)) != 0 && _indices != null;
+            if (updateIndex) {
+                // ensure index buffer in vertex range
+                int indexBufferEnd = indexBufferIndex + indexCount - 5;
+                for (int i = indexBufferIndex, v = vertexBufferIndex; i < indexBufferEnd; i += 6, v += 4) {
+                    _indices.buffer[i] = v;
+                    _indices.buffer[i + 1] = v + 1;
+                    _indices.buffer[i + 2] = v + 2;
+                    _indices.buffer[i + 3] = v + 2;
+                    _indices.buffer[i + 4] = v + 3;
+                    _indices.buffer[i + 5] = v;
                 }
-                return exUpdateFlags.Vertex;
+                updateFlags &= ~exUpdateFlags.Index;
+                retval |= exUpdateFlags.Index;
             }
-            return exUpdateFlags.None;
+            bool updateVertex = (updateFlags & exUpdateFlags.Text) != 0;
+            if (updateVertex) {
+                Vector3 anyPoint = _vertices.buffer.Length > 0 ? _vertices.buffer[0] : new Vector3();
+                for (int i = 0; i < vertexCount_; ++i) {
+                    _vertices.buffer[vertexBufferIndex + i] = anyPoint;
+                }
+                updateFlags &= ~exUpdateFlags.Text;
+                retval |= exUpdateFlags.Vertex;
+            }
+            return retval;
         }
 
-        // save dirty flag because SpriteFontBuilder.UpdateBuffers will overwrite it
-        exUpdateFlags applyedFlags = exUpdateFlags.None;
         bool transparentDirty = (updateFlags & exUpdateFlags.Transparent) != 0;
         if (transparentDirty) {
             updateFlags &= ~exUpdateFlags.Transparent;
             if (transparent_) {
+                // make vertex invisible
+                Vector3 anyPoint = _vertices.buffer.Length > 0 ? _vertices.buffer[0] : new Vector3();
+                for (int i = 0; i < vertexCount_; ++i) {
+                    _vertices.buffer[vertexBufferIndex + i] = anyPoint;
+                }
                 updateFlags &= ~exUpdateFlags.Vertex;
+                return updateFlags | exUpdateFlags.Vertex;   // 既然不可见，直接让mesh更新各个buffer即可。这里不重设updateFlags，所以变回可见时会正确初始化。
             }
             else {
+                // revert vertex
                 updateFlags |= exUpdateFlags.Vertex;
             }
-            applyedFlags |= (exUpdateFlags.Transparent | exUpdateFlags.Vertex);
         }
-        else if (transparent_ && (updateFlags & exUpdateFlags.Vertex) != 0) {
-            updateFlags &= ~exUpdateFlags.Vertex;
+        else if (transparent_) {
+            return exUpdateFlags.None;
         }
 
-        applyedFlags |= SpriteFontBuilder.UpdateBuffers (this, Space.World, layer_.alpha, _vertices, _uvs, 
-                                                        _colors32, _indices, vertexBufferIndex, indexBufferIndex);
-        
-        if (transparentDirty && transparent_) {
-            // 如果有exUpdateFlags.Text一样会被UpdateBuffers显示出来，需要重新设为不可见
-            Vector3 meshBBoxPoint = _vertices.buffer.Length > 0 ? _vertices.buffer[0] : new Vector3();
-            for (int i = 1; i < vertexCount_; ++i) {
-                _vertices.buffer[vertexBufferIndex + i] = meshBBoxPoint;
-            }
-        }
-        return applyedFlags;
+        return SpriteFontBuilder.UpdateBuffers (this, Space.World, layer_.alpha, _vertices, _uvs, 
+                                                 _colors32, _indices, vertexBufferIndex, indexBufferIndex);
     }
 
     #endregion  // Functions used to update geometry buffer
@@ -599,7 +611,7 @@ namespace ex2D.Detail {
             bool colorUpdated = false;   // 有渐变色时，每个字符单独计算顶点色，否则全局填充顶点色
 
             // Debug.Log(string.Format("[UpdateBuffers|SpriteFontBuilder] _vbIndex: {0} _ibIndex: {1}", _vbIndex, _ibIndex));
-            if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.Vertex | exUpdateFlags.Color)) != 0) {
+            if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
                 if (_alpha > 0.0f) {
                     // 初始化渐变色要用到的全局参数
                     Color tmp = _sprite.color; tmp.a *= _alpha;
@@ -618,11 +630,8 @@ namespace ex2D.Detail {
                     botFinalColor = new Color ();
                 }
                 colorUpdated = topFinalColor != botFinalColor;
-                if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.Vertex)) != 0 || colorUpdated) {
+                if ((_sprite.updateFlags & exUpdateFlags.Text & ~exUpdateFlags.Color) != 0 || colorUpdated) {
                     BuildText(_sprite, _space, _vertices, _vbIndex, _uvs, colorUpdated ? _colors32 : null);
-                    if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
-                        _sprite.updateFlags |= (exUpdateFlags.Vertex | exUpdateFlags.UV | exUpdateFlags.Color);
-                    }
                 }
             }
             if ((_sprite.updateFlags & exUpdateFlags.Index) != 0 && _indices != null) {
@@ -787,11 +796,11 @@ namespace ex2D.Detail {
         // ------------------------------------------------------------------ 
         
         private static int BuildTextInLocalSpace (exISpriteFont _sprite, out float maxWidth) {
-            if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.Color)) == 0) {
+            if ((_sprite.updateFlags & exUpdateFlags.Color) == 0) {
                 colors32 = null;    // no need to update color
             }
             //texelSize = new Vector2();
-            if ((_sprite.updateFlags & (exUpdateFlags.Text | exUpdateFlags.UV)) == 0) {
+            if ((_sprite.updateFlags & exUpdateFlags.UV) == 0) {
                 uvs = null;         // no need to update uv
             }
             //else if (uvs != null && _sprite.font.texture != null) {

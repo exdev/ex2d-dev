@@ -34,6 +34,13 @@ public class exUIScrollView : exUIControl {
         WhenDragging,
     }
 
+	public enum ContentDirection {
+        TopToBottom,
+        BottomToTop,
+        LeftToRight,
+        RightToLeft
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     //
     ///////////////////////////////////////////////////////////////////////////////
@@ -100,7 +107,9 @@ public class exUIScrollView : exUIControl {
     public DragEffect dragEffect = DragEffect.MomentumAndSpring;
     public ShowCondition showCondition = ShowCondition.Always;
     public bool allowHorizontalScroll = true;
+    public ContentDirection horizontalContentDir = ContentDirection.LeftToRight;
     public bool allowVerticalScroll = true;
+    public ContentDirection verticalContentDir = ContentDirection.TopToBottom;
     public Transform contentAnchor = null;
 
     public float scrollSpeed = 0.5f;
@@ -179,15 +188,18 @@ public class exUIScrollView : exUIControl {
                                     return;
                                }
 
+                               float contentX = (horizontalContentDir == ContentDirection.LeftToRight) ? 0.0f : -(contentSize_.x - width);
+                               float contentY = (verticalContentDir == ContentDirection.TopToBottom) ? 0.0f : -(contentSize_.y - height);
+                               Rect scrollRect = new Rect( scrollOffset_.x, scrollOffset_.y, width, height );
+                               Rect contentRect = new Rect( contentX, contentY, Mathf.Max( contentSize_.x, width ), Mathf.Max( contentSize_.y, height ) );
+                               Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( scrollRect, contentRect );
+
                                exUIPointEvent pointEvent = _event as exUIPointEvent;
                                for ( int i = 0; i < pointEvent.pointInfos.Length; ++i ) {
                                    exUIPointInfo point = pointEvent.pointInfos[i];
                                    if ( draggable && ( pointEvent.isTouch || pointEvent.GetMouseButton(0) ) && point.id == draggingID  ) {
                                        Vector2 delta = point.worldDelta; 
                                        delta.x = -delta.x;
-                                       Rect scrollRect = new Rect( scrollOffset_.x, scrollOffset_.y, width, height );
-                                       Rect contentRect = new Rect( 0.0f, 0.0f, Mathf.Max( contentSize_.x, width ), Mathf.Max( contentSize_.y, height ) );
-                                       Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( scrollRect, contentRect );
                                        if ( Mathf.Abs(constrainOffset.x) > 0.001f ) delta.x *= 0.5f;
                                        if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
 
@@ -211,10 +223,12 @@ public class exUIScrollView : exUIControl {
                            delegate ( exUIEvent _event ) {
                                // TODO: if ( mouseWheelByHorizontal )
 
+                               float contentX = (horizontalContentDir == ContentDirection.LeftToRight) ? 0.0f : -(contentSize_.x - width);
+                               float contentY = (verticalContentDir == ContentDirection.TopToBottom) ? 0.0f : -(contentSize_.y - height);
                                exUIWheelEvent wheelEvent = _event as exUIWheelEvent;
                                Vector2 delta = new Vector2( 0.0f, -wheelEvent.delta * 100.0f );
                                Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset_.x, scrollOffset_.y, width, height ), 
-                                                                                                new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
+                                                                                                new Rect( contentX, contentY, contentSize_.x, contentSize_.y ) );
                                if ( Mathf.Abs(constrainOffset.y) > 0.001f ) delta.y *= 0.5f;
 
                                velocity = Vector2.Lerp ( velocity, velocity + (delta / Time.deltaTime) * scrollSpeed, 0.67f );
@@ -239,8 +253,10 @@ public class exUIScrollView : exUIControl {
         Vector2 deltaScroll = Vector2.zero;
         bool doScroll = (damping || spring);
 
+        float contentX = (horizontalContentDir == ContentDirection.LeftToRight) ? 0.0f : -(contentSize_.x - width);
+        float contentY = (verticalContentDir == ContentDirection.TopToBottom) ? 0.0f : -(contentSize_.y - height);
         Rect scrollRect = new Rect( scrollOffset_.x, scrollOffset_.y, width, height );
-        Rect contentRect = new Rect( 0.0f, 0.0f, Mathf.Max( contentSize_.x, width ), Mathf.Max( contentSize_.y, height ) );
+        Rect contentRect = new Rect( contentX, contentY, Mathf.Max( contentSize_.x, width ), Mathf.Max( contentSize_.y, height ) );
 
         if ( damping || spring  )
             constrainOffset = exGeometryUtility.GetConstrainOffset ( scrollRect, contentRect );
@@ -346,8 +362,10 @@ public class exUIScrollView : exUIControl {
         if ( dragEffect != DragEffect.None ) {
             damping = true;
 
+            float contentX = (horizontalContentDir == ContentDirection.LeftToRight) ? 0.0f : -(contentSize_.x - width);
+            float contentY = (verticalContentDir == ContentDirection.TopToBottom) ? 0.0f : -(contentSize_.y - height);
             Vector2 constrainOffset = exGeometryUtility.GetConstrainOffset ( new Rect( scrollOffset_.x, scrollOffset_.y, width, height ), 
-                                                                             new Rect( 0.0f, 0.0f, contentSize_.x, contentSize_.y ) );
+                                                                             new Rect( contentX, contentY, contentSize_.x, contentSize_.y ) );
             if ( Mathf.Abs(constrainOffset.x) > 0.001f ) {
                 if ( dragEffect == DragEffect.MomentumAndSpring ) {
                     velocity.x *= 0.5f;

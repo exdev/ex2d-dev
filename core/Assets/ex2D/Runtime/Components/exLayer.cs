@@ -9,7 +9,7 @@
 // defines
 ///////////////////////////////////////////////////////////////////////////////
 
-#define FORCE_UPDATE_VERTEX_INFO ///< 删除mesh最后面的顶点时，仅先从index buffer和vertex buffer中清除，其它数据不标记为脏。因为是尾端的冗余数据，不同步也可以。
+#define LAZY_UPDATE_BUFFER_TAIL ///< 删除mesh最后面的顶点时，仅先从index buffer和vertex buffer中清除，其它数据不标记为脏。因为是尾端的冗余数据，不同步也可以。
 
 ///////////////////////////////////////////////////////////////////////////////
 // usings
@@ -97,6 +97,14 @@ public class exLayer : MonoBehaviour
                 (spriteNeedsToSetMaterialDirty as IFriendOfLayer).SetMaterialDirty();
                 spriteNeedsToSetMaterialDirty = null;
             }
+        }
+
+        // ------------------------------------------------------------------ 
+        // Desc:
+        // ------------------------------------------------------------------ 
+
+        public static bool MeshMaybeChange (exLayeredSprite _sprite) {
+            return ReferenceEquals(_sprite, spriteNeedsToSetBufferSize) || ReferenceEquals(_sprite, spriteNeedsToSetMaterialDirty);
         }
 
         // ------------------------------------------------------------------ 
@@ -482,7 +490,7 @@ public class exLayer : MonoBehaviour
     // ------------------------------------------------------------------ 
     
     internal void HideSprite (exLayeredSprite _sprite) {
-        exDebug.Assert(false, "GetMeshToAdd要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中");
+        exDebug.Assert(false, "必须开启enableFastShowHide，因为GetMeshToAdd要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中");
         if (_sprite.isInIndexBuffer) {
             int meshIndex = IndexOfMesh(_sprite);
             if (meshIndex != -1) {
@@ -679,11 +687,15 @@ public class exLayer : MonoBehaviour
             return;
         }
         (_sprite as IFriendOfLayer).globalDepth = newGlobalDepth;
+        if (_sprite.isInIndexBuffer == false) {
+            return;
+        }
         // update mesh
         int oldMeshIndex = IndexOfMesh (_sprite);
         exDebug.Assert(oldMeshIndex != -1);
         exMesh mesh = meshList[oldMeshIndex];
-        if (IsRenderOrderChangedAmongMeshes(_sprite, oldMeshIndex)) {
+        bool meshMaybeChange = UpdateSpriteWhileRecreating.MeshMaybeChange(_sprite);
+        if (meshMaybeChange || IsRenderOrderChangedAmongMeshes(_sprite, oldMeshIndex)) {
             //Debug.Log(string.Format("[UpdateSpriteDepth|exLayer] mesh: {0}", mesh));
             RemoveFromMesh(_sprite, mesh); // 这里需要保证depth改变后也能正常remove
             UpdateSpriteWhileRecreating.TryUpdate(_sprite);
@@ -699,7 +711,6 @@ public class exLayer : MonoBehaviour
             if (IsRenderOrderChangedInMesh(_sprite, oldMeshIndex, oldSortedSpriteIndex)) {
                 //Debug.Log("[UpdateSpriteDepth|exLayer] changed");
                 RemoveFromMesh(_sprite, mesh); // 这里需要保证depth改变后也能正常remove
-                UpdateSpriteWhileRecreating.TryUpdate(_sprite);
                 AddToMesh(_sprite, mesh);
             }
             //else {
@@ -763,10 +774,17 @@ public class exLayer : MonoBehaviour
         if (UpdateSpriteWhileRecreating.Clear() == false) { // 假如更新depth时没遍历到_sprite，则手动更新
             int meshIndex = IndexOfMesh(_sprite);
             if (meshIndex != -1) {
+                //Debug.Log("before remove");
+                //meshList[meshIndex].OutputDebugInfo(true);
                 RemoveFromMesh(_sprite, meshList[meshIndex]);
+                //Debug.Log("after remove");
+                //meshList[meshIndex].OutputDebugInfo(true);
             }
             (_sprite as IFriendOfLayer).SetMaterialDirty();
-            AddToMesh(_sprite, GetMeshToAdd(_sprite));
+            var mesh = GetMeshToAdd(_sprite);
+            AddToMesh(_sprite, mesh);
+            //Debug.Log("after add");
+            //mesh.OutputDebugInfo(true);
         }
     }
 
@@ -857,13 +875,24 @@ public class exLayer : MonoBehaviour
 
     private void ResortMeshes (int _startIndex = 0) {
         float interval = 0.01f;
-        float z = zMin - _startIndex * interval;
-        for (int i = _startIndex, count = meshList.Count; i < count; ++i) {
+        //float z = zMin - _startIndex * interval;
+        float nextZ = zMin;
+        // 由于mesh的碎片化，所以mesh的z是不确定的
+        // 这里先要查找meshList前面最远的z，以它作为排序的起始点
+        for (int i = _startIndex - 1; i > 0; --i) {
             exMesh mesh = meshList[i];
             if (mesh != null) {
-                mesh.transform.position = new Vector3(0, 0, z);
+                nextZ = mesh.transform.position.z - interval;
+                break;
             }
-            z -= interval;
+        }
+        //
+        for (int i = _startIndex, max = meshList.Count; i < max; ++i) {
+            exMesh mesh = meshList[i];
+            if (mesh != null) {
+                mesh.transform.position = new Vector3(0, 0, nextZ);
+                nextZ -= interval;
+            }
         }
     }
 
@@ -1219,10 +1248,19 @@ public class exLayer : MonoBehaviour
             if (sprite.isInIndexBuffer) {
                 int indexEnd = sprite.indexBufferIndex + sprite.indexCount;
                 for (int index = sprite.indexBufferIndex; index < indexEnd; ++index) {
-                    if (index >= _mesh.indices.Count) {
-                        Debug.Log(string.Format("[RemoveFromMesh|exLayer] index: {1} _mesh.indices.Count: {0}", _mesh.indices.Count, index));
+                    //if (index >= _mesh.indices.Count) {
+                    //    Debug.Log(string.Format("[RemoveFromMesh|exLayer] index: {1} _mesh.indices.Count: {0}", _mesh.indices.Count, index));
+                    //}
+                    if (_mesh.indices.buffer[index] > 0) {  // only shift if inited index in case of negative index value
+                        _mesh.indices.buffer[index] -= vertexCount;
+#if EX_DEBUG
+                        if (_mesh.indices.buffer[index] < 0 && (sprite.updateFlags & exUpdateFlags.Index) == 0) {
+                            Debug.LogError(string.Format("Failed setting triangles. Some indices are referencing out of bounds vertices. " +
+                                                         "removing sprite: {0}, error sprite: {2} mesh: {1}", _sprite.gameObject.name, _mesh.gameObject.name, sprite), sprite);
+                            sprite.OutputDebugInfo();
+                        }
+#endif
                     }
-                    _mesh.indices.buffer[index] -= vertexCount;
                 }
             }
         }
@@ -1233,7 +1271,7 @@ public class exLayer : MonoBehaviour
         _mesh.colors32.RemoveRange(_sprite.vertexBufferIndex, vertexCount);
         _mesh.uvs.RemoveRange(_sprite.vertexBufferIndex, vertexCount);
 
-#if FORCE_UPDATE_VERTEX_INFO
+#if LAZY_UPDATE_BUFFER_TAIL
         bool removeLastSprite = (_sprite.spriteIndexInMesh == _mesh.spriteList.Count);
         if (!removeLastSprite) {
             _mesh.updateFlags |= (exUpdateFlags.Color | exUpdateFlags.UV | exUpdateFlags.Normal);
@@ -1292,6 +1330,7 @@ public class exLayer : MonoBehaviour
             int indexCount = _sprite.indexCount;
             exDebug.Assert(indexCount > 0);
             _mesh.indices.AddRange(indexCount);
+            // TODO: Array.Copy
             for (int i = _mesh.indices.Count - 1 - indexCount; i >= _sprite.indexBufferIndex ; --i) {
                 _mesh.indices.buffer[i + indexCount] = _mesh.indices.buffer[i];
             }
@@ -1303,6 +1342,7 @@ public class exLayer : MonoBehaviour
             }
             // insert into _sortedSpriteList
             _mesh.sortedSpriteList.Insert(sortedSpriteIndex, _sprite);
+            // 这里并没给index buffer分配初始值，所以index很有可能全是0，如果减小index值时，要注意是否还是0，如果是0就不能再减小了。
         }
     }
     

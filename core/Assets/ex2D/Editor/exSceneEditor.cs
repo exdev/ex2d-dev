@@ -651,8 +651,8 @@ class exSceneEditor : EditorWindow {
                     if ( o is exTextureInfo ||
                          o is exBitmapFont ||
                          o is Font ||
-                         o is exSpriteAnimationClip ||
-                         o is exUILayoutInfo ) 
+                         o is exSpriteAnimationClip )
+                          
                     {
                         DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
                         break;
@@ -706,12 +706,6 @@ class exSceneEditor : EditorWindow {
                             sprite.textureInfo = clip.frameInfos[0].textureInfo;
                         }
                         InitSprite(sprite);
-                    }
-                    else if ( o is exUILayoutInfo ) {
-                        newGO = new GameObject(o.name);
-                        exUILayout layout = newGO.AddComponent<exUILayout>();
-                        layout.layoutInfo = o as exUILayoutInfo;
-                        layout.Sync();
                     }
 
                     if ( newGO != null && activeLayer != null ) {
@@ -931,7 +925,11 @@ class exSceneEditor : EditorWindow {
             if ( scrollView != null ) {
                 aabb.width = scrollView.contentSize.x;
                 aabb.yMin = aabb.yMax - scrollView.contentSize.y;
+
+                float contentX = (scrollView.horizontalContentDir == exUIScrollView.ContentDirection.LeftToRight) ? 0.0f : (scrollView.contentSize.x-scrollView.width);
+                float contentY = (scrollView.verticalContentDir == exUIScrollView.ContentDirection.TopToBottom) ? 0.0f : (scrollView.contentSize.y-scrollView.height);
                 aabb.center += scrollView.scrollOffset;
+                aabb.center += new Vector2( contentX, contentY );
                 vertices = new Vector3[4] {
                     l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMin, 0)),
                     l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMax, 0)),
@@ -1238,11 +1236,7 @@ class exSceneEditor : EditorWindow {
                 trans_rotation = Handles.Disc ( trans_rotation, trans_position, Vector3.forward, handleSize * 0.5f, true, 1 );
 
             if ( EditorGUI.EndChangeCheck() ) {
-#if UNITY_4_3
                 UnityEditor.Undo.RecordObjects(Selection.transforms, "Change Transform");
-#else
-                UnityEditor.Undo.RegisterUndo(Selection.transforms, "Change Transform");
-#endif
 
                 if ( Selection.transforms.Length == 1 ) {
                     trans.position = trans_position;

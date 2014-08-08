@@ -6,6 +6,7 @@
 // ======================================================================================
 
 #define DUPLICATE_WHEN_PINGPONE
+//#define AUTO_DISABLE
 
 ///////////////////////////////////////////////////////////////////////////////
 // usings
@@ -310,6 +311,7 @@ public class exSpriteAnimation : MonoBehaviour {
     
     //private float curWrappedTime = 0.0f;
     private int curIndex = -1;
+    private int playStartFrame = 0;    // 在调用Play的当帧的LateUpdate不进行step
 
     ///////////////////////////////////////////////////////////////////////////////
     // other properties
@@ -344,19 +346,25 @@ public class exSpriteAnimation : MonoBehaviour {
             if (playAutomatically && defaultAnimation != null) {
                 Play(defaultAnimation.name, 0);
             }
+#if AUTO_DISABLE
             else {
                 enabled = false;
             }
+#endif
         }
     }
     
     // Unity自带的Animation在Update和LateUpdate之间执行。
     // 这里我们采用LateUpdate，用户如果有需要在帧切换之后执行的操作，可使用事件或自行修改优先级。
     void LateUpdate () {
-        if (curAnimation != null) {
+        if (curAnimation != null && Time.frameCount > playStartFrame) {
             float delta = Time.deltaTime * curAnimation.speed;
             Step(delta);
         }
+    }
+
+    void OnDisable () {
+        Stop();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -404,6 +412,7 @@ public class exSpriteAnimation : MonoBehaviour {
 
     public void Stop () {
         Stop (curAnimation);
+        curAnimation = null;
     }
 
     // ------------------------------------------------------------------ 
@@ -413,11 +422,12 @@ public class exSpriteAnimation : MonoBehaviour {
 
     public void Stop ( exSpriteAnimationState _animState ) {
         if ( _animState != null ) {
-            exSpriteAnimationClip.StopAction stopAction = _animState.stopAction;
-
+            if (ReferenceEquals(_animState, curAnimation)) {
+                curAnimation = null;
+            }
             _animState.time = 0.0f;
-            _animState = null;
 
+            exSpriteAnimationClip.StopAction stopAction = _animState.stopAction;
             switch ( stopAction ) {
             case exSpriteAnimationClip.StopAction.DoNothing:
                 break;
@@ -435,7 +445,9 @@ public class exSpriteAnimation : MonoBehaviour {
                 break;
             }
         }
+#if AUTO_DISABLE
         enabled = false;
+#endif
     }
 
     // ------------------------------------------------------------------ 
@@ -663,8 +675,11 @@ public class exSpriteAnimation : MonoBehaviour {
         if (curAnimation != null) {
             curIndex = -1;
             curAnimation.time = _time;
+            playStartFrame = Time.frameCount;
             Sample();
+#if AUTO_DISABLE
             enabled = true;
+#endif
         }
     }
 

@@ -30,7 +30,9 @@ class exUIScrollViewInspector : exUIControlInspector {
     protected SerializedProperty contentAnchorProp;
     protected SerializedProperty contentSizeProp;
     protected SerializedProperty allowHorizontalScrollProp;
+    protected SerializedProperty horizontalContentDirProp;
     protected SerializedProperty allowVerticalScrollProp;
+    protected SerializedProperty verticalContentDirProp;
     protected SerializedProperty scrollSpeedProp;
 
     // ------------------------------------------------------------------ 
@@ -46,7 +48,9 @@ class exUIScrollViewInspector : exUIControlInspector {
         contentAnchorProp = serializedObject.FindProperty("contentAnchor");
         contentSizeProp = serializedObject.FindProperty("contentSize_");
         allowHorizontalScrollProp = serializedObject.FindProperty("allowHorizontalScroll");
+        horizontalContentDirProp = serializedObject.FindProperty("horizontalContentDir");
         allowVerticalScrollProp = serializedObject.FindProperty("allowVerticalScroll");
+        verticalContentDirProp = serializedObject.FindProperty("verticalContentDir");
         scrollSpeedProp = serializedObject.FindProperty("scrollSpeed");
     }
 
@@ -63,7 +67,9 @@ class exUIScrollViewInspector : exUIControlInspector {
         EditorGUILayout.PropertyField ( contentAnchorProp );
         EditorGUILayout.PropertyField ( contentSizeProp, new GUIContent("Content Size") );
         EditorGUILayout.PropertyField ( allowHorizontalScrollProp );
+        EditorGUILayout.PropertyField ( horizontalContentDirProp );
         EditorGUILayout.PropertyField ( allowVerticalScrollProp );
+        EditorGUILayout.PropertyField ( verticalContentDirProp );
         EditorGUILayout.PropertyField ( scrollSpeedProp );
 
         if ( serializedObject.isEditingMultipleObjects == false ) {
@@ -105,7 +111,12 @@ class exUIScrollViewInspector : exUIControlInspector {
             if ( scrollView != null ) {
                 aabb.width = scrollView.contentSize.x;
                 aabb.yMin = aabb.yMax - scrollView.contentSize.y;
+
+                float contentX = (scrollView.horizontalContentDir == exUIScrollView.ContentDirection.LeftToRight) ? 0.0f : (scrollView.contentSize.x-scrollView.width);
+                float contentY = (scrollView.verticalContentDir == exUIScrollView.ContentDirection.TopToBottom) ? 0.0f : (scrollView.contentSize.y-scrollView.height);
+
                 aabb.center += scrollView.scrollOffset;
+                aabb.center += new Vector2( contentX, contentY );
                 vertices = new Vector3[4] {
                     l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMin, 0)),
                     l2w.MultiplyPoint3x4(new Vector3(aabb.xMin, aabb.yMax, 0)),
