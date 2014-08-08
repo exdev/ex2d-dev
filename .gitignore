@@ -43,15 +43,16 @@ _build/
 # exvim files 
 #/////////////////////////////////////////////////////////////////////////////
 
-*.err
-_log/
+*.exvim
 *.vimentry
-*.vimentry.meta
+*.vimproject
 .vimfiles.*/
-quick_gen_project_*_autogen.bat
-quick_gen_project_*_autogen.bat.meta
-quick_gen_project_*_autogen.sh
-quick_gen_project_*_autogen.sh.meta
+.exvim.*/
+
+#/////////////////////////////////////////////////////////////////////////////
+# project file
+#/////////////////////////////////////////////////////////////////////////////
+
+_log/
+*.err
 *.userprefs
-*/-tk2d.asset
-*/-tk2d.asset.meta

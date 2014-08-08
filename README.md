@@ -6,6 +6,10 @@
 * [Script Reference (Coming Soon...)](TODO)
 * [Download in Unity3D Asset Store](http://u3d.as/content/ex-dev-team/ex2d-v1-0-0/2eJ)
 
-## License
+## Free License
 
 ex2D uses GPL v3.0 License. Please read [LICENSE](https://github.com/exdev/ex2d-dev/blob/master/LICENSE.txt) for more details.
+
+## Comercial License
+
+ex2D Comercial User follow our [COMERCIAL-LICENSE](https://github.com/exdev/ex2d-dev/blob/master/COMERCIAL-LICENSE.txt).
