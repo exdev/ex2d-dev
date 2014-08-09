@@ -142,8 +142,8 @@ public class exRectSelection<T> {
 
                 if ( isRectSelecting ) {
                     Rect selectRect = cb_UpdateRect( selectStartPoint, e.mousePosition );
-                    T[] array = cb_PickRectObjects ( selectRect );
-                    // currentSelection = array;
+                    T[] objs = cb_PickRectObjects ( selectRect );
+                    // currentSelection = objs;
                     bool flag = false;
 
                     if ( lastSelection == null ) {
@@ -151,10 +151,10 @@ public class exRectSelection<T> {
                         flag = true;
                     }
 
-                    flag |= (lastSelection.Count != array.Length);
+                    flag |= (lastSelection.Count != objs.Length);
                     if ( !flag ) {
-                        Dictionary<T, bool> dictionary = new Dictionary<T, bool>(array.Length);
-                        T[] array2 = array;
+                        Dictionary<T, bool> dictionary = new Dictionary<T, bool>(objs.Length);
+                        T[] array2 = objs;
                         for ( int i = 0; i < array2.Length; ++i ) {
                             T key = array2[i];
                             dictionary.Add(key, false);
@@ -168,22 +168,22 @@ public class exRectSelection<T> {
                     }
 
                     if ( flag ) {
-                        lastSelection = new Dictionary<T, bool>(array.Length);
-                        T[] array3 = array;
+                        lastSelection = new Dictionary<T, bool>(objs.Length);
+                        T[] array3 = objs;
                         for ( int j = 0; j < array3.Length; ++j ) {
                             T key2 = array3[j];
                             lastSelection.Add(key2, false);
                         }
-                        if ( array != null ) {
+                        if ( objs != null ) {
                             if ( e.shift ) {
-                                UpdateSelection(array, SelectionType.Additive);
+                                UpdateSelection(objs, SelectionType.Additive);
                             }
                             else {
                                 if ( EditorGUI.actionKey ) {
-                                    UpdateSelection(array, SelectionType.Subtractive);
+                                    UpdateSelection(objs, SelectionType.Subtractive);
                                 }
                                 else {
-                                    UpdateSelection(array, SelectionType.Normal);
+                                    UpdateSelection(objs, SelectionType.Normal);
                                 }
                             }
 
@@ -291,8 +291,8 @@ public class exRectSelection<T> {
         switch (_type) {
         case SelectionType.Additive:
             if ( _objs.Length > 0 ) {
-                T[] array = new T[selectionStart.Length + _objs.Length];
-                System.Array.Copy(selectionStart, array, selectionStart.Length);
+                T[] objs = new T[selectionStart.Length + _objs.Length];
+                System.Array.Copy(selectionStart, objs, selectionStart.Length);
 
                 // add unique object
                 int count = selectionStart.Length;
@@ -305,21 +305,21 @@ public class exRectSelection<T> {
                         }
                     }
                     if ( exists == false ) {
-                        array[count] = _objs[i];
+                        objs[count] = _objs[i];
                         ++count;
                     }
                 }
-                System.Array.Resize( ref array, count );
+                System.Array.Resize( ref objs, count );
 
                 // switch active object
                 if ( isRectSelecting ) {
-                    activeObj = array[0];
+                    activeObj = objs[0];
                 }
                 else {
                     activeObj = _objs[0];
                 }
 
-                selectedObjs = array;
+                selectedObjs = objs;
                 return;
             }
 
@@ -338,10 +338,10 @@ public class exRectSelection<T> {
                     dictionary.Remove(key2);
                 }
             }
-            T[] array = new T[dictionary.Keys.Count];
-            dictionary.Keys.CopyTo(array, 0);
+            T[] objs = new T[dictionary.Keys.Count];
+            dictionary.Keys.CopyTo(objs, 0);
 
-            selectedObjs = array;
+            selectedObjs = objs;
 
             if ( IsInSelectedList ( activeObj ) == false ) {
                 activeObj = selectedObjs.Length > 0 ? selectedObjs[0] : default(T); 
