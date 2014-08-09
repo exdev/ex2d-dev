@@ -392,7 +392,21 @@ public class exSpriteFont : exLayeredSprite, exISpriteFont {
                     _vertices.buffer[vertexBufferIndex + i] = anyPoint;
                 }
                 updateFlags &= ~exUpdateFlags.Vertex;
-                return updateFlags | exUpdateFlags.Vertex;   // 既然不可见，直接让mesh更新各个buffer即可。这里不重设updateFlags，所以变回可见时会正确初始化。
+
+                if ((updateFlags & exUpdateFlags.Index) > 0) {
+                    // generate indices
+                    int indexBufferEnd = indexBufferIndex + indexCount - 5;
+                    for (int i = indexBufferIndex, v = vertexBufferIndex; i < indexBufferEnd; i += 6, v += 4) {
+                        _indices.buffer[i] = v;
+                        _indices.buffer[i + 1] = v + 1;
+                        _indices.buffer[i + 2] = v + 2;
+                        _indices.buffer[i + 3] = v + 2;
+                        _indices.buffer[i + 4] = v + 3;
+                        _indices.buffer[i + 5] = v;
+                    }
+                    updateFlags &= ~exUpdateFlags.Index;
+                }
+                return updateFlags | exUpdateFlags.VertexAndIndex;   // 既然不可见，直接让mesh更新各个buffer即可。这里不重设其它updateFlags，所以变回可见时会正确初始化。
             }
             else {
                 // revert vertex

@@ -341,7 +341,7 @@ public class exMesh : MonoBehaviour
     [ContextMenu("Output Mesh Info")]
     [System.Diagnostics.Conditional("EX_DEBUG")]
     public void OutputDebugInfo () {
-        OutputDebugInfo(false);
+        OutputDebugInfo(true);
     }
 
     [System.Diagnostics.Conditional("EX_DEBUG")]
