@@ -290,61 +290,65 @@ public class exRectSelection<T> {
     void UpdateSelection ( T[] _objs, SelectionType _type ) {
         switch (_type) {
         case SelectionType.Additive:
-            if ( _objs.Length > 0 ) {
-                T[] objs = new T[selectionStart.Length + _objs.Length];
-                System.Array.Copy(selectionStart, objs, selectionStart.Length);
+            {
+                if ( _objs.Length > 0 ) {
+                    T[] objs = new T[selectionStart.Length + _objs.Length];
+                    System.Array.Copy(selectionStart, objs, selectionStart.Length);
 
-                // add unique object
-                int count = selectionStart.Length;
-                for ( int i = 0; i < _objs.Length; ++i ) {
-                    bool exists = false;
-                    for ( int j = 0; j < selectionStart.Length; ++j ) {
-                        if ( ReferenceEquals( selectionStart[j], _objs[i] ) ) {
-                            exists = true;
-                            break;
+                    // add unique object
+                    int count = selectionStart.Length;
+                    for ( int i = 0; i < _objs.Length; ++i ) {
+                        bool exists = false;
+                        for ( int j = 0; j < selectionStart.Length; ++j ) {
+                            if ( ReferenceEquals( selectionStart[j], _objs[i] ) ) {
+                                exists = true;
+                                break;
+                            }
+                        }
+                        if ( exists == false ) {
+                            objs[count] = _objs[i];
+                            ++count;
                         }
                     }
-                    if ( exists == false ) {
-                        objs[count] = _objs[i];
-                        ++count;
+                    System.Array.Resize( ref objs, count );
+
+                    // switch active object
+                    if ( isRectSelecting ) {
+                        activeObj = objs[0];
                     }
-                }
-                System.Array.Resize( ref objs, count );
+                    else {
+                        activeObj = _objs[0];
+                    }
 
-                // switch active object
-                if ( isRectSelecting ) {
-                    activeObj = objs[0];
-                }
-                else {
-                    activeObj = _objs[0];
+                    selectedObjs = objs;
+                    return;
                 }
 
-                selectedObjs = objs;
-                return;
+                selectedObjs = selectionStart;
             }
-
-            selectedObjs = selectionStart;
             return;
 
         case SelectionType.Subtractive:
-            Dictionary<T, bool> dictionary = new Dictionary<T, bool>(selectionStart.Length);
-            for ( int j = 0; j < selectionStart.Length; ++j ) {
-                T key = selectionStart[j];
-                dictionary.Add(key, false);
-            }
-            for ( int k = 0; k < _objs.Length; ++k ) {
-                T key2 = _objs[k];
-                if ( dictionary.ContainsKey(key2) ) {
-                    dictionary.Remove(key2);
+            {
+                Dictionary<T, bool> dictionary = new Dictionary<T, bool>(selectionStart.Length);
+                for ( int j = 0; j < selectionStart.Length; ++j ) {
+                    T key = selectionStart[j];
+                    dictionary.Add(key, false);
                 }
-            }
-            T[] objs = new T[dictionary.Keys.Count];
-            dictionary.Keys.CopyTo(objs, 0);
+                for ( int k = 0; k < _objs.Length; ++k ) {
+                    T key2 = _objs[k];
+                    if ( dictionary.ContainsKey(key2) ) {
+                        dictionary.Remove(key2);
+                    }
+                }
+                T[] objs = new T[dictionary.Keys.Count];
+                dictionary.Keys.CopyTo(objs, 0);
 
-            selectedObjs = objs;
+                selectedObjs = objs;
 
-            if ( IsInSelectedList ( activeObj ) == false ) {
-                activeObj = selectedObjs.Length > 0 ? selectedObjs[0] : default(T); 
+                if ( IsInSelectedList ( activeObj ) == false ) {
+                    activeObj = selectedObjs.Length > 0 ? selectedObjs[0] : default(T); 
+                }
             }
             return;
         }
