@@ -182,7 +182,7 @@ namespace fsm {
             logDebugInfo = GUILayout.Toggle( logDebugInfo, "Log States" );
 
             if ( showDebugInfo ) {
-                ShowDebugInfo ( 0, true, _textStyle, currentTransition );
+                ShowDebugInfo ( 0, true, _textStyle, currentTransition_ );
             }
         }
 #endif

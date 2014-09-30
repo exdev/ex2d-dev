@@ -41,10 +41,18 @@ namespace fsm {
         public string name = "";
         public Mode mode = Mode.Exclusive;
 
-        // route state will check condition and transfer to 
-        // the next state immediately before transition.onStart
-        // it will then reset the initState of its parent.
-        public bool isRoute = false; 
+        // group state will check conditions and transfer to 
+        // other sub state instead of initState.
+        public List<Transition> routeInTransitions = null;
+        public bool hasRouteIn {
+            get {
+                return routeInTransitions != null && routeInTransitions.Count > 0;
+            }
+        }
+        // if hasRouteOut, state can not exit unless its child RouteOutState can be activated
+        public bool containRouteOut = false;
+        // once its sub transition checked its sub route out state, isEnd become true
+        public bool isEnd = false;
 
         protected State parent_ = null;
         public State parent {
@@ -112,13 +120,16 @@ namespace fsm {
                 }
             }
         }
+        protected Transition currentTransition_ = null;
+        public Transition currentTransition { get { return currentTransition_; } }
 
         protected List<Transition> transitionList = new List<Transition>();
         protected List<State> children = new List<State>();
 
         protected bool inTransition = false;
-        protected Transition currentTransition = null;
         protected List<State> currentStates = new List<State>();
+
+        public bool trigger = false;
 
         ///////////////////////////////////////////////////////////////////////////////
         // event handles
@@ -127,7 +138,7 @@ namespace fsm {
         public System.Action<State, State> onEnter = null;
         public System.Action<State, State> onExit = null;
         public System.Action<State> onAction = null;
-
+        
         ///////////////////////////////////////////////////////////////////////////////
         // functions
         ///////////////////////////////////////////////////////////////////////////////
@@ -189,7 +200,67 @@ namespace fsm {
                 //     Debug.Log( "FSM Debug: On Action - " + currentStates[i].name + " at " + Time.time );
                 // } DISABLE end 
             }
-        } 
+        }
+
+        // ------------------------------------------------------------------ 
+        // Desc: 
+        // ------------------------------------------------------------------ 
+
+        private Transition SelectTransition () {
+            for (int i = 0; i < transitionList.Count; ++i) {
+                Transition transition = transitionList[i];
+                if (transition.onCheck() || (transition.target != null && transition.target.trigger)) {
+                    if (transition.target is RouteOutState) {
+                        parent.isEnd = true;
+                        // check parent's transtion
+                        var parentTransition = parent.SelectTransition(); // TODO: cache result
+                        if (parentTransition != null) {
+                            return transition;
+                        }
+                    }
+                    else {
+                        return transition;
+                    }
+                }
+            }
+            return null;
+        }
+
+        // ------------------------------------------------------------------ 
+        // Transition to another child state
+        // ------------------------------------------------------------------ 
+
+        private void Transition (State sourceSubState, Transition transition) {
+            exDebug.Assert(sourceSubState.parent == this);
+            exDebug.Assert(transition.source == sourceSubState);
+            // NOTE: if parent transition triggerred, the child should always execute onExit transition
+            // exit states
+            ExitStates(transition.target, sourceSubState);
+            // route out
+            if (transition.target is RouteOutState) {
+                exDebug.Assert(transition.target.hasRouteIn == false, "RouteOutState not allowed to have route in");
+
+                var parentTransition = SelectTransition();
+                exDebug.Assert(parentTransition != null, "No valid transition to route oute!");
+                parentTransition.OnRouteFrom(transition);
+                parent.Transition(this, parentTransition);
+                // if routing out, this state will be exit immediately by calling parent.Transition(),
+                // so we dont need to mark its transition here.
+            }
+            else {
+                // update state
+                currentTransition_ = transition;
+                inTransition = true;
+                // route in
+            	if (transition.target.mode == Mode.Exclusive) {
+                    transition.target.CheckRoute(transition);
+                }
+            }
+            // transition on start
+            if (transition.onStart != null) transition.onStart();
+            // reset trigger
+            transition.target.trigger = false;
+        }
 
         // ------------------------------------------------------------------ 
         // Desc: 
@@ -203,39 +274,24 @@ namespace fsm {
             //
             for ( int i = 0; i < currentStates.Count; ++i ) {
                 State activeChild = currentStates[i];
-
-                // NOTE: if parent transition triggerred, the child should always execute onExit transition
-                for ( int j = 0; j < activeChild.transitionList.Count; ++j ) {
-                    Transition transition = activeChild.transitionList[j];
-                    if ( transition.onCheck() ) {
-
-                        // exit states
-                        transition.source.parent.ExitStates ( transition.target, transition.source );   // TODO: 这里应该不进行++i
-
-                        // route happends here
-                        if ( transition.target.mode == Mode.Exclusive &&
-                             transition.target.children.Count > 0 ) 
-                        {
-                            State firstChild = transition.target.children[0];
-                            if ( firstChild.isRoute ) {
-                                firstChild.CheckRoute(transition);
-                            }
-                        }
-
-                        // transition on start
-                        if ( transition.onStart != null ) transition.onStart();
-                        
-                        // set current transition
-                        currentTransition = transition;
-                        inTransition = true;
-
-                        break;
-                    }
-                }
-
-                if ( inTransition == false ) {
+#if UN_INTERRUPTABLE
+                if (activeChild.containRouteOut) {
+                    // we dont need to check activeChild's transition here, because its child states will check its route out transitions
                     activeChild.CheckConditions ();
                 }
+                else {
+#endif
+                    var nextTransition = activeChild.SelectTransition();
+                    if (nextTransition != null) {
+                        // TODO: 这里应该不进行++i，因为currentStates已经改变
+                        Transition(activeChild, nextTransition);
+	                }
+                    else {
+                        activeChild.CheckConditions ();
+                    }
+#if UN_INTERRUPTABLE
+                }
+#endif
             }
         }
 
@@ -244,19 +300,27 @@ namespace fsm {
         // ------------------------------------------------------------------ 
 
         public void CheckRoute ( Transition _parentTransition ) {
-            bool hasTransition = false;
-            for ( int i = 0; i < transitionList.Count; ++i ) {
-                Transition transition = transitionList[i];
-                transition.Bridge(_parentTransition);
+            if (hasRouteIn) {
+                exDebug.Assert(_parentTransition == null || 
+                               _parentTransition.source.parent.currentTransition_ == _parentTransition,
+                               "Routing rely on currentTransition");
 
-                if ( transition.onCheck() ) {
-                    parent.initState = transition.target;
-                    hasTransition = true;
-                    break;
+                bool hasTransition = false;
+                for ( int i = 0; i < routeInTransitions.Count; ++i ) {
+                    Transition transition = routeInTransitions[i];
+                    if ( transition.onCheck() || (transition.target != null && transition.target.trigger) ) {
+                        transition.target.trigger = false;
+                        initState = transition.target;
+                        if (_parentTransition != null) {
+                            transition.OnRouteFrom(_parentTransition);
+                        }
+                        hasTransition = true;
+                        break;
+                    }
                 }
-            }
-            if ( hasTransition == false ) {
-                Debug.LogError( "FSM error: route state must have transition" );
+                if ( hasTransition == false ) {
+                    Debug.LogError( "FSM error: route state must have transition" );
+                }
             }
         }
 
@@ -268,24 +332,24 @@ namespace fsm {
         public void UpdateTransitions () {
             if ( inTransition ) {
                 // update transition
-                if ( currentTransition.onTransition() ) {
+                if ( currentTransition_.onTransition() ) {
 
                     // transition on end
-                    if ( currentTransition.onEnd != null ) currentTransition.onEnd();
+                    if ( currentTransition_.onEnd != null ) currentTransition_.onEnd();
 
                     // enter states
-                    State targetState = currentTransition.target;
+                    State targetState = currentTransition_.target;
                     if ( targetState == null )
-                        targetState = currentTransition.source;
+                        targetState = currentTransition_.source;
 
                     if ( targetState.parent != null )
-                        targetState.parent.EnterStates ( targetState, currentTransition.source );
+                        targetState.parent.EnterStates ( targetState, currentTransition_.source );
                     else {
                         Debug.Log( "targetState = " + targetState.name + ", " + name );
                     }
 
                     //
-                    currentTransition = null;
+                    currentTransition_ = null;
                     inTransition = false;
                 }
             }
@@ -302,8 +366,8 @@ namespace fsm {
         // ------------------------------------------------------------------ 
 
         public void EnterStates ( State _toEnter, State _toExit ) {
+            _toEnter.isEnd = false;
             currentStates.Add (_toEnter);
-
             if ( machine != null && machine.logDebugInfo ) 
                 Debug.Log( "FSM Debug: Enter State - " + _toEnter.name + " at " + Time.time );
 
@@ -349,7 +413,7 @@ namespace fsm {
 
         public bool IsActiveState (State _state, bool _containsTransTarget = true) {
             if (inTransition && _containsTransTarget) {
-                if (ReferenceEquals(currentTransition.target, _state)) {
+                if (ReferenceEquals(currentTransition_.target, _state)) {
                     return true;
                 }
             }
@@ -415,14 +479,14 @@ namespace fsm {
         // ------------------------------------------------------------------ 
 
         protected Transition GetCurrentTransition () {
-            if ( currentTransition != null ) {
-                return currentTransition;
+            if ( currentTransition_ != null ) {
+                return currentTransition_;
             }
 
             State p = parent_;
             while ( p != null ) {
-                if ( p.inTransition && p.currentTransition != null )
-                    return p.currentTransition;
+                if ( p.inTransition && p.currentTransition_ != null )
+                    return p.currentTransition_;
                 p = p.parent_;
             }
 
@@ -464,7 +528,7 @@ namespace fsm {
                 _textStyle.fontStyle = FontStyle.Normal;
                 if ( _t != null ) {
                     if ( _t.source == this ) {
-                        suffix = " >>>";
+                        suffix = (_t.target != this) ? " >>>" : " <->";
                         _textStyle.normal.textColor = colorExit;
                     }
                     else if ( _t.target == this ) {
@@ -486,7 +550,7 @@ namespace fsm {
 
             for ( int i = 0; i < children.Count; ++i ) {
                 State s = children[i];
-                s.ShowDebugInfo ( _level + 1, currentStates.IndexOf(s) != -1, _textStyle, inTransition ? currentTransition : _t );
+                s.ShowDebugInfo ( _level + 1, currentStates.IndexOf(s) != -1, _textStyle, inTransition ? currentTransition_ : _t );
             }
         }
 
@@ -521,6 +585,18 @@ namespace fsm {
             //     stateMachine.Send ( Event.FINISHED );
             // }
             // } TODO end 
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // RouteOutState
+    ///////////////////////////////////////////////////////////////////////////////
+
+    public class RouteOutState : State {
+        public RouteOutState (string _name, State _parent = null)
+            : base (_name, _parent) {
+            exDebug.Assert(_parent != null);
+            _parent.containRouteOut = true;
         }
     }
 }

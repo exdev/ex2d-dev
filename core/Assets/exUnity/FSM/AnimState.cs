@@ -17,14 +17,25 @@ namespace fsm {
 /// </summary>
 public class AnimTransition : TimerTransition {
 
+    // We assume that the playing states should not keep the reference of any transition,
+    // so we just create a global shared dummy transition for routing.
+    // Otherwise we should pass an unique transition everytime we route it
+    private static AnimTransition routingTransition = new AnimTransition();
+
     /// <summary> 触发动画跳转，不论when、after条件是否满足。 </summary>
-    public bool trigger = false;
     public bool syncNormalizedTime = false;
+    public float scale = 1.0f;  // scale duration
 
     System.Nullable<float> exitTime;
+    float exitTimeOffset = 0.0f;
     System.Func<bool> onDoCheck;
     AnimTransition syncWith = null;
     string[] fromNameList = null;
+
+    public override float duration {
+        get { return base.duration * scale; }
+        set { base.duration = value; }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -45,17 +56,18 @@ public class AnimTransition : TimerTransition {
         onDoCheck = _onCheck;
         return this;
     }
-    public void whenDefault () {
-        onDoCheck = delegate () { return true; };
-    }
 
     /// <summary> 限制只有动画播放到了一定的时候才能跳转，和when是与(and)的布尔关系。 </summary>
     /// <param name="_normalizedTime">
     /// 和Mecanim里的Exit Time一样，用于限制退出这个状态所需要的时间。
     /// 如果是0.5则代表必须等到动画播放到一半后才能切换到其它状态，2.5则代表要等动画loop 2.5次后才能切换到其它状态。
     /// </param>
-    public AnimTransition after (float _normalizedTime) {
+    /// <param name="_offset"> 
+    /// 为0时，_normalizedTime指定的是动画开始crossfade的时刻；为1.0时，_normalizedTime指定的是动画crossfade完成后的时刻。
+    /// </param>
+    public AnimTransition after (float _normalizedTime, float _offset = 0.0f) {
         exitTime = _normalizedTime;
+        exitTimeOffset = _offset;
         return this;
     }
 
@@ -76,61 +88,52 @@ public class AnimTransition : TimerTransition {
         }
     }
 
-    // 该函数不会改变内部状态，可多次调用
     public bool TestOwnConditions () {
         //
         if ( fromNameList != null ) {
-            if ( source == null )
+            string soureName = null;
+            try {
+                soureName = target.parent.parent.currentTransition.source.name;
+            }
+            catch (System.NullReferenceException) {
                 return false;
-
-            bool found = (System.Array.IndexOf(fromNameList, source.name) != -1);
+            }
+            bool found = (System.Array.IndexOf(fromNameList, soureName) != -1);
             if (found == false) {
-                return false;   // TODO: what if triggered ?
+                return false;
             }
-        }
-
-        //
-        if (trigger) {
-            return true;
-        }
-
-        //
-        float normalizedTime = 0.0f;
-        if ( source != null ) {
-            normalizedTime = ((AnimState)source).normalizedTime;
-#if UNITY_EDITOR
-            if ( normalizedTime >= 1.0f ) {
-                if (exitTime.HasValue != false && exitTime.Value > 1.0f) {
-                    var s = (AnimState)source;
-                    var state = s.anim[s.curAnimName];
-                    if (state != null && (state.wrapMode != WrapMode.Loop && state.wrapMode != WrapMode.PingPong && state.wrapMode != WrapMode.ClampForever)) {
-                        Debug.LogWarning(string.Format("非循环动画的normalizedTime永远不可能大于1 ({0} to {1})", source.name, target.name));
-                    }
-                }
-            }
-#endif
-        }
-        else {
-            normalizedTime = 1.0f;
         }
 
         //
         if ( exitTime.HasValue ) {
-            if ( normalizedTime < exitTime.Value )
+            if (source == null) {
                 return false;
-
-            if (onDoCheck != null) {
-                return onDoCheck();
             }
-
-            return true;
+            AnimState s = (AnimState)source;
+            var state = s.anim[s.curAnimName];
+            if (state == null) {
+                return false;
+            }
+            float normalizedTime = s.normalizedTime;
+#if UNITY_EDITOR
+            if ( normalizedTime >= 1.0f && exitTime.HasValue && exitTime.Value > 1.0f ) {
+                if (state != null && (state.wrapMode != WrapMode.Loop && state.wrapMode != WrapMode.PingPong && state.wrapMode != WrapMode.ClampForever)) {
+                    Debug.LogWarning(string.Format("非循环动画的normalizedTime永远不可能大于1 ({0} to {1})", source.name, target.name));
+                }
+            }
+#endif
+            if (normalizedTime * state.length < exitTime.Value * state.length - exitTimeOffset * duration) {
+                return false;
+            }
         }
 
         //
         if (onDoCheck != null) {
             return onDoCheck();
         }
-        return false;
+
+        bool defaultTrue = target != null && target.parent.hasRouteIn;
+        return defaultTrue;
     }
 
     bool OnCheck () {
@@ -139,8 +142,23 @@ public class AnimTransition : TimerTransition {
             return isSyncStateActive && syncWith.TestOwnConditions();
         }
         bool result = TestOwnConditions();
-        trigger = false;
+        //trigger = false;
         return result;
+    }
+
+    public override void OnRouteFrom ( Transition _from ) {
+        exDebug.Assert(_from != null, "Previous transition should not be null!");
+        base.OnRouteFrom(_from);
+        TimerTransition timerTrans = _from as TimerTransition;
+        if ( timerTrans != null ) {
+            routingTransition.source = _from.source;
+            routingTransition.target = target;
+            routingTransition.duration = duration + timerTrans.duration;
+            AnimState animState = target as AnimState;
+            if ( animState != null ) {
+                animState.Play(routingTransition);
+            }
+        }
     }
 }
 
@@ -150,7 +168,23 @@ public class AnimTransition : TimerTransition {
 public class AnimState : State {
 
     public Animation anim = null;
-    public string curAnimName = null;
+    private string curAnimName_ = null;
+
+    public string curAnimName {
+        get { return curAnimName_; }
+        set {
+            curAnimName_ = value;
+            var group = parent_ as AnimState;
+            if (group != null) {
+                group.curAnimName = syncGroupNTime ? value : null;
+	        }
+        }
+    }
+
+    /// <summary>
+    /// Sync group's normalized time with this animation, so that its parent group's transition can support after() condition.
+    /// </summary>
+    public bool syncGroupNTime = false;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Properties
@@ -159,7 +193,7 @@ public class AnimState : State {
     public float normalizedTime {
         get {
             //AnimationState animState = anim.GetPlayingAnimation();
-            AnimationState animState = anim[curAnimName];
+            AnimationState animState = anim[curAnimName_];
             //Debug.Log(string.Format("animState: {0} " + animState.normalizedTime, animState.name));
 
             if ( animState != null ) {
@@ -194,7 +228,8 @@ public class AnimState : State {
     /// <summary> 声明状态的跳转 </summary>
     /// <param name="_targetState"> 目标状态 </param>
     /// <param name="_duration"> 动画过渡所需时间 </param>
-    public AnimTransition to (AnimState _targetState, float _duration = 0.3f, bool _syncNTime = false) {
+    /// <param name="_syncNTime"> 跳转开始时，将目标动画的normalized time设置成和当前动画一致 </param>
+    public AnimTransition to (State _targetState, float _duration = 0.3f, bool _syncNTime = false) {
         AnimTransition transition = new AnimTransition() {
             source = this,
             target = _targetState,
@@ -226,7 +261,6 @@ public class AnimState : State {
         if (string.IsNullOrEmpty(_animName)) {
             anim.Stop();
             curAnimName = null;
-
             return;
         }
 
@@ -280,16 +314,8 @@ public class AnimState : State {
     }
 }
 
-public class RouteAnimState : AnimState {
-    public RouteAnimState (string _name, Animation _anim, State _parent = null)
-        : base(_name, _anim, _parent)
-    {
-        isRoute = true;
-    }
-}
-
 /// <summary>
-/// NullAnimState
+/// 做上半身动画时，可以用NullAnimState来表示什么都不播的状态。
 /// </summary>
 
 public class NullAnimState : AnimState {
@@ -360,17 +386,41 @@ public class NullBlendToStopAnimState : AnimState {
 /// </summary>
 
 public class GroupAnimState : AnimState {
+
+    //public override float normalizedTime {
+    //    get {
+    //        return isEnd ? 1.0f : 0.0f;
+    //    }
+    //}
+
     public GroupAnimState (string _name, Animation _anim, State _parent = null)
         : base(_name, _anim, _parent)
     {
     }
 
     public override void Play (Transition _transition) {
+        // if routed, animation was played by transition
+        bool playRouteAnim = _transition != null && hasRouteIn;
         AnimState animState = initState as AnimState;
-        if ( animState != null ) {
+        if ( animState != null && playRouteAnim == false ) {
             animState.Play(_transition);
-            curAnimName = animState.curAnimName;
         }
+    }
+
+    /// <summary> 声明一个路由，用于选择进入Group后触发哪个子状态，用法请参考AnimState.to </summary>
+    public AnimTransition routeIn (State _targetState, float _duration = 0.3f, bool _syncNTime = false) {
+        exDebug.Assert(_targetState.parent == this, "Can not route into other state");
+        if (routeInTransitions == null) {
+            routeInTransitions = new List<Transition>();
+	    }
+        AnimTransition transition = new AnimTransition() {
+            source = null,
+            target = _targetState,
+            duration = _duration,
+            syncNormalizedTime = _syncNTime,
+        };
+        routeInTransitions.Add (transition);
+        return transition;
     }
 }
 
