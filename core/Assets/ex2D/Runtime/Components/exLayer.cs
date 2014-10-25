@@ -606,7 +606,9 @@ public class exLayer : MonoBehaviour
         foreach (exLayeredSprite sprite in spriteList) {
             if (sprite != null) {
                 if (ReferenceEquals(sprite.layer, this) == false && sprite.layer != null) {
-                    Debug.LogError("Sprite's hierarchy is invalid!", sprite);
+                    var errorInfo = string.Format("Sprite's hierarchy not matched with its layer! sprite: {0}, hierarchy layer: {1}, expected layer: {2}", 
+                                                  sprite.gameObject.name, this.gameObject.name, sprite.layer.gameObject.name);
+                    Debug.LogError(errorInfo, sprite);
                 }
                 (sprite as IFriendOfLayer).ResetLayerProperties();
             }
