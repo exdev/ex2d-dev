@@ -74,7 +74,7 @@ public static class MenuItems {
             string rawTexturePath = AssetDatabase.GetAssetPath(rawTexture);
             string dirPath = Path.GetDirectoryName(rawTexturePath);
 
-            exEditorUtility.ImportTextureForAtlas(rawTexture);
+            exEditorUtility.ImportTextureForTextureInfo(rawTexture);
 
             exTextureInfo textureInfo = exGenericAssetUtility<exTextureInfo>.LoadExistsOrCreate ( dirPath, rawTexture.name );
             textureInfo.rawTextureGUID = exEditorUtility.AssetToGUID(rawTexture);
@@ -207,7 +207,7 @@ public static class MenuItems {
     // Desc: 
     // ------------------------------------------------------------------ 
 
-    [MenuItem ("ex2D/About...", false, 1001)]
+    [MenuItem ("ex2D/About...", false, 1010)]
     public static void Open_AboutWindow () {
         ScriptableWizard.DisplayWizard<ex2DAboutWindow>("About ex2D");
     }

@@ -290,6 +290,12 @@ public class ex2DRenderer : MonoBehaviour {
         return mat;
     }
 
+#if EX_DEBUG
+    public static int GetMaterialCount () {
+        return materialTable.Count;
+    }
+#endif
+
     // ------------------------------------------------------------------ 
     /// Force refresh all layers. This is called by ex2D.
     // ------------------------------------------------------------------ 
