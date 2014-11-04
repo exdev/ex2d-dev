@@ -428,7 +428,9 @@ public class exLayer : MonoBehaviour
         }
         else {
             if (_sprite.layer != this) {
-                Debug.LogWarning ("Sprite not in this layer.");
+                if (_sprite.layer != null) 
+                    Debug.Log("sprite layer: " + _sprite.layer.gameObject.name);
+                Debug.LogWarning ("Sprite not in this layer." + _sprite.gameObject.name);
                 return;
             }
             int meshIndex = IndexOfMesh (_sprite);
@@ -881,7 +883,7 @@ public class exLayer : MonoBehaviour
         float nextZ = zMin;
         // 由于mesh的碎片化，所以mesh的z是不确定的
         // 这里先要查找meshList前面最远的z，以它作为排序的起始点
-        for (int i = _startIndex - 1; i > 0; --i) {
+        for (int i = _startIndex - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
             if (mesh != null) {
                 nextZ = mesh.transform.position.z - interval;
